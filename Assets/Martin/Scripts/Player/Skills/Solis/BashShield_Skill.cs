@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Player/Skills/Solis/Bash Shield Skill")]
+[CreateAssetMenu(menuName = "Player/Skills/Solis/Bash Shield")]
 public class BashShield_Skill : Skill
 {
     public float dashSpeed;

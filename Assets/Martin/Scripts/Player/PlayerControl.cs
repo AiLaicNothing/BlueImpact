@@ -555,7 +555,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
             OnDead();
         }
 
-        anim.SetTrigger("Hit");
+        //anim.SetTrigger("Hit");
     }
 
     public void Heal(int amount)
