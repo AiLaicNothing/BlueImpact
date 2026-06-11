@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
 public class PlayerControl : MonoBehaviour, IDamageable
@@ -34,7 +35,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     [Header("Range")]
     [SerializeField] private bool isRange;
     [SerializeField] private Transform firePoint;
-
+    [SerializeField] private ShootData shootData;
     [SerializeField] private LayerMask whatIsHitable;
 
     [Header("Skills")]
@@ -54,7 +55,6 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public bool blockVelocity = false;
     public bool isDead { get; private set; }
 
-    // ✅ USAR PlayerStatsManager
     private PlayerStatsManager playerStatsManager;
 
     private Rigidbody rb;
@@ -97,6 +97,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public MeleeAttackCombo NormalCombo => normalCombo;
     public MeleeAttackCombo AirCombo => airCombo;
     public bool IsRange => isRange;
+    public ShootData ShootData => shootData;
     public Transform FirePoint => firePoint;
     public float FallGravityMult => fallGravityMultiplier;
     public PlayerStatsManager PlayerStatsManager => playerStatsManager;
@@ -109,7 +110,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
         RegisterStates();
         mainCam = Camera.main;
 
-        // ✅ Obtener PlayerStatsManager
+        //  Obtener PlayerStatsManager
         playerStatsManager = GetComponent<PlayerStatsManager>();
         if (playerStatsManager != null)
         {
@@ -119,7 +120,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     private void Start()
     {
-        // ✅ Inicializar cooldowns
+        //  Inicializar cooldowns
         skillsCD = new float[maxSkillSlot];
         for (int i = 0; i < skillsCD.Length; i++)
         {
@@ -144,7 +145,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         if (isDead) return;
 
-        // ✅ Actualizar cooldowns
+        //  Actualizar cooldowns
         for (int i = 0; i < skillsCD.Length; i++)
         {
             if (skillsCD[i] > 0)
@@ -246,7 +247,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     }
 
     //===================================================================================
-    //=====================         COMBAT RELATED           ============================
+    //=====================        MELEE COMBAT RELATED      ============================
     //===================================================================================
 
     public void DoHit(int comboIndex, bool isGroundAttack)
@@ -394,6 +395,36 @@ public class PlayerControl : MonoBehaviour, IDamageable
         }
 
         attackMovementRoutine = null;
+    }
+
+    //===================================================================================
+    //=====================        RANGE COMBAT RELATED      ============================
+    //===================================================================================
+
+    public void Shoot(Vector3 targetPoint)
+    {
+        if (shootData == null) return;
+        if (shootData.proyectilePrefab == null) return;
+        if (firePoint == null) return;
+
+        Vector3 spawnPosition = firePoint.position;
+        Vector3 direction = (targetPoint - spawnPosition).normalized;
+
+        if (direction.sqrMagnitude < 0.0001f) direction = playerModel != null ? playerModel.forward : transform.forward;
+
+        GameObject projectile = Instantiate(shootData.proyectilePrefab, spawnPosition, Quaternion.LookRotation(direction));
+
+        Rigidbody projectileRb = projectile.GetComponent<Rigidbody>();
+        if (projectileRb != null)
+        {
+            projectileRb.linearVelocity = direction * shootData.proyectileSpeed;
+        }
+
+        P_Projectile proyectile = projectile.GetComponent<P_Projectile>();
+        if (proyectile != null)
+        {
+            proyectile.Initialize(10,shootData.hitData, direction, shootData.proyectileSpeed,Vector3.zero);
+        }
     }
 
     //===================================================================================

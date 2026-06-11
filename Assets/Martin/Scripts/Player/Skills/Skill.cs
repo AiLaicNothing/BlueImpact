@@ -28,12 +28,4 @@ public abstract class Skill : ScriptableObject
     public AudioClip actionSound;
 
     public abstract void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos);
-
-    //public abstract void LocalExecute(PlayerController player, Vector3 targetPoint);
-
-    //public abstract void ServerExecute(
-    //    PlayerController player,
-    //    Vector3 targetPoint,
-    //    Vector3 lockTargetPos
-    //);
 }

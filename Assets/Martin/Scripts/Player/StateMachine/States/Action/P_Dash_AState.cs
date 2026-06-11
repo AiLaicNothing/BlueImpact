@@ -10,7 +10,6 @@ public class P_Dash_AState : PlayerState
 
     public override void OnEnter()
     {
-        // ✅ USAR PlayerStatsManager
         if (!player.PlayerStatsManager.CanConsume(StatType.Stamina, (int)player.DashCost))
         {
             Debug.Log("No hay stamina para dash");

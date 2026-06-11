@@ -27,13 +27,14 @@ public class P_Skill_AState : PlayerState
         }
 
         //--> Check if the player has enough resources to cast
-        //if (!player.HasResource(currentSkill.resourceType, currentSkill.cost))
-        //{
-        //    player.ChangeActionState(player.iddle_AState);
-        //    return;
-        //}
+        if (!player.PlayerStatsManager.CanConsume(currentSkill.resourceType, currentSkill.cost))
+        {
+            Debug.Log($"No hay {currentSkill.resourceType} para {currentSkill.name} [Skill]");
+            player.ChangeActionState(player.iddle_AState);
+            return;
+        }
 
-        //player.ConsumeResource(currentSkill.resourceType, currentSkill.cost);
+        player.PlayerStatsManager.Consume(currentSkill.resourceType, currentSkill.cost);
 
         player.isPerformingAct = true;
 
