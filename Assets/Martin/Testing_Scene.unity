@@ -965,6 +965,7 @@ GameObject:
   - component: {fileID: 1319957205}
   - component: {fileID: 1319957207}
   - component: {fileID: 1319957206}
+  - component: {fileID: 1319957208}
   m_Layer: 7
   m_Name: Solis
   m_TagString: Player
@@ -1205,6 +1206,70 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 8de24897-6afe-4e44-b64f-01acb215d7b9
     m_ActionName: 'Player/OnMelee[/Keyboard/f]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1319957207}
+        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
+        m_MethodName: OnSkill1
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 367eb3f3-b196-42ff-94d3-7e208ccf3be5
+    m_ActionName: 'Player/Skill1[/Keyboard/1]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1319957207}
+        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
+        m_MethodName: OnSkill2
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: a47b8027-d035-4526-a09a-6f3aa0c22a4c
+    m_ActionName: 'Player/Skill2[/Keyboard/2]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1319957207}
+        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
+        m_MethodName: OnSkill3
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 191ef5cd-b173-40eb-b111-29cb22ddc2d5
+    m_ActionName: 'Player/Skill3[/Keyboard/3]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1319957207}
+        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
+        m_MethodName: OnSkill4
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 530285e3-5a88-4fef-a691-58d63c67ed7a
+    m_ActionName: 'Player/Skill4[/Keyboard/4]'
   m_NeverAutoSwitchControlSchemes: 1
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: Player
@@ -1222,13 +1287,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edcd9569de8c54d4ab5ad2c43a137885, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  moveSpeed: 10
+  movementSpeed: 10
   jumpForce: 7.5
   moveMultiplier: 1
   whatIsGround:
     serializedVersion: 2
     m_Bits: 1024
-  groundCheck: {fileID: 804116376}
+  GroundCheck: {fileID: 804116376}
   groundCheckRange: 0.15
   baseGravity: -9.81
   fallGravityMultiplier: 2.5
@@ -1245,6 +1310,11 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 7424
   maxSkillSlot: 4
+  skills:
+  - {fileID: 11400000, guid: 2f8da68de8e826446802492a7dca96c3, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   showDebug: 1
   hitboxPrefab: {fileID: 65547742025389114, guid: b60a9548e8b1aba4497aeaf2c3ebe7a9, type: 3}
   hasUsedAirAttack: 0
@@ -1264,6 +1334,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInputHandler
   attackBufferTime: 0.2
+--- !u!114 &1319957208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319957201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18128f46fa640014991dc7c2133b03ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsManager
+  characterDefinition: {fileID: 11400000, guid: f5a87ef9a34693b4d895b4b11db4ecc8, type: 2}
+  statsConfig: {fileID: 11400000, guid: 6cf73245c6b688249832990c47c019d7, type: 2}
+  upgradePoints: 0
 --- !u!1 &1515962846
 GameObject:
   m_ObjectHideFlags: 0
@@ -1449,58 +1534,6 @@ Transform:
   - {fileID: 1244991403}
   m_Father: {fileID: 1319957204}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2014995977
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2014995979}
-  - component: {fileID: 2014995978}
-  m_Layer: 0
-  m_Name: Target Group
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2014995978
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2014995977}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e5eb80d8e62d9d145bb50fb783c0f731, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineTargetGroup
-  PositionMode: 0
-  RotationMode: 1
-  UpdateMethod: 2
-  Targets:
-  - Object: {fileID: 1917993245}
-    Weight: 1
-    Radius: 1
-  m_LegacyTargets: []
---- !u!4 &2014995979
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2014995977}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1509,4 +1542,3 @@ SceneRoots:
   - {fileID: 681752282}
   - {fileID: 513350059}
   - {fileID: 1319957204}
-  - {fileID: 2014995979}

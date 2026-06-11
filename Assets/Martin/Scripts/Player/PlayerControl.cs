@@ -104,6 +104,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         RegisterComponents();
         RegisterStates();
+        skillsCD = new float[maxSkillSlot];
         mainCam = Camera.main;
     }
 
@@ -118,6 +119,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
         if (isDead) return;
 
         CheckGround();
+        UpdateCooldowns();
 
         moveSM.Update();
         actionSM.Update();
@@ -430,6 +432,17 @@ public class PlayerControl : MonoBehaviour, IDamageable
         return skillsCD[index] <= 0f;
     }
 
+    private void UpdateCooldowns()
+    {
+        for (int i = 0; i < skillsCD.Length; i++)
+        {
+            if (skillsCD[i] > 0f)
+            {
+                skillsCD[i] -= Time.deltaTime;
+            }
+        }
+    }
+
     public void TriggerCooldown(int index)
     {
         if (index < 0 || index >= skills.Length)
@@ -566,10 +579,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
             debugBox = Instantiate(hitboxPrefab);
         }
 
-        debugBox.transform.SetPositionAndRotation(
-            center,
-            rot
-        );
+        debugBox.transform.SetPositionAndRotation(center, rot);
 
         debugBox.transform.localScale = size;
 
