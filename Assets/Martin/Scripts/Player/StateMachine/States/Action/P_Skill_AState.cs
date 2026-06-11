@@ -3,22 +3,93 @@ using UnityEngine;
 public class P_Skill_AState : PlayerState
 {
     public P_Skill_AState(PlayerControl player) : base(player) { }
-
     Skill currentSkill;
     int skillIndex;
 
     float timer;
     bool isCasting = true;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+
+    Vector3 saveTargetPoint;
+    public override void OnEnter()
     {
-        
+        //--> Check thatk skill is not null
+        if (currentSkill == null)
+        {
+            player.ChangeActionState(player.iddle_AState);
+            return;
+        }
+
+        //--> Check that the is not in cooldown
+        if (!player.IsSkillReady(skillIndex))
+        {
+            player.ChangeActionState(player.iddle_AState);
+            return;
+        }
+
+        //--> Check if the player has enough resources to cast
+        //if (!player.HasResource(currentSkill.resourceType, currentSkill.cost))
+        //{
+        //    player.ChangeActionState(player.iddle_AState);
+        //    return;
+        //}
+
+        //player.ConsumeResource(currentSkill.resourceType, currentSkill.cost);
+
+        player.isPerformingAct = true;
+
+        isCasting = true;
+        timer = currentSkill.castTime;
+
+        saveTargetPoint = player.GetViewPoint();
+
+        //--> call animator and play the animation name of casting
+        //player.Animator.Play(currentSkill.castAnimation);
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void OnUpdate()
     {
-        
+        //--> If casting
+        if (isCasting)
+        {
+            //--> If player dash interrupt and cancel the skill casting
+            if (player.Input.hasDashed)
+            {
+                player.ChangeActionState(player.dash_AState);
+                return;
+            }
+        }
+
+        timer -= Time.deltaTime;
+
+        if (timer <= 0)
+        {
+            if (isCasting)
+            {
+                isCasting = false;
+
+                //player.Animator.Play(currentSkill.actionAnimation);
+
+                // Execute skill logic
+                player.UseSkill(skillIndex, saveTargetPoint);
+
+                // Set cooldown
+                player.TriggerCooldown(skillIndex);
+
+                // Optional: short action duration
+                // This is the duration of the casting???
+                timer = currentSkill.actionTime;
+            }
+            else
+            {
+                player.ChangeActionState(player.iddle_AState);
+            }
+        }
+    }
+
+    public override void OnExit()
+    {
+        player.isPerformingAct = false;
+        player.blockVelocity = false;
     }
 
     public void SetSkill(Skill desiredSkill, int index)

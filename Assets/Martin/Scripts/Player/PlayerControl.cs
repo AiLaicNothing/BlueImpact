@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using UnityEngine;
 
 public class PlayerControl : MonoBehaviour, IDamageable
@@ -383,6 +384,30 @@ public class PlayerControl : MonoBehaviour, IDamageable
     //===================================================================================
     //=====================          SKILL RELATED           ============================
     //===================================================================================
+
+    public void UseSkill(int skillIndex, Vector3 targetPoint)
+    {
+        if (skillIndex < 0 || skillIndex >= skills.Length) return;
+
+        Skill skill = skills[skillIndex];
+        if (skill == null) return;
+
+        if (!IsSkillReady(skillIndex)) return;
+
+        //if (!HasResource(skill.resourceType, skill.cost)) return;
+
+        //ConsumeResource(skill.resourceType, skill.cost);
+
+        TriggerCooldown(skillIndex);
+
+        Vector3 lockTargetPos = Vector3.zero;
+        if (lockOnTarget != null && lockOnTarget.isTargeting && lockOnTarget.CurrentTarget != null)
+        {
+            lockTargetPos = lockOnTarget.CurrentTarget.position;
+        }
+
+        skill.ExecuteSkill(this, targetPoint, lockTargetPos);
+    }
 
     public Skill GetSkill(int index)
     {

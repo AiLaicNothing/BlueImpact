@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Skill : ScriptableObject
+public abstract class Skill : ScriptableObject
 {
     [Header("Info")]
     public string skillId;
@@ -26,6 +26,8 @@ public class Skill : ScriptableObject
     [Header("Audio")]
     public AudioClip castSound;
     public AudioClip actionSound;
+
+    public abstract void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos);
 
     //public abstract void LocalExecute(PlayerController player, Vector3 targetPoint);
 
