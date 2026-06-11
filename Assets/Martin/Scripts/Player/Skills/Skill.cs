@@ -11,8 +11,8 @@ public abstract class Skill : ScriptableObject
     //public CharacterType ownerCharacter;
 
     [Header("Cost")]
-    public ResourceType resourceType;
-    public float cost;
+    public StatType resourceType;
+    public int cost;
 
     [Header("Casting")]
     public float castTime;

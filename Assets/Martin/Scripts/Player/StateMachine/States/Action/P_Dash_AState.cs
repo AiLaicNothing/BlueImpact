@@ -4,31 +4,27 @@ public class P_Dash_AState : PlayerState
 {
     public P_Dash_AState(PlayerControl player) : base(player) { }
 
-    float timer;
-    Vector3 dashDir;
-    float dashSpeed;
+    private float timer;
+    private Vector3 dashDir;
+    private float dashSpeed;
+
     public override void OnEnter()
     {
-        Debug.Log("Enter Dash State");
+        // ✅ USAR PlayerStatsManager
+        if (!player.PlayerStatsManager.CanConsume(StatType.Stamina, (int)player.DashCost))
+        {
+            Debug.Log("No hay stamina para dash");
+            player.ChangeActionState(player.iddle_AState);
+            return;
+        }
 
-        //if (!player.HasStamina(player.DashCost))
-        //{
-        //    player.ChangeActionState(player.iddeAction_State);
-        //    return;
-        //}
-
-        //player.ConsumeStamina(player.DashCost);
-
-        // AUDIO CENTRALIZADO
-        //player.PlayDashAudio();
+        player.PlayerStatsManager.Consume(StatType.Stamina, (int)player.DashCost);
 
         timer = player.DashDuration;
         dashSpeed = player.DashDistance / player.DashDuration;
-
         player.isPerformingAct = true;
 
         Vector2 input = player.Input.moveInput;
-
         if (input.magnitude > 0.1f)
         {
             Vector3 camForward = Camera.main.transform.forward;
@@ -53,10 +49,8 @@ public class P_Dash_AState : PlayerState
     {
         timer -= Time.deltaTime;
 
-        // Maintain constant dash velocity
         Vector3 velocity = dashDir * dashSpeed;
         velocity.y = 0;
-
         player.Rb.linearVelocity = velocity;
 
         if (timer <= 0)
@@ -68,9 +62,6 @@ public class P_Dash_AState : PlayerState
     public override void OnExit()
     {
         player.Rb.useGravity = true;
-
         player.isPerformingAct = false;
-
-        Debug.Log("Exit Dash State");
     }
 }

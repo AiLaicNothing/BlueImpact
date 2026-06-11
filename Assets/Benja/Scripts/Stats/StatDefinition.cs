@@ -16,4 +16,4 @@ public class StatDefinition : ScriptableObject
 
     [Header("Penalty")]
     public StatDefinition penaltyTarget;
-}
+}   

@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Globalization;
+﻿using System.Collections;
 using UnityEngine;
 
 public class PlayerControl : MonoBehaviour, IDamageable
@@ -53,7 +52,10 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     public bool isPerformingAct = false;
     public bool blockVelocity = false;
-    public bool isDead {  get; private set; }
+    public bool isDead { get; private set; }
+
+    // ✅ USAR PlayerStatsManager
+    private PlayerStatsManager playerStatsManager;
 
     private Rigidbody rb;
     private Animator anim;
@@ -97,6 +99,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public bool IsRange => isRange;
     public Transform FirePoint => firePoint;
     public float FallGravityMult => fallGravityMultiplier;
+    public PlayerStatsManager PlayerStatsManager => playerStatsManager;
 
     #endregion
 
@@ -104,12 +107,25 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         RegisterComponents();
         RegisterStates();
-        skillsCD = new float[maxSkillSlot];
         mainCam = Camera.main;
+
+        // ✅ Obtener PlayerStatsManager
+        playerStatsManager = GetComponent<PlayerStatsManager>();
+        if (playerStatsManager != null)
+        {
+            playerStatsManager.EnsureInitialized();
+        }
     }
 
     private void Start()
     {
+        // ✅ Inicializar cooldowns
+        skillsCD = new float[maxSkillSlot];
+        for (int i = 0; i < skillsCD.Length; i++)
+        {
+            skillsCD[i] = 0f;
+        }
+
         moveSM.Initialize(iddle_State);
         actionSM.Initialize(iddle_AState);
     }
@@ -119,14 +135,21 @@ public class PlayerControl : MonoBehaviour, IDamageable
         if (isDead) return;
 
         CheckGround();
-        UpdateCooldowns();
 
         moveSM.Update();
         actionSM.Update();
     }
+
     private void FixedUpdate()
     {
         if (isDead) return;
+
+        // ✅ Actualizar cooldowns
+        for (int i = 0; i < skillsCD.Length; i++)
+        {
+            if (skillsCD[i] > 0)
+                skillsCD[i] -= Time.fixedDeltaTime;
+        }
 
         ApplyGravity();
 
@@ -181,20 +204,10 @@ public class PlayerControl : MonoBehaviour, IDamageable
     private void Movement()
     {
         Vector2 inputDir = input.moveInput.normalized;
-
         Vector3 moveDir = GetCameraRelativeDir(inputDir);
-
         Vector3 velocity = moveDir * movementSpeed * moveMultiplier;
-
         velocity.y = rb.linearVelocity.y;
-
-        //if (platformRider != null && platformRider.IsOnPlatform)
-        //{
-        //    velocity += platformRider.CurrentPlatformVelocity;
-        //}
-
         rb.linearVelocity = velocity;
-
         HandleRotation(moveDir);
     }
 
@@ -213,10 +226,12 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         rb.AddForce(Vector3.up * baseGravity * currentGravityMultiplier, ForceMode.Acceleration);
     }
+
     public void SetGravityMultiplier(float value)
     {
         currentGravityMultiplier = value;
     }
+
     private void CheckGround()
     {
         bool previousGrounded = isGrounded;
@@ -313,10 +328,8 @@ public class PlayerControl : MonoBehaviour, IDamageable
         Collider targetCol = target.GetComponentInChildren<Collider>();
         if (targetCol == null) return 0f;
 
-        // Use the target's horizontal size as stopping distance.
         float radius = Mathf.Max(targetCol.bounds.extents.x, targetCol.bounds.extents.z);
 
-        // Add a small buffer so you do not clip into them.
         return radius + 0.25f;
     }
 
@@ -396,9 +409,14 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         if (!IsSkillReady(skillIndex)) return;
 
-        //if (!HasResource(skill.resourceType, skill.cost)) return;
+        // ✅ USAR PlayerStatsManager
+        if (!playerStatsManager.CanConsume(skill.resourceType, skill.cost))
+        {
+            Debug.Log($"No hay suficiente {skill.resourceType}");
+            return;
+        }
 
-        //ConsumeResource(skill.resourceType, skill.cost);
+        playerStatsManager.Consume(skill.resourceType, skill.cost);
 
         TriggerCooldown(skillIndex);
 
@@ -413,8 +431,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     public Skill GetSkill(int index)
     {
-        if (index < 0 || index >= skills.Length
-        )
+        if (index < 0 || index >= skills.Length)
         {
             return null;
         }
@@ -430,17 +447,6 @@ public class PlayerControl : MonoBehaviour, IDamageable
         }
 
         return skillsCD[index] <= 0f;
-    }
-
-    private void UpdateCooldowns()
-    {
-        for (int i = 0; i < skillsCD.Length; i++)
-        {
-            if (skillsCD[i] > 0f)
-            {
-                skillsCD[i] -= Time.deltaTime;
-            }
-        }
     }
 
     public void TriggerCooldown(int index)
@@ -503,8 +509,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         Vector3 lookDir;
 
-        if (input.isAiming || (lockOnTarget != null && lockOnTarget.isTargeting)
-        )
+        if (input.isAiming || (lockOnTarget != null && lockOnTarget.isTargeting))
         {
             var cam = mainCam;
 
@@ -540,20 +545,31 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     public void TakeDamage(float damage)
     {
+        if (isDead) return;
 
+        // ✅ USAR PlayerStatsManager
+        playerStatsManager.Consume(StatType.Health, (int)damage);
+
+        if (playerStatsManager.IsDead())
+        {
+            OnDead();
+        }
+
+        anim.SetTrigger("Hit");
     }
 
-    private void OnHeal(float ammount)
+    public void Heal(int amount)
     {
         if (isDead) return;
 
+        // ✅ USAR PlayerStatsManager
+        playerStatsManager.Restore(StatType.Health, amount);
     }
 
     private void OnDead()
     {
         isDead = true;
     }
-
 
     //===================================================================================
     //=====================             DEBUG                ============================
@@ -572,7 +588,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     public GameObject ShowHitboxPersistent(Vector3 center, Vector3 size, Quaternion rot, GameObject debugBox)
     {
-        if (hitboxPrefab == null)  return null;
+        if (hitboxPrefab == null) return null;
 
         if (debugBox == null)
         {
@@ -585,5 +601,4 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         return debugBox;
     }
-
 }
