@@ -17,6 +17,8 @@ public class CheckpointStatsPanel : MonoBehaviour
     [SerializeField] private Button confirmButton;
 
     [SerializeField] private Button cancelButton;
+    [SerializeField]
+    private Button backButton;
 
     [Header("Stats")]
     [SerializeField] private Transform statsContainer;
@@ -29,24 +31,39 @@ public class CheckpointStatsPanel : MonoBehaviour
 
     private void Awake()
     {
-        confirmButton.onClick.AddListener(ConfirmChanges);
+        if (playerStats == null)
+        {
+            playerStats =
+                FindFirstObjectByType<PlayerStatsManager>();
+        }
 
+        confirmButton.onClick.AddListener(ConfirmChanges);
+        backButton.onClick.AddListener(Back);
         cancelButton.onClick.AddListener(CancelChanges);
     }
 
-    private void OnEnable()
-    {
-        OpenSession();
-    }
 
+    private void Back()
+    {
+        Session.CancelChanges();
+
+        CheckpointMenuUI.Instance.ShowMainPanel();
+    }
     private void OnDisable()
     {
+        Session = null;
+
         ClearEntries();
     }
 
-    private void OpenSession()
+    public void OpenSession()
     {
+        Debug.Log("OpenSession");
+
         playerStats.EnsureInitialized();
+
+        Debug.Log(
+    $"Stats encontradas: {playerStats.GetAllStats().Count}");
 
         Session = new StatsModificationSession(playerStats);
 

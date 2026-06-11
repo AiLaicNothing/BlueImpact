@@ -21,7 +21,12 @@ public class PlayerStatsManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("PlayerStatsManager Awake");
+        if (statsConfig == null)
+        {
+            Debug.LogError(
+                $"{nameof(PlayerStatsManager)}: StatsConfig no asignado.",
+                this);
+        }
 
         EnsureInitialized();
     }
@@ -34,6 +39,15 @@ public class PlayerStatsManager : MonoBehaviour
     }
     private void InitializeStats()
     {
+        if (characterDefinition == null)
+        {
+            Debug.LogError(
+                $"{nameof(PlayerStatsManager)}: CharacterDefinition no asignado.",
+                this);
+
+            return;
+        }
+
         runtimeStats = new Dictionary<StatDefinition, RuntimeStat>();
 
         foreach (CharacterStatValue statValue in characterDefinition.baseStats)
@@ -80,6 +94,9 @@ public class PlayerStatsManager : MonoBehaviour
     public void AddUpgradePoints(int amount)
     {
         upgradePoints += amount;
+
+        Debug.Log(
+            $"Upgrade Points: {upgradePoints}");
     }
 
     public bool HasEnoughPoints(int amount)
