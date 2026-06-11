@@ -465,8 +465,9 @@ GameObject:
   - component: {fileID: 5208757005598520682}
   - component: {fileID: 1150333610149765655}
   - component: {fileID: 6855885166615657495}
-  - component: {fileID: 1243876424670888161}
   - component: {fileID: 7807007946530445189}
+  - component: {fileID: 1243876424670888161}
+  - component: {fileID: 6520566844088166869}
   - component: {fileID: 3918977527686612573}
   m_Layer: 7
   m_Name: Solis
@@ -517,9 +518,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 0
   m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 80
-  m_CollisionDetection: 0
+  m_Interpolate: 1
+  m_Constraints: 112
+  m_CollisionDetection: 1
 --- !u!136 &5208757005598520682
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -802,6 +803,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInputHandler
   attackBufferTime: 0.2
+--- !u!114 &7807007946530445189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4977990477473264777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18128f46fa640014991dc7c2133b03ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsManager
+  characterDefinition: {fileID: 11400000, guid: f5a87ef9a34693b4d895b4b11db4ecc8, type: 2}
+  statsConfig: {fileID: 11400000, guid: 6cf73245c6b688249832990c47c019d7, type: 2}
+  upgradePoints: 0
+  staminaRegenRate: 5
+  staminaRegenDelay: 1.5
+  manaRegenRate: 3
+  manaRegenDelay: 2
+  healthRegenRate: 1
+  healthRegenDelay: 5
 --- !u!114 &1243876424670888161
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -833,6 +855,7 @@ MonoBehaviour:
   airCombo: {fileID: 11400000, guid: de8886feca16a934f90ecb3d76375df1, type: 2}
   isRange: 0
   firePoint: {fileID: 5627502935723402889}
+  shootData: {fileID: 0}
   whatIsHitable:
     serializedVersion: 2
     m_Bits: 7424
@@ -848,27 +871,31 @@ MonoBehaviour:
   hasUsedDash: 0
   isPerformingAct: 0
   blockVelocity: 0
---- !u!114 &7807007946530445189
+--- !u!114 &6520566844088166869
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4977990477473264777}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 18128f46fa640014991dc7c2133b03ff, type: 3}
+  m_Script: {fileID: 11500000, guid: 939a046e07e63df45a30bbcc17c970f0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerStatsManager
-  characterDefinition: {fileID: 11400000, guid: f5a87ef9a34693b4d895b4b11db4ecc8, type: 2}
-  statsConfig: {fileID: 11400000, guid: 6cf73245c6b688249832990c47c019d7, type: 2}
-  upgradePoints: 0
-  staminaRegenRate: 5
-  staminaRegenDelay: 1.5
-  manaRegenRate: 3
-  manaRegenDelay: 2
-  healthRegenRate: 1
-  healthRegenDelay: 5
+  m_EditorClassIdentifier: Assembly-CSharp::LockOnTarget
+  mainCamera: {fileID: 0}
+  freeLook: {fileID: 0}
+  input: {fileID: 6855885166615657495}
+  inputProvider: {fileID: 3947670542337584405}
+  aimIcon: {fileID: 0}
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 7168
+  enemyTag: Enemy
+  targetLockOffset: {x: 0, y: 0}
+  minDistance: 1
+  maxDistance: 15
+  lockSpeed: 3
 --- !u!114 &3918977527686612573
 MonoBehaviour:
   m_ObjectHideFlags: 0
