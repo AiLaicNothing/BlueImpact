@@ -12,57 +12,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 36baaa8bdcb9d8b49b9199833965d2c3, type: 3}
   m_Name: Main Camera Blends
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineBlenderSettings
-  m_CustomBlends:
-  - m_From: Player Camera
-    m_To: StartPuzzle
-    m_Blend:
-      m_Style: 0
-      m_Time: 2
-      m_CustomCurve:
+  CustomBlends:
+  - From: Player Camera
+    To: StartPuzzle
+    Blend:
+      Style: 0
+      Time: 2
+      CustomCurve:
         serializedVersion: 2
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - m_From: StartPuzzle
-    m_To: Player Camera
-    m_Blend:
-      m_Style: 0
-      m_Time: 2
-      m_CustomCurve:
+  - From: StartPuzzle
+    To: Player Camera
+    Blend:
+      Style: 0
+      Time: 2
+      CustomCurve:
         serializedVersion: 2
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - m_From: CompletePuzzle
-    m_To: Player Camera
-    m_Blend:
-      m_Style: 0
-      m_Time: 2
-      m_CustomCurve:
+  - From: CompletePuzzle
+    To: Player Camera
+    Blend:
+      Style: 0
+      Time: 2
+      CustomCurve:
         serializedVersion: 2
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - m_From: Player Camera
-    m_To: CompletePuzzle
-    m_Blend:
-      m_Style: 0
-      m_Time: 2
-      m_CustomCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 0
-        m_PostInfinity: 0
-        m_RotationOrder: 0
-  - m_From: FreeLook Camera
-    m_To: CompletePuzzle
-    m_Blend:
-      m_Style: 1
-      m_Time: 2
-      m_CustomCurve:
+  - From: Player Camera
+    To: CompletePuzzle
+    Blend:
+      Style: 0
+      Time: 2
+      CustomCurve:
         serializedVersion: 2
         m_Curve: []
         m_PreInfinity: 0
