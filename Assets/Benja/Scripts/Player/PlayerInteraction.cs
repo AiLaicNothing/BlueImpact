@@ -13,16 +13,22 @@ public class PlayerInteraction : MonoBehaviour
 
     private IInteractable previousInteractable;
 
+    private bool interactionLocked;
+
     private void Update()
     {
+        if (interactionLocked)
+            return;
+
         FindClosestInteractable();
     }
 
     public void OnInteract(InputAction.CallbackContext context)
     {
-        Debug.Log("Interact presionado");
-
         if (!context.performed)
+            return;
+
+        if (interactionLocked)
             return;
 
         currentInteractable?.Interact();
@@ -68,4 +74,57 @@ public class PlayerInteraction : MonoBehaviour
                 currentInteractable);
         }
     }
+    private void OnEnable()
+    {
+        GameModeManager.Instance.OnGameModeChanged += HandleGameModeChanged;
+    }
+
+    private void OnDisable()
+    {
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.OnGameModeChanged -= HandleGameModeChanged;
+        }
+    }
+
+    private void HandleGameModeChanged(GameMode mode)
+    {
+        switch (mode)
+        {
+            case GameMode.Gameplay:
+                UnlockInteraction();
+                break;
+
+            default:
+                LockInteraction();
+                break;
+        }
+    }
+    public void LockInteraction()
+    {
+        interactionLocked = true;
+
+        currentInteractable = null;
+        previousInteractable = null;
+
+        InteractionUI.Instance?.Clear();
+    }
+
+    public void UnlockInteraction()
+    {
+        interactionLocked = false;
+
+        FindClosestInteractable();
+    }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+
+        Gizmos.DrawWireSphere(
+            transform.position,
+            interactionRadius);
+    }
+#endif
 }

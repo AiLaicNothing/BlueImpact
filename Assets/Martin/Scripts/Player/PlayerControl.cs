@@ -50,7 +50,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     public bool hasUsedAirAttack = false;
     public bool hasUsedDash = false;
-
+    public bool IsInputLocked { get; private set; }
     public bool isPerformingAct = false;
     public bool blockVelocity = false;
     public bool isDead { get; private set; }
@@ -130,12 +130,43 @@ public class PlayerControl : MonoBehaviour, IDamageable
         moveSM.Initialize(iddle_State);
         actionSM.Initialize(iddle_AState);
     }
+    private void OnEnable()
+    {
+        GameModeManager.Instance.OnGameModeChanged += HandleGameModeChanged;
+    }
 
+    private void OnDisable()
+    {
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.OnGameModeChanged -= HandleGameModeChanged;
+        }
+    }
+
+    private void HandleGameModeChanged(GameMode mode)
+    {
+        switch (mode)
+        {
+            case GameMode.Gameplay:
+                UnlockPlayerControl();
+                break;
+
+            case GameMode.UI:
+            case GameMode.Puzzle:
+            case GameMode.Dialogue:
+            case GameMode.Cutscene:
+                LockPlayerControl();
+                break;
+        }
+    }
     private void Update()
     {
         if (isDead) return;
 
         CheckGround();
+
+        if (IsInputLocked)
+            return;
 
         moveSM.Update();
         actionSM.Update();
@@ -154,14 +185,34 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         ApplyGravity();
 
-        if (!isPerformingAct) Movement();
+        if (IsInputLocked)
+        {
+            rb.linearVelocity =
+                new Vector3(0f, rb.linearVelocity.y, 0f);
 
-        if (blockVelocity) rb.linearVelocity = Vector3.zero;
+            return;
+        }
 
-        moveSM.FixedUpdate();
-        actionSM.FixedUpdate();
+        if (!isPerformingAct)
+            Movement();
+
+        if (blockVelocity)
+            rb.linearVelocity = Vector3.zero;
     }
+    public void LockPlayerControl()
+    {
+        IsInputLocked = true;
 
+        rb.linearVelocity = Vector3.zero;
+
+        input.ClearInputs();
+    }
+    public void UnlockPlayerControl()
+    {
+        IsInputLocked = false;
+
+        input.ClearInputs();
+    }
     public void ChangeState(PlayerState nextState)
     {
         moveSM.ChangeState(nextState);

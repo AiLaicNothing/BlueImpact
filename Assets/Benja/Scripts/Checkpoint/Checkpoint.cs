@@ -14,6 +14,8 @@ public class Checkpoint : MonoBehaviour, IInteractable
 
     public void Interact()
     {
+        InteractionUI.Instance.SetInteractable(null); // 👈 ocultas UI
+
         CheckpointManager.Instance.Interact(this);
     }
 

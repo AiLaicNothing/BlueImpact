@@ -155,4 +155,28 @@ public class PlayerInputHandler : MonoBehaviour
         attackBufferCounter = 0f;
         bufferedAttackType = AttackInputType.None;
     }
+
+
+    public void ClearInputs()
+    {
+        moveInput = Vector2.zero;
+
+        hasJumped = false;
+        hasDashed = false;
+
+        isAiming = false;
+        lookInput = Vector2.zero;
+
+        onLockTarget = false;
+
+        scrollInput = 0f;
+
+        skill1Pressed = false;
+        skillPressedIndex = -1;
+
+        attackBufferCounter = 0f;
+        bufferedAttackType = AttackInputType.None;
+
+        onMelee = false;
+    }
 }

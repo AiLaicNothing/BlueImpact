@@ -52,6 +52,8 @@ public class CheckpointMenuUI : MonoBehaviour
     {
         currentCheckpoint = checkpoint;
 
+        GameModeManager.Instance.SetMode(GameMode.UI);
+
         CloseAllPanels();
 
         mainPanel.SetActive(true);
@@ -61,6 +63,7 @@ public class CheckpointMenuUI : MonoBehaviour
     {
         CloseAllPanels();
 
+        GameModeManager.Instance.SetMode(GameMode.Gameplay);
     }
 
     private void OpenTravelPanel()

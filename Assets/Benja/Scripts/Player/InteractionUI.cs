@@ -18,12 +18,13 @@ public class InteractionUI : MonoBehaviour
 
     public void SetInteractable(IInteractable interactable)
     {
-        bool show = interactable != null;
-
-        root.SetActive(show);
-
-        if (!show)
+        if (interactable == null)
+        {
+            Clear();
             return;
+        }
+
+        root.SetActive(true);
 
         string inputLabel = GetInputLabel();
 
@@ -31,10 +32,14 @@ public class InteractionUI : MonoBehaviour
             $"[{inputLabel}] {interactable.GetInteractionText()}";
     }
 
+    public void Clear()
+    {
+        root.SetActive(false);
+    }
+
     private string GetInputLabel()
     {
-        // Por ahora fijo.
-        // Luego detectaremos mando automáticamente.
+        // Luego puedes detectar automáticamente teclado/mando.
         return "E";
     }
 }
