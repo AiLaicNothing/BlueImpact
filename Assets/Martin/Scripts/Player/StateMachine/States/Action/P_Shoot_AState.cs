@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class P_Shoot_AState : PlayerState
 {
-    public P_Shoot_AState(PlayerController player) : base(player) { }
+    public P_Shoot_AState(PlayerControl player) : base(player) { }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()

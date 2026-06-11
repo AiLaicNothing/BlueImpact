@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class P_Fall_State : PlayerState
 {
-    public P_Fall_State(PlayerController player) : base(player) { }
+    public P_Fall_State(PlayerControl player) : base(player) { }
     public override void OnEnter()
     {
         Debug.Log("Enter Fall State");

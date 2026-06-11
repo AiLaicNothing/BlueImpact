@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class P_Iddle_State : PlayerState
 {
-    public P_Iddle_State(PlayerController player) : base(player) { }
+    public P_Iddle_State(PlayerControl player) : base(player) { }
 
     public override void OnEnter()
     {

@@ -1,15 +1,14 @@
 using System.Collections;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour, IDamageable
+public class PlayerControl : MonoBehaviour, IDamageable
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 10f;
+    [SerializeField] private float movementSpeed = 10f;
     [SerializeField] private float jumpForce = 8f;
     [SerializeField] private float moveMultiplier = 1f;
     [SerializeField] private LayerMask whatIsGround;
-    [SerializeField] private Transform groundCheck;
+    [SerializeField] private Transform GroundCheck;
     [SerializeField] private float groundCheckRange;
     private bool isGrounded;
 
@@ -90,6 +89,8 @@ public class PlayerController : MonoBehaviour, IDamageable
     public LockOnTarget LockOnTarget => lockOnTarget;
     public bool IsGrounded => isGrounded;
     public float DashCost => dashCost;
+    public float DashDuration => dashDuration;
+    public float DashDistance => dashDistance;
     public MeleeAttackCombo NormalCombo => normalCombo;
     public MeleeAttackCombo AirCombo => airCombo;
     public bool IsRange => isRange;
@@ -180,7 +181,7 @@ public class PlayerController : MonoBehaviour, IDamageable
 
         Vector3 moveDir = GetCameraRelativeDir(inputDir);
 
-        Vector3 velocity = moveDir * moveSpeed * moveMultiplier;
+        Vector3 velocity = moveDir * movementSpeed * moveMultiplier;
 
         velocity.y = rb.linearVelocity.y;
 
@@ -217,7 +218,7 @@ public class PlayerController : MonoBehaviour, IDamageable
     {
         bool previousGrounded = isGrounded;
 
-        isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckRange, whatIsGround);
+        isGrounded = Physics.Raycast(GroundCheck.position, Vector3.down, groundCheckRange, whatIsGround);
 
         if (!previousGrounded && isGrounded)
         {

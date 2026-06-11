@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class P_AirAttack_AState : PlayerState
 {
-    public P_AirAttack_AState(PlayerController player) : base(player) { }
+    public P_AirAttack_AState(PlayerControl player) : base(player) { }
 
     int comboIndex;
     float timer;

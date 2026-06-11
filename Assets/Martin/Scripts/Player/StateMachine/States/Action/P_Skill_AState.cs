@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class P_Skill_AState : PlayerState
 {
-    public P_Skill_AState(PlayerController player) : base(player) { }
+    public P_Skill_AState(PlayerControl player) : base(player) { }
 
     Skill currentSkill;
     int skillIndex;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class P_Move_State : PlayerState
 {
-    public P_Move_State(PlayerController player) : base(player) { }
+    public P_Move_State(PlayerControl player) : base(player) { }
 
     public override void OnEnter()
     {

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class P_Iddle_AState : PlayerState
 {
-    public P_Iddle_AState(PlayerController player) : base(player) { }
+    public P_Iddle_AState(PlayerControl player) : base(player) { }
     public override void OnEnter()
     {
         Debug.Log("Enter Iddle Action State");

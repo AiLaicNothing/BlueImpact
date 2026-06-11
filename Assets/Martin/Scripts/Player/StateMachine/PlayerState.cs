@@ -2,8 +2,8 @@ using UnityEngine;
 
 public abstract class PlayerState 
 {
-    protected PlayerController player;
-    public PlayerState(PlayerController player)
+    protected PlayerControl player;
+    public PlayerState(PlayerControl player)
     {
         this.player = player;
     }
