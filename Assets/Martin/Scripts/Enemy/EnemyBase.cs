@@ -73,7 +73,7 @@ public class EnemyBase : MonoBehaviour
 
     protected virtual void Awake()
     {
-        player = FindFirstObjectByType<PlayerControl>();
+        player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerControl>();
 
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();

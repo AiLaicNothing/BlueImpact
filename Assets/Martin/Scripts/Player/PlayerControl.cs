@@ -309,21 +309,38 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         Collider[] hits = Physics.OverlapBox(center, attack.hitBoxSize * 0.5f, playerModel.transform.rotation);
 
+        if (showDebug)
+        {
+            ShowHitbox(center, attack.hitBoxSize, playerModel.rotation);
+        }
+
         foreach (var hit in hits)
         {
             if (hit.CompareTag("Enemy"))
             {
                 IDamageable damageable = hit.GetComponent<IDamageable>();
+
                 if (damageable != null)
                 {
                     Vector3 hitDir = playerModel.transform.forward;
-                    damageable.TakeDamage(1f);
+
+                    DamageInfo info = new DamageInfo
+                    {
+                        damage = 1,
+                        hitDirection = hitDir,
+                        throwType = attack.hitData.throwType,
+                        stunDuration = attack.hitData.stunDuration,
+                        keepInAir = attack.hitData.keepInAir,
+                        airLiftForce = attack.hitData.airLiftForce,
+                        pushForce = attack.hitData.pushForce,
+                        knockDownForce = attack.hitData.knockDownForce,
+                        knockDownForwardScale = attack.hitData.knockDownForwardScale,
+                        staggerBuild = attack.hitData.staggerCharge
+                    };
+
+                    damageable.TakeDamage(in info);
                 }
             }
-        }
-        if (showDebug)
-        {
-            ShowHitbox(center, attack.hitBoxSize, playerModel.rotation);
         }
     }
 

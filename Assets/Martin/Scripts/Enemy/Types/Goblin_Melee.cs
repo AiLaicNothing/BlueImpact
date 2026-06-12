@@ -274,20 +274,14 @@ public class Goblin_Melee : EnemyBase
 
             if (damageable != null)
             {
-                //damageable.TakeDamage(
-                //    new DamageInfo
-                //    {
-                //        damage = stats.damage,
-                //        hitDirection = attackForward,
-                //        throwType = ThrowType.None,
-                //        stunDuration = 0.15f,
-                //        keepInAir = false,
-                //        airLiftForce = 0f,
-                //        pushForce = 0f,
-                //        knockDownForce = 0f,
-                //        knockDownForwardScale = 0f,
-                //        staggerBuild = 0f
-                //    });
+
+                DamageInfo info = new DamageInfo
+                {
+                    damage = stats.damage,
+                    hitDirection = transform.forward,
+                };
+
+                damageable.TakeDamage(in info);
             }
         }
     }
