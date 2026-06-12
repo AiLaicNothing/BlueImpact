@@ -19,6 +19,10 @@ public class TimedPlatformChallenge : MonoBehaviour
     public bool Persistent => persistent;
     public string ChallengeID => challengeID;
 
+    [Header("Rewards")]
+    [SerializeField]
+    private List<ChallengeDoor> rewardDoors = new();
+
     [Header("Challenge")]
     [SerializeField] private float challengeDuration = 30f;
 
@@ -217,12 +221,18 @@ public class TimedPlatformChallenge : MonoBehaviour
 
         if (completeCamera != null)
         {
-            CameraEventRelay.Instance?.Play(
-                completeCamera);
+            CameraEventRelay.Instance?.Play(completeCamera);
         }
 
-        Debug.Log(
-            $"[Challenge] Completed: {challengeID}");
+        foreach (var door in rewardDoors)
+        {
+            if (door == null)
+                continue;
+
+            door.Open();
+        }
+
+        Debug.Log($"[Challenge] Completed: {challengeID}");
     }
 
     //====================================================
