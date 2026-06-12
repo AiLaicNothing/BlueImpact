@@ -63,7 +63,22 @@ public class SpinAttack_Skill : Skill
             {
                 Vector3 dir = (target.transform.position - player.transform.position).normalized;
 
-                damageable.TakeDamage(10);
+
+                DamageInfo info = new DamageInfo
+                {
+                    damage = 1,
+                    hitDirection = dir,
+                    throwType = hitData.throwType,
+                    stunDuration = hitData.stunDuration,
+                    keepInAir = hitData.keepInAir,
+                    airLiftForce = hitData.airLiftForce,
+                    pushForce = hitData.pushForce,
+                    knockDownForce = hitData.knockDownForce,
+                    knockDownForwardScale = hitData.knockDownForwardScale,
+                    staggerBuild = hitData.staggerCharge
+                };
+
+                damageable.TakeDamage(info);
             }
         }
     }

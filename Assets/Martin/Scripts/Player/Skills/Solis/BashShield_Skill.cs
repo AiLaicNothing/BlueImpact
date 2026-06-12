@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "Player/Skills/Solis/Bash Shield")]
@@ -69,7 +70,23 @@ public class BashShield_Skill : Skill
             IDamageable damageable = hit.GetComponent<IDamageable>();
             if (damageable == null) continue;
 
-            damageable.TakeDamage(1);
+            Vector3 hitDir = player.Model.transform.forward;
+
+            DamageInfo info = new DamageInfo
+            {
+                damage = 1,
+                hitDirection = hitDir,
+                throwType = hitData.throwType,
+                stunDuration = hitData.stunDuration,
+                keepInAir = hitData.keepInAir,
+                airLiftForce = hitData.airLiftForce,
+                pushForce = hitData.pushForce,
+                knockDownForce = hitData.knockDownForce,
+                knockDownForwardScale = hitData.knockDownForwardScale,
+                staggerBuild = hitData.staggerCharge
+            };
+
+            damageable.TakeDamage(info);
 
             break;
         }

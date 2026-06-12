@@ -642,12 +642,11 @@ public class PlayerControl : MonoBehaviour, IDamageable
     //=====================         HEALTH RELATED           ============================
     //===================================================================================
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(in DamageInfo info)
     {
         if (isDead) return;
 
-        // ✅ USAR PlayerStatsManager
-        playerStatsManager.Consume(StatType.Health, (int)damage);
+        playerStatsManager.Consume(StatType.Health, (int)info.damage);
 
         if (playerStatsManager.IsDead())
         {
@@ -661,7 +660,6 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         if (isDead) return;
 
-        // ✅ USAR PlayerStatsManager
         playerStatsManager.Restore(StatType.Health, amount);
     }
 
@@ -700,4 +698,5 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         return debugBox;
     }
+
 }
