@@ -3,8 +3,9 @@ using System.Collections;
 using System.Data.SqlTypes;
 using UnityEngine;
 using UnityEngine.AI;
+using static UnityEngine.Analytics.IAnalytic;
 
-public class EnemyBase : MonoBehaviour
+public class EnemyBase : MonoBehaviour, IDamageable
 {
     [Header("Stats")]
     [SerializeField] protected EnemyStats stats;
@@ -117,18 +118,11 @@ public class EnemyBase : MonoBehaviour
 
         return Vector3.Distance(transform.position, player.transform.position);
     }
-
-    public virtual void TakeDamage(HitData hitData, Vector3 hitDirection, Transform attacker = null)
+    public void TakeDamage(in DamageInfo info)
     {
         if (isDead) return;
-        if (hitData == null) return;
 
         ShowHitVfx();
-
-        //float damage = CalculateDamage(hitData);
-        //currentHp -= damage;
-
-        UpdateHealthUI();
 
         if (currentHp <= 0f)
         {
@@ -136,31 +130,17 @@ public class EnemyBase : MonoBehaviour
             return;
         }
 
-        HandleRevenge(hitData);
-        HandleStagger(hitData);
-        HandleReaction(hitData, hitDirection);
+        HandleRevenge();
+        HandleStagger(info);
+        HandleReaction(info);
 
-        if (hitData.stunDuration > 0f)
+        if (info.stunDuration > 0f)
         {
-            ApplyStun(hitData.stunDuration);
+            ApplyStun(info.stunDuration);
         }
     }
 
-    //protected virtual float CalculateDamage(HitData hitData)
-    //{
-    //    float baseDamage = ((stats.physicalDamage * hitData.physicalScale) +
-    //                        (stats.magicalDamage * hitData.magicalScale)) *
-    //                        hitData.damageMultiplier;
-
-    //    if (isStaggered)
-    //    {
-    //        baseDamage *= 1.5f;
-    //    }
-
-    //    return baseDamage;
-    //}
-
-    protected virtual void HandleRevenge(HitData hitData)
+    protected virtual void HandleRevenge()
     {
         if (isStaggered) return;
 
@@ -199,7 +179,7 @@ public class EnemyBase : MonoBehaviour
         isHitStunned = false;
     }
 
-    protected virtual void HandleStagger(HitData hitData)
+    protected virtual void HandleStagger(DamageInfo info)
     {
         if (!stats.hasStagger) return;
         if (isInStaggerCooldown) return;
@@ -210,7 +190,7 @@ public class EnemyBase : MonoBehaviour
             return;
         }
 
-        currentStaggerBuild += hitData.staggerCharge;
+        currentStaggerBuild += info.staggerBuild;
 
         if (currentStaggerBuild >= stats.staggerThreshold)
         {
@@ -290,7 +270,7 @@ public class EnemyBase : MonoBehaviour
         }
     }
 
-    protected virtual void HandleReaction(HitData hitData, Vector3 hitDirection)
+    protected virtual void HandleReaction(DamageInfo info)
     {
         if (immuneToMovement)
             return;
@@ -298,38 +278,38 @@ public class EnemyBase : MonoBehaviour
         if (isInReaction)
             return;
 
-        switch (hitData.throwType)
+        switch (info.throwType)
         {
             case ThrowType.Push:
-                StartReaction(EnemyReactionType.Push, hitDirection, hitData);
+                StartReaction(EnemyReactionType.Push, info.hitDirection, info);
                 break;
 
             case ThrowType.Airbone:
-                StartReaction(EnemyReactionType.Launch, hitDirection, hitData);
+                StartReaction(EnemyReactionType.Launch, info.hitDirection, info);
                 break;
 
             case ThrowType.Knockdown:
-                StartReaction(EnemyReactionType.KnockDown, hitDirection, hitData);
+                StartReaction(EnemyReactionType.KnockDown, info.hitDirection, info);
                 break;
         }
 
-        if (hitData.keepInAir)
+        if (info.keepInAir)
         {
-            SustainAir(hitData.airLiftForce);
+            SustainAir(info.airLiftForce);
         }
     }
 
-    protected virtual void StartReaction(EnemyReactionType type, Vector3 hitDirection, HitData hitData)
+    protected virtual void StartReaction(EnemyReactionType type, Vector3 hitDirection, DamageInfo info)
     {
         if (reactionCoroutine != null)
         {
             StopCoroutine(reactionCoroutine);
         }
 
-        reactionCoroutine = StartCoroutine(ReactionRoutine(type, hitDirection, hitData));
+        reactionCoroutine = StartCoroutine(ReactionRoutine(type, hitDirection, info));
     }
 
-    protected virtual IEnumerator ReactionRoutine(EnemyReactionType type, Vector3 hitDirection, HitData hitData)
+    protected virtual IEnumerator ReactionRoutine(EnemyReactionType type, Vector3 hitDirection, DamageInfo info)
     {
         isInReaction = true;
         DisableAgent();
@@ -337,15 +317,15 @@ public class EnemyBase : MonoBehaviour
         switch (type)
         {
             case EnemyReactionType.Push:
-                ApplyPush(hitDirection, hitData.pushForce);
+                ApplyPush(hitDirection, info.pushForce);
                 break;
 
             case EnemyReactionType.Launch:
-                ApplyLaunch(hitDirection, hitData.airLiftForce);
+                ApplyLaunch(hitDirection, info.airLiftForce);
                 break;
 
             case EnemyReactionType.KnockDown:
-                ApplyKnockDown(hitDirection, hitData.knockDownForce, hitData.knockDownForwardScale);
+                ApplyKnockDown(hitDirection, info.knockDownForce, info.knockDownForwardScale);
                 break;
         }
 
@@ -366,7 +346,7 @@ public class EnemyBase : MonoBehaviour
         }
         else
         {
-            yield return new WaitForSeconds(hitData.stunDuration);
+            yield return new WaitForSeconds(info.stunDuration);
         }
 
         EnableAgentIfNeeded();
@@ -540,13 +520,14 @@ public class EnemyBase : MonoBehaviour
         Destroy(gameObject);
     }
 
-    public void ForceKnockDown(Vector3 hitDirection, float force)
-    {
-        if (isDead) return;
-        StartReaction(EnemyReactionType.KnockDown, hitDirection, new HitData
-        {
-            knockDownForce = force,
-            stunDuration = 0.2f
-        });
-    }
+    //public void ForceKnockDown(Vector3 hitDirection, float force)
+    //{
+    //    if (isDead) return;
+    //    StartReaction(EnemyReactionType.KnockDown, hitDirection, new HitData
+    //    {
+    //        knockDownForce = force,
+    //        stunDuration = 0.2f
+    //    });
+    //} 
+
 }
