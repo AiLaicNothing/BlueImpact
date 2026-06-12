@@ -155,9 +155,23 @@ public class P_Projectile : MonoBehaviour
         {
             IDamageable target = other.GetComponent<IDamageable>();
 
+            DamageInfo info = new DamageInfo
+            {
+                damage = 1,
+                hitDirection = transform.forward,
+                throwType = hitData.throwType,
+                stunDuration = hitData.stunDuration,
+                keepInAir = hitData.keepInAir,
+                airLiftForce = hitData.airLiftForce,
+                pushForce = hitData.pushForce,
+                knockDownForce = hitData.knockDownForce,
+                knockDownForwardScale = hitData.knockDownForwardScale,
+                staggerBuild = hitData.staggerCharge
+            };
+
             if (target != null)
             {
-                target.TakeDamage(10);
+                target.TakeDamage(info);
             }
 
             Destroy(gameObject);
