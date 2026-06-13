@@ -33,6 +33,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [Header("Recovery")]
     [SerializeField] protected float airRecoverDelay = 0.05f;
     [SerializeField] protected float knockDownRecoverDelay = 0.15f;
+
+    [Header("Air Hang")]
+    [SerializeField] protected float airGravityMultiplier = 0.7f;
+    private float originalDrag;
     [SerializeField] protected float airHangDuration = 0.75f;
     protected float airHangRemaining;
     protected bool isAirHung;
@@ -119,13 +123,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
     public void TakeDamage(in DamageInfo info)
     {
-        Debug.Log(
-    $"TakeDamage | keepInAir:{info.keepInAir} " +
-    $"hang:{info.airHangDuration} " +
-    $"staggered:{isStaggered} " +
-    $"inReaction:{isInReaction}"
-);
-
         if (isDead) return;
 
         ShowHitVfx();
@@ -291,19 +288,14 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected virtual void HandleReaction(DamageInfo info)
     {
-        Debug.Log(
-    $"HandleReaction | keepInAir:{info.keepInAir} " +
-    $"hang:{info.airHangDuration}");
 
         if (immuneToMovement) return;
 
         // Always allow air extension
         if (info.keepInAir)
         {
-            SustainAir(info.airHangDuration);
+            SustainAir(info.airHangDuration, info.airLiftForce);
         }
-
-        if (isInReaction) return;
 
         switch (info.throwType)
         {
@@ -481,14 +473,16 @@ public class EnemyBase : MonoBehaviour, IDamageable
         rb.AddForce(forwardSlam, ForceMode.VelocityChange);
     }
 
-    protected virtual void SustainAir(float hangTime)
+    protected virtual void SustainAir(float hangTime, float extraLift)
     {
+        if (rb == null) return;
 
-        if (rb == null || hangTime <= 0f)
-            return;
-
-        // Add time instead of replacing it
         airHangRemaining += hangTime;
+
+        if (extraLift > 0f)
+        {
+            rb.AddForce(Vector3.up * extraLift, ForceMode.VelocityChange);
+        }
 
         if (airHangCoroutine == null)
         {
@@ -499,19 +493,17 @@ public class EnemyBase : MonoBehaviour, IDamageable
     {
         isAirHung = true;
 
-        rb.useGravity = false;
+        float originalGravityScale = rb.useGravity ? 1f : 0f;
 
         while (airHangRemaining > 0f)
         {
-
-            rb.linearVelocity = new Vector3( rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-
             airHangRemaining -= Time.deltaTime;
+
+
+            if (rb.linearVelocity.y < 0f) rb.AddForce(Vector3.up * Physics.gravity.magnitude * (1f - airGravityMultiplier), ForceMode.Acceleration);
 
             yield return null;
         }
-
-        rb.useGravity = true;
 
         isAirHung = false;
         airHangRemaining = 0f;
