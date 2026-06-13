@@ -484,11 +484,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         airHangRemaining += hangTime;
 
-        //if (extraLift > 0f)
-        //{
-        //    rb.AddForce(Vector3.up * extraLift, ForceMode.VelocityChange);
-        //}
-
         if (airHangCoroutine == null)
         {
             airHangCoroutine = StartCoroutine(AirHangRoutine());

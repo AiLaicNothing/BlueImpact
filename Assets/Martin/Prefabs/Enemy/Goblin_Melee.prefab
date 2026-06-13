@@ -257,8 +257,8 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7353159426421426004}
   serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
+  m_Mass: 8
+  m_LinearDamping: 1
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -273,9 +273,9 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
+  m_Interpolate: 1
+  m_Constraints: 112
+  m_CollisionDetection: 1
 --- !u!136 &2566983402602992255
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -283,7 +283,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7353159426421426004}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: fbbc35b5cb2cb47478d1db093016dd33, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -312,7 +312,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Goblin_Melee
   stats: {fileID: 11400000, guid: 017e7140c3444334cac1945300dd2e3e, type: 2}
-  weight: 100
+  weight: 50
   pushResistance: 1
   launchResistance: 1
   knockDownResistance: 1
@@ -328,6 +328,8 @@ MonoBehaviour:
   groundCheckDistance: 0.2
   airRecoverDelay: 0.05
   knockDownRecoverDelay: 0.15
+  airGravityMultiplier: 0.2
+  airHangDuration: 0.75
   revengeThreshold: 3
   revengeDecayDelay: 2
   currentHp: 0
