@@ -9,35 +9,36 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 219fa2461a5cff94392134c213e1ab28, type: 3}
-  m_Name: Bash Shield_Skill
-  m_EditorClassIdentifier: Assembly-CSharp::BashShield_Skill
-  skillId: 000
+  m_Script: {fileID: 11500000, guid: 636da3775b4dc41428e51b3b5a24dfb4, type: 3}
+  m_Name: Spin Attack
+  m_EditorClassIdentifier: Assembly-CSharp::SpinAttack_Skill
+  skillId: 
   skillSprite: {fileID: 0}
-  skillName: Embestida de escudo
-  resourceType: 3
+  skillName: Golpe Giratorio
+  resourceType: 0
   cost: 10
-  castTime: 0
+  castTime: 0.25
   cooldown: 0
-  actionTime: 0.3
+  actionTime: 2
   castAnimation: 
   actionAnimation: 
   castSound: {fileID: 0}
   actionSound: {fileID: 0}
-  dashSpeed: 30
-  duration: 0.3
+  hitBoxSize: {x: 3, y: 3, z: 3}
+  spawnOffSet: {x: 0, y: 1, z: 0}
+  targets:
+    serializedVersion: 2
+    m_Bits: 256
+  duration: 2
+  tickRate: 0.4
   hitData:
     physicalScale: 1
     magicalScale: 1
     damageMultiplier: 1
     staggerCharge: 10
-    throwType: 1
+    throwType: 0
     stunDuration: 0
-    keepInAir: 1
-    airHangDuration: 0.15
-    airLiftForce: 2
-    pushForce: 8
-    knockDownForce: 10
-    knockDownForwardScale: 0.15
-  hitBoxSize: {x: 1, y: 1, z: 1}
-  hitBoxOffset: {x: 0, y: 0, z: 1}
+    keepInAir: 0
+    airLiftForce: 0
+  vfx: {fileID: 0}
+  debugBox: {fileID: 0}
