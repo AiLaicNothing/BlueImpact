@@ -60,6 +60,7 @@ public class Goblin_Melee : EnemyBase
 
         if (isDead) return;
         if (isStunned || IsStaggered) return;
+        if (agent.enabled == false) return;
 
         UpdateTarget();
         HandleDetection();

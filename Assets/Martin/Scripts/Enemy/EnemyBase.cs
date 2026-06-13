@@ -294,12 +294,17 @@ public class EnemyBase : MonoBehaviour, IDamageable
         // Always allow air extension
         if (info.keepInAir)
         {
-            SustainAir(info.airHangDuration, info.airLiftForce);
+            SustainAir(info.airHangDuration);
+
+            if (!IsGrounded)
+            {
+                AirJuggle(info.airLiftForce);
+            }
         }
 
         switch (info.throwType)
         {
-            case ThrowType.Push:
+            case ThrowType.Push: 
                 StartReaction(EnemyReactionType.Push, info.hitDirection, info);
                 break;
 
@@ -473,16 +478,16 @@ public class EnemyBase : MonoBehaviour, IDamageable
         rb.AddForce(forwardSlam, ForceMode.VelocityChange);
     }
 
-    protected virtual void SustainAir(float hangTime, float extraLift)
+    protected virtual void SustainAir(float hangTime)
     {
         if (rb == null) return;
 
         airHangRemaining += hangTime;
 
-        if (extraLift > 0f)
-        {
-            rb.AddForce(Vector3.up * extraLift, ForceMode.VelocityChange);
-        }
+        //if (extraLift > 0f)
+        //{
+        //    rb.AddForce(Vector3.up * extraLift, ForceMode.VelocityChange);
+        //}
 
         if (airHangCoroutine == null)
         {
@@ -508,6 +513,22 @@ public class EnemyBase : MonoBehaviour, IDamageable
         isAirHung = false;
         airHangRemaining = 0f;
         airHangCoroutine = null;
+    }
+
+    protected virtual void AirJuggle(float lift)
+    {
+        if (rb == null)
+            return;
+
+        Vector3 vel = rb.linearVelocity;
+
+        vel.y = Mathf.Max(vel.y, 0f);
+
+        rb.linearVelocity = vel;
+
+        rb.AddForce(
+            Vector3.up * lift,
+            ForceMode.VelocityChange);
     }
 
     protected virtual float GetPushScale()
