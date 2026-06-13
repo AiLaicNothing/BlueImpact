@@ -60,7 +60,8 @@ public class P_Dash_AState : PlayerState
 
     public override void OnExit()
     {
-        player.Rb.useGravity = true;
+        player.Rb.linearVelocity = Vector3.zero;
+
         player.isPerformingAct = false;
     }
 }

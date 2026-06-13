@@ -18,7 +18,7 @@ MonoBehaviour:
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 3}
     vfxRotOffset: {x: 0, y: 60, z: 0}
-    name: 
+    name: basic_01
     duration: 0.6
     comboWindowStart: 0.3
     comboWindowEnd: 0.8
@@ -62,20 +62,24 @@ MonoBehaviour:
       throwType: 0
       stunDuration: 0
       keepInAir: 0
+      airHangDuration: 0
       airLiftForce: 0
+      pushForce: 8
+      knockDownForce: 10
+      knockDownForwardScale: 0.15
   - attackVfx: {fileID: 0}
     vfxSpawnTime: 0
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 3}
     vfxRotOffset: {x: 0, y: 90, z: 0}
-    name: 
+    name: basic 02
     duration: 0.8
     comboWindowStart: 0.4
     comboWindowEnd: 0.9
     hitTime: 0.2
     hitBoxSize: {x: 2.5, y: 2.5, z: 2}
     hitBoxOffSet: {x: 0, y: 0, z: 1}
-    moveDis: 1
+    moveDis: 0
     moveStartTime: 0.1
     moveDuration: 0.12
     moveCurve:
@@ -112,20 +116,24 @@ MonoBehaviour:
       throwType: 0
       stunDuration: 0.1
       keepInAir: 0
+      airHangDuration: 0
       airLiftForce: 0
+      pushForce: 8
+      knockDownForce: 10
+      knockDownForwardScale: 0.15
   - attackVfx: {fileID: 0}
     vfxSpawnTime: 0
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 4}
     vfxRotOffset: {x: 60, y: 0, z: -90}
-    name: 
+    name: basic 03
     duration: 0.7
     comboWindowStart: 0.4
     comboWindowEnd: 0.7
     hitTime: 0.3
     hitBoxSize: {x: 3, y: 3, z: 2.5}
     hitBoxOffSet: {x: 0, y: 0, z: 1.5}
-    moveDis: 5
+    moveDis: 0
     moveStartTime: 0.2
     moveDuration: 0.12
     moveCurve:
@@ -161,5 +169,9 @@ MonoBehaviour:
       staggerCharge: 10
       throwType: 2
       stunDuration: 0.3
-      keepInAir: 0
-      airLiftForce: 3
+      keepInAir: 1
+      airHangDuration: 1
+      airLiftForce: 20
+      pushForce: 8
+      knockDownForce: 10
+      knockDownForwardScale: 0

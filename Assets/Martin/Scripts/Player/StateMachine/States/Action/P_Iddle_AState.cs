@@ -31,7 +31,7 @@ public class P_Iddle_AState : PlayerState
                 if (!player.IsGrounded && !player.hasUsedAirAttack)
                 {
                     //-->Do airAttack
-                    player.ChangeActionState(player.airAttackAState);
+                    player.ChangeActionState(player.airAttack_AState);
                 }
                 else if (player.IsGrounded)
                 {
@@ -50,9 +50,9 @@ public class P_Iddle_AState : PlayerState
                 }
                 else
                 {
-                    if (!player.IsRange && !player.hasUsedAirAttack)
+                    if (!player.IsGrounded && !player.hasUsedAirAttack)
                     {
-                        player.ChangeActionState(player.attack_AState);
+                        player.ChangeActionState(player.airAttack_AState);
                     }
                     else if (player.IsGrounded)
                     {

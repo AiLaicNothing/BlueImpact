@@ -13,6 +13,7 @@ public class HitData
     public ThrowType throwType;
     public float stunDuration = 0.15f;
     public bool keepInAir;
+    public float airHangDuration;
     public float airLiftForce = 8f;
     public float pushForce = 8f;
     public float knockDownForce = 10f;

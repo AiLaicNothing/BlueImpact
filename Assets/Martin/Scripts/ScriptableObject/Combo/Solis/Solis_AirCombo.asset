@@ -18,7 +18,7 @@ MonoBehaviour:
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 1}
     vfxRotOffset: {x: 0, y: 0, z: -40}
-    name: 
+    name: AIR 01
     duration: 0.6
     comboWindowStart: 0.3
     comboWindowEnd: 0.8
@@ -62,13 +62,17 @@ MonoBehaviour:
       throwType: 0
       stunDuration: 0.2
       keepInAir: 1
+      airHangDuration: 0.2
       airLiftForce: 2
+      pushForce: 8
+      knockDownForce: 10
+      knockDownForwardScale: 0.15
   - attackVfx: {fileID: 0}
     vfxSpawnTime: 0
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 40}
     vfxRotOffset: {x: 0, y: 0, z: 1}
-    name: 
+    name: AIR 02
     duration: 0.6
     comboWindowStart: 0.4
     comboWindowEnd: 0.9
@@ -112,13 +116,17 @@ MonoBehaviour:
       throwType: 0
       stunDuration: 0.2
       keepInAir: 1
+      airHangDuration: 0.2
       airLiftForce: 2
+      pushForce: 8
+      knockDownForce: 10
+      knockDownForwardScale: 0.15
   - attackVfx: {fileID: 0}
     vfxSpawnTime: 0
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 1}
     vfxRotOffset: {x: 0, y: 0, z: 0}
-    name: 
+    name: AIR 03
     duration: 0.6
     comboWindowStart: 0.4
     comboWindowEnd: 0.6
@@ -159,7 +167,11 @@ MonoBehaviour:
       magicalScale: 1
       damageMultiplier: 1
       staggerCharge: 10
-      throwType: 1
+      throwType: 0
       stunDuration: 0.2
       keepInAir: 1
+      airHangDuration: 0.2
       airLiftForce: 2
+      pushForce: 8
+      knockDownForce: 10
+      knockDownForwardScale: 0.15

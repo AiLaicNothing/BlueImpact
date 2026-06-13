@@ -11,8 +11,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [SerializeField] protected EnemyStats stats;
 
     [Header("Reaction Tuning")]
-    [SerializeField] protected float weight = 100f;
-    [SerializeField] protected float pushResistance = 1f;
+    [SerializeField] protected float weight = 100f; // the lower the higher force
+    [SerializeField] protected float pushResistance = 1f; // the higher the lower force
     [SerializeField] protected float launchResistance = 1f;
     [SerializeField] protected float knockDownResistance = 1f;
 
@@ -33,6 +33,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [Header("Recovery")]
     [SerializeField] protected float airRecoverDelay = 0.05f;
     [SerializeField] protected float knockDownRecoverDelay = 0.15f;
+    [SerializeField] protected float airHangDuration = 0.75f;
+    protected float airHangRemaining;
+    protected bool isAirHung;
 
     [Header("Revenge")]
     [SerializeField] protected int revengeThreshold = 3;
@@ -62,6 +65,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected Coroutine hitStunCoroutine;
     protected Coroutine staggerCoroutine;
     protected Coroutine reactionCoroutine;
+    protected Coroutine airHangCoroutine;
     protected Coroutine revengeDecayCoroutine;
 
     protected EnemyReactionType currentReaction = EnemyReactionType.None;
@@ -88,17 +92,12 @@ public class EnemyBase : MonoBehaviour, IDamageable
         if (rb != null)
         {
             rb.useGravity = true;
-            rb.interpolation = RigidbodyInterpolation.Interpolate;
-            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
     }
 
     protected virtual void Start()
     {
-        if (agent != null && !isGroundEnemy)
-        {
-            agent.enabled = false;
-        }
+
     }
 
     protected virtual void Update()
@@ -120,9 +119,18 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
     public void TakeDamage(in DamageInfo info)
     {
+        Debug.Log(
+    $"TakeDamage | keepInAir:{info.keepInAir} " +
+    $"hang:{info.airHangDuration} " +
+    $"staggered:{isStaggered} " +
+    $"inReaction:{isInReaction}"
+);
+
         if (isDead) return;
 
         ShowHitVfx();
+
+        currentHp -= info.damage;
 
         if (currentHp <= 0f)
         {
@@ -131,8 +139,13 @@ public class EnemyBase : MonoBehaviour, IDamageable
         }
 
         HandleRevenge();
-        HandleStagger(info);
-        HandleReaction(info);
+
+        bool canReact = HandleStagger(info);
+
+        if (canReact)
+        {
+            HandleReaction(info);
+        }
 
         if (info.stunDuration > 0f)
         {
@@ -179,15 +192,18 @@ public class EnemyBase : MonoBehaviour, IDamageable
         isHitStunned = false;
     }
 
-    protected virtual void HandleStagger(DamageInfo info)
+    protected virtual bool HandleStagger(DamageInfo info)
     {
-        if (!stats.hasStagger) return;
-        if (isInStaggerCooldown) return;
+        if (!stats.hasStagger)
+            return false;
+
+        if (isInStaggerCooldown)
+            return isStaggered;
 
         if (isStaggered)
         {
             ExtendStagger();
-            return;
+            return true;
         }
 
         currentStaggerBuild += info.staggerBuild;
@@ -195,7 +211,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
         if (currentStaggerBuild >= stats.staggerThreshold)
         {
             TriggerStagger();
+            return true;
         }
+
+        return false;
     }
 
     protected virtual void TriggerStagger()
@@ -272,11 +291,19 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected virtual void HandleReaction(DamageInfo info)
     {
-        if (immuneToMovement)
-            return;
+        Debug.Log(
+    $"HandleReaction | keepInAir:{info.keepInAir} " +
+    $"hang:{info.airHangDuration}");
 
-        if (isInReaction)
-            return;
+        if (immuneToMovement) return;
+
+        // Always allow air extension
+        if (info.keepInAir)
+        {
+            SustainAir(info.airHangDuration);
+        }
+
+        if (isInReaction) return;
 
         switch (info.throwType)
         {
@@ -292,15 +319,12 @@ public class EnemyBase : MonoBehaviour, IDamageable
                 StartReaction(EnemyReactionType.KnockDown, info.hitDirection, info);
                 break;
         }
-
-        if (info.keepInAir)
-        {
-            SustainAir(info.airLiftForce);
-        }
     }
 
     protected virtual void StartReaction(EnemyReactionType type, Vector3 hitDirection, DamageInfo info)
     {
+
+        Debug.Log("Get reaction");
         if (reactionCoroutine != null)
         {
             StopCoroutine(reactionCoroutine);
@@ -309,47 +333,75 @@ public class EnemyBase : MonoBehaviour, IDamageable
         reactionCoroutine = StartCoroutine(ReactionRoutine(type, hitDirection, info));
     }
 
-    protected virtual IEnumerator ReactionRoutine(EnemyReactionType type, Vector3 hitDirection, DamageInfo info)
+    protected virtual IEnumerator ReactionRoutine(EnemyReactionType reactionType, Vector3 hitDirection, DamageInfo info)
     {
         isInReaction = true;
+
         DisableAgent();
 
-        switch (type)
+        switch (reactionType)
         {
             case EnemyReactionType.Push:
-                ApplyPush(hitDirection, info.pushForce);
-                break;
+                {
+                    ApplyPush(hitDirection, info.pushForce);
+                    break;
+                }
 
             case EnemyReactionType.Launch:
-                ApplyLaunch(hitDirection, info.airLiftForce);
-                break;
+                {
+                    ApplyLaunch(hitDirection, info.airLiftForce);
+                    break;
+                }
 
             case EnemyReactionType.KnockDown:
-                ApplyKnockDown(hitDirection, info.knockDownForce, info.knockDownForwardScale);
-                break;
+                {
+                    ApplyKnockDown(hitDirection, info.knockDownForce, info.knockDownForwardScale);
+                    break;
+                }
         }
 
-        if (type == EnemyReactionType.Launch)
+        switch (reactionType)
         {
-            while (rb.linearVelocity.y > 0.1f)
-            {
-                yield return null;
-            }
+            case EnemyReactionType.Push:
+                {
+                    yield return new WaitForSeconds(info.stunDuration);
+                    break;
+                }
 
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+            case EnemyReactionType.Launch:
+                {
+                    while (rb.linearVelocity.y > 0.05f)
+                    {
+                        yield return null;
+                    }
 
-            yield return new WaitForSeconds(airRecoverDelay);
-        }
-        else if (type == EnemyReactionType.KnockDown)
-        {
-            yield return new WaitForSeconds(knockDownRecoverDelay);
-        }
-        else
-        {
-            yield return new WaitForSeconds(info.stunDuration);
+                    while (isAirHung)
+                    {
+                        yield return null;
+                    }
+
+                    while (!isGrounded)
+                    {
+                        yield return null;
+                    }
+
+                    yield return new WaitForSeconds(airRecoverDelay);
+                    break;
+                }
+
+            case EnemyReactionType.KnockDown:
+                {
+                    while (!isGrounded)
+                    {
+                        yield return null;
+                    }
+
+                    yield return new WaitForSeconds(knockDownRecoverDelay);
+                    break;
+                }
         }
 
-        EnableAgentIfNeeded();
+        rb.linearVelocity = Vector3.zero;
 
         isInReaction = false;
         reactionCoroutine = null;
@@ -358,6 +410,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected virtual void ApplyPush(Vector3 hitDirection, float pushForce)
     {
         if (rb == null) return;
+
+        Debug.Log("Get push");
 
         Vector3 dir = hitDirection;
         dir.y = 0f;
@@ -375,12 +429,14 @@ public class EnemyBase : MonoBehaviour, IDamageable
         force.y = 0f;
 
         rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
-        rb.AddForce(force, ForceMode.Impulse);
+        rb.AddForce(force, ForceMode.VelocityChange);
     }
 
     protected virtual void ApplyLaunch(Vector3 hitDirection, float liftForce)
     {
         if (rb == null) return;
+
+        Debug.Log("Get Launch");
 
         float scaledLift = liftForce * GetLaunchScale();
 
@@ -395,13 +451,14 @@ public class EnemyBase : MonoBehaviour, IDamageable
         dir.Normalize();
 
         rb.linearVelocity = new Vector3(0f, 0f, 0f);
-        rb.AddForce(Vector3.up * scaledLift, ForceMode.Impulse);
-        rb.AddForce(dir * (scaledLift * 0.25f), ForceMode.Impulse);
+        rb.AddForce(Vector3.up * scaledLift, ForceMode.VelocityChange);
     }
 
     protected virtual void ApplyKnockDown(Vector3 hitDirection, float knockDownForce, float forwardScale)
     {
         if (rb == null) return;
+
+        Debug.Log("Get knockDown");
 
         float scaledForce = knockDownForce * GetKnockDownScale();
 
@@ -420,48 +477,80 @@ public class EnemyBase : MonoBehaviour, IDamageable
         Vector3 downwardForce = Vector3.down * scaledForce;
         Vector3 forwardSlam = dir * (scaledForce * forwardScale);
 
-        rb.AddForce(downwardForce, ForceMode.Impulse);
-        rb.AddForce(forwardSlam, ForceMode.Impulse);
+        rb.AddForce(downwardForce, ForceMode.VelocityChange);
+        rb.AddForce(forwardSlam, ForceMode.VelocityChange);
     }
 
-    protected virtual void SustainAir(float lift)
+    protected virtual void SustainAir(float hangTime)
     {
-        if (rb == null) return;
 
-        Vector3 vel = rb.linearVelocity;
+        if (rb == null || hangTime <= 0f)
+            return;
 
-        if (vel.y < 0f)
+        // Add time instead of replacing it
+        airHangRemaining += hangTime;
+
+        if (airHangCoroutine == null)
         {
-            vel.y = 0f;
+            airHangCoroutine = StartCoroutine(AirHangRoutine());
+        }
+    }
+    protected virtual IEnumerator AirHangRoutine()
+    {
+        isAirHung = true;
+
+        rb.useGravity = false;
+
+        while (airHangRemaining > 0f)
+        {
+
+            rb.linearVelocity = new Vector3( rb.linearVelocity.x, 0f, rb.linearVelocity.z);
+
+            airHangRemaining -= Time.deltaTime;
+
+            yield return null;
         }
 
-        vel.y += lift;
-        rb.linearVelocity = vel;
+        rb.useGravity = true;
+
+        isAirHung = false;
+        airHangRemaining = 0f;
+        airHangCoroutine = null;
     }
 
     protected virtual float GetPushScale()
     {
         float weightFactor = Mathf.Max(0.1f, weight / 100f);
-        return Mathf.Max(0.1f, pushResistance * weightFactor);
+        return 1f / (pushResistance * weightFactor);
     }
 
     protected virtual float GetLaunchScale()
     {
         float weightFactor = Mathf.Max(0.1f, weight / 100f);
-        return Mathf.Max(0.1f, launchResistance * weightFactor);
+        return 1f / (launchResistance * weightFactor);
     }
 
     protected virtual float GetKnockDownScale()
     {
         float weightFactor = Mathf.Max(0.1f, weight / 100f);
-        return Mathf.Max(0.1f, knockDownResistance * weightFactor);
+        return 1f / (knockDownResistance * weightFactor);
     }
 
     protected virtual void CheckGround()
     {
         if (groundCheck == null) return;
 
+        if (isAirHung)
+        {
+            isGrounded = false;
+            return;
+        }
+
         isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckDistance, whatIsGround);
+
+        if (!isGrounded) return;
+
+        if (!IsStaggered && !agent.enabled) EnableAgentIfNeeded();
     }
 
     protected virtual void DisableAgent()
@@ -470,21 +559,22 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         if (agent.enabled)
         {
-            agent.isStopped = true;
-            agent.updatePosition = false;
-            agent.updateRotation = false;
+            agent.ResetPath();
+            agent.enabled = false;
         }
     }
 
     protected virtual void EnableAgentIfNeeded()
     {
-        if (!isGroundEnemy) return;
         if (agent == null) return;
+        if (agent.enabled) return;
 
-        agent.Warp(transform.position);
-        agent.updatePosition = true;
-        agent.updateRotation = true;
-        agent.isStopped = false;
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
+        {
+            transform.position = hit.position;
+            agent.enabled = true;
+            agent.Warp(hit.position);
+        }
     }
 
     protected virtual void ShowHitVfx()
@@ -519,15 +609,4 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         Destroy(gameObject);
     }
-
-    //public void ForceKnockDown(Vector3 hitDirection, float force)
-    //{
-    //    if (isDead) return;
-    //    StartReaction(EnemyReactionType.KnockDown, hitDirection, new HitData
-    //    {
-    //        knockDownForce = force,
-    //        stunDuration = 0.2f
-    //    });
-    //} 
-
 }

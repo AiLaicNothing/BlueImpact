@@ -14,6 +14,7 @@ public struct DamageInfo
     public float stunDuration;
 
     public bool keepInAir;
+    public float airHangDuration;
     public float airLiftForce;
     public float pushForce;
     public float knockDownForce;

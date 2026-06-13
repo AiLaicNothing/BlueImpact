@@ -76,7 +76,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     public P_Iddle_AState iddle_AState;
     public P_Attack_AState attack_AState;
-    public P_AirAttack_AState airAttackAState;
+    public P_AirAttack_AState airAttack_AState;
     public P_Shoot_AState shoot_AState;
     public P_Skill_AState skill_AState;
     public P_Dash_AState dash_AState;
@@ -235,7 +235,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         iddle_AState = new P_Iddle_AState(this);
         attack_AState = new P_Attack_AState(this);
-        airAttackAState = new P_AirAttack_AState(this);
+        airAttack_AState = new P_AirAttack_AState(this);
         shoot_AState = new P_Shoot_AState(this);
         skill_AState = new P_Skill_AState(this);
         dash_AState = new P_Dash_AState(this);
@@ -314,6 +314,23 @@ public class PlayerControl : MonoBehaviour, IDamageable
             ShowHitbox(center, attack.hitBoxSize, playerModel.rotation);
         }
 
+        Vector3 hitDir = playerModel.transform.forward;
+
+        DamageInfo info = new DamageInfo
+        {
+            damage = 1,
+            hitDirection = hitDir,
+            throwType = attack.hitData.throwType,
+            stunDuration = attack.hitData.stunDuration,
+            keepInAir = attack.hitData.keepInAir,
+            airHangDuration = attack.hitData.airHangDuration,
+            airLiftForce = attack.hitData.airLiftForce,
+            pushForce = attack.hitData.pushForce,
+            knockDownForce = attack.hitData.knockDownForce,
+            knockDownForwardScale = attack.hitData.knockDownForwardScale,
+            staggerBuild = attack.hitData.staggerCharge
+        };
+
         foreach (var hit in hits)
         {
             if (hit.CompareTag("Enemy"))
@@ -322,21 +339,6 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
                 if (damageable != null)
                 {
-                    Vector3 hitDir = playerModel.transform.forward;
-
-                    DamageInfo info = new DamageInfo
-                    {
-                        damage = 1,
-                        hitDirection = hitDir,
-                        throwType = attack.hitData.throwType,
-                        stunDuration = attack.hitData.stunDuration,
-                        keepInAir = attack.hitData.keepInAir,
-                        airLiftForce = attack.hitData.airLiftForce,
-                        pushForce = attack.hitData.pushForce,
-                        knockDownForce = attack.hitData.knockDownForce,
-                        knockDownForwardScale = attack.hitData.knockDownForwardScale,
-                        staggerBuild = attack.hitData.staggerCharge
-                    };
 
                     damageable.TakeDamage(in info);
                 }
