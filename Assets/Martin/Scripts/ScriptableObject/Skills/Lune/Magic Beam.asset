@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ece182eca301dc2448023c4019e2c4fe, type: 3}
+  m_Name: Magic Beam
+  m_EditorClassIdentifier: Assembly-CSharp::MagicBeam_Skill
+  skillId: 
+  skillSprite: {fileID: 0}
+  skillName: "Laser m\xE1gico"
+  resourceType: 4
+  cost: 0
+  castTime: 0.3
+  cooldown: 3
+  actionTime: 1.5
+  castAnimation: 
+  actionAnimation: 
+  castSound: {fileID: 0}
+  actionSound: {fileID: 0}
+  maxRange: 15
+  width: 2
+  height: 2
+  debug: 1
+  duration: 2
+  tickRate: 0.2
+  startOffset: {x: 0, y: 0, z: 1}
+  hitData:
+    physicalScale: 1
+    magicalScale: 1
+    damageMultiplier: 1
+    staggerCharge: 10
+    throwType: 0
+    stunDuration: 0.15
+    keepInAir: 0
+    airHangDuration: 0
+    airLiftForce: 8
+    pushForce: 8
+    knockDownForce: 10
+    knockDownForwardScale: 0.15
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 7168
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  sfx: {fileID: 0}
