@@ -65,7 +65,7 @@ public class MagicBullet_Skill : Skill
 
         for (int i = 0; i < proyectilePerNode; i++)
         {
-            GameObject proj = Instantiate(proyectilePrefab, pos, Quaternion.identity);
+            GameObject proj = Instantiate(proyectilePrefab, pos, Quaternion.LookRotation(baseDir));
 
             var proyectile = proj.GetComponent<P_Projectile>();
 
