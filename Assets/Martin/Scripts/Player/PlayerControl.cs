@@ -103,6 +103,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public bool IsRange => isRange;
     public ShootData ShootData => shootData;
     public Transform FirePoint => firePoint;
+    public int MaxSkillSlot => maxSkillSlot;
     public float FallGravityMult => fallGravityMultiplier;
     public PlayerStatsManager PlayerStatsManager => playerStatsManager;
 
@@ -562,6 +563,26 @@ public class PlayerControl : MonoBehaviour, IDamageable
             return;
 
         skillsCD[index] = skills[index].cooldown;
+    }
+
+    //===================================================================================
+    //=====================         SKILL UI RELATED         ============================
+    //===================================================================================
+
+    public float GetSkillCooldownRemaining(int index)
+    {
+        if (index < 0 || index >= skillsCD.Length) return 0f;
+
+        return Mathf.Max(0f, skillsCD[index]);
+    }
+
+    public float GetSkillCooldownDuration(int index)
+    {
+        Skill skill = GetSkill(index);
+
+        if (skill == null) return 0f;
+
+        return skill.cooldown;
     }
 
     //===================================================================================

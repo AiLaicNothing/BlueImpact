@@ -34,13 +34,13 @@ public class P_Skill_AState : PlayerState
             return;
         }
 
-        Debug.Log($"Player has {player.PlayerStatsManager.GetActualValue(StatType.Mana)}");
+        Debug.Log($"Player has {player.PlayerStatsManager.GetActualValue(currentSkill.resourceType)}");
 
         player.PlayerStatsManager.Consume(currentSkill.resourceType, currentSkill.cost);
 
         Debug.Log($"Skill consume {currentSkill.resourceType} {currentSkill.cost}");
 
-        Debug.Log($"Player has now {player.PlayerStatsManager.GetActualValue(StatType.Mana)}");
+        Debug.Log($"Player has now {player.PlayerStatsManager.GetActualValue(currentSkill.resourceType)}");
 
         player.isPerformingAct = true;
 
