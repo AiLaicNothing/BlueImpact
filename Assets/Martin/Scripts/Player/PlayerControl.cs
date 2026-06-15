@@ -499,7 +499,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
         P_Projectile proyectile = projectile.GetComponent<P_Projectile>();
         if (proyectile != null)
         {
-            proyectile.Initialize(((statsManager.GetCurrentValue(StatType.PhysicalDamage) * shootData.hitData.physicalScale) + (statsManager.GetCurrentValue(StatType.MagicalDamage) * shootData.hitData.magicalScale)),, shootData.hitData, direction, shootData.proyectileSpeed,Vector3.zero);
+            proyectile.Initialize(((statsManager.GetCurrentValue(StatType.PhysicalDamage) * shootData.hitData.physicalScale) + (statsManager.GetCurrentValue(StatType.MagicalDamage) * shootData.hitData.magicalScale)), shootData.hitData, direction, shootData.proyectileSpeed,Vector3.zero);
         }
     }
 
