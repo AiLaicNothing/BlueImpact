@@ -51,6 +51,19 @@ public class P_Skill_AState : PlayerState
 
         //--> call animator and play the animation name of casting
         //player.Animator.Play(currentSkill.castAnimation);
+        if (player.Anim != null)
+        {
+            int skill = Animator.StringToHash($"{currentSkill.castAnimation}");
+
+            if (player.Anim.HasState(1, skill))
+            {
+                player.Anim.Play(skill);
+            }
+            else
+            {
+                Debug.Log("[PlayerAnimator] is missing castAnimation State");
+            }
+        }
     }
 
     public override void OnUpdate()

@@ -11,7 +11,7 @@ public class P_Iddle_AState : PlayerState
         {
             int empty = Animator.StringToHash("Empty");
 
-            if (player.Anim.HasState(0, empty))
+            if (player.Anim.HasState(1, empty))
             {
                 player.Anim.Play(empty);
             }
