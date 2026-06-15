@@ -1,12 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
-public class GameplaySettingsUI : SettingsPanelUI
+public class GameplaySettingsUI : MonoBehaviour
 {
-    [SerializeField] private CanvasGroup audioTabContent;
-    [SerializeField] private CanvasGroup controlsTabContent;
-    [SerializeField] private CanvasGroup gameplayTabContent;
+    [SerializeField] private CanvasGroup canvasGroup;
+    [SerializeField] private Button backButton;
+    [SerializeField] private TabsManager tabsManager;
+    [SerializeField] private CanvasGroup pausePanelCanvasGroup;
 
     // AUDIO
     [SerializeField] private SettingSlider masterVolumeSlider;
@@ -20,100 +20,106 @@ public class GameplaySettingsUI : SettingsPanelUI
     [SerializeField] private Transform keybindsContainer;
     [SerializeField] private KeybindButton keybindButtonPrefab;
 
-    // GAMEPLAY
-    [SerializeField] private SettingToggle screenShakeToggle;
-    [SerializeField] private SettingSlider screenShakeIntensitySlider;
-    [SerializeField] private SettingToggle autoSaveToggle;
-    [SerializeField] private Button resetToDefaultButton;
-
     private SettingsManager settingsManager;
 
-    protected override void Awake()
+    private void Awake()
     {
-        base.Awake();
+        if (canvasGroup == null)
+            canvasGroup = GetComponent<CanvasGroup>();
+
+        if (backButton != null)
+            backButton.onClick.AddListener(Close);
+
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+        }
 
         settingsManager = SettingsManager.Instance;
-        
-        if (resetToDefaultButton != null)
-            resetToDefaultButton.onClick.AddListener(ResetToDefaults);
-
         InitializeAllSettings();
     }
 
     private void InitializeAllSettings()
     {
+        if (settingsManager == null) return;
+
         InitializeAudioSettings();
         InitializeControlsSettings();
-        InitializeGameplaySettings();
     }
 
     private void InitializeAudioSettings()
     {
+        if (settingsManager == null) return;
+
         var settings = settingsManager.GetSettings();
 
-        masterVolumeSlider.Initialize(
-            "Volumen Global",
-            0,
-            1,
-            settings.audio.masterVolume,
-            (value) => settingsManager.SetMasterVolume(value)
-        );
+        if (masterVolumeSlider != null)
+            masterVolumeSlider.Initialize(
+                "Volumen Global", 0f, 1f,
+                settings.audio.masterVolume,
+                (value) => settingsManager.SetMasterVolume(value),
+                SettingSlider.DisplayFormat.Percentage
+            );
 
-        voiceVolumeSlider.Initialize(
-            "Volumen de Voz",
-            0,
-            1,
-            settings.audio.voiceVolume,
-            (value) => settingsManager.SetVoiceVolume(value)
-        );
+        if (voiceVolumeSlider != null)
+            voiceVolumeSlider.Initialize(
+                "Volumen de Voz", 0f, 1f,
+                settings.audio.voiceVolume,
+                (value) => settingsManager.SetVoiceVolume(value),
+                SettingSlider.DisplayFormat.Percentage
+            );
 
-        sfxVolumeSlider.Initialize(
-            "Volumen de Efectos",
-            0,
-            1,
-            settings.audio.sfxVolume,
-            (value) => settingsManager.SetSFXVolume(value)
-        );
+        if (sfxVolumeSlider != null)
+            sfxVolumeSlider.Initialize(
+                "Volumen de Efectos", 0f, 1f,
+                settings.audio.sfxVolume,
+                (value) => settingsManager.SetSFXVolume(value),
+                SettingSlider.DisplayFormat.Percentage
+            );
 
-        musicVolumeSlider.Initialize(
-            "Volumen de Música",
-            0,
-            1,
-            settings.audio.musicVolume,
-            (value) => settingsManager.SetMusicVolume(value)
-        );
+        if (musicVolumeSlider != null)
+            musicVolumeSlider.Initialize(
+                "Volumen de Música", 0f, 1f,
+                settings.audio.musicVolume,
+                (value) => settingsManager.SetMusicVolume(value),
+                SettingSlider.DisplayFormat.Percentage
+            );
     }
 
     private void InitializeControlsSettings()
     {
+        if (settingsManager == null) return;
+
         var settings = settingsManager.GetSettings();
 
-        mouseSensitivitySlider.Initialize(
-            "Sensibilidad del Mouse",
-            0.1f,
-            3f,
-            settings.controls.mouseSensitivity,
-            (value) => settingsManager.SetMouseSensitivity(value)
-        );
+        if (mouseSensitivitySlider != null)
+            mouseSensitivitySlider.Initialize(
+                "Sensibilidad del Mouse", 0.1f, 3f,
+                settings.controls.mouseSensitivity,
+                (value) => settingsManager.SetMouseSensitivity(value),
+                SettingSlider.DisplayFormat.DecimalTwoPlaces
+            );
 
-        invertMouseYToggle.Initialize(
-            "Invertir Eje Y del Mouse",
-            settings.controls.invertMouseY,
-            (value) => settingsManager.SetInvertMouseY(value)
-        );
+        if (invertMouseYToggle != null)
+            invertMouseYToggle.Initialize(
+                "Invertir Eje Y del Mouse",
+                settings.controls.invertMouseY,
+                (value) => settingsManager.SetInvertMouseY(value)
+            );
 
         CreateKeybinds();
     }
 
     private void CreateKeybinds()
     {
-        // Limpiar contenedor
-        foreach (Transform child in keybindsContainer)
-        {
-            Destroy(child.gameObject);
-        }
+        if (keybindsContainer == null || keybindButtonPrefab == null)
+            return;
 
-        // Crear botones para las teclas principales (iguales al menú)
+        foreach (Transform child in keybindsContainer)
+            Destroy(child.gameObject);
+
         var keybinds = new[]
         {
             ("Movimiento", "Player/Move", 0),
@@ -121,80 +127,58 @@ public class GameplaySettingsUI : SettingsPanelUI
             ("Saltar", "Player/Jump", 0),
             ("Esquiva", "Player/Dash", 0),
             ("Interactuar", "Player/Interact", 0),
-            ("Habilidad 1", "Player/Skill1", 0),
-            ("Habilidad 2", "Player/Skill2", 0),
-            ("Habilidad 3", "Player/Skill3", 0),
-            ("Habilidad 4", "Player/Skill4", 0),
         };
 
         foreach (var (label, action, binding) in keybinds)
         {
-            var keybindButton = Instantiate(keybindButtonPrefab, keybindsContainer);
-            keybindButton.Initialize(label, action, binding);
+            var btn = Instantiate(keybindButtonPrefab, keybindsContainer);
+            btn.Initialize(label, action, binding);
         }
     }
 
-    private void InitializeGameplaySettings()
+    public void Open()
     {
-        var settings = settingsManager.GetSettings();
+        gameObject.SetActive(true);
 
-        screenShakeToggle.Initialize(
-            "Screen Shake",
-            settings.gameplay.screenShake,
-            (value) => settingsManager.SetScreenShake(value)
-        );
-
-        screenShakeIntensitySlider.Initialize(
-            "Intensidad del Screen Shake",
-            0,
-            1,
-            settings.gameplay.screenShakeIntensity,
-            (value) => settingsManager.SetScreenShakeIntensity(value)
-        );
-
-        // Auto-save es solo lectura en gameplay (no se cambia aquí)
-        autoSaveToggle.Initialize(
-            "Auto-guardado",
-            settings.gameplay.autoSave,
-            (_) => { } // Sin callback
-        );
-    }
-
-    private void ResetToDefaults()
-    {
-        // Mostrar confirmación
-        if (ConfirmDialogUI.Instance != null)
+        if (canvasGroup != null)
         {
-            ConfirmDialogUI.Instance.Show(
-                "¿Resetear todas las opciones a valores por defecto?",
-                () =>
-                {
-                    settingsManager.ResetToDefaults();
-                    InitializeAllSettings();
-                    RefreshAllSettings();
-                }
-            );
+            canvasGroup.alpha = 1;
+            canvasGroup.interactable = true;
+            canvasGroup.blocksRaycasts = true;
         }
-    }
 
-    protected override void OnBackPressed()
-    {
-        settingsManager.SaveSettings();
-        Close();
-    }
-
-    public override void Open()
-    {
-        base.Open();
-        RefreshAllSettings();
-    }
-
-    private void RefreshAllSettings()
-    {
-        var keybinds = keybindsContainer.GetComponentsInChildren<KeybindButton>();
-        foreach (var keybind in keybinds)
+        if (pausePanelCanvasGroup != null)
         {
-            keybind.RefreshDisplay();
+            pausePanelCanvasGroup.blocksRaycasts = false;
+            pausePanelCanvasGroup.interactable = false;
         }
+
+        if (tabsManager != null)
+            tabsManager.ShowTab(0);
+
+        Debug.Log("GameplaySettingsUI abierto");
+    }
+
+    public void Close()
+    {
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 0;
+            canvasGroup.interactable = false;
+            canvasGroup.blocksRaycasts = false;
+        }
+
+        if (pausePanelCanvasGroup != null)
+        {
+            pausePanelCanvasGroup.blocksRaycasts = true;
+            pausePanelCanvasGroup.interactable = true;
+        }
+
+        gameObject.SetActive(false);
+
+        if (settingsManager != null)
+            settingsManager.SaveSettings();
+
+        Debug.Log("GameplaySettingsUI cerrado");
     }
 }
