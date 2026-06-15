@@ -10,29 +10,6 @@ public class InputRebindingManager : MonoBehaviour
     private InputActionAsset inputActions;
     private Dictionary<string, string> rebindingOverrides = new();
 
-    // Configuración por defecto del Input System
-    private readonly Dictionary<string, string> DefaultBindings = new()
-    {
-        { "Player/Move/Keyboard", "<Keyboard>/w,<Keyboard>/a,<Keyboard>/s,<Keyboard>/d" },
-        { "Player/Move/Gamepad", "<Gamepad>/leftStick" },
-        { "Player/Look/Keyboard", "<Pointer>/delta" },
-        { "Player/Look/Gamepad", "<Gamepad>/rightStick" },
-        { "Player/Attack/Keyboard", "<Mouse>/leftButton" },
-        { "Player/Attack/Gamepad", "<Gamepad>/buttonWest" },
-        { "Player/Jump/Keyboard", "<Keyboard>/space" },
-        { "Player/Jump/Gamepad", "<Gamepad>/buttonSouth" },
-        { "Player/Dash/Keyboard", "<Keyboard>/leftShift" },
-        { "Player/Dash/Gamepad", "<Gamepad>/leftStickPress" },
-        { "Player/Interact/Keyboard", "<Keyboard>/e" },
-        { "Player/Interact/Gamepad", "<Gamepad>/buttonNorth" },
-        { "Player/Crouch/Keyboard", "<Keyboard>/c" },
-        { "Player/Crouch/Gamepad", "<Gamepad>/buttonEast" },
-        { "Player/Skill1/Keyboard", "<Keyboard>/1" },
-        { "Player/Skill2/Keyboard", "<Keyboard>/2" },
-        { "Player/Skill3/Keyboard", "<Keyboard>/3" },
-        { "Player/Skill4/Keyboard", "<Keyboard>/4" },
-    };
-
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -49,16 +26,30 @@ public class InputRebindingManager : MonoBehaviour
 
     private void LoadInputActions()
     {
-        // Cargar el Input System (ajusta la ruta según tu proyecto)
+        // OPCIÓN 1: Si está en Resources/
         inputActions = Resources.Load<InputActionAsset>("InputSystem_Actions");
+        
+        // OPCIÓN 2: Si está en Assets directamente (sin Resources)
+        // Necesitarás usar Resources.LoadAll o cargarlo manualmente
+        if (inputActions == null)
+        {
+            // Buscar en toda la carpeta Assets
+            var allAssets = Resources.LoadAll<InputActionAsset>("");
+            if (allAssets.Length > 0)
+            {
+                inputActions = allAssets[0];
+                Debug.Log("InputActionAsset encontrado: " + inputActions.name);
+            }
+        }
 
         if (inputActions == null)
         {
-            Debug.LogError("No se pudo cargar InputSystem_Actions desde Resources");
+            Debug.LogError("No se pudo cargar InputSystem_Actions. Verifica que exista en Assets/Resources/");
             return;
         }
 
         inputActions.Enable();
+        LoadRebindings();
     }
 
     // ==================== REBINDING ====================
@@ -76,6 +67,7 @@ public class InputRebindingManager : MonoBehaviour
         }
 
         var rebind = action.PerformInteractiveRebinding(bindingIndex);
+        
         rebind.OnComplete(operation =>
         {
             Debug.Log($"Remapeo completado para {actionName}: {action.bindings[bindingIndex].effectivePath}");
@@ -102,10 +94,13 @@ public class InputRebindingManager : MonoBehaviour
 
     /// <summary>
     /// Obtiene todas las acciones del Input System
+    /// CORREGIDO: Sin usar ListAllActions()
     /// </summary>
     public List<string> GetAllActions()
     {
         List<string> actions = new();
+
+        if (inputActions == null) return actions;
 
         foreach (var map in inputActions.actionMaps)
         {
@@ -137,19 +132,26 @@ public class InputRebindingManager : MonoBehaviour
 
     /// <summary>
     /// Resetea todas las teclas a sus valores por defecto
+    /// CORREGIDO: Sin usar ListAllActions()
     /// </summary>
-    //public void ResetAllBindings()
-    //{
-    //    if (inputActions == null) return;
+    public void ResetAllBindings()
+    {
+        if (inputActions == null) return;
 
-    //    foreach (var action in inputActions.ListAllActions())
-    //    {
-    //        action.RemoveAllBindingOverrides();
-    //    }
+        // Iterar sobre cada action map
+        foreach (var actionMap in inputActions.actionMaps)
+        {
+            // Iterar sobre cada acción en el map
+            foreach (var action in actionMap.actions)
+            {
+                action.RemoveAllBindingOverrides();
+            }
+        }
 
-    //    rebindingOverrides.Clear();
-    //    SaveRebindings();
-    //}
+        rebindingOverrides.Clear();
+        SaveRebindings();
+        Debug.Log("Todos los bindings han sido reseteados");
+    }
 
     /// <summary>
     /// Resetea una acción específica a su valor por defecto
@@ -161,6 +163,7 @@ public class InputRebindingManager : MonoBehaviour
         {
             action.RemoveAllBindingOverrides();
             SaveRebindings();
+            Debug.Log($"Binding reseteado para {actionName}");
         }
     }
 
@@ -168,6 +171,8 @@ public class InputRebindingManager : MonoBehaviour
 
     public void SaveRebindings()
     {
+        if (inputActions == null) return;
+
         var rebindData = inputActions.SaveBindingOverridesAsJson();
         PlayerPrefs.SetString("InputRebindings", rebindData);
         PlayerPrefs.Save();
@@ -181,8 +186,15 @@ public class InputRebindingManager : MonoBehaviour
         string rebindData = PlayerPrefs.GetString("InputRebindings", "");
         if (!string.IsNullOrEmpty(rebindData))
         {
-            inputActions.LoadBindingOverridesFromJson(rebindData);
-            Debug.Log("Rebindings cargados");
+            try
+            {
+                inputActions.LoadBindingOverridesFromJson(rebindData);
+                Debug.Log("Rebindings cargados");
+            }
+            catch
+            {
+                Debug.LogWarning("Error al cargar rebindings, usando valores por defecto");
+            }
         }
     }
 
@@ -235,7 +247,7 @@ public class InputRebindingManager : MonoBehaviour
     public string GetBindingPath(string actionName, int bindingIndex = 0)
     {
         var action = inputActions.FindAction(actionName);
-        if (action == null || bindingIndex >= action.bindings.Count)
+        if (action == null || bindingIndex >= action.bindings.Count) 
             return "";
 
         return action.bindings[bindingIndex].effectivePath;

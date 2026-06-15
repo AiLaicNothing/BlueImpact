@@ -33,7 +33,7 @@ public class GameplaySettingsUI : SettingsPanelUI
         base.Awake();
 
         settingsManager = SettingsManager.Instance;
-
+        
         if (resetToDefaultButton != null)
             resetToDefaultButton.onClick.AddListener(ResetToDefaults);
 
@@ -121,7 +121,6 @@ public class GameplaySettingsUI : SettingsPanelUI
             ("Saltar", "Player/Jump", 0),
             ("Esquiva", "Player/Dash", 0),
             ("Interactuar", "Player/Interact", 0),
-            ("Agacharse", "Player/Crouch", 0),
             ("Habilidad 1", "Player/Skill1", 0),
             ("Habilidad 2", "Player/Skill2", 0),
             ("Habilidad 3", "Player/Skill3", 0),

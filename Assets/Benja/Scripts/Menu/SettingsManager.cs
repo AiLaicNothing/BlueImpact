@@ -24,13 +24,13 @@ public class SettingsManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         settingsPath = Path.Combine(Application.persistentDataPath, "settings.json");
-
+        
         LoadSettings();
         ApplyAllSettings();
     }
 
     // ==================== LOAD & SAVE ====================
-
+    
     public void LoadSettings()
     {
         if (File.Exists(settingsPath))
@@ -88,7 +88,7 @@ public class SettingsManager : MonoBehaviour
     private void ApplyVideoSettings()
     {
         var videoSettings = currentSettings.video;
-
+        
         // Resolución
         var resolutions = Screen.resolutions;
         if (videoSettings.resolutionIndex < resolutions.Length)
@@ -98,7 +98,7 @@ public class SettingsManager : MonoBehaviour
         }
 
         // Brillo (usando post-processing o ajuste de gamma)
-        float brightness = videoSettings.brightnessLevel / 100f;
+        float brightness = videoSettings.brightnessLevel / 10000f;
         ApplyBrightness(brightness);
 
         Debug.Log("Video settings aplicadas");
@@ -107,18 +107,18 @@ public class SettingsManager : MonoBehaviour
     private void ApplyAudioSettings()
     {
         var audioSettings = currentSettings.audio;
-
+        
         // Aquí integrarás con tu sistema de audio
         // Ejemplo si usas AudioMixer:
         // audioMixer.SetFloat("MasterVolume", Mathf.Log10(audioSettings.masterVolume) * 20);
-
+        
         Debug.Log($"Audio settings aplicadas - Master: {audioSettings.masterVolume}");
     }
 
     private void ApplyControlsSettings()
     {
         var controlSettings = currentSettings.controls;
-
+        
         // Esto se aplicará cuando cargues el Input System
         // Por ahora, solo guardamos los datos
         Debug.Log($"Controls settings aplicadas - Sensibilidad: {controlSettings.mouseSensitivity}");
@@ -244,10 +244,10 @@ public class SettingsManager : MonoBehaviour
     public int GetCurrentResolutionIndex()
     {
         Resolution current = new Resolution { width = Screen.width, height = Screen.height };
-
+        
         for (int i = Screen.resolutions.Length - 1; i >= 0; i--)
         {
-            if (Screen.resolutions[i].width == current.width &&
+            if (Screen.resolutions[i].width == current.width && 
                 Screen.resolutions[i].height == current.height)
             {
                 return i;

@@ -3675,6 +3675,50 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_ActionId: 24908448-c609-4bc3-a128-ea258674378a
+--- !u!1 &683610803
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 683610805}
+  - component: {fileID: 683610804}
+  m_Layer: 0
+  m_Name: Game
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &683610804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 683610803}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 034723862e409244a81352633d85a49b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameModeManager
+--- !u!4 &683610805
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 683610803}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1216.8151, y: 573.21826, z: -64.19318}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &691938275
 GameObject:
   m_ObjectHideFlags: 0
@@ -11308,19 +11352,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2004944796436511186, guid: 0413a94f5da614b459ef1a6cc034587d, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9893945
+      value: 0.9985957
       objectReference: {fileID: 0}
     - target: {fileID: 2004944796436511186, guid: 0413a94f5da614b459ef1a6cc034587d, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.14525363
+      value: 0.01964973
       objectReference: {fileID: 0}
     - target: {fileID: 2004944796436511186, guid: 0413a94f5da614b459ef1a6cc034587d, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0.0000000147431285
+      value: 0.049188875
       objectReference: {fileID: 0}
     - target: {fileID: 2004944796436511186, guid: 0413a94f5da614b459ef1a6cc034587d, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.000000002164448
+      value: -0.000967907
       objectReference: {fileID: 0}
     - target: {fileID: 2254472236542313719, guid: 0413a94f5da614b459ef1a6cc034587d, type: 3}
       propertyPath: m_Name
@@ -11345,9 +11389,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4977990477473264777, guid: 0413a94f5da614b459ef1a6cc034587d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1936403604}
-    - targetCorrespondingSourceObject: {fileID: 4977990477473264777, guid: 0413a94f5da614b459ef1a6cc034587d, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1936403613}
   m_SourcePrefab: {fileID: 100100000, guid: 0413a94f5da614b459ef1a6cc034587d, type: 3}
 --- !u!4 &1936403595 stripped
 Transform:
@@ -11371,18 +11412,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d37021e02288674fb398f7f863f6650, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraManager
---- !u!114 &1936403613
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1936403596}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 034723862e409244a81352633d85a49b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameModeManager
 --- !u!1 &1936453124
 GameObject:
   m_ObjectHideFlags: 0
@@ -11470,7 +11499,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1936453124}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.14525366, y: 0.000000014743132, z: -0.0000000021644488, w: 0.9893945}
+  m_LocalRotation: {x: 0.019649731, y: 0.04918888, z: -0.0009679074, w: 0.9985957}
   m_LocalPosition: {x: 31.19, y: -2.02, z: 79.39}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -13031,3 +13060,4 @@ SceneRoots:
   - {fileID: 229130970}
   - {fileID: 1621597693}
   - {fileID: 777670600}
+  - {fileID: 683610805}

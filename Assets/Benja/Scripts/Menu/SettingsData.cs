@@ -9,7 +9,7 @@ public class SettingsData
     public class VideoSettings
     {
         public int resolutionIndex = 0;
-        public int brightnessLevel = 100;
+        public int brightnessLevel =100;
         public int contrastLevel = 100;
         public bool fullscreen = true;
     }
