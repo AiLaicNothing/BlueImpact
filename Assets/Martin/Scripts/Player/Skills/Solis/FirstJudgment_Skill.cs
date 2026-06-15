@@ -40,7 +40,7 @@ public class FirstJudgment_Skill : Skill
 
         FirstJudgmentSword proj = sword.GetComponent<FirstJudgmentSword>();
 
-        proj.Initialize(hitData);
+        proj.Initialize(hitData, player);
 
         if (spawnSFX != null)
         {

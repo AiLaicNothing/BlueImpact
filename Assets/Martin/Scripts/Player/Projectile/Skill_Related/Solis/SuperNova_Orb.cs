@@ -26,7 +26,7 @@ public class SuperNova_Orb : MonoBehaviour
     {
         info = new DamageInfo
         {
-            damage = 1,
+            damage = ((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * hitData.magicalScale)),
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,
             keepInAir = hitData.keepInAir,
@@ -39,7 +39,7 @@ public class SuperNova_Orb : MonoBehaviour
 
         explosionInfo = new DamageInfo
         {
-            damage = 1,
+            damage = ((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * explosionData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * explosionData.magicalScale)),
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,
             keepInAir = hitData.keepInAir,

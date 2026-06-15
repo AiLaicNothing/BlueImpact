@@ -29,7 +29,7 @@ public class FireSlash_Skill : Skill
 
         if (proyectile != null)
         {
-            proyectile.Initialize(10, hitData, dir, proyectileSpeed, Vector3.zero);
+            proyectile.Initialize(((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * hitData.magicalScale)), hitData, dir, proyectileSpeed, Vector3.zero);
         }
     }
 

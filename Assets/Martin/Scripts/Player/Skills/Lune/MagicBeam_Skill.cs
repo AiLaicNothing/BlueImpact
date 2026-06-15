@@ -94,7 +94,7 @@ public class MagicBeam_Skill : Skill
 
         DamageInfo info = new DamageInfo
         {
-            damage = 1,
+            damage = ((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * hitData.magicalScale)),
             hitDirection = dir,
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,

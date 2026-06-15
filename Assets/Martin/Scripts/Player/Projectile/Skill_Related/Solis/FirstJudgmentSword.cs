@@ -33,13 +33,13 @@ public class FirstJudgmentSword : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
-    public void Initialize(HitData hitData)
+    public void Initialize(HitData hitData, PlayerControl player)
     {
         velocity = Vector3.down * initialSpeed;
 
         info = new DamageInfo
         {
-            damage = 1,
+            damage = ((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * hitData.magicalScale)),
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,
             keepInAir = hitData.keepInAir,

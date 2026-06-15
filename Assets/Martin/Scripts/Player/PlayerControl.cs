@@ -1,6 +1,8 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
+using static UnityEngine.Analytics.IAnalytic;
 
 public class PlayerControl : MonoBehaviour, IDamageable
 {
@@ -30,6 +32,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     [Header("Combat")]
     [SerializeField] private MeleeAttackCombo normalCombo;
     [SerializeField] private MeleeAttackCombo airCombo;
+    private StatsManager statsManager;
     private Coroutine attackMovementRoutine;
 
     [Header("Range")]
@@ -90,6 +93,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public Transform Model => playerModel;
     public PlayerInputHandler Input => input;
     public LockOnTarget LockOnTarget => lockOnTarget;
+    public StatsManager Stats => statsManager;
     public bool IsGrounded => isGrounded;
     public float DashCost => dashCost;
     public float DashDuration => dashDuration;
@@ -247,6 +251,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
         anim = GetComponent<Animator>();
         input = GetComponent<PlayerInputHandler>();
         lockOnTarget = GetComponent<LockOnTarget>();
+        statsManager = GetComponent<StatsManager>();
     }
 
     //===================================================================================
@@ -322,11 +327,12 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
                 if (damageable != null)
                 {
+
                     Vector3 hitDir = playerModel.transform.forward;
 
                     DamageInfo info = new DamageInfo
                     {
-                        damage = 1,
+                        damage = ((statsManager.GetCurrentValue(StatType.PhysicalDamage) * attack.hitData.physicalScale) + (statsManager.GetCurrentValue(StatType.MagicalDamage) * attack.hitData.magicalScale)),
                         hitDirection = hitDir,
                         throwType = attack.hitData.throwType,
                         stunDuration = attack.hitData.stunDuration,
@@ -339,6 +345,8 @@ public class PlayerControl : MonoBehaviour, IDamageable
                     };
 
                     damageable.TakeDamage(in info);
+
+                    Debug.Log("Player Hit");
                 }
             }
         }
@@ -491,7 +499,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
         P_Projectile proyectile = projectile.GetComponent<P_Projectile>();
         if (proyectile != null)
         {
-            proyectile.Initialize(10,shootData.hitData, direction, shootData.proyectileSpeed,Vector3.zero);
+            proyectile.Initialize(((statsManager.GetCurrentValue(StatType.PhysicalDamage) * shootData.hitData.physicalScale) + (statsManager.GetCurrentValue(StatType.MagicalDamage) * shootData.hitData.magicalScale)),, shootData.hitData, direction, shootData.proyectileSpeed,Vector3.zero);
         }
     }
 

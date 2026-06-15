@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using static UnityEngine.Analytics.IAnalytic;
 
@@ -26,6 +27,7 @@ public class BloodMoon : MonoBehaviour
     [SerializeField] private LayerMask enemyLayer;
 
     private HitData hitData;
+    private PlayerControl player;
     private float damage;
     private bool hasLanded;
     private float timer;
@@ -130,7 +132,7 @@ public class BloodMoon : MonoBehaviour
 
                 DamageInfo info = new DamageInfo
                 {
-                    damage = 1,
+                    damage = ((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * hitData.magicalScale)),
                     hitDirection = dir,
                     throwType = hitData.throwType,
                     stunDuration = hitData.stunDuration,

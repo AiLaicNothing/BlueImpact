@@ -49,6 +49,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected Rigidbody rb;
     protected Animator anim;
     protected NavMeshAgent agent;
+    protected E_BarHolder_UI barUI;
+    protected E_HealthBar healthUI;
+    protected E_StaggerBar staggerUI;
 
     [Header("Runtime State")]
     [SerializeField] protected float currentHp;
@@ -87,6 +90,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();
         agent = GetComponent<NavMeshAgent>();
+
+        barUI = GetComponentInChildren<E_BarHolder_UI>();
+        healthUI = GetComponentInChildren<E_HealthBar>();
+        staggerUI = GetComponentInChildren<E_StaggerBar>();
 
         if (stats != null)
         {
@@ -148,6 +155,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             ApplyStun(info.stunDuration);
         }
+
+        healthUI.UpdateHealthBar(currentHp, stats.maxHp);
+        staggerUI.UpdateStaggerhBar(currentStaggerBuild, stats.staggerThreshold);
+        barUI.Show();
     }
 
     protected virtual void HandleRevenge()
@@ -601,6 +612,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected virtual void UpdateHealthUI()
     {
         // Hook your health bar UI here if needed.
+
     }
 
     protected virtual void Die()
