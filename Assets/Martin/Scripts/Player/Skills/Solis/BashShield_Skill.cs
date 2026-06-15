@@ -74,7 +74,7 @@ public class BashShield_Skill : Skill
 
             DamageInfo info = new DamageInfo
             {
-                damage = ((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * hitData.magicalScale)),
+                damage = ((player.PlayerStatsManager.GetActualValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.MagicalDamage) * hitData.magicalScale)),
                 hitDirection = hitDir,
                 throwType = hitData.throwType,
                 stunDuration = hitData.stunDuration,

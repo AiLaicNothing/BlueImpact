@@ -147,20 +147,12 @@ public class PlayerStatsManager : MonoBehaviour
     public bool Consume(StatType statType, int amount)
     {
         if (!CanConsume(statType, amount))
-        {
-            Debug.Log($"{statType} insuficiente. Necesitas {amount}, tienes {actualValues[GetStatDefinition(statType)]}");
             return false;
-        }
 
         StatDefinition statDef = GetStatDefinition(statType);
-        if (statDef == null) return false;
 
-        actualValues[statDef] = Mathf.Max(
-            actualValues[statDef] - amount,
-            runtimeStats[statDef].definition.minValue
-        );
+        actualValues[statDef] = Mathf.Max(actualValues[statDef] - amount,0);
 
-        // ✅ Resetear timer de regeneración al consumir
         regenTimers[statDef] = 0f;
 
         return true;

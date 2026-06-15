@@ -69,6 +69,7 @@ public class P_Iddle_AState : PlayerState
 
         if (index != -1)
         {
+            Debug.Log($"Player: Try change to skill state {index}");
             var skill = player.GetSkill(index);
 
             if (skill != null && player.IsSkillReady(index))
