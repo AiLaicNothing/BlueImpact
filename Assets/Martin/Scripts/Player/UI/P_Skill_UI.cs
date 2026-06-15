@@ -25,7 +25,7 @@ public class P_Skill_UI : MonoBehaviour
         UpdateCooldowns();
     }
 
-    private void RefreshIcons()
+    public void RefreshIcons()
     {
         for (int i = 0; i < slots.Length; i++)
         {
