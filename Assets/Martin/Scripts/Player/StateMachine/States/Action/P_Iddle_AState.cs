@@ -6,6 +6,20 @@ public class P_Iddle_AState : PlayerState
     public override void OnEnter()
     {
         Debug.Log("Enter Iddle Action State");
+
+        if (player.Anim != null)
+        {
+            int empty = Animator.StringToHash("Empty");
+
+            if (player.Anim.HasState(0, empty))
+            {
+                player.Anim.Play(empty);
+            }
+            else
+            {
+                Debug.Log("[PlayerAnimator] is missing walk State");
+            }
+        }
     }
 
     public override void OnUpdate()

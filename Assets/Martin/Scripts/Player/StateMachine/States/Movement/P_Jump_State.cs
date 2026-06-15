@@ -13,6 +13,21 @@ public class P_Jump_State : PlayerState
         }
 
         player.Jump();
+
+
+        if (player.Anim != null)
+        {
+            int jump = Animator.StringToHash("Jump");
+
+            if (player.Anim.HasState(0, jump))
+            {
+                player.Anim.Play(jump);
+            }
+            else
+            {
+                Debug.Log("[PlayerAnimator] is missing jump State");
+            }
+        }
     }
 
     public override void OnUpdate()

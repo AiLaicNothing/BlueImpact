@@ -11,6 +11,20 @@ public class P_Move_State : PlayerState
             return;
         }
         //--> Play the animation
+
+        if (player.Anim != null)
+        {
+            int walk = Animator.StringToHash("Walk");
+
+            if (player.Anim.HasState(0, walk))
+            {
+                player.Anim.Play(walk);
+            }
+            else
+            {
+                Debug.Log("[PlayerAnimator] is missing walk State");
+            }
+        }
     }
 
     public override void OnUpdate()

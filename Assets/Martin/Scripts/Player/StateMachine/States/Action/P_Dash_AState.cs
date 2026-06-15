@@ -41,7 +41,19 @@ public class P_Dash_AState : PlayerState
             dashDir = player.Model.transform.forward;
         }
 
-        player.Rb.useGravity = false;
+        if (player.Anim != null)
+        {
+            int dash = Animator.StringToHash("Dash");
+
+            if (player.Anim.HasState(1, dash))
+            {
+                player.Anim.Play(dash);
+            }
+            else
+            {
+                Debug.Log("[PlayerAnimator] is missing walk State");
+            }
+        }
     }
 
     public override void OnUpdate()

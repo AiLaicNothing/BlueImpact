@@ -254,7 +254,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     private void RegisterComponents()
     {
         rb = GetComponent<Rigidbody>();
-        anim = GetComponent<Animator>();
+        anim = GetComponentInChildren<Animator>();
         input = GetComponent<PlayerInputHandler>();
         lockOnTarget = GetComponent<LockOnTarget>();
         statsManager = GetComponent<StatsManager>();

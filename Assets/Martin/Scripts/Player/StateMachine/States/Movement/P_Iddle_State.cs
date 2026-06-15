@@ -12,6 +12,20 @@ public class P_Iddle_State : PlayerState
             return;
         }
         //--> Play the animation
+
+        if (player.Anim != null)
+        {
+            int idle = Animator.StringToHash("Idle");
+
+            if (player.Anim.HasState(0, idle))
+            {
+                player.Anim.Play(idle);
+            }
+            else
+            {
+                Debug.Log("[PlayerAnimator] is missing idle State");
+            }
+        }
     }
 
     public override void OnUpdate()

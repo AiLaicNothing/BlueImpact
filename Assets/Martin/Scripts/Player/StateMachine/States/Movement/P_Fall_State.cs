@@ -13,6 +13,21 @@ public class P_Fall_State : PlayerState
         }
 
         player.SetGravityMultiplier(player.FallGravityMult);
+
+
+        if (player.Anim != null)
+        {
+            int fall = Animator.StringToHash("Falling");
+
+            if (player.Anim.HasState(0, fall))
+            {
+                player.Anim.Play(fall);
+            }
+            else
+            {
+                Debug.Log("[PlayerAnimator] is missing fall State");
+            }
+        }
     }
 
     public override void OnUpdate()
