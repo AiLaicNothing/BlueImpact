@@ -33,9 +33,12 @@ public class P_Skill_AState : PlayerState
             player.ChangeActionState(player.iddle_AState);
             return;
         }
+        Debug.Log($"Player has {player.PlayerStatsManager.GetActualValue(StatType.Mana)}");
 
         player.PlayerStatsManager.Consume(currentSkill.resourceType, currentSkill.cost);
+        Debug.Log($"Skill consume {currentSkill.resourceType} {currentSkill.cost}");
 
+        Debug.Log($"Player has now {player.PlayerStatsManager.GetActualValue(StatType.Mana)}");
         player.isPerformingAct = true;
 
         isCasting = true;

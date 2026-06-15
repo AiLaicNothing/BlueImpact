@@ -490,16 +490,11 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         GameObject projectile = Instantiate(shootData.proyectilePrefab, spawnPosition, Quaternion.LookRotation(direction));
 
-        Rigidbody projectileRb = projectile.GetComponent<Rigidbody>();
-        if (projectileRb != null)
-        {
-            projectileRb.linearVelocity = direction * shootData.proyectileSpeed;
-        }
-
         P_Projectile proyectile = projectile.GetComponent<P_Projectile>();
+
         if (proyectile != null)
         {
-            proyectile.Initialize(((statsManager.GetCurrentValue(StatType.PhysicalDamage) * shootData.hitData.physicalScale) + (statsManager.GetCurrentValue(StatType.MagicalDamage) * shootData.hitData.magicalScale)), shootData.hitData, direction, shootData.proyectileSpeed,Vector3.zero);
+            proyectile.Initialize(shootData.hitData, this ,direction, shootData.proyectileSpeed,Vector3.zero);
         }
     }
 

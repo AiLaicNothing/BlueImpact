@@ -71,7 +71,8 @@ public class MagicBullet_Skill : Skill
 
             if (proyectile != null)
             {
-                proyectile.Initialize(((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * hitData.magicalScale)), hitData, baseDir, speed, finalTarget);
+
+                proyectile.Initialize(hitData, player, baseDir, speed, finalTarget);
             }
 
             yield return new WaitForSeconds(timeBtwShoot);

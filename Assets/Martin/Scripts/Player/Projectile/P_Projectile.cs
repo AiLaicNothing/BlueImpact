@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,8 +22,9 @@ public class P_Projectile : MonoBehaviour
 
     private Transform target;
 
-    private float damage;
+    private PlayerControl player;
     private HitData hitData;
+    private DamageInfo info;
     private Vector3 direction;
     private float speed;
 
@@ -30,14 +32,32 @@ public class P_Projectile : MonoBehaviour
 
     private Vector3 lockTargetPos;
 
-    public void Initialize(float dmg, HitData data, Vector3 dir, float spd, Vector3 lockTargetPos)
+    private void Awake()
     {
-        damage = dmg;
-        hitData = data;
+        rb = GetComponent<Rigidbody>();
+    }
+
+    public void Initialize(HitData hitdata, PlayerControl player,Vector3 dir, float spd, Vector3 lockTargetPos)
+    {
+        hitData = hitdata;
+        this.player = player;
         direction = dir.normalized;
         speed = spd;
 
-        rb = GetComponent<Rigidbody>();
+        info = new DamageInfo
+        {
+            damage = ((player.Stats.GetCurrentValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.Stats.GetCurrentValue(StatType.MagicalDamage) * hitData.magicalScale)),
+            hitDirection = transform.forward,
+            throwType = hitData.throwType,
+            stunDuration = hitData.stunDuration,
+            keepInAir = hitData.keepInAir,
+            airLiftForce = hitData.airLiftForce,
+            pushForce = hitData.pushForce,
+            knockDownForce = hitData.knockDownForce,
+            knockDownForwardScale = hitData.knockDownForwardScale,
+            staggerBuild = hitData.staggerCharge
+        };
+
 
         this.lockTargetPos = lockTargetPos;
 
@@ -154,20 +174,6 @@ public class P_Projectile : MonoBehaviour
         if (other.CompareTag("Enemy"))
         {
             IDamageable target = other.GetComponent<IDamageable>();
-
-            DamageInfo info = new DamageInfo
-            {
-                damage = 1,
-                hitDirection = transform.forward,
-                throwType = hitData.throwType,
-                stunDuration = hitData.stunDuration,
-                keepInAir = hitData.keepInAir,
-                airLiftForce = hitData.airLiftForce,
-                pushForce = hitData.pushForce,
-                knockDownForce = hitData.knockDownForce,
-                knockDownForwardScale = hitData.knockDownForwardScale,
-                staggerBuild = hitData.staggerCharge
-            };
 
             if (target != null)
             {
