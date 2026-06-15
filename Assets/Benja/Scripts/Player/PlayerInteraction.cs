@@ -15,6 +15,21 @@ public class PlayerInteraction : MonoBehaviour
 
     private bool interactionLocked;
 
+    private void Start()
+    {
+        // ✅ CAMBIO: Suscribirse en Start() en lugar de OnEnable()
+        // En Start(), GameModeManager ya está inicializado
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.OnGameModeChanged += HandleGameModeChanged;
+            Debug.Log("PlayerInteraction suscrito a GameModeManager");
+        }
+        else
+        {
+            Debug.LogError("GameModeManager no encontrado");
+        }
+    }
+
     private void Update()
     {
         if (interactionLocked)
@@ -74,11 +89,8 @@ public class PlayerInteraction : MonoBehaviour
                 currentInteractable);
         }
     }
-    private void OnEnable()
-    {
-        GameModeManager.Instance.OnGameModeChanged += HandleGameModeChanged;
-    }
 
+    // ✅ CAMBIO: Desuscribirse en OnDisable()
     private void OnDisable()
     {
         if (GameModeManager.Instance != null)
@@ -100,6 +112,7 @@ public class PlayerInteraction : MonoBehaviour
                 break;
         }
     }
+
     public void LockInteraction()
     {
         interactionLocked = true;

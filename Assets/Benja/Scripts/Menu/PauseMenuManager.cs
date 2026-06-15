@@ -6,7 +6,7 @@ public class PauseMenuManager : MonoBehaviour
 {
     [SerializeField] private CanvasGroup pauseMenuCanvasGroup;
     [SerializeField] private GameplaySettingsUI gameplaySettingsPanel;
-
+    
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button mainMenuButton;

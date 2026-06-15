@@ -134,10 +134,15 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         moveSM.Initialize(iddle_State);
         actionSM.Initialize(iddle_AState);
-    }
-    private void OnEnable()
-    {
-        GameModeManager.Instance.OnGameModeChanged += HandleGameModeChanged;    
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.OnGameModeChanged += HandleGameModeChanged;
+            Debug.Log("PlayerControl suscrito");
+        }
+        else
+        {
+            Debug.LogError("GameModeManager no encontrado");
+        }
     }
 
     private void OnDisable()
