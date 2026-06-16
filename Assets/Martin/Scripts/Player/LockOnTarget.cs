@@ -8,7 +8,8 @@ public class LockOnTarget : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Camera mainCamera;
-    [SerializeField] private CinemachineFreeLook freeLook;
+    [SerializeField] private CinemachineCamera cameraRig;
+    [SerializeField] private CinemachineOrbitalFollow orbitalFollow;
     [SerializeField] private PlayerInputHandler input;
     [SerializeField] private CinemachineInputAxisController inputProvider;
 
@@ -25,28 +26,49 @@ public class LockOnTarget : MonoBehaviour
 
     private List<Transform> validTarget = new List<Transform>();
     private int currentIndex = 0;
+
     public bool isTargeting { get; private set; }
     public Transform CurrentTarget => currentTarget;
 
     private Transform currentTarget;
 
-    void Start()
+    private void Awake()
     {
-        mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
-
-        if (aimIcon == null)
+        if (mainCamera == null)
         {
-            //PlayerUI hud = FindFirstObjectByType<PlayerUI>();
-            //if (hud != null)
-            //    aimIcon = hud.aimIcon;
+            mainCamera = GameObject.FindGameObjectWithTag("MainCamera")?.GetComponent<Camera>();
         }
 
-        // Disable default Cinemachine input
-        freeLook.m_XAxis.m_InputAxisName = "";
-        freeLook.m_YAxis.m_InputAxisName = "";
+        if (cameraRig == null)
+        {
+            cameraRig = FindFirstObjectByType<CinemachineCamera>();
+        }
+
+        if (orbitalFollow == null && cameraRig != null)
+        {
+            orbitalFollow = cameraRig.GetComponent<CinemachineOrbitalFollow>();
+        }
+
+        if (inputProvider == null && cameraRig != null)
+        {
+            inputProvider = cameraRig.GetComponent<CinemachineInputAxisController>();
+        }
     }
 
-    void Update()
+    private void Start()
+    {
+        if (aimIcon == null)
+        {
+            P_TargetSelector_UI hud = FindFirstObjectByType<P_TargetSelector_UI>();
+
+            if (hud != null)
+            {
+                aimIcon = hud.aimIcon;
+            }
+        }
+    }
+
+    private void Update()
     {
         HandleLockInput();
 
@@ -84,9 +106,10 @@ public class LockOnTarget : MonoBehaviour
         }
         else
         {
-            // Free look using Input System
-            freeLook.m_XAxis.m_InputAxisValue = input.lookInput.x;
-            freeLook.m_YAxis.m_InputAxisValue = input.lookInput.y;
+            if (inputProvider != null)
+            {
+                inputProvider.enabled = true;
+            }
         }
 
         if (aimIcon != null)
@@ -101,8 +124,7 @@ public class LockOnTarget : MonoBehaviour
         }
     }
 
-
-    void HandleLockInput()
+    private void HandleLockInput()
     {
         if (!input.onLockTarget) return;
 
@@ -116,32 +138,31 @@ public class LockOnTarget : MonoBehaviour
         }
     }
 
-    void UpdateLockCamera()
+    private void UpdateLockCamera()
     {
+        if (currentTarget == null || orbitalFollow == null)
+        {
+            ClearTarget();
+            return;
+        }
 
-        if (!currentTarget) { ClearTarget(); return; }
+        // Use the camera's Follow target as the origin, but do not modify LookAt.
+        Transform followTarget = cameraRig != null && cameraRig.Follow != null? cameraRig.Follow: transform;
 
-        Vector3 dirToTarget = currentTarget.position - freeLook.Follow.position;
+        Vector3 dirToTarget = currentTarget.position - followTarget.position;
 
         float targetX = Mathf.Atan2(dirToTarget.x, dirToTarget.z) * Mathf.Rad2Deg;
-        freeLook.m_XAxis.Value = Mathf.LerpAngle(freeLook.m_XAxis.Value, targetX, Time.deltaTime * lockSpeed);
+        orbitalFollow.HorizontalAxis.Value = Mathf.LerpAngle( orbitalFollow.HorizontalAxis.Value, targetX, Time.deltaTime * lockSpeed);
 
-        // Calculamos el ángulo vertical (pitch)
         float distanceXZ = new Vector2(dirToTarget.x, dirToTarget.z).magnitude;
         float angleY = Mathf.Atan2(dirToTarget.y, distanceXZ) * Mathf.Rad2Deg;
 
-        // Mapeo de ángulo a rango 0-1 del FreeLook
-        // Normalmente: -45 grados es arriba (0), 45 grados es abajo (1). 
-        // Ajusta estos valores según los límites que tengas en el Inspector de tu FreeLook.
         float minAngle = -40f;
         float maxAngle = 40f;
 
-        // InverseLerp nos da un valor de 0 a 1 basado en el ángulo actual
-        // Nota: El eje Y en FreeLook suele estar invertido (0 arriba, 1 abajo)
         float targetYNormalized = Mathf.InverseLerp(maxAngle, minAngle, angleY);
 
-        // Aplicar con suavizado
-        freeLook.m_YAxis.Value = Mathf.Lerp(freeLook.m_YAxis.Value, targetYNormalized, Time.deltaTime * lockSpeed);
+        orbitalFollow.VerticalAxis.Value = Mathf.Lerp(orbitalFollow.VerticalAxis.Value, targetYNormalized, Time.deltaTime * lockSpeed);
     }
 
     private void HandleTargetSwitch()
@@ -170,7 +191,7 @@ public class LockOnTarget : MonoBehaviour
         currentTarget = validTarget[currentIndex];
     }
 
-    void AssignTarget()
+    private void AssignTarget()
     {
         validTarget = GetValidTargets();
 
@@ -178,17 +199,18 @@ public class LockOnTarget : MonoBehaviour
 
         currentIndex = 0;
         currentTarget = validTarget[currentIndex];
-
         isTargeting = true;
 
-        if (inputProvider != null) inputProvider.enabled = false;
+        if (inputProvider != null)
+        {
+            inputProvider.enabled = false;
+        }
     }
 
-    void ClearTarget()
+    private void ClearTarget()
     {
         isTargeting = false;
         currentTarget = null;
-
 
         if (inputProvider != null)
         {
@@ -196,7 +218,7 @@ public class LockOnTarget : MonoBehaviour
         }
     }
 
-    List<Transform> GetValidTargets()
+    private List<Transform> GetValidTargets()
     {
         Collider[] hits = Physics.OverlapSphere(transform.position, maxDistance);
 
@@ -212,7 +234,6 @@ public class LockOnTarget : MonoBehaviour
 
             if (dist < minDistance || dist > maxDistance) continue;
 
-            // BETTER CAMERA CHECK
             Vector3 camForward = mainCamera.transform.forward;
             Vector3 toEnemy = (enemy.position - mainCamera.transform.position).normalized;
 
@@ -220,7 +241,6 @@ public class LockOnTarget : MonoBehaviour
 
             if (dot < 0.5f) continue;
 
-            // SCREEN CHECK
             Vector3 viewportPos = mainCamera.WorldToViewportPoint(enemy.position);
 
             if (viewportPos.z <= 0) continue;
@@ -229,12 +249,10 @@ public class LockOnTarget : MonoBehaviour
 
             if (viewportPos.y < 0.1f || viewportPos.y > 0.9f) continue;
 
-            // OBSTACLE CHECK
             Vector3 origin = mainCamera.transform.position;
             Vector3 targetPos = enemy.position + Vector3.up;
 
             Vector3 dir = (targetPos - origin).normalized;
-
             float rayDistance = Vector3.Distance(origin, targetPos);
 
             if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
@@ -245,27 +263,25 @@ public class LockOnTarget : MonoBehaviour
             targets.Add(enemy);
         }
 
-        // SORT BY SCREEN CENTER
         targets = targets.OrderBy(t =>
         {
             Vector3 viewPos = mainCamera.WorldToViewportPoint(t.position);
-
             return Vector2.Distance(new Vector2(viewPos.x, viewPos.y), new Vector2(0.5f, 0.5f));
         }).ToList();
 
         return targets;
     }
-    bool IsTargetValid(Transform target)
+
+    private bool IsTargetValid(Transform target)
     {
         if (target == null) return false;
 
         return GetValidTargets().Contains(target);
     }
 
-    void OnDrawGizmos()
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, maxDistance);
     }
 }
-

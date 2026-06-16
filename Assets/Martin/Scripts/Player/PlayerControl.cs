@@ -338,7 +338,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
                     DamageInfo info = new DamageInfo
                     {
-                        damage = ((statsManager.GetCurrentValue(StatType.PhysicalDamage) * attack.hitData.physicalScale) + (statsManager.GetCurrentValue(StatType.MagicalDamage) * attack.hitData.magicalScale)),
+                        damage = ((playerStatsManager.GetActualValue(StatType.PhysicalDamage) * attack.hitData.physicalScale) + (playerStatsManager.GetActualValue(StatType.MagicalDamage) * attack.hitData.magicalScale)),
                         hitDirection = hitDir,
                         throwType = attack.hitData.throwType,
                         stunDuration = attack.hitData.stunDuration,
