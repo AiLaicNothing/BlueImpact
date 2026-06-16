@@ -6,9 +6,6 @@ using UnityEngine.UI;
 
 public class CheckpointStatsPanel : MonoBehaviour
 {
-    [Header("Player")]
-    [SerializeField] private PlayerStatsManager playerStats;
-
     [Header("Header")]
     [SerializeField] private Image characterIcon;
     [SerializeField] private TMP_Text availablePointsText;
@@ -25,17 +22,12 @@ public class CheckpointStatsPanel : MonoBehaviour
     [Header("UI")]
     [SerializeField] private EventSystem eventSystem;
 
+    private PlayerStatsManager playerStats;  // ✅ SIN SERIALIZEFIELD
     private readonly List<StatEntryUI> entries = new();
-
     public StatsModificationSession Session { get; private set; }
 
     private void Awake()
     {
-        if (playerStats == null)
-        {
-            playerStats = FindFirstObjectByType<PlayerStatsManager>();
-        }
-
         if (eventSystem == null)
             eventSystem = EventSystem.current;
 
@@ -44,27 +36,58 @@ public class CheckpointStatsPanel : MonoBehaviour
         cancelButton.onClick.AddListener(CancelChanges);
     }
 
-    private void Back()
-    {
-        Session.CancelChanges();
-        CheckpointMenuUI.Instance.ShowMainPanel();
-
-        // ✅ VOLVER A SELECCIONAR EN EL MENÚ ANTERIOR
-        if (eventSystem != null)
-        {
-            eventSystem.SetSelectedGameObject(null);
-        }
-    }
 
     private void OnDisable()
     {
+        // ✅ DESUSCRIBIRSE
+        PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
+
         Session = null;
         ClearEntries();
     }
 
+    private void OnEnable()
+    {
+        Debug.Log("✅ CheckpointStatsPanel.OnEnable - Suscribiendo al evento");
+        PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
+    }
+
+    private void OnPlayerSpawned(PlayerControl player)
+    {
+        Debug.Log("✅ CheckpointStatsPanel.OnPlayerSpawned - Recibí el evento");
+        playerStats = player.GetComponent<PlayerStatsManager>();
+        Debug.Log($"playerStats guardado: {(playerStats != null ? "✅" : "❌")}");
+    }
+
+    private void Back()
+    {
+        if (Session != null)
+            Session.CancelChanges();
+
+        CheckpointMenuUI.Instance.ShowMainPanel();
+
+        if (eventSystem != null)
+            eventSystem.SetSelectedGameObject(null);
+    }
+
     public void OpenSession()
     {
-        Debug.Log("OpenSession");
+        // ✅ SI NO TIENE playerStats, BUSCAR
+        if (playerStats == null)
+        {
+            playerStats = FindFirstObjectByType<PlayerStatsManager>();
+            Debug.LogWarning("⚠️ playerStats era null, lo busqué dinámicamente");
+        }
+
+        if (playerStats == null)
+        {
+            Debug.LogError("❌ PlayerStatsManager no encontrado");
+            return;
+        }
+
+    
+
+    Debug.Log("OpenSession");
 
         playerStats.EnsureInitialized();
         Debug.Log($"Stats encontradas: {playerStats.GetAllStats().Count}");
@@ -76,7 +99,6 @@ public class CheckpointStatsPanel : MonoBehaviour
         CreateEntries();
         Refresh();
 
-        // ✅ SELECCIONAR PRIMER STAT O BOTÓN PARA GAMEPAD
         if (eventSystem != null && entries.Count > 0)
         {
             var firstStat = entries[0].GetComponentInChildren<Button>();
@@ -111,17 +133,13 @@ public class CheckpointStatsPanel : MonoBehaviour
     public void TryIncrease(StatDefinition stat)
     {
         if (Session.IncreaseStat(stat))
-        {
             Refresh();
-        }
     }
 
     public void TryDecrease(StatDefinition stat)
     {
         if (Session.UndoIncrease(stat))
-        {
             Refresh();
-        }
     }
 
     private void ConfirmChanges()
