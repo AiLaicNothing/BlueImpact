@@ -343,6 +343,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
                         throwType = attack.hitData.throwType,
                         stunDuration = attack.hitData.stunDuration,
                         keepInAir = attack.hitData.keepInAir,
+                        airHangDuration = attack.hitData.airHangDuration,
                         airLiftForce = attack.hitData.airLiftForce,
                         pushForce = attack.hitData.pushForce,
                         knockDownForce = attack.hitData.knockDownForce,

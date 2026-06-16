@@ -47,6 +47,7 @@ public class FatuoFire_Skill : Skill
                     throwType = hitData.throwType,
                     stunDuration = hitData.stunDuration,
                     keepInAir = hitData.keepInAir,
+                    airHangDuration = hitData.airHangDuration,
                     airLiftForce = hitData.airLiftForce,
                     pushForce = hitData.pushForce,
                     knockDownForce = hitData.knockDownForce,

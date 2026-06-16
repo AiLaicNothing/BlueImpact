@@ -31,6 +31,7 @@ public class SuperNova_Orb : MonoBehaviour
             stunDuration = hitData.stunDuration,
             keepInAir = hitData.keepInAir,
             airLiftForce = hitData.airLiftForce,
+            airHangDuration = hitData.airHangDuration,
             pushForce = hitData.pushForce,
             knockDownForce = hitData.knockDownForce,
             knockDownForwardScale = hitData.knockDownForwardScale,
