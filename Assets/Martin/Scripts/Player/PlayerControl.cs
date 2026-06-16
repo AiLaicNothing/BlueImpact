@@ -52,6 +52,13 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     private List<Skill> unlockedSkills = new List<Skill>();
 
+    [Header("Audios")]
+    [SerializeField] public AudioSource audioLoopSource;
+    [SerializeField] public AudioClip walk;
+    [SerializeField] public AudioClip dash;
+    [SerializeField] public AudioClip jump;
+    [SerializeField] public AudioClip onHit;
+
     private void InitializeSkills()
     {
         // Si tienes skills en el array, considéralas desbloqueadas
@@ -773,6 +780,30 @@ public class PlayerControl : MonoBehaviour, IDamageable
     private void OnDead()
     {
         isDead = true;
+    }
+
+    public void PlayAudio(AudioClip audio, float volume = 1)
+    {
+        Audio_Manager.Instance.PlayAudio(audio, volume);
+    }
+
+    public void PlayConstantAudio(AudioClip audio, float volume, bool ended)
+    {
+        if (!ended)
+        {
+            if (rb.linearVelocity.magnitude < 0.01f) return;
+
+            if (audioLoopSource.isPlaying) return;
+
+            audioLoopSource.clip = audio;
+            audioLoopSource.loop = true;
+            audioLoopSource.volume = volume;
+            audioLoopSource.Play();
+        }
+        else
+        {
+            audioLoopSource.Stop();
+        }
     }
 
     //===================================================================================

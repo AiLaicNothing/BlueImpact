@@ -23,6 +23,8 @@ public class P_Dash_AState : PlayerState
         dashSpeed = player.DashDistance / player.DashDuration;
         player.isPerformingAct = true;
 
+        player.PlayAudio(player.dash, 1f);
+
         Vector2 input = player.Input.moveInput;
         if (input.magnitude > 0.1f)
         {

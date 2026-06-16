@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 4870464349737039380}
   - component: {fileID: 7311357746741640411}
   - component: {fileID: 5897453960812039193}
+  - component: {fileID: 7755962749448472070}
   m_Layer: 7
   m_Name: Lune
   m_TagString: Player
@@ -435,6 +436,11 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   playerInput: {fileID: 3680218208860738297}
+  audioLoopSource: {fileID: 7755962749448472070}
+  walk: {fileID: 8300000, guid: 4f74f07e7432acd4da9d60783631085f, type: 3}
+  dash: {fileID: 8300000, guid: d85170ea40d4188428b8b35aeb2db31c, type: 3}
+  jump: {fileID: 0}
+  onHit: {fileID: 0}
   showDebug: 1
   hitboxPrefab: {fileID: 65547742025389114, guid: b60a9548e8b1aba4497aeaf2c3ebe7a9, type: 3}
   hasUsedAirAttack: 0
@@ -483,6 +489,103 @@ MonoBehaviour:
   interactableLayer:
     serializedVersion: 2
     m_Bits: 16384
+--- !u!82 &7755962749448472070
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 35960284782305832}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1272966317009081115
 GameObject:
   m_ObjectHideFlags: 0
@@ -639,8 +742,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4757472050106491939}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.050802335, y: -4.426417e-15, z: 1.2144762e-16, w: 0.9987088}
-  m_LocalPosition: {x: 0, y: 1.5, z: -5}
+  m_LocalRotation: {x: -0.00097102433, y: 0.9985232, z: -0.019062208, w: -0.050864533}
+  m_LocalPosition: {x: 0.4857512, y: 1.172581, z: 4.7555265}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -723,7 +826,7 @@ MonoBehaviour:
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
-    Value: 0
+    Value: -174.16777
     Center: 0
     Range: {x: -180, y: 180}
     Wrap: 1
@@ -733,7 +836,7 @@ MonoBehaviour:
       Time: 2
     Restrictions: 0
   VerticalAxis:
-    Value: 17.5
+    Value: 11.115658
     Center: 17.5
     Range: {x: -10, y: 45}
     Wrap: 0
@@ -859,7 +962,7 @@ MonoBehaviour:
         LegacyInput: 
         LegacyGain: 1
         CancelDeltaTime: 0
-      InputValue: 0
+      InputValue: -0
       Driver:
         AccelTime: 0.2
         DecelTime: 0.2
@@ -872,7 +975,7 @@ MonoBehaviour:
         LegacyInput: 
         LegacyGain: 1
         CancelDeltaTime: 0
-      InputValue: 0
+      InputValue: -0
       Driver:
         AccelTime: 0
         DecelTime: 0

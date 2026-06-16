@@ -29,6 +29,8 @@ public class P_Move_State : PlayerState
 
     public override void OnUpdate()
     {
+        player.PlayConstantAudio(player.walk, 1, false);
+
         if (!player.IsGrounded)
         {
             player.ChangeState(player.fall_State);
@@ -46,5 +48,10 @@ public class P_Move_State : PlayerState
             player.ChangeState(player.jump_State);
             return;
         }
+    }
+
+    public override void OnExit()
+    {
+        player.PlayConstantAudio(player.walk, 1, true);
     }
 }
