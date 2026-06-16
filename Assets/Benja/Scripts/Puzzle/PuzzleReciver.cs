@@ -1,28 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Cinemachine;
-
 using System;
 using System.Xml.Linq;
-
 
 public class PuzzleReceiver : MonoBehaviour
 {
     [System.Serializable]
+
     public class ActivatorRequirement
     {
+
         [Header("Activator")]
         public MonoBehaviour activatorObject;
 
         [Header("Required State")]
         public bool requiredState = true;
-
-
     }
 
     [Header("Save System")]
     [SerializeField] private string receiverID;
-
     public string ReceiverID => receiverID;
 
     public enum LogicMode
@@ -38,81 +35,25 @@ public class PuzzleReceiver : MonoBehaviour
     [SerializeField]
     private List<ActivatorRequirement> requirements = new();
 
-    // =====================================================
-    // IMPORTANTE:
-    // Cambiado de MonoBehaviour -> PuzzleDoor
-    // para evitar problemas de cast con interfaces.
-    // =====================================================
-
     [Header("Targets")]
     [SerializeField]
     private List<PuzzleDoor> targets = new();
 
-    [Header("Camera")]
-#if CINEMACHINE_V3 || CINEMACHINE_3_0_0_OR_NEWER
-    [SerializeField] private CinemachineCamera puzzleCamera;
-#else
-    [SerializeField] private CinemachineVirtualCameraBase puzzleCamera;
-#endif
-
-    [SerializeField] private int activePriority = 20;
-    [SerializeField] private int inactivePriority = 0;
-    [SerializeField] private float cameraDuration = 2.5f;
-    [SerializeField] private bool cameraTriggerOnlyOnce = true;
-
-    // =====================================================
-    // LEGACY SYSTEM
-    // =====================================================
+    [Header("Camera - On Activation")]
+    [SerializeField] private bool useCameraOnActivation = true;  // ✅ TOGGLE
+    [SerializeField] private CameraRequest activationCamera;
 
     private readonly List<IActivator> _activators = new();
-
-    // =====================================================
-
     private bool _currentState = false;
 
     public bool IsActive => _currentState;
-
-    private bool _cameraHasTriggered = false;
-
-    private Coroutine _cameraRoutine;
 
     private void Awake()
     {
         _currentState = false;
         Debug.Log(
             $"[PuzzleReceiver] Requirements count = {requirements.Count}");
-
-        if (puzzleCamera != null)
-            puzzleCamera.Priority = inactivePriority;
-
-        //// Convert MonoBehaviour -> IActivator
-        //foreach (var req in requirements)
-        //{
-        //    Debug.Log(
-        //        $"[PuzzleReceiver] Requirement loaded -> " +
-        //        $"{req.activatorObject}");
-
-
-        //    if (req.activator == null)
-        //    {
-        //        Debug.LogWarning(
-        //            $"[PuzzleReceiver] {req.activatorObject} NO implementa IActivator");
-        //    }
-        //}
-
-        //Debug.Log(
-        //    $"[PuzzleReceiver] Targets count = {targets.Count}");
-
-        //foreach (var target in targets)
-        //{
-        //    Debug.Log(
-        //        $"[PuzzleReceiver] Target loaded -> {target}");
-        //}
     }
-
-    // =====================================================
-    // LEGACY SUPPORT
-    // =====================================================
 
     public void RegisterActivator(IActivator activator)
     {
@@ -120,12 +61,8 @@ public class PuzzleReceiver : MonoBehaviour
             _activators.Add(activator);
     }
 
-    // =====================================================
-
     public void Evaluate()
     {
-
-
         bool shouldBeActive;
 
         // =====================================================
@@ -253,10 +190,11 @@ public class PuzzleReceiver : MonoBehaviour
             }
         }
 
+        // ✅ TRIGGER CAMERA CUANDO SE ACTIVA
         if (_currentState)
         {
             Debug.Log(
-                "[PuzzleReceiver] Triggering camera");
+                "[PuzzleReceiver] Triggering activation camera");
 
             TriggerCamera();
         }
@@ -264,41 +202,24 @@ public class PuzzleReceiver : MonoBehaviour
 
     private void TriggerCamera()
     {
-        if (puzzleCamera == null)
+        // ✅ SI NO QUIERE USAR CÁMARAS, SALIR SIN WARNING
+        if (!useCameraOnActivation)
             return;
 
-        if (cameraTriggerOnlyOnce &&
-            _cameraHasTriggered)
+        if (activationCamera == null)
+        {
+            Debug.LogWarning("[PuzzleReceiver] Activation camera asignado pero NULL");
             return;
+        }
 
-        _cameraHasTriggered = true;
-
-        if (_cameraRoutine != null)
-            StopCoroutine(_cameraRoutine);
-
-        _cameraRoutine =
-            StartCoroutine(CameraRoutine());
+        if (CameraEventRelay.Instance != null)
+        {
+            CameraEventRelay.Instance.Play(activationCamera);
+            Debug.Log("[PuzzleReceiver] Camera played");
+        }
     }
-
-    private System.Collections.IEnumerator CameraRoutine()
-    {
-        puzzleCamera.Priority = activePriority;
-
-        yield return new WaitForSeconds(cameraDuration);
-
-        puzzleCamera.Priority = inactivePriority;
-
-        _cameraRoutine = null;
-    }
-
-    /// <summary>
-    /// Restauración directa desde save.
-    /// SOLO SERVIDOR.
-    /// </summary>
     public void SetStateDirectly(bool active)
     {
-
-
         _currentState = active;
 
         foreach (var target in targets)
