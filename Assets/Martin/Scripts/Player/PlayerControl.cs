@@ -65,6 +65,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     private Camera mainCam;
     private PlayerInputHandler input;
     private LockOnTarget lockOnTarget;
+    private P_Skill_UI asd;
 
     #region StateMachine References
 
@@ -121,6 +122,10 @@ public class PlayerControl : MonoBehaviour, IDamageable
         {
             playerStatsManager.EnsureInitialized();
         }
+
+        asd = FindFirstObjectByType<P_Skill_UI>();
+
+        asd.RefreshIcons();
     }
 
     private void Start()

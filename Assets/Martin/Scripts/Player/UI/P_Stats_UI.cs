@@ -9,16 +9,26 @@ public class P_Stats_UI : MonoBehaviour
 
     private PlayerControl player;
     private PlayerStatsManager statsManager;
-
-    private void Awake()
-    {
-        player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerControl>();
-        statsManager = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerStatsManager>();
-    }
+    private bool hasFoundPlayer;
 
     private void Update()
     {
+        FindPlayer();
         UpdateSliders();
+    }
+
+    private void FindPlayer()
+    {
+        if (!hasFoundPlayer)
+        {
+            player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerControl>();
+            statsManager = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerStatsManager>();
+
+            if (player != null && statsManager != null )
+            {
+                hasFoundPlayer = true;
+            }
+        }
     }
 
     private void UpdateSliders()

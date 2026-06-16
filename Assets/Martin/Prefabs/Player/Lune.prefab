@@ -334,6 +334,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: 530285e3-5a88-4fef-a691-58d63c67ed7a
     m_ActionName: 'Player/Skill4[/Keyboard/4]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 8328033608135414242}
+        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
+        m_MethodName: OnLockTarget
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 8915c505-460c-480d-8344-120a4e50ebbc
+    m_ActionName: 'Player/LockOnTarget[/Keyboard/q]'
   m_NeverAutoSwitchControlSchemes: 1
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: Player
@@ -427,13 +443,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 35960284782305832}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 939a046e07e63df45a30bbcc17c970f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LockOnTarget
   mainCamera: {fileID: 0}
-  freeLook: {fileID: 0}
+  cameraRig: {fileID: 1005427704291705290}
+  orbitalFollow: {fileID: 0}
   input: {fileID: 8328033608135414242}
   inputProvider: {fileID: 4171898914765419617}
   aimIcon: {fileID: 0}
