@@ -119,7 +119,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public bool isPerformingAct = false;
     public bool blockVelocity = false;
     public bool isDead { get; private set; }
-
+    public CharacterInfo CurrentCharacterInfo { get; set; }
     private PlayerStatsManager playerStatsManager;
 
     private Rigidbody rb;
@@ -422,7 +422,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
                     DamageInfo info = new DamageInfo
                     {
-                        damage = ((playerStatsManager.GetActualValue(StatType.PhysicalDamage) * attack.hitData.physicalScale) + (playerStatsManager.GetActualValue(StatType.MagicalDamage) * attack.hitData.magicalScale)),
+                        damage = ((playerStatsManager.GetActualValue(StatType.DañoFísico) * attack.hitData.physicalScale) + (playerStatsManager.GetActualValue(StatType.DañoMágico) * attack.hitData.magicalScale)),
                         hitDirection = hitDir,
                         throwType = attack.hitData.throwType,
                         stunDuration = attack.hitData.stunDuration,
@@ -760,7 +760,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         if (isDead) return;
 
-        playerStatsManager.Consume(StatType.Health, (int)info.damage);
+        playerStatsManager.Consume(StatType.Vida, (int)info.damage);
 
         if (playerStatsManager.IsDead())
         {
@@ -774,7 +774,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         if (isDead) return;
 
-        playerStatsManager.Restore(StatType.Health, amount);
+        playerStatsManager.Restore(StatType.Vida, amount);
     }
 
     private void OnDead()

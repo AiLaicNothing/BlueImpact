@@ -27,7 +27,8 @@ public class PlayerSpawn_Manager : MonoBehaviour
         var playerControl = playerInstance.GetComponent<PlayerControl>();
         if (playerControl != null)
         {
-            // ✅ DISPARAR EVENTO
+            // ✅ GUARDAR LA REFERENCIA
+            playerControl.CurrentCharacterInfo = currentCharacterInfo;
             OnPlayerSpawned?.Invoke(playerControl);
         }
     }

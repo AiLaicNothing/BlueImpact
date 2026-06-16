@@ -39,7 +39,7 @@ public class FirstJudgmentSword : MonoBehaviour
 
         info = new DamageInfo
         {
-            damage = ((player.PlayerStatsManager.GetActualValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.MagicalDamage) * hitData.magicalScale)),
+            damage = ((player.PlayerStatsManager.GetActualValue(StatType.DañoFísico) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.DañoFísico) * hitData.magicalScale)),
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,
             keepInAir = hitData.keepInAir,

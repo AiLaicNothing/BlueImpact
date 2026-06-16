@@ -10,14 +10,14 @@ public class P_Dash_AState : PlayerState
 
     public override void OnEnter()
     {
-        if (!player.PlayerStatsManager.CanConsume(StatType.Stamina, (int)player.DashCost))
+        if (!player.PlayerStatsManager.CanConsume(StatType.Estamina, (int)player.DashCost))
         {
             Debug.Log("No hay stamina para dash");
             player.ChangeActionState(player.iddle_AState);
             return;
         }
 
-        player.PlayerStatsManager.Consume(StatType.Stamina, (int)player.DashCost);
+        player.PlayerStatsManager.Consume(StatType.Estamina, (int)player.DashCost);
 
         timer = player.DashDuration;
         dashSpeed = player.DashDistance / player.DashDuration;

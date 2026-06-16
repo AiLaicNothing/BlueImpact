@@ -16,11 +16,11 @@ public class StatsUIDisplay : MonoBehaviour
     private void Start()
     {
         // Inicializar displays
-        healthDisplay.Initialize(StatType.Health, "Salud");
-        staminaDisplay.Initialize(StatType.Stamina, "Resistencia");
-        manaDisplay.Initialize(StatType.Mana, "Maná");
-        physicalDamageDisplay.Initialize(StatType.PhysicalDamage, "Daño Físico");
-        magicalDamageDisplay.Initialize(StatType.MagicalDamage, "Daño Mágico");
+        healthDisplay.Initialize(StatType.Vida, "Salud");
+        staminaDisplay.Initialize(StatType.Estamina, "Resistencia");
+        manaDisplay.Initialize(StatType.Maná, "Maná");
+        physicalDamageDisplay.Initialize(StatType.DañoFísico, "Daño Físico");
+        magicalDamageDisplay.Initialize(StatType.DañoMágico, "Daño Mágico");
     }
 
     private void Update()

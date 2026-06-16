@@ -49,7 +49,7 @@ public class StatDisplayItem : MonoBehaviour
         if (statValueText != null)
         {
             // Si es un stat regenerable (Health, Stamina, Mana)
-            if (statType == StatType.Health || statType == StatType.Stamina || statType == StatType.Mana)
+            if (statType == StatType.Vida || statType == StatType.Estamina || statType == StatType.Maná)
             {
                 statValueText.text = $"{info.currentValue}/{info.maxValue}";
             }
@@ -63,7 +63,7 @@ public class StatDisplayItem : MonoBehaviour
         // Actualizar porcentaje
         if (statPercentText != null)
         {
-            if (statType == StatType.Health || statType == StatType.Stamina || statType == StatType.Mana)
+            if (statType == StatType.Vida || statType == StatType.Estamina || statType == StatType.Maná)
             {
                 statPercentText.text = $"{info.percentage * 100:F0}%";
             }
@@ -78,11 +78,11 @@ public class StatDisplayItem : MonoBehaviour
     {
         return type switch
         {
-            StatType.Health => healthColor,
-            StatType.Stamina => staminaColor,
-            StatType.Mana => manaColor,
-            StatType.PhysicalDamage => damageColor,
-            StatType.MagicalDamage => damageColor,
+            StatType.Vida => healthColor,
+            StatType.Estamina => staminaColor,
+            StatType.Maná => manaColor,
+            StatType.DañoFísico => damageColor,
+            StatType.DañoMágico => damageColor,
             _ => Color.white
         };
     }

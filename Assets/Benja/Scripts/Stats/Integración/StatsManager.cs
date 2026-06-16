@@ -68,14 +68,14 @@ public class StatsManager : MonoBehaviour
     {
         if (stats == null || stats.Count == 0) return;
 
-        if (stats.ContainsKey(StatType.Stamina))
-            UpdateRegeneration(StatType.Stamina, staminaRegenRate, staminaRegenDelay);
+        if (stats.ContainsKey(StatType.Estamina))
+            UpdateRegeneration(StatType.Estamina, staminaRegenRate, staminaRegenDelay);
 
-        if (stats.ContainsKey(StatType.Mana))
-            UpdateRegeneration(StatType.Mana, manaRegenRate, manaRegenDelay);
+        if (stats.ContainsKey(StatType.Maná))
+            UpdateRegeneration(StatType.Maná, manaRegenRate, manaRegenDelay);
 
-        if (stats.ContainsKey(StatType.Health))
-            UpdateRegeneration(StatType.Health, healthRegenRate, healthRegenDelay);
+        if (stats.ContainsKey(StatType.Vida))
+            UpdateRegeneration(StatType.Vida, healthRegenRate, healthRegenDelay);
     }
 
     private void UpdateRegeneration(StatType statType, float regenRate, float regenDelay)
@@ -241,18 +241,18 @@ public class StatsManager : MonoBehaviour
     {
         return statName switch
         {
-            "Health" => StatType.Health,
-            "PhysicalDamage" => StatType.PhysicalDamage,
-            "MagicalDamage" => StatType.MagicalDamage,
-            "Stamina" => StatType.Stamina,
-            "Mana" => StatType.Mana,
-            _ => StatType.Health
+            "Health" => StatType.Vida,
+            "PhysicalDamage" => StatType.DañoFísico,
+            "MagicalDamage" => StatType.DañoMágico,
+            "Stamina" => StatType.Estamina,
+            "Mana" => StatType.Maná,
+            _ => StatType.Vida
         };
     }
 
     public bool IsDead()
     {
-        return GetCurrentValue(StatType.Health) <= 0;
+        return GetCurrentValue(StatType.Vida) <= 0;
     }
 }
 

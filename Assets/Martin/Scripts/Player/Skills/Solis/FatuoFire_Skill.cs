@@ -42,13 +42,13 @@ public class FatuoFire_Skill : Skill
             {
                 DamageInfo info = new DamageInfo
                 {
-                    damage = ((player.PlayerStatsManager.GetActualValue(StatType.PhysicalDamage) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.MagicalDamage) * hitData.magicalScale)),
+                    damage = ((player.PlayerStatsManager.GetActualValue(StatType.DañoFísico) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.DañoMágico) * hitData.magicalScale)),
                     hitDirection = player.Model.forward,
                     throwType = hitData.throwType,
                     stunDuration = hitData.stunDuration,
                     keepInAir = hitData.keepInAir,
                     airHangDuration = hitData.airHangDuration,
-                    airLiftForce = hitData.airLiftForce,
+                    airLiftForce = hitData.airLiftForce,    
                     pushForce = hitData.pushForce,
                     knockDownForce = hitData.knockDownForce,
                     knockDownForwardScale = hitData.knockDownForwardScale,

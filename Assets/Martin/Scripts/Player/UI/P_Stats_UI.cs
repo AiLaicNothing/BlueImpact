@@ -43,17 +43,17 @@ public class P_Stats_UI : MonoBehaviour
 
     private void UpdateHp()
     {
-        hpSlider.value = (float)statsManager.GetActualValue(StatType.Health) / statsManager.GetMaxValue(StatType.Health);
+        hpSlider.value = (float)statsManager.GetActualValue(StatType.Vida) / statsManager.GetMaxValue(StatType.Vida);
     }
 
     private void UpdateStamina()
     {
-        staminaSlider.value = (float)statsManager.GetActualValue(StatType.Stamina) / statsManager.GetMaxValue(StatType.Stamina);
+        staminaSlider.value = (float)statsManager.GetActualValue(StatType.Estamina) / statsManager.GetMaxValue(StatType.Estamina);
     }
 
     private void UpdateMana()
     {
-        manaSlider.value = (float)statsManager.GetActualValue(StatType.Mana) / statsManager.GetMaxValue(StatType.Mana);
+        manaSlider.value = (float)statsManager.GetActualValue(StatType.Maná) / statsManager.GetMaxValue(StatType.Maná);
     }
 
     public void ShowUI()

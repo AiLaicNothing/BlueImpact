@@ -43,9 +43,9 @@ public class PlayerStatsManager : MonoBehaviour
         if (runtimeStats == null) return;
 
         // ✅ Actualizar regeneración
-        UpdateRegeneration(StatType.Stamina, staminaRegenRate, staminaRegenDelay);
-        UpdateRegeneration(StatType.Mana, manaRegenRate, manaRegenDelay);
-        UpdateRegeneration(StatType.Health, healthRegenRate, healthRegenDelay);
+        UpdateRegeneration(StatType.Estamina, staminaRegenRate, staminaRegenDelay);
+        UpdateRegeneration(StatType.Maná, manaRegenRate, manaRegenDelay);
+        UpdateRegeneration(StatType.Vida, healthRegenRate, healthRegenDelay);
     }
 
     public void EnsureInitialized()
@@ -236,7 +236,7 @@ public class PlayerStatsManager : MonoBehaviour
     /// </summary>
     public bool IsDead()
     {
-        StatDefinition healthDef = GetStatDefinition(StatType.Health);
+        StatDefinition healthDef = GetStatDefinition(StatType.Vida);
         if (healthDef == null) return false;
 
         return actualValues[healthDef] <= 0;
