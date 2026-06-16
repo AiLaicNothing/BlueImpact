@@ -107,7 +107,7 @@ public class SkillManagementPanel : MonoBehaviour
 
     private void RefreshAvailableSkills()
     {
-        if (player == null) return;  // ✅ AGREGA ESTO
+        if (player == null) return;
 
         foreach (Transform child in availableSkillsParent)
             Destroy(child.gameObject);
@@ -115,16 +115,32 @@ public class SkillManagementPanel : MonoBehaviour
         skillButtons.Clear();
 
         var unlockedSkills = player.GetUnlockedSkills();
+
         foreach (var skill in unlockedSkills)
         {
+            // ✅ VERIFICAR SI YA ESTÁ EQUIPADA
+            bool equipped = false;
+            for (int i = 0; i < 4; i++)
+            {
+                if (player.GetEquippedSkill(i) == skill)
+                {
+                    equipped = true;
+                    break;
+                }
+            }
+
+            // ✅ SI YA ESTÁ EQUIPADA, NO MOSTRARLA
+            if (equipped)
+                continue;
+
+            // SOLO CREAR EL BOTÓN SI NO ESTÁ EQUIPADA
             var buttonObj = Instantiate(skillButtonPrefab, availableSkillsParent);
-            var skillButton = buttonObj.GetComponent<SkillButton>();  // ✅ USA SKILLBUTTON
+            var skillButton = buttonObj.GetComponent<SkillButton>();
 
             if (skillButton != null)
             {
-                skillButton.Initialize(skill, this);  // ✅ PASAR SKILL Y PANEL
+                skillButton.Initialize(skill, this);
             }
-            // ... resto del código
         }
     }
 

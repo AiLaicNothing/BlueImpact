@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 public class SkillButton : MonoBehaviour
 {
+    [SerializeField] private Image skillIcon;  // ✅ SERIALFIELD
+
     private Skill skill;
     private SkillManagementPanel panel;
     private Button button;
@@ -15,10 +17,11 @@ public class SkillButton : MonoBehaviour
 
         button.onClick.AddListener(OnClick);
 
-        // Asignar sprite
-        var image = GetComponent<Image>();
-        if (image != null)
-            image.sprite = skill.skillSprite;
+        // ✅ USAR EL SERIALFIELD
+        if (skillIcon != null)
+            skillIcon.sprite = skill.skillSprite;
+        else
+            Debug.LogWarning("⚠️ skillIcon no asignado en el prefab");
     }
 
     private void OnClick()
