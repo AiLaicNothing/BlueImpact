@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 7311357746741640411}
   - component: {fileID: 5897453960812039193}
   - component: {fileID: 7755962749448472070}
+  - component: {fileID: 7684274174462013518}
   m_Layer: 7
   m_Name: Lune
   m_TagString: Player
@@ -586,6 +587,20 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &7684274174462013518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 35960284782305832}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d37021e02288674fb398f7f863f6650, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraManager
+  inputAxisController: {fileID: 4171898914765419617}
+  orbitalFollow: {fileID: 2157764920331437879}
 --- !u!1 &1272966317009081115
 GameObject:
   m_ObjectHideFlags: 0

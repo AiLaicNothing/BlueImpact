@@ -3,44 +3,35 @@ using UnityEngine;
 
 public class CameraManager : MonoBehaviour
 {
-    private CinemachineInputAxisController axisController;
-
-    private void Awake()
-    {
-        axisController =
-            FindFirstObjectByType<CinemachineInputAxisController>();
-    }
+    [SerializeField] private CinemachineInputAxisController inputAxisController;
+    [SerializeField] private CinemachineOrbitalFollow orbitalFollow;
 
     private void Start()
     {
-        // ✅ CAMBIO: Suscribirse en Start() en lugar de OnEnable()
-        // En Start(), GameModeManager ya está inicializado
         if (GameModeManager.Instance != null)
         {
             GameModeManager.Instance.OnGameModeChanged += HandleGameModeChanged;
-            Debug.Log("CameraManager suscrito a GameModeManager");
-        }
-        else
-        {
-            Debug.LogError("GameModeManager no encontrado");
+            Debug.Log("✅ CameraManager suscrito");
         }
     }
 
-    // ✅ CAMBIO: Desuscribirse en OnDisable()
     private void OnDisable()
     {
         if (GameModeManager.Instance != null)
-        {
             GameModeManager.Instance.OnGameModeChanged -= HandleGameModeChanged;
-        }
     }
 
     private void HandleGameModeChanged(GameMode mode)
     {
-        if (axisController == null)
-            return;
+        bool isGameplay = mode == GameMode.Gameplay;
 
-        axisController.enabled =
-            mode == GameMode.Gameplay;
+        Debug.Log($"🎮 GameMode: {mode} | Movimiento: {(isGameplay ? "ACTIVO" : "BLOQUEADO")}");
+
+        // ✅ DESHABILITAR SOLO EL MOVIMIENTO
+        if (inputAxisController != null)
+            inputAxisController.enabled = isGameplay;
+
+        if (orbitalFollow != null)
+            orbitalFollow.enabled = isGameplay;
     }
 }
