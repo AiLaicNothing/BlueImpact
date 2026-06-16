@@ -85,8 +85,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected virtual void Awake()
     {
-        player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerControl>();
-
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();
         agent = GetComponent<NavMeshAgent>();
@@ -113,6 +111,11 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected virtual void Update()
     {
+        if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerControl>();
+        }
+
         if (isDead) return;
 
         CheckGround();
