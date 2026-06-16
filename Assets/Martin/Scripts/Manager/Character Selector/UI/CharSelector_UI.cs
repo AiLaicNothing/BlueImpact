@@ -10,6 +10,9 @@ public class CharSelector_UI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI description;
     [SerializeField] private Image charImage;
 
+    [Header("Sfx")]
+    [SerializeField] private AudioClip music;
+
     [Header("Buttons")]
     [SerializeField] private Button[] charButtons;
     [SerializeField] private Button confirmButton;
@@ -35,6 +38,7 @@ public class CharSelector_UI : MonoBehaviour
             panel.SetActive(true);
         }
 
+        Audio_Manager.Instance.ChangeMusic(music, 0.15f);
         SelectCharacter(0);
         SetButtons();
     }

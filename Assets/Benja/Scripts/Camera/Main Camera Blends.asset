@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Main Camera Blends
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineBlenderSettings
   CustomBlends:
-  - From: Player Camera
+  - From: Player_FreeLook_Cam
     To: StartPuzzle
     Blend:
       Style: 0
@@ -24,8 +24,8 @@ MonoBehaviour:
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - From: StartPuzzle
-    To: Player Camera
+  - From: Player_FreeLook_Cam
+    To: StartPuzzle
     Blend:
       Style: 0
       Time: 2
@@ -35,18 +35,7 @@ MonoBehaviour:
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - From: CompletePuzzle
-    To: Player Camera
-    Blend:
-      Style: 0
-      Time: 2
-      CustomCurve:
-        serializedVersion: 2
-        m_Curve: []
-        m_PreInfinity: 0
-        m_PostInfinity: 0
-        m_RotationOrder: 0
-  - From: Player Camera
+  - From: Player_FreeLook_Cam
     To: CompletePuzzle
     Blend:
       Style: 0
@@ -57,8 +46,8 @@ MonoBehaviour:
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - From: DoorPuzzle
-    To: Player Camera
+  - From: Player_FreeLook_Cam
+    To: DoorPuzzle
     Blend:
       Style: 0
       Time: 2
@@ -68,8 +57,30 @@ MonoBehaviour:
         m_PreInfinity: 0
         m_PostInfinity: 0
         m_RotationOrder: 0
-  - From: Player Camera
-    To: DoorPuzzle
+  - From: CompletePuzzle
+    To: Player_FreeLook_Cam
+    Blend:
+      Style: 0
+      Time: 2
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 0
+  - From: DoorPuzzle
+    To: Player_FreeLook_Cam
+    Blend:
+      Style: 0
+      Time: 2
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 0
+  - From: StartPuzzle
+    To: Player_FreeLook_Cam
     Blend:
       Style: 0
       Time: 2
