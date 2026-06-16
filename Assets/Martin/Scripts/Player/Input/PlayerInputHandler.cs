@@ -18,6 +18,36 @@ public class PlayerInputHandler : MonoBehaviour
     public bool onMelee { get; private set; }
     public bool skill1Pressed { get; private set; }
     public int skillPressedIndex { get; private set; } = -1;
+
+    // ✅ AGREGAR ESTO: Acción Pause
+    public InputAction pauseAction { get; private set; }
+    private InputActionAsset inputActions;
+
+    private void Awake()
+    {
+        // ✅ CARGAR INPUT ACTIONS
+        inputActions = Resources.Load<InputActionAsset>("InputSystem_Actions");
+
+        if (inputActions != null)
+        {
+            pauseAction = inputActions.FindAction("Pause");
+
+            if (pauseAction != null)
+            {
+                pauseAction.Enable();
+                Debug.Log("Pause action cargada correctamente");
+            }
+            else
+            {
+                Debug.LogError("Acción 'Pause' no encontrada en InputSystem_Actions");
+            }
+        }
+        else
+        {
+            Debug.LogError("InputSystem_Actions no encontrado en Resources");
+        }
+    }
+
     public void OnMove(InputAction.CallbackContext context)
     {
         moveInput = context.ReadValue<Vector2>();
@@ -178,5 +208,14 @@ public class PlayerInputHandler : MonoBehaviour
         bufferedAttackType = AttackInputType.None;
 
         onMelee = false;
+    }
+
+    private void OnDestroy()
+    {
+        // ✅ LIMPIAR AL DESTRUIR
+        if (pauseAction != null)
+        {
+            pauseAction.Disable();
+        }
     }
 }

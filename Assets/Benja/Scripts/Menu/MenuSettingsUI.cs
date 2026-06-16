@@ -31,6 +31,9 @@ public class MenuSettingsUI : MonoBehaviour
     private SettingsManager settingsManager;
     private bool isOpen = false;
 
+    // ✅ NUEVO: Detectar dispositivo
+    private bool isGamepadActive = false;
+
     private void Awake()
     {
         // Obtener CanvasGroup si no está asignado
@@ -51,6 +54,30 @@ public class MenuSettingsUI : MonoBehaviour
 
         settingsManager = SettingsManager.Instance;
         InitializeAllSettings();
+    }
+
+    private void Update()
+    {
+        // ✅ DETECTAR DISPOSITIVO CADA FRAME
+        if (isOpen)
+        {
+            bool wasGamepadActive = isGamepadActive;
+
+            if (UnityEngine.InputSystem.Gamepad.current != null && UnityEngine.InputSystem.Gamepad.current.wasUpdatedThisFrame)
+            {
+                isGamepadActive = true;
+            }
+            else if (UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.wasUpdatedThisFrame)
+            {
+                isGamepadActive = false;
+            }
+
+            // ✅ SI CAMBIA DE DISPOSITIVO, ACTUALIZAR KEYBINDS
+            if (wasGamepadActive != isGamepadActive)
+            {
+                CreateKeybinds();
+            }
+        }
     }
 
     private void InitializeAllSettings()
@@ -90,8 +117,7 @@ public class MenuSettingsUI : MonoBehaviour
             );
         }
 
-        // Brillo - CORREGIDO: 0-100 en lugar de 0-200
-        // Si el valor guardado es 0-200, lo normalizamos a 0-1
+        // Brillo
         float brightnessNormalized = settings.video.brightnessLevel / 100f;
         if (brightnessSlider != null)
         {
@@ -105,7 +131,7 @@ public class MenuSettingsUI : MonoBehaviour
             );
         }
 
-        // Contraste - CORREGIDO: 0-100 en lugar de 0-200
+        // Contraste
         float contrastNormalized = settings.video.contrastLevel / 100f;
         if (contrastSlider != null)
         {
@@ -192,7 +218,7 @@ public class MenuSettingsUI : MonoBehaviour
 
         var settings = settingsManager.GetSettings();
 
-        // Sensibilidad - CORREGIDO: mostrar como decimales (0.1, 0.2, 0.3, etc)
+        // Sensibilidad
         if (mouseSensitivitySlider != null)
         {
             mouseSensitivitySlider.Initialize(
@@ -201,7 +227,7 @@ public class MenuSettingsUI : MonoBehaviour
                 3f,
                 settings.controls.mouseSensitivity,
                 (value) => settingsManager.SetMouseSensitivity(value),
-                SettingSlider.DisplayFormat.DecimalTwoPlaces // Mostrar como 0.10, 0.20, etc
+                SettingSlider.DisplayFormat.DecimalTwoPlaces
             );
         }
 
@@ -228,15 +254,56 @@ public class MenuSettingsUI : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        // Crear botones para las teclas principales
+        // ✅ MOSTRAR KEYBINDS SEGÚN DISPOSITIVO
+        if (isGamepadActive)
+        {
+            CreateGamepadKeybinds();
+        }
+        else
+        {
+            CreateKeyboardKeybinds();
+        }
+    }
+
+    private void CreateKeyboardKeybinds()
+    {
+        // ✅ KEYBINDS PARA TECLADO
+        // [1] = WASD/Up (W - adelante)
+        // [2] = WASD/Down (S - atrás)
+        // [3] = WASD/Left (A - izquierda)
+        // [4] = WASD/Right (D - derecha)
         var keybinds = new[]
         {
-            ("Movimiento Adelante", "Player/Move", 0),
+            ("Adelante", "Player/Move", 1),
+            ("Izquierda", "Player/Move", 3),
+            ("Atrás", "Player/Move", 2),
+            ("Derecha", "Player/Move", 4),
             ("Atacar", "Player/Attack", 0),
+            ("Melee", "Player/OnMelee", 0),
             ("Saltar", "Player/Jump", 0),
-            ("Esquiva", "Player/Dash", 0),
+            ("Dash", "Player/Dash", 0),
             ("Interactuar", "Player/Interact", 0),
-            ("Agacharse", "Player/Crouch", 0),
+        };
+
+        foreach (var (label, action, binding) in keybinds)
+        {
+            var keybindButton = Instantiate(keybindButtonPrefab, keybindsContainer);
+            keybindButton.Initialize(label, action, binding);
+        }
+    }
+
+    private void CreateGamepadKeybinds()
+    {
+        // ✅ KEYBINDS PARA GAMEPAD
+        // [5] = Left Stick (movimiento)
+        var keybinds = new[]
+        {
+            ("Movimiento", "Player/Move", 5),
+            ("Atacar", "Player/Attack", 1),
+            ("Melee", "Player/OnMelee", 1),
+            ("Saltar", "Player/Jump", 1),
+            ("Dash", "Player/Dash", 1),
+            ("Interactuar", "Player/Interact", 1),
         };
 
         foreach (var (label, action, binding) in keybinds)
@@ -266,7 +333,7 @@ public class MenuSettingsUI : MonoBehaviour
 
         if (tabsManager != null)
         {
-            tabsManager.ShowTab(0); // Mostrar primer tab
+            tabsManager.ShowTab(0);
         }
 
         RefreshAllSettings();

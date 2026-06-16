@@ -1,6 +1,8 @@
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class PauseManager : MonoBehaviour
 {
@@ -9,12 +11,18 @@ public class PauseManager : MonoBehaviour
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button exitMenuButton;
 
-    [SerializeField] private MenuSettingsUI gameplaySettingsUI;
+    [SerializeField] private GameplaySettingsUI gameplaySettingsUI;
+    [SerializeField] private EventSystem eventSystem;
 
     private bool isPaused = false;
+    private PlayerInputHandler playerInputHandler;
+    private Button currentSelectedButton;
 
     private void Start()
     {
+        // Obtener el input handler
+        playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
+
         // Conectar botones
         if (resumeButton != null)
             resumeButton.onClick.AddListener(Resume);
@@ -30,18 +38,38 @@ public class PauseManager : MonoBehaviour
             pausePanelCanvasGroup.interactable = false;
             pausePanelCanvasGroup.blocksRaycasts = false;
         }
+
+        // EventSystem para navegación
+        if (eventSystem == null)
+            eventSystem = EventSystem.current;
+
+        currentSelectedButton = resumeButton;
     }
 
-    private void Update()
+    private void OnEnable()
     {
-        // ESC para pausar/reanudar
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // Suscribirse a evento de pausa del input system
+        if (playerInputHandler != null && playerInputHandler.pauseAction != null)
         {
-            if (isPaused)
-                Resume();
-            else
-                Pause();
+            playerInputHandler.pauseAction.performed += OnPauseInput;
         }
+    }
+
+    private void OnDisable()
+    {
+        if (playerInputHandler != null && playerInputHandler.pauseAction != null)
+        {
+            playerInputHandler.pauseAction.performed -= OnPauseInput;
+        }
+    }
+
+    // Callback del Input System
+    private void OnPauseInput(InputAction.CallbackContext context)
+    {
+        if (isPaused)
+            Resume();
+        else
+            Pause();
     }
 
     public void Pause()
@@ -54,6 +82,13 @@ public class PauseManager : MonoBehaviour
             pausePanelCanvasGroup.alpha = 1;
             pausePanelCanvasGroup.interactable = true;
             pausePanelCanvasGroup.blocksRaycasts = true;
+        }
+
+        // Mantener el button target en Resume
+        if (eventSystem != null && resumeButton != null)
+        {
+            eventSystem.SetSelectedGameObject(resumeButton.gameObject);
+            currentSelectedButton = resumeButton;
         }
 
         // Cambiar GameMode
@@ -75,6 +110,12 @@ public class PauseManager : MonoBehaviour
             pausePanelCanvasGroup.blocksRaycasts = false;
         }
 
+        // Deseleccionar botón
+        if (eventSystem != null)
+        {
+            eventSystem.SetSelectedGameObject(null);
+        }
+
         // Cambiar GameMode
         if (GameModeManager.Instance != null)
             GameModeManager.Instance.SetMode(GameMode.Gameplay);
@@ -92,7 +133,17 @@ public class PauseManager : MonoBehaviour
 
     public void ExitToMenu()
     {
-        Time.timeScale = 1f; // Restaurar tiempo
-        SceneManager.LoadScene("MainMenu");
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("menu");
+    }
+
+    // Método para cuando Settings se cierra
+    public void OnSettingsClosed()
+    {
+        // Volver a seleccionar botón después de cerrar settings
+        if (eventSystem != null && settingsButton != null)
+        {
+            eventSystem.SetSelectedGameObject(settingsButton.gameObject);
+        }
     }
 }
