@@ -17,7 +17,7 @@ public class P_Iddle_AState : PlayerState
             }
             else
             {
-                Debug.Log("[PlayerAnimator] is missing walk State");
+                Debug.Log("[PlayerAnimator] is missing idle State");
             }
         }
     }
