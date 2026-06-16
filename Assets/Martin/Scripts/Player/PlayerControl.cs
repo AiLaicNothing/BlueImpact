@@ -123,13 +123,14 @@ public class PlayerControl : MonoBehaviour, IDamageable
             playerStatsManager.EnsureInitialized();
         }
 
-        asd = FindFirstObjectByType<P_Skill_UI>();
-
-        asd.RefreshIcons();
     }
 
     private void Start()
     {
+        asd = FindAnyObjectByType<P_Skill_UI>();
+        asd.RefreshIcons();
+
+
         //  Inicializar cooldowns
         skillsCD = new float[maxSkillSlot];
         for (int i = 0; i < skillsCD.Length; i++)
@@ -148,6 +149,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
         {
             Debug.LogError("GameModeManager no encontrado");
         }
+
     }
 
     private void OnDisable()

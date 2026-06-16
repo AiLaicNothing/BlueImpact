@@ -23,9 +23,6 @@ public class P_AirAttack_AState : PlayerState
         vel.y = 0;
         player.Rb.linearVelocity = vel;
 
-        //This can be change
-        player.Rb.useGravity = false;
-
         StartAttack();
 
         //-->Play animation here
@@ -87,8 +84,6 @@ public class P_AirAttack_AState : PlayerState
 
     public override void OnExit()
     {
-        player.Rb.useGravity = true;
-
         player.isPerformingAct = false;
 
         player.blockVelocity = false;
