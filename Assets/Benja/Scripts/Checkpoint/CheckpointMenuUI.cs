@@ -127,6 +127,11 @@ public class CheckpointMenuUI : MonoBehaviour
         CloseAllPanels();
         skillsPanel.SetActive(true);
 
+        // ✅ AGREGA ESTAS LÍNEAS:
+        var skillPanel = skillsPanel.GetComponent<SkillManagementPanel>();
+        if (skillPanel != null)
+            skillPanel.Open();  // ← LLAMAR OPEN()
+
         // ✅ SELECCIONAR PRIMER BOTÓN SI EXISTE
         if (eventSystem != null)
         {

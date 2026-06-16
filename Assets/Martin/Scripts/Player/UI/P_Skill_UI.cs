@@ -13,31 +13,35 @@ public class P_Skill_UI : MonoBehaviour
     {
         RefreshIcons();
     }
+    private void OnEnable()
+    {
+        PlayerSpawn_Manager.OnPlayerSpawned += SetPlayer;
+    }
 
+    private void OnDisable()
+    {
+        PlayerSpawn_Manager.OnPlayerSpawned -= SetPlayer;
+    }
+
+    private void SetPlayer(PlayerControl playerControl)
+    {
+        player = playerControl;
+        RefreshIcons();
+    }
     private void Update()
     {
-        FindPlayer();
 
         if (player == null) return;
 
         UpdateCooldowns();
     }
-    private void FindPlayer()
-    {
-        if (!hasFoundPlayer)
-        {
-            player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerControl>();
 
-            if (player != null)
-            {
-                hasFoundPlayer = true;
-            }
-        }
-    }
 
 
     public void RefreshIcons()
     {
+        if (player == null) return;  
+
         for (int i = 0; i < slots.Length; i++)
         {
             Skill skill = player.GetSkill(i);
@@ -54,6 +58,7 @@ public class P_Skill_UI : MonoBehaviour
 
     private void UpdateCooldowns()
     {
+        if (player == null) return; 
         for (int i = 0; i < slots.Length; i++)
         {
             Skill skill = player.GetSkill(i);

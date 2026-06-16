@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.UI;
 using static UnityEngine.Analytics.IAnalytic;
 
 public class PlayerControl : MonoBehaviour, IDamageable
@@ -44,6 +47,58 @@ public class PlayerControl : MonoBehaviour, IDamageable
     [Header("Skills")]
     [SerializeField] private int maxSkillSlot = 4;
     [SerializeField] private Skill[] skills = new Skill[4];
+    private EventSystem eventSystem;
+    [SerializeField]private PlayerInput playerInput;
+
+    private List<Skill> unlockedSkills = new List<Skill>();
+
+    private void InitializeSkills()
+    {
+        // Si tienes skills en el array, considéralas desbloqueadas
+        foreach (var skill in skills)
+        {
+            if (skill != null && !unlockedSkills.Contains(skill))
+                unlockedSkills.Add(skill);
+        }
+    }
+
+    public void UnlockSkill(Skill skill)
+    {
+        if (skill != null && !unlockedSkills.Contains(skill))
+        {
+            unlockedSkills.Add(skill);
+            Debug.Log($"✅ Desbloqueada: {skill.skillName}");
+        }
+    }
+
+    public List<Skill> GetUnlockedSkills()
+    {
+        return unlockedSkills;
+    }
+
+    public void EquipSkill(int slot, Skill skill)
+    {
+        if (slot >= 0 && slot < skills.Length)
+        {
+            skills[slot] = skill;
+            Debug.Log($"⚡ Equipada en slot {slot}: {skill?.skillName}");
+        }
+    }
+
+    public void UnequipSkill(int slot)
+    {
+        if (slot >= 0 && slot < skills.Length)
+        {
+            skills[slot] = null;
+        }
+    }
+
+    public Skill GetEquippedSkill(int slot)
+    {
+        if (slot >= 0 && slot < skills.Length)
+            return skills[slot];
+        return null;
+    }
 
     private float[] skillsCD;
 
@@ -129,7 +184,22 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         asd = FindAnyObjectByType<P_Skill_UI>();
         asd.RefreshIcons();
+        InitializeSkills();
 
+        // ✅ ASIGNAR UI INPUT MODULE
+        var playerInput = GetComponent<PlayerInput>();
+        if (playerInput != null)
+        {
+            var uiInputModule = FindAnyObjectByType<InputSystemUIInputModule>();
+            if (uiInputModule != null)
+            {
+                playerInput.uiInputModule = uiInputModule;
+            }
+            else
+            {
+                Debug.LogError("❌ InputSystemUIInputModule no encontrado");
+            }
+        }
 
         //  Inicializar cooldowns
         skillsCD = new float[maxSkillSlot];

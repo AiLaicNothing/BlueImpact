@@ -13,26 +13,29 @@ public class P_Stats_UI : MonoBehaviour
 
     private void Update()
     {
-        FindPlayer();
         UpdateSliders();
     }
-
-    private void FindPlayer()
+    private void OnEnable()
     {
-        if (!hasFoundPlayer)
-        {
-            player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerControl>();
-            statsManager = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerStatsManager>();
-
-            if (player != null && statsManager != null )
-            {
-                hasFoundPlayer = true;
-            }
-        }
+        PlayerSpawn_Manager.OnPlayerSpawned += SetPlayer;
     }
+
+    private void OnDisable()
+    {
+        PlayerSpawn_Manager.OnPlayerSpawned -= SetPlayer;
+    }
+
+    private void SetPlayer(PlayerControl playerControl)
+    {
+        player = playerControl;
+        statsManager = playerControl.GetComponent<PlayerStatsManager>();
+    }
+
 
     private void UpdateSliders()
     {
+        if (player == null || statsManager == null) return;  
+
         UpdateHp();
         UpdateStamina();
         UpdateMana();
