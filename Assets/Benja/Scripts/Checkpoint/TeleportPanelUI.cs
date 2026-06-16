@@ -41,10 +41,22 @@ public class TeleportPanelUI : MonoBehaviour
     public void Open()
     {
         RefreshList();
-        selectedCheckpoint = null;
-        previewImage.sprite = null;
-        checkpointName.text = "Selecciona un destino";
-        travelButton.interactable = false;
+
+        // ✅ OBTENER CHECKPOINT ACTUAL
+        Checkpoint current = CheckpointManager.Instance.GetActiveCheckpoint();
+
+        if (current != null)
+        {
+            // ✅ MOSTRAR LA PREVIEW DEL CHECKPOINT ACTUAL
+            SelectCheckpoint(current);
+        }
+        else
+        {
+            // Si no hay checkpoint actual, mostrar vacío
+            previewImage.sprite = null;
+            checkpointName.text = "Selecciona un destino";
+            travelButton.interactable = false;
+        }
 
         // ✅ SELECCIONAR PRIMER CHECKPOINT PARA GAMEPAD
         if (eventSystem != null && entries.Count > 0)
@@ -72,7 +84,7 @@ public class TeleportPanelUI : MonoBehaviour
         foreach (Checkpoint checkpoint in CheckpointManager.Instance.GetDiscoveredCheckpoints())
         {
             CheckpointEntryUI entry = Instantiate(entryPrefab, content);
-            bool isCurrent = checkpoint == current;
+            bool isCurrent = checkpoint == current;     
 
             entry.Initialize(checkpoint, this, isCurrent);
             entries.Add(entry);
