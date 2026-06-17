@@ -82,7 +82,23 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public bool IsStaggered => isStaggered;
     public bool IsDead => isDead;
     public bool IsGrounded => isGrounded;
+    protected virtual void OnEnable()
+    {
+        // ✅ SUSCRIBIRSE AL EVENTO
+        PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
+    }
 
+    protected virtual void OnDisable()
+    {
+        // ✅ DESUSCRIBIRSE
+        PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
+    }
+
+    private void OnPlayerSpawned(PlayerControl spawnedPlayer)
+    {
+        player = spawnedPlayer;
+        Debug.Log($"✅ Enemy encontró al player: {player.name}");
+    }
     protected virtual void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -110,11 +126,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
 
     protected virtual void Update()
-    {
-        if (player == null)
-        {
-            player = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerControl>();
-        }
+    { 
 
         if (isDead) return;
 
