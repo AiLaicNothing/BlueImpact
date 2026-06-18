@@ -24,13 +24,20 @@ public class SettingsManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         settingsPath = Path.Combine(Application.persistentDataPath, "settings.json");
-        
+
+        // ✅ AGREGA: Validar que settingsPath existe
+        if (!Directory.Exists(Application.persistentDataPath))
+        {
+            Directory.CreateDirectory(Application.persistentDataPath);
+        }
+
         LoadSettings();
         ApplyAllSettings();
     }
 
+
     // ==================== LOAD & SAVE ====================
-    
+
     public void LoadSettings()
     {
         if (File.Exists(settingsPath))
@@ -45,15 +52,50 @@ public class SettingsManager : MonoBehaviour
             {
                 Debug.LogWarning("Error al cargar configuración, usando valores por defecto");
                 currentSettings = new SettingsData();
+                SetDefault1920x1080();  // ✅ AGREGA ESTO
             }
         }
         else
         {
             currentSettings = new SettingsData();
+            SetDefault1920x1080();  // ✅ AGREGA ESTO
             SaveSettings();
         }
     }
 
+    // ✅ AGREGA ESTE MÉTODO
+    private void SetDefault1920x1080()
+    {
+        Resolution[] resolutions = Screen.resolutions;
+
+        // Buscar 1920x1080
+        for (int i = 0; i < resolutions.Length; i++)
+        {
+            if (resolutions[i].width == 1920 && resolutions[i].height == 1080)
+            {
+                currentSettings.video.resolutionIndex = i;
+                Debug.Log($"✅ Resolución por defecto: 1920x1080 (índice {i})");
+                return;
+            }
+        }
+
+        // Si no existe, buscar la más cercana a 1920x1080
+        int closestIndex = 0;
+        float closestDistance = float.MaxValue;
+
+        foreach (var res in resolutions)
+        {
+            float distance = Mathf.Abs(res.width - 1920) + Mathf.Abs(res.height - 1080);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestIndex = System.Array.IndexOf(resolutions, res);
+            }
+        }
+
+        currentSettings.video.resolutionIndex = closestIndex;
+        Debug.LogWarning($"⚠️ 1920x1080 no disponible, usando: {resolutions[closestIndex].width}x{resolutions[closestIndex].height}");
+    }
     public void SaveSettings()
     {
         try
@@ -71,10 +113,10 @@ public class SettingsManager : MonoBehaviour
     public void ResetToDefaults()
     {
         currentSettings = new SettingsData();
+        SetDefault1920x1080();  // ✅ AGREGA ESTO - Resetear a 1920x1080
         ApplyAllSettings();
         SaveSettings();
     }
-
     // ==================== APPLY SETTINGS ====================
 
     private void ApplyAllSettings()
@@ -88,17 +130,22 @@ public class SettingsManager : MonoBehaviour
     private void ApplyVideoSettings()
     {
         var videoSettings = currentSettings.video;
-        
+
         // Resolución
         var resolutions = Screen.resolutions;
-        if (videoSettings.resolutionIndex < resolutions.Length)
+        if (videoSettings.resolutionIndex >= 0 && videoSettings.resolutionIndex < resolutions.Length)
         {
             Resolution res = resolutions[videoSettings.resolutionIndex];
             Screen.SetResolution(res.width, res.height, videoSettings.fullscreen);
+            Debug.Log($"✅ Resolución aplicada: {res.width}x{res.height} | Pantalla completa: {videoSettings.fullscreen}");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Índice de resolución inválido");
         }
 
-        // Brillo (usando post-processing o ajuste de gamma)
-        float brightness = videoSettings.brightnessLevel / 10000f;
+        // Brillo
+        float brightness = videoSettings.brightnessLevel / 100f;  // ✅ CAMBIÉ: 10000f → 100f (rango más realista)
         ApplyBrightness(brightness);
 
         Debug.Log("Video settings aplicadas");

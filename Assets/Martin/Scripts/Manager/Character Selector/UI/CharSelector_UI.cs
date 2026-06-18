@@ -77,6 +77,9 @@ public class CharSelector_UI : MonoBehaviour
 
         var spawnPoint = CharSelector_Manager.Instance.GetInitialSpawnPoint();
 
+        // ✅ CONFIGURAR RESPAWN INICIAL
+        CharSelector_Manager.Instance.SetupRespawn();
+
         PlayerSpawn_Manager.Instance.SpawnCharacter(spawnPoint);
     }
 }

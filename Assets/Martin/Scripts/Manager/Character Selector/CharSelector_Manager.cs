@@ -26,4 +26,14 @@ public class CharSelector_Manager : MonoBehaviour
     {
         return spawnPoint;
     }
+
+    public void SetupRespawn()
+    {
+        // ✅ GUARDAR EL SPAWN INICIAL EN RESPAWNMANAGER
+        if (RespawnManager.Instance != null && spawnPoint != null)
+        {
+            RespawnManager.Instance.SetInitialSpawnPoint(spawnPoint);
+            Debug.Log("✅ Initial spawn point configurado en RespawnManager");
+        }
+    }
 }

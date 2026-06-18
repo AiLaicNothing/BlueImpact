@@ -779,7 +779,17 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     private void OnDead()
     {
-        isDead = true;
+        Debug.Log("💀 Player muere");
+
+        // ✅ USAR EL SPAWNPOINT DEL CHECKPOINT ACTUAL
+        if (RespawnManager.Instance != null)
+        {
+            RespawnManager.Instance.Respawn();
+        }
+        else
+        {   
+            Debug.LogError("❌ RespawnManager no encontrado");
+        }
     }
 
     public void PlayAudio(AudioClip audio, float volume = 1)
