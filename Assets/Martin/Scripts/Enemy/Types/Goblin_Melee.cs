@@ -356,10 +356,24 @@ public class Goblin_Melee : EnemyBase
 
     public void ShowHitbox(Vector3 center, Vector3 size, Quaternion rot)
     {
-        if (hitBoxPrefab == null) return;
+        if (hitBoxPrefab == null || !debug) return;
 
         GameObject box = Instantiate(hitBoxPrefab, center, rot);
         box.transform.localScale = size;
         Destroy(box, 0.2f);
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (!debug) return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(safeZone.position, 1f);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(safeZone.position, maxChaseDistance);
     }
 }

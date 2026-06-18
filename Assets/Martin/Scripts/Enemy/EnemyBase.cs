@@ -45,6 +45,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [SerializeField] protected int revengeThreshold = 3;
     [SerializeField] protected float revengeDecayDelay = 2f;
 
+    [Header("Debug")]
+    [SerializeField] protected bool debug = true;
+
     [Header("Components")]
     protected Rigidbody rb;
     protected Animator anim;

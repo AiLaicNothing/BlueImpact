@@ -467,5 +467,19 @@ public class Goblin_Range : EnemyBase
 
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, turnSpeed * 60f * Time.deltaTime);
     }
+
+    private void OnDrawGizmos()
+    {
+        if (!debug) return;
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, detectionRange);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(safeZone.position, 1f);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(safeZone.position, maxChaseDistance);
+    }
 }
 
