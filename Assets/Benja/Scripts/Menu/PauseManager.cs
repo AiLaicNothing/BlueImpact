@@ -6,32 +6,58 @@ using UnityEngine.UI;
 
 public class PauseManager : MonoBehaviour
 {
+    public static PauseManager Instance { get; private set; }
+
+    [Header("Canvas")]
     [SerializeField] private CanvasGroup pausePanelCanvasGroup;
+
+    [Header("Buttons")]
     [SerializeField] private Button resumeButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button exitMenuButton;
 
+    [Header("Settings")]
     [SerializeField] private GameplaySettingsUI gameplaySettingsUI;
+
+    [Header("UI")]
     [SerializeField] private EventSystem eventSystem;
 
     private bool isPaused = false;
     private PlayerInputHandler playerInputHandler;
-    private Button currentSelectedButton;
+
+    private void Awake()
+    {
+        // ✅ SINGLETON
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
 
     private void Start()
     {
-        // Obtener el input handler
+        // ✅ OBTENER REFERENCIAS
         playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
 
-        // Conectar botones
+        if (eventSystem == null)
+            eventSystem = EventSystem.current;
+
+        if (pausePanelCanvasGroup == null)
+            pausePanelCanvasGroup = GetComponent<CanvasGroup>();
+
+        // ✅ CONECTAR BOTONES
         if (resumeButton != null)
             resumeButton.onClick.AddListener(Resume);
+
         if (settingsButton != null)
             settingsButton.onClick.AddListener(OpenSettings);
+
         if (exitMenuButton != null)
             exitMenuButton.onClick.AddListener(ExitToMenu);
 
-        // Pausepanel invisible al inicio
+        // ✅ OCULTAR PAUSE PANEL AL INICIO
         if (pausePanelCanvasGroup != null)
         {
             pausePanelCanvasGroup.alpha = 0;
@@ -39,20 +65,35 @@ public class PauseManager : MonoBehaviour
             pausePanelCanvasGroup.blocksRaycasts = false;
         }
 
-        // EventSystem para navegación
-        if (eventSystem == null)
-            eventSystem = EventSystem.current;
-
-        currentSelectedButton = resumeButton;
+        // ✅ SUSCRIBIRSE SI YA EXISTE
+        SubscribeToPauseAction();
     }
 
-    private void OnEnable()
+    private void Update()
     {
-        // Suscribirse a evento de pausa del input system
-        if (playerInputHandler != null && playerInputHandler.pauseAction != null)
+        // ✅ SI PLAYERINPUTHANDLER AÚN NO EXISTE, INTENTAR CADA FRAME
+        if (playerInputHandler == null)
         {
-            playerInputHandler.pauseAction.performed += OnPauseInput;
+            playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
+
+            if (playerInputHandler != null)
+            {
+                Debug.Log("✅ PlayerInputHandler encontrado en Update");
+                SubscribeToPauseAction();
+            }
         }
+    }
+
+    private void SubscribeToPauseAction()
+    {
+        if (playerInputHandler == null || playerInputHandler.pauseAction == null)
+        {
+            Debug.LogWarning("⚠️ No se puede suscribir a pauseAction aún");
+            return;
+        }
+
+        playerInputHandler.pauseAction.performed += OnPauseInput;
+        Debug.Log("✅ PauseManager suscrito a pauseAction");
     }
 
     private void OnDisable()
@@ -63,7 +104,6 @@ public class PauseManager : MonoBehaviour
         }
     }
 
-    // Callback del Input System
     private void OnPauseInput(InputAction.CallbackContext context)
     {
         if (isPaused)
@@ -74,8 +114,12 @@ public class PauseManager : MonoBehaviour
 
     public void Pause()
     {
+        if (isPaused) return;
+
         isPaused = true;
         Time.timeScale = 0f;
+
+        Debug.Log("⏸️ Juego pausado");
 
         if (pausePanelCanvasGroup != null)
         {
@@ -84,24 +128,23 @@ public class PauseManager : MonoBehaviour
             pausePanelCanvasGroup.blocksRaycasts = true;
         }
 
-        // Mantener el button target en Resume
         if (eventSystem != null && resumeButton != null)
         {
             eventSystem.SetSelectedGameObject(resumeButton.gameObject);
-            currentSelectedButton = resumeButton;
         }
 
-        // Cambiar GameMode
         if (GameModeManager.Instance != null)
             GameModeManager.Instance.SetMode(GameMode.UI);
-
-        Debug.Log("Juego pausado");
     }
 
     public void Resume()
     {
+        if (!isPaused) return;
+
         isPaused = false;
         Time.timeScale = 1f;
+
+        Debug.Log("▶️ Juego reanudado");
 
         if (pausePanelCanvasGroup != null)
         {
@@ -110,17 +153,13 @@ public class PauseManager : MonoBehaviour
             pausePanelCanvasGroup.blocksRaycasts = false;
         }
 
-        // Deseleccionar botón
         if (eventSystem != null)
         {
             eventSystem.SetSelectedGameObject(null);
         }
 
-        // Cambiar GameMode
         if (GameModeManager.Instance != null)
             GameModeManager.Instance.SetMode(GameMode.Gameplay);
-
-        Debug.Log("Juego reanudado");
     }
 
     public void OpenSettings()
@@ -137,13 +176,13 @@ public class PauseManager : MonoBehaviour
         SceneManager.LoadScene("menu");
     }
 
-    // Método para cuando Settings se cierra
     public void OnSettingsClosed()
     {
-        // Volver a seleccionar botón después de cerrar settings
         if (eventSystem != null && settingsButton != null)
         {
             eventSystem.SetSelectedGameObject(settingsButton.gameObject);
         }
     }
+
+    public bool IsPaused => isPaused;
 }

@@ -25,29 +25,37 @@ public class PlayerInputHandler : MonoBehaviour
 
     private void Awake()
     {
-        // ✅ CARGAR INPUT ACTIONS
         inputActions = Resources.Load<InputActionAsset>("InputSystem_Actions");
 
         if (inputActions != null)
         {
-            pauseAction = inputActions.FindAction("Pause");
+            var playerActionMap = inputActions.FindActionMap("Player");
 
-            if (pauseAction != null)
+            if (playerActionMap != null)
             {
-                pauseAction.Enable();
-                Debug.Log("Pause action cargada correctamente");
+                pauseAction = playerActionMap.FindAction("Pause");
+
+                if (pauseAction != null)
+                {
+                    pauseAction.Enable();  // ✅ HABILITAR AQUÍ
+                    Debug.Log("✅ Pause action habilitada");
+                }
+                else
+                {
+                    Debug.LogError("❌ Acción 'Pause' no encontrada");
+                }
             }
-            else
-            {
-                Debug.LogError("Acción 'Pause' no encontrada en InputSystem_Actions");
-            }
-        }
-        else
-        {
-            Debug.LogError("InputSystem_Actions no encontrado en Resources");
         }
     }
 
+    private void OnDestroy()
+    {
+        // ✅ LIMPIAR AL DESTRUIR
+        if (pauseAction != null)
+        {
+            pauseAction.Disable();
+        }
+    }
     public void OnMove(InputAction.CallbackContext context)
     {
         moveInput = context.ReadValue<Vector2>();
@@ -210,12 +218,5 @@ public class PlayerInputHandler : MonoBehaviour
         onMelee = false;
     }
 
-    private void OnDestroy()
-    {
-        // ✅ LIMPIAR AL DESTRUIR
-        if (pauseAction != null)
-        {
-            pauseAction.Disable();
-        }
-    }
+
 }
