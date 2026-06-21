@@ -1,13 +1,11 @@
 using UnityEngine;
 
-public class CuboDestructible : MonoBehaviour
+public class CuboDestructible : MonoBehaviour, IDamageable
 {
-    public float vidaMaxima = 300f;
+    public float vidaMaxima = 100f; 
     public float vidaActual;
 
-    public GameObject cuboEntero;
     public GameObject cuboDanio1;
-    public GameObject cuboDanio2;
     public GameObject cuboRestos;
 
     void Start()
@@ -16,52 +14,51 @@ public class CuboDestructible : MonoBehaviour
         ActualizarEstadoVisual();
     }
 
-    public void RecibirDanio(float cantidad)
+    void ActualizarEstadoVisual()
     {
-        vidaActual -= cantidad;
+        float porcentajeVida = (vidaActual / vidaMaxima) * 100f;
+
+        if (porcentajeVida > 30f)
+        {
+            cuboDanio1.SetActive(true);
+            cuboRestos.SetActive(false);
+        }
+        else if (porcentajeVida > 0f)
+        {
+            cuboDanio1.SetActive(false);
+            cuboRestos.SetActive(true);
+        }
+        else
+        {
+            cuboDanio1.SetActive(false);
+            cuboRestos.SetActive(false);
+        }
+    }
+
+    void OnValidate()
+    {
+        if (Application.isPlaying)
+            ActualizarEstadoVisual();
+    }
+
+    void Destruir()
+    {
+        Destroy(gameObject, 1f); 
+    }
+
+    public void TakeDamage(in DamageInfo info)
+    {
+        vidaActual -= info.damage;
         vidaActual = Mathf.Clamp(vidaActual, 0, vidaMaxima);
+
+        Debug.Log($"🔴 Cubo recibió {info.damage} daño. Vida actual: {vidaActual}/{vidaMaxima}");
 
         ActualizarEstadoVisual();
 
         if (vidaActual <= 0)
         {
+            Debug.Log("💥 Cubo destruido");
             Destruir();
         }
-    }
-
-    void ActualizarEstadoVisual()
-    {
-        // apagar todo
-        cuboEntero.SetActive(false);
-        cuboDanio1.SetActive(false);
-        cuboDanio2.SetActive(false);
-        cuboRestos.SetActive(false);
-
-        if (vidaActual > 200)
-        {
-            cuboEntero.SetActive(true);
-        }
-        else if (vidaActual > 100)
-        {
-            cuboDanio1.SetActive(true);
-        }
-        else if (vidaActual > 0)
-        {
-            cuboDanio2.SetActive(true);
-        }
-        else
-        {
-            cuboRestos.SetActive(true);
-        }
-    }
-    //solo pa pobrar luego lo comento
-    void OnValidate()
-    {
-        ActualizarEstadoVisual();
-    }
-
-    void Destruir()
-    {
-        Destroy(gameObject, 2f);
     }
 }
