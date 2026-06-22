@@ -9,8 +9,15 @@ public class CreditsPanel : MonoBehaviour
     [SerializeField] private ScrollRect scrollRect;
     [SerializeField] private TextMeshProUGUI creditsText;
 
-    // Animación
+    [Header("Auto Scroll")]
+    [SerializeField] private RectTransform content;
+    [SerializeField] private RectTransform endMarker;
+    [SerializeField] private float scrollSpeed = 30f;
+
+    [Header("Animación")]
     [SerializeField] private float fadeDuration = 0.3f;
+
+    private bool isScrolling = false;
 
     private void Awake()
     {
@@ -20,37 +27,53 @@ public class CreditsPanel : MonoBehaviour
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
 
-        // Inicializar oculto
         canvasGroup.alpha = 0;
         canvasGroup.interactable = false;
 
-        // Cargar créditos
         LoadCredits();
     }
-
-    [SerializeField] private CanvasGroup mainMenuPanelCanvasGroup;
 
     public void Open()
     {
         gameObject.SetActive(true);
 
-        if (mainMenuPanelCanvasGroup != null)
-        {
-            mainMenuPanelCanvasGroup.blocksRaycasts = false;
-            mainMenuPanelCanvasGroup.interactable = false;
-        }
-
         StartCoroutine(FadeIn());
+
+        // reset scroll al inicio
+        content.anchoredPosition = new Vector2(content.anchoredPosition.x, -Screen.height);
+
+        isScrolling = true;
+    }
+
+    private void Update()
+    {
+        if (!isScrolling) return;
+
+        content.anchoredPosition += Vector2.up * scrollSpeed * Time.deltaTime;
+ 
+        float contentHeight = content.rect.height;
+        float viewportHeight = scrollRect.viewport.rect.height;
+
+        float maxScroll = contentHeight - viewportHeight;
+
+        if (content.anchoredPosition.y >= maxScroll)
+        {
+            content.anchoredPosition = new Vector2(content.anchoredPosition.x, maxScroll);
+            isScrolling = false;
+        }
+    }
+
+    private bool IsAtEnd()
+    {
+        float contentY = Mathf.Abs(content.anchoredPosition.y);
+        float targetY = Mathf.Abs(endMarker.anchoredPosition.y);
+
+        return contentY >= targetY;
     }
 
     public void Close()
     {
-        if (mainMenuPanelCanvasGroup != null)
-        {
-            mainMenuPanelCanvasGroup.blocksRaycasts = true;
-            mainMenuPanelCanvasGroup.interactable = true;
-        }
-
+        isScrolling = false;
         StartCoroutine(FadeOut());
     }
 
@@ -90,51 +113,41 @@ public class CreditsPanel : MonoBehaviour
 
     private void LoadCredits()
     {
-        if (creditsText == null) return;
+        creditsText.text = @" 
 
-        string credits = @"<b>CRÉDITOS</b>
 
-<size=80%>
 
-<b>DESARROLLO</b>
-Benja - Game Developer
+~ ° ~
 
-<b>PROGRAMACIÓN</b>
-Benja - Lead Programmer
+Este juego fue creado por seis personas.
 
-<b>ARTE</b>
-[Tu artista aquí]
-[Tu artista aquí]
+Sin departamentos.
+Sin barreras.
+Solo ideas compartidas, pruebas, errores y mejoras constantes.
 
-<b>SONIDO Y MÚSICA</b>
-[Tu compositor aquí]
-[Diseñador de sonido]
+Cada uno de nosotros hizo un poco de todo,
+y todo el equipo hizo posible este juego.
 
-<b>GAMEPLAY Y DISEÑO</b>
-Benja - Game Designer
+EQUIPO
 
-<b>AGRADECIMIENTOS</b>
-A todo el equipo por su dedicación
-A la comunidad Unity
-A todos nuestros testers
+[ BENJAMIN ]
 
-<b>HERRAMIENTAS UTILIZADAS</b>
-Unity Engine
-InputSystem
-TextMesh Pro
-Netcode for GameObjects
+[ FRANCESCA ]
 
-<b>LIBRERÍAS Y ASSETS</b>
-[Agrega tus dependencias aquí]
+[ ALVARO ]
 
-<b>LICENCIAS</b>
-Este juego fue desarrollado con Unity.
+[ MARTIN ]
 
-</size>
+[ ROSELING ]
 
-Gracias por jugar.
+[ BOADA ]
+
+AGRADECIMIENTOS
+
+Gracias por ser parte de esta aventura y por ayudarnos a crecer como equipo.
+
+
+[ 7UP ]
 ";
-
-        creditsText.text = credits;
     }
 }
