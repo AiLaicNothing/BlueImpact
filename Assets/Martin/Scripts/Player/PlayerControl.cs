@@ -379,7 +379,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         if (rb == null) return;
 
-        rb.AddForce(Vector3.up * baseGravity * currentGravityMultiplier, ForceMode.Acceleration);
+        rb.AddForce(Vector3.up * (baseGravity * currentGravityMultiplier), ForceMode.Acceleration);
     }
 
     public void SetGravityMultiplier(float value)

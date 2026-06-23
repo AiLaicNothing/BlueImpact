@@ -56,9 +56,6 @@ public class FlyingGolem : EnemyBase
     [SerializeField] private bool instantDetection;
 
     [Header("Patrol")]
-    [SerializeField] private Transform safeZone;
-    [SerializeField] private bool hasPatrol;
-    [SerializeField] private Transform[] patrolZones;
     [SerializeField] private float stopDistance = 1.5f;
 
     [Header("Fall / Recover")]

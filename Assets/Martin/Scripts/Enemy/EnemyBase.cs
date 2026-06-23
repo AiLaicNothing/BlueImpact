@@ -24,6 +24,15 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [SerializeField] private Vector3 hitVfxOffset = new Vector3(0f, 1.2f, 0f);
     [SerializeField] private float hitVfxDuration = 1.5f;
 
+    [Header("StaggerVfx")]
+    [SerializeField] private GameObject staggerVfx;
+    [SerializeField] private Vector3 staggerVfxOffset = new Vector3(0f, 1.2f, 0f);
+    [SerializeField] private float staggerVfxDuration = 1.5f;
+
+    [Header("Sfx")]
+    [SerializeField] private AudioSource audio_Source;
+    [SerializeField] private AudioClip onHit;
+
     [Header("Ground")]
     [SerializeField] protected LayerMask whatIsGround;
     [SerializeField] protected Transform groundCheck;
@@ -44,6 +53,11 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [Header("Revenge")]
     [SerializeField] protected int revengeThreshold = 3;
     [SerializeField] protected float revengeDecayDelay = 2f;
+
+    [Header("Patrol")]
+    [SerializeField] protected Transform safeZone;
+    [SerializeField] protected Transform[] patrolZones;
+    [SerializeField] protected bool hasPatrol;
 
     [Header("Debug")]
     [SerializeField] protected bool debug = true;
@@ -87,13 +101,11 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public bool IsGrounded => isGrounded;
     protected virtual void OnEnable()
     {
-        // ✅ SUSCRIBIRSE AL EVENTO
         PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
     }
 
     protected virtual void OnDisable()
     {
-        // ✅ DESUSCRIBIRSE
         PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
     }
 
@@ -152,6 +164,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         ShowHitVfx();
 
+        audio_Source.PlayOneShot(onHit);
+
+        float totalDamage = IsStaggered ? info.damage * 1.5f : info.damage;
         currentHp -= info.damage;
 
         if (currentHp <= 0f)
@@ -220,11 +235,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected virtual bool HandleStagger(DamageInfo info)
     {
-        if (!stats.hasStagger)
-            return false;
+        if (!stats.hasStagger) return false;
 
-        if (isInStaggerCooldown)
-            return isStaggered;
+        if (isInStaggerCooldown) return isStaggered;
 
         if (isStaggered)
         {
@@ -236,6 +249,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         if (currentStaggerBuild >= stats.staggerThreshold)
         {
+            ShowStaggerVfx();
             TriggerStagger();
             return true;
         }
@@ -627,6 +641,19 @@ public class EnemyBase : MonoBehaviour, IDamageable
         }
     }
 
+    protected virtual void ShowStaggerVfx()
+    {
+        if (staggerVfx == null) return;
+
+        Vector3 spawnPos = transform.position + hitVfxOffset;
+        GameObject vfx = Instantiate(staggerVfx, spawnPos, transform.rotation);
+
+        if (staggerVfxDuration > 0f)
+        {
+            Destroy(vfx, staggerVfxDuration);
+        }
+    }
+
     protected virtual void UpdateHealthUI()
     {
         // Hook your health bar UI here if needed.
@@ -646,5 +673,12 @@ public class EnemyBase : MonoBehaviour, IDamageable
         }
 
         Destroy(gameObject);
+    }
+
+    public void OnSpawn(Transform[] PatrolPoints, Transform safePoint, bool hasPatrol)
+    {
+        patrolZones = PatrolPoints;
+        safeZone = safePoint;
+        this.hasPatrol = hasPatrol;
     }
 }

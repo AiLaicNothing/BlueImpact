@@ -28,9 +28,6 @@ public class Goblin_Melee : EnemyBase
     [SerializeField] private float detectionDelay = 0.25f;
 
     [Header("Patrol")]
-    [SerializeField] private Transform safeZone;
-    [SerializeField] private bool hasPatrol;
-    [SerializeField] private Transform[] patrolZones;
     [SerializeField] private float stopDistance = 0.5f;
 
     [Header("Debug")]

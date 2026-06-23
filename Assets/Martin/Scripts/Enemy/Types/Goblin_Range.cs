@@ -36,9 +36,6 @@ public class Goblin_Range : EnemyBase
     [SerializeField] private float detectionDelay = 0.25f;
 
     [Header("Patrol")]
-    [SerializeField] private Transform safeZone;
-    [SerializeField] private bool hasPatrol;
-    [SerializeField] private Transform[] patrolZones;
     [SerializeField] private float stopDistance = 0.5f;
 
     private bool hasDetectedPlayer;
@@ -103,9 +100,7 @@ public class Goblin_Range : EnemyBase
     {
         if (!HasValidPlayer()) return false;
 
-        Vector3 origin = firePoint != null
-            ? firePoint.position
-            : transform.position + Vector3.up * targetRayHeight;
+        Vector3 origin = firePoint != null? firePoint.position : transform.position + Vector3.up * targetRayHeight;
 
         Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
         Vector3 dir = (targetPos - origin).normalized;

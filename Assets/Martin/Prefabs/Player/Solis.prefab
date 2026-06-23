@@ -60,7 +60,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2254472236542313719}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.019113759, y: 0.04918929, z: -0.00094150455, w: 0.99860615}
+  m_LocalRotation: {x: 0.0498137, y: -0.000000020333058, z: 0.0000000010141237, w: 0.99875855}
   m_LocalPosition: {x: 0, y: 1.5, z: -5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -122,7 +122,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b5d7c088409d9a40b7b09aa707777f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineOrbitalFollow
-  TargetOffset: {x: 0, y: 0, z: 0}
+  TargetOffset: {x: 0, y: -1, z: 0}
   TrackerSettings:
     BindingMode: 4
     PositionDamping: {x: 0, y: 0, z: 0}
@@ -134,13 +134,13 @@ MonoBehaviour:
   Orbits:
     Top:
       Radius: 2.5
-      Height: 3
+      Height: 4
     Center:
       Radius: 5
-      Height: 1.5
+      Height: 2.5
     Bottom:
       Radius: 2.5
-      Height: -0.5
+      Height: 1.5
     SplineCurvature: 0.5
   RecenteringTarget: 2
   HorizontalAxis:
@@ -328,7 +328,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1757137706333977587}
+  m_Father: {fileID: 7907219430774423904}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4308266925320453281
 GameObject:
@@ -359,6 +359,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 5627502935723402889}
   - {fileID: 43262760210249759}
   m_Father: {fileID: 960076220326454166}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -699,7 +700,19 @@ MonoBehaviour:
     m_ActionId: 530285e3-5a88-4fef-a691-58d63c67ed7a
     m_ActionName: 'Player/Skill4[/Keyboard/4]'
   - m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 6855885166615657495}
+        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
+        m_MethodName: OnLockTarget
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: 8915c505-460c-480d-8344-120a4e50ebbc
     m_ActionName: 'Player/LockOnTarget[/Keyboard/q]'
   - m_PersistentCalls:
@@ -803,7 +816,12 @@ MonoBehaviour:
   walk: {fileID: 8300000, guid: 4f74f07e7432acd4da9d60783631085f, type: 3}
   dash: {fileID: 8300000, guid: d85170ea40d4188428b8b35aeb2db31c, type: 3}
   jump: {fileID: 0}
+  land: {fileID: 0}
   onHit: {fileID: 0}
+  onDead: {fileID: 0}
+  meleeAttack: {fileID: 0}
+  shootSound: {fileID: 0}
+  sfxVolume: 0.8
   showDebug: 1
   hitboxPrefab: {fileID: 65547742025389114, guid: b60a9548e8b1aba4497aeaf2c3ebe7a9, type: 3}
   hasUsedAirAttack: 0
@@ -823,8 +841,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LockOnTarget
   mainCamera: {fileID: 0}
-  cameraRig: {fileID: 0}
-  orbitalFollow: {fileID: 0}
+  cameraRig: {fileID: 2680798955826533983}
+  orbitalFollow: {fileID: 7560659605750283324}
   input: {fileID: 6855885166615657495}
   inputProvider: {fileID: 3947670542337584405}
   aimIcon: {fileID: 0}
@@ -833,7 +851,7 @@ MonoBehaviour:
     m_Bits: 7168
   enemyTag: Enemy
   targetLockOffset: {x: 0, y: 0}
-  minDistance: 1
+  minDistance: 0.2
   maxDistance: 15
   lockSpeed: 3
 --- !u!114 &3918977527686612573
@@ -1024,7 +1042,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5627502935723402889}
   - {fileID: 2471502945193907899}
   m_Father: {fileID: 960076220326454166}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1053,7 +1070,7 @@ Transform:
   m_GameObject: {fileID: 8076060820978197462}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.47993, y: 1.30774, z: -0.14022}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

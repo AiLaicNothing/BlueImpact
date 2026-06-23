@@ -1,16 +1,57 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [SerializeField] private List<SpawnEntry> spawnEntries = new();
+
+    private void Start()
     {
-        
+        for (int i = 0; i < spawnEntries.Count; i++)
+        {
+            if (spawnEntries[i].spawnOnStart) Spawn(i);
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    public void Spawn(int index)
     {
-        
+        if (index < 0 || index >= spawnEntries.Count) return;
+
+        SpawnEntry entry = spawnEntries[index];
+
+        if (entry.oneTimeSpawn && entry.hasSpawned) return;
+
+        if (entry.enemyPrefab == null || entry.spawnPoint == null) return;
+
+        GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation);
+
+        EnemyBase enemy = enemyObj.GetComponent<EnemyBase>();
+        if (enemy == null)
+        {
+            Destroy(enemyObj);
+            return;
+        }
+
+        enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol);
+
+        entry.hasSpawned = true;
+        entry.spawnedEnemy = enemy;
+    }
+
+    public void Respawn(int index)
+    {
+        if (index < 0 || index >= spawnEntries.Count) return;
+
+        SpawnEntry entry = spawnEntries[index];
+
+        if (entry.oneTimeSpawn) return;
+
+        Spawn(index);
+    }
+
+    public void SpawnAll()
+    {
+        for (int i = 0; i < spawnEntries.Count; i++) Spawn(i);
     }
 }
+
