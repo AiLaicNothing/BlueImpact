@@ -27,6 +27,7 @@ public class CheckpointMenuUI : MonoBehaviour
 
     private Checkpoint currentCheckpoint;
     private bool isOpen = false;
+    public bool IsOpen() => isOpen;
 
     private void Awake()
     {
@@ -52,7 +53,6 @@ public class CheckpointMenuUI : MonoBehaviour
         mainPanel.SetActive(true);
         isOpen = true;
 
-        // ✅ SELECCIONAR PRIMER BOTÓN PARA GAMEPAD
         if (eventSystem != null)
         {
             eventSystem.SetSelectedGameObject(travelButton.gameObject);
@@ -63,7 +63,6 @@ public class CheckpointMenuUI : MonoBehaviour
     {
         currentCheckpoint = checkpoint;
 
-        // ✅ CAMBIAR GAMEMODE
         if (GameModeManager.Instance != null)
             GameModeManager.Instance.SetMode(GameMode.UI);
 
@@ -71,7 +70,9 @@ public class CheckpointMenuUI : MonoBehaviour
         mainPanel.SetActive(true);
         isOpen = true;
 
-        // ✅ SELECCIONAR PRIMER BOTÓN PARA GAMEPAD
+        // ✅ CONGELAR JUEGO UNA VEZ AL ABRIR (safe zone)
+        Time.timeScale = 0f;
+
         if (eventSystem != null)
         {
             eventSystem.SetSelectedGameObject(travelButton.gameObject);
@@ -83,11 +84,12 @@ public class CheckpointMenuUI : MonoBehaviour
         CloseAllPanels();
         isOpen = false;
 
-        // ✅ RESTAURAR GAMEMODE
+        // ✅ DESCONGELAR JUEGO AL CERRAR
+        Time.timeScale = 1f;
+
         if (GameModeManager.Instance != null)
             GameModeManager.Instance.SetMode(GameMode.Gameplay);
 
-        // ✅ DESELECCIONAR
         if (eventSystem != null)
         {
             eventSystem.SetSelectedGameObject(null);
@@ -100,7 +102,8 @@ public class CheckpointMenuUI : MonoBehaviour
         teleportPanel.gameObject.SetActive(true);
         teleportPanel.Open();
 
-        // ✅ SELECCIONAR PRIMER ELEMENTO DEL PANEL
+        // ✅ SIN TOCAR Time.timeScale - el juego sigue congelado
+
         if (eventSystem != null)
         {
             var firstButton = teleportPanel.GetComponent<Button>();
@@ -115,10 +118,11 @@ public class CheckpointMenuUI : MonoBehaviour
         statsPanel.SetActive(true);
         checkpointStatsPanel.OpenSession();
 
-        // ✅ SELECCIONAR PRIMER ELEMENTO
+        // ✅ SIN TOCAR Time.timeScale - el juego sigue congelado
+
         if (eventSystem != null && checkpointStatsPanel != null)
         {
-            eventSystem.SetSelectedGameObject(null); // Reset
+            eventSystem.SetSelectedGameObject(null);
         }
     }
 
@@ -127,12 +131,12 @@ public class CheckpointMenuUI : MonoBehaviour
         CloseAllPanels();
         skillsPanel.SetActive(true);
 
-        // ✅ AGREGA ESTAS LÍNEAS:
+        // ✅ SIN TOCAR Time.timeScale - el juego sigue congelado
+
         var skillPanel = skillsPanel.GetComponent<SkillManagementPanel>();
         if (skillPanel != null)
-            skillPanel.Open();  // ← LLAMAR OPEN()
+            skillPanel.Open();
 
-        // ✅ SELECCIONAR PRIMER BOTÓN SI EXISTE
         if (eventSystem != null)
         {
             var firstButton = skillsPanel.GetComponentInChildren<Button>();

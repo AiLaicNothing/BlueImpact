@@ -38,24 +38,23 @@ public class CheckpointManager : MonoBehaviour
 
     public void Interact(Checkpoint checkpoint)
     {
-        // ✅ VALIDAR QUE playerStats EXISTE
         if (playerStats == null)
         {
-            Debug.LogError("❌ PlayerStatsManager no inicializado. Esperando spawn del player...");
+            Debug.LogError("❌ PlayerStatsManager no inicializado");
             return;
         }
 
-        SetActiveCheckpoint(checkpoint);
+        // 🔍 DEBUG: ¿Existen los singletons?
+        Debug.Log($"PopupUI.Instance: {PopupUI.Instance}");
+        Debug.Log($"CheckpointMenuUI.Instance: {CheckpointMenuUI.Instance}");
 
+        SetActiveCheckpoint(checkpoint);
         bool firstDiscovery = DiscoverCheckpoint(checkpoint);
 
         if (firstDiscovery)
         {
-            playerStats.AddUpgradePoints(
-                checkpoint.Data.upgradePointsReward);
-
-            PopupUI.Instance.Show(
-                $"+{checkpoint.Data.upgradePointsReward} puntos por descubrir\n{checkpoint.Data.checkpointName}");
+            playerStats.AddUpgradePoints(checkpoint.Data.upgradePointsReward);
+            PopupUI.Instance.Show("..."); // ← Aquí explota
         }
 
         CheckpointMenuUI.Instance.Open(checkpoint);

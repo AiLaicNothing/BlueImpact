@@ -106,14 +106,23 @@ public class PauseManager : MonoBehaviour
 
     private void OnPauseInput(InputAction.CallbackContext context)
     {
-        // ✅ SI SETTINGS ESTÁ ABIERTO, EL PADRE (PauseManager) CIERRA PRIMERO
+        // ✅ JERARQUÍA DE CIERRE (de innermost a outermost)
+
+        // 1️⃣ SI SETTINGS ESTÁ ABIERTO, CIERRA SETTINGS (no pausa)
         if (gameplaySettingsUI != null && gameplaySettingsUI.IsOpen)
         {
             gameplaySettingsUI.Close();
-            return;  // ← No pausar/reanudar aún
+            return;
         }
 
-        // ✅ SI NO, PROCEDER CON PAUSA/REANUDACIÓN NORMAL
+        // 2️⃣ SI CHECKPOINT MENU ESTÁ ABIERTO, CIERRA CHECKPOINT (no pausa)
+        if (CheckpointMenuUI.Instance != null && CheckpointMenuUI.Instance.IsOpen())
+        {
+            CheckpointMenuUI.Instance.CloseMenu();
+            return;
+        }
+
+        // 3️⃣ SI NADA ESTÁ ABIERTO, PROCEDE CON PAUSA/REANUDACIÓN NORMAL
         if (isPaused)
             Resume();
         else

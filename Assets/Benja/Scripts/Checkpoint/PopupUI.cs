@@ -4,22 +4,33 @@ using UnityEngine;
 
 public class PopupUI : MonoBehaviour
 {
-    public static PopupUI Instance { get; private set; }
+    private static PopupUI instance;
+    public static PopupUI Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = FindObjectOfType<PopupUI>();
+                if (instance == null)
+                {
+                    Debug.LogError("❌ PopupUI no encontrado en la escena");
+                }
+            }
+            return instance;
+        }
+    }
 
     [SerializeField] private CanvasGroup canvasGroup;
-
     [SerializeField] private TMP_Text messageText;
-
     [SerializeField] private float visibleTime = 1f;
-
     [SerializeField] private float fadeDuration = 0.25f;
 
     private Coroutine currentRoutine;
 
     private void Awake()
     {
-        Instance = this;
-
+        instance = this;
         canvasGroup.alpha = 0;
     }
 
@@ -30,20 +41,15 @@ public class PopupUI : MonoBehaviour
             StopCoroutine(currentRoutine);
         }
 
-        currentRoutine =
-            StartCoroutine(ShowRoutine(message));
+        currentRoutine = StartCoroutine(ShowRoutine(message));
     }
 
     private IEnumerator ShowRoutine(string message)
     {
         messageText.text = message;
-
         yield return Fade(0, 1);
-
         yield return new WaitForSeconds(visibleTime);
-
         yield return Fade(1, 0);
-
         currentRoutine = null;
     }
 
@@ -54,16 +60,10 @@ public class PopupUI : MonoBehaviour
         while (elapsed < fadeDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-
-            canvasGroup.alpha =
-                Mathf.Lerp(
-                    from,
-                    to,
-                    elapsed / fadeDuration);
-
+            canvasGroup.alpha = Mathf.Lerp(from, to, elapsed / fadeDuration);
             yield return null;
         }
 
         canvasGroup.alpha = to;
     }
-} 
+}
