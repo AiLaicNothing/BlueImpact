@@ -38,7 +38,7 @@ public class CharSelector_UI : MonoBehaviour
             panel.SetActive(true);
         }
 
-        Audio_Manager.Instance.ChangeMusic(music, 0.15f);
+        Audio_Manager.Instance.PlayMusic(music, 0.15f);
         SelectCharacter(0);
         SetButtons();
     }

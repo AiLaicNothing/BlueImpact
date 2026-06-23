@@ -4,6 +4,17 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// 🎮 GameplaySettingsUI - UI de configuración en escena GAMEPLAY
+/// 
+/// ⚠️ UBICACIÓN: Escena de GAMEPLAY
+/// 
+/// Características:
+/// ✅ Tabs: Video, Audio, Controls
+/// ✅ Control de volúmenes: Master, Music, SFX, UI, Player, Enemy, Ambient
+/// ✅ Cambio de dispositivo (teclado/gamepad) en tiempo real
+/// ✅ Integración con SettingsManager y PauseManager
+/// </summary>
 public class GameplaySettingsUI : MonoBehaviour
 {
     [Header("Canvas")]
@@ -16,26 +27,29 @@ public class GameplaySettingsUI : MonoBehaviour
     [SerializeField] private TabsManager tabsManager;
     [SerializeField] private CanvasGroup pausePanelCanvasGroup;
 
-    [Header("Video Dropdowns")]
+    // ==================== VIDEO ====================
+    [Header("VIDEO")]
     [SerializeField] private TMP_Dropdown resolutionDropdown;
-
-    [Header("Video Sliders")]
     [SerializeField] private Slider brightnessSlider;
     [SerializeField] private Slider contrastSlider;
-
-    [Header("Video Toggles")]
     [SerializeField] private Toggle fullscreenToggle;
 
-    [Header("Audio Sliders")]
+    // ==================== AUDIO ====================
+    [Header("AUDIO")]
     [SerializeField] private Slider masterVolumeSlider;
-    [SerializeField] private Slider voiceVolumeSlider;
-    [SerializeField] private Slider sfxVolumeSlider;
     [SerializeField] private Slider musicVolumeSlider;
+    [SerializeField] private Slider sfxVolumeSlider;
+    [SerializeField] private Slider uiVolumeSlider;
 
-    [Header("Control Sliders")]
+    // ✅ NUEVOS: Volúmenes específicos
+    [SerializeField] private Slider playerSFXVolumeSlider;
+    [SerializeField] private Slider enemySFXVolumeSlider;
+    [SerializeField] private Slider ambientVolumeSlider;
+    [SerializeField] private Slider voiceVolumeSlider;
+
+    // ==================== CONTROLS ====================
+    [Header("CONTROLS")]
     [SerializeField] private Slider mouseSensitivitySlider;
-
-    [Header("Keybinds")]
     [SerializeField] private Transform keybindsContainer;
     [SerializeField] private GameObject keybindPrefab;
 
@@ -47,6 +61,11 @@ public class GameplaySettingsUI : MonoBehaviour
     private PlayerInputHandler playerInputHandler;
     private bool isOpen = false;
     private bool isGamepadActive = false;
+
+    // ✅ PROPIEDAD PÚBLICA PARA QUE PAUSEMANAGER SEPA SI ESTÁ ABIERTO
+    public bool IsOpen => isOpen;
+
+    // ==================== INICIALIZACIÓN ====================
 
     private void Awake()
     {
@@ -72,12 +91,11 @@ public class GameplaySettingsUI : MonoBehaviour
 
         playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
 
-        // ✅ BUSCAR SETTINGSMANAGER (con fallback)
+        // ✅ BUSCAR SETTINGSMANAGER
         settingsManager = SettingsManager.Instance;
 
         if (settingsManager == null)
         {
-            // ✅ INTENTAR BUSCAR EN ESCENA
             settingsManager = FindFirstObjectByType<SettingsManager>();
 
             if (settingsManager == null)
@@ -113,6 +131,12 @@ public class GameplaySettingsUI : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        // ✅ LIMPIAR SI ES NECESARIO
+        // (PauseManager maneja la lógica de input)
+    }
+
     private void InitializeAllSettings()
     {
         if (settingsManager == null) return;
@@ -122,11 +146,13 @@ public class GameplaySettingsUI : MonoBehaviour
         InitializeControlsSettings();
     }
 
+    // ==================== VIDEO ====================
+
     private void InitializeVideoSettings()
     {
         if (settingsManager == null)
         {
-            // ✅ VALORES DEFAULT PARA VIDEO
+            // ✅ VALORES DEFAULT
             if (resolutionDropdown != null)
             {
                 resolutionDropdown.options.Clear();
@@ -201,43 +227,20 @@ public class GameplaySettingsUI : MonoBehaviour
         }
     }
 
+    // ==================== AUDIO ====================
+
     private void InitializeAudioSettings()
     {
         // ✅ SI NO HAY SETTINGS, USAR VALORES DEFAULT
         if (settingsManager == null)
         {
-            if (masterVolumeSlider != null)
-            {
-                masterVolumeSlider.minValue = 0f;
-                masterVolumeSlider.maxValue = 1f;
-                masterVolumeSlider.value = 0.8f;
-            }
-
-            if (voiceVolumeSlider != null)
-            {
-                voiceVolumeSlider.minValue = 0f;
-                voiceVolumeSlider.maxValue = 1f;
-                voiceVolumeSlider.value = 0.8f;
-            }
-
-            if (sfxVolumeSlider != null)
-            {
-                sfxVolumeSlider.minValue = 0f;
-                sfxVolumeSlider.maxValue = 1f;
-                sfxVolumeSlider.value = 0.8f;
-            }
-
-            if (musicVolumeSlider != null)
-            {
-                musicVolumeSlider.minValue = 0f;
-                musicVolumeSlider.maxValue = 1f;
-                musicVolumeSlider.value = 0.8f;
-            }
+            //SetAudioDefaults();
             return;
         }
 
         var settings = settingsManager.GetSettings();
 
+        // ✅ MASTER VOLUME
         if (masterVolumeSlider != null)
         {
             masterVolumeSlider.minValue = 0f;
@@ -246,14 +249,16 @@ public class GameplaySettingsUI : MonoBehaviour
             masterVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetMasterVolume(value));
         }
 
-        if (voiceVolumeSlider != null)
+        // ✅ MUSIC VOLUME
+        if (musicVolumeSlider != null)
         {
-            voiceVolumeSlider.minValue = 0f;
-            voiceVolumeSlider.maxValue = 1f;
-            voiceVolumeSlider.value = settings.audio.voiceVolume;
-            voiceVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetVoiceVolume(value));
+            musicVolumeSlider.minValue = 0f;
+            musicVolumeSlider.maxValue = 1f;
+            musicVolumeSlider.value = settings.audio.musicVolume;
+            musicVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetMusicVolume(value));
         }
 
+        // ✅ SFX VOLUME
         if (sfxVolumeSlider != null)
         {
             sfxVolumeSlider.minValue = 0f;
@@ -262,14 +267,67 @@ public class GameplaySettingsUI : MonoBehaviour
             sfxVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetSFXVolume(value));
         }
 
-        if (musicVolumeSlider != null)
+        // ✅ UI VOLUME
+        if (uiVolumeSlider != null)
         {
-            musicVolumeSlider.minValue = 0f;
-            musicVolumeSlider.maxValue = 1f;
-            musicVolumeSlider.value = settings.audio.musicVolume;
-            musicVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetMusicVolume(value));
+            uiVolumeSlider.minValue = 0f;
+            uiVolumeSlider.maxValue = 1f;
+            uiVolumeSlider.value = settings.audio.uiVolume;
+            uiVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetUIVolume(value));
+        }
+
+        // ✅ PLAYER SFX VOLUME
+        if (playerSFXVolumeSlider != null)
+        {
+            playerSFXVolumeSlider.minValue = 0f;
+            playerSFXVolumeSlider.maxValue = 1f;
+            playerSFXVolumeSlider.value = settings.audio.playerSFXVolume;
+            playerSFXVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetPlayerSFXVolume(value));
+        }
+
+        // ✅ ENEMY SFX VOLUME
+        if (enemySFXVolumeSlider != null)
+        {
+            enemySFXVolumeSlider.minValue = 0f;
+            enemySFXVolumeSlider.maxValue = 1f;
+            enemySFXVolumeSlider.value = settings.audio.enemySFXVolume;
+            enemySFXVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetEnemySFXVolume(value));
+        }
+
+        // ✅ AMBIENT VOLUME
+        if (ambientVolumeSlider != null)
+        {
+            ambientVolumeSlider.minValue = 0f;
+            ambientVolumeSlider.maxValue = 1f;
+            ambientVolumeSlider.value = settings.audio.ambientVolume;
+            ambientVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetAmbientVolume(value));
+        }
+
+        // ✅ VOICE VOLUME
+        if (voiceVolumeSlider != null)
+        {
+            voiceVolumeSlider.minValue = 0f;
+            voiceVolumeSlider.maxValue = 1f;
+            voiceVolumeSlider.value = settings.audio.voiceVolume;
+            voiceVolumeSlider.onValueChanged.AddListener((value) => settingsManager.SetVoiceVolume(value));
         }
     }
+
+    //private void SetAudioDefaults()
+    //{
+    //    float[] sliders = { masterVolumeSlider, musicVolumeSlider, sfxVolumeSlider, uiVolumeSlider,
+    //                       playerSFXVolumeSlider, enemySFXVolumeSlider, ambientVolumeSlider, voiceVolumeSlider }
+    //                       .Where(s => s != null).ToArray();
+
+    //    foreach (var slider in sliders)
+    //    {
+    //        slider.minValue = 0f;
+    //        slider.maxValue = 1f;
+    //        slider.value = 0.8f;
+    //    }
+    //}
+
+    // ==================== CONTROLS ====================
 
     private void InitializeControlsSettings()
     {
@@ -307,7 +365,7 @@ public class GameplaySettingsUI : MonoBehaviour
         foreach (Transform child in keybindsContainer)
             Destroy(child.gameObject);
 
-        // ✅ CREAR KEYBINDS SEGÚN DISPOSITIVO
+        // ✅ CREAR SEGÚN DISPOSITIVO
         if (isGamepadActive)
         {
             CreateGamepadKeybinds();
@@ -379,6 +437,8 @@ public class GameplaySettingsUI : MonoBehaviour
         }
     }
 
+    // ==================== ABRIR / CERRAR ====================
+
     public void Open()
     {
         isOpen = true;
@@ -408,7 +468,13 @@ public class GameplaySettingsUI : MonoBehaviour
             eventSystem.SetSelectedGameObject(resolutionDropdown.gameObject);
         }
 
-        Debug.Log("🔧 Settings abierto");
+        // ✅ CAMBIAR A UI SI ESTAMOS EN GAMEPLAY
+        if (GameModeManager.Instance != null && GameModeManager.Instance.CurrentMode == GameMode.Gameplay)
+        {
+            GameModeManager.Instance.SetMode(GameMode.UI);
+        }
+
+        Debug.Log("🔧 Settings abierto (Gameplay)");
     }
 
     public void Close()
@@ -437,6 +503,16 @@ public class GameplaySettingsUI : MonoBehaviour
             pauseManager.OnSettingsClosed();
         }
 
-        Debug.Log("🔧 Settings cerrado");
+        // ✅ REGRESAR A GAMEPLAY SOLO SI NO ESTAMOS EN PAUSA
+        if (GameModeManager.Instance != null)
+        {
+            if (pauseManager != null && !pauseManager.IsPaused)
+            {
+                GameModeManager.Instance.SetMode(GameMode.Gameplay);
+            }
+            // Si estamos en pausa, mantener UI (PauseManager lo manejará al resumir)
+        }
+
+        Debug.Log("🔧 Settings cerrado (Gameplay)");
     }
 }

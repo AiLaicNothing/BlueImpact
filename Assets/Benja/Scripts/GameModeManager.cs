@@ -43,7 +43,64 @@ public class GameModeManager : MonoBehaviour
 
         CurrentMode = newMode;
         Debug.Log($"Game Mode → {CurrentMode}");
+
+        // ✅ CONTROLAR CURSOR AUTOMÁTICAMENTE
+        UpdateCursorState(newMode);
+
         OnGameModeChanged?.Invoke(CurrentMode);
+    }
+
+    /// <summary>
+    /// ✅ Controla la visibilidad y bloqueo del cursor según el GameMode
+    /// </summary>
+    private void UpdateCursorState(GameMode mode)
+    {
+        switch (mode)
+        {
+            case GameMode.Gameplay:
+                // ❌ Sin mouse, bloqueado al centro
+                Cursor.visible = false;
+                Cursor.lockState = CursorLockMode.Locked;
+                Debug.Log("🎮 Cursor bloqueado (Gameplay)");
+                break;
+
+            case GameMode.UI:
+            case GameMode.Puzzle:
+            case GameMode.Dialogue:
+            case GameMode.Cutscene:
+                // ✅ Con mouse, visible
+                Cursor.visible = true;
+                Cursor.lockState = CursorLockMode.None;
+                Debug.Log("🖱️ Cursor desbloqueado (UI/Menu)");
+                break;
+        }
+    }
+
+    /// <summary>
+    /// ✅ Método público para controlar el cursor manualmente si es necesario
+    /// </summary>
+    public void SetCursorState(bool visible, CursorLockMode lockMode)
+    {
+        Cursor.visible = visible;
+        Cursor.lockState = lockMode;
+    }
+
+    /// <summary>
+    /// ✅ Mostrar cursor
+    /// </summary>
+    public void ShowCursor()
+    {
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    /// <summary>
+    /// ✅ Ocultar y bloquear cursor
+    /// </summary>
+    public void HideCursor()
+    {
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     /// <summary>

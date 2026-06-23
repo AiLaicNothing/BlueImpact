@@ -12,12 +12,18 @@ public class CharSelector_Manager : MonoBehaviour
 
     private void Awake()
     {
-        Instance = this;    
+        Instance = this;
+
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.SetMode(GameMode.UI);
+            Debug.Log("🎨 Cambiado a GameMode.UI - Selector de personajes");
+        }
     }
 
     public CharacterInfo GetCharacterInfo(int index)
     {
-        if ( index < 0 || index >= characters.Length) return null;
+        if (index < 0 || index >= characters.Length) return null;
 
         return characters[index];
     }
@@ -29,7 +35,6 @@ public class CharSelector_Manager : MonoBehaviour
 
     public void SetupRespawn()
     {
-        // ✅ GUARDAR EL SPAWN INICIAL EN RESPAWNMANAGER
         if (RespawnManager.Instance != null && spawnPoint != null)
         {
             RespawnManager.Instance.SetInitialSpawnPoint(spawnPoint);

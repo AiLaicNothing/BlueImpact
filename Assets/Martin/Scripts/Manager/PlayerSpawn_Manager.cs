@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerSpawn_Manager : MonoBehaviour
 {
     public static PlayerSpawn_Manager Instance;
-    public static event Action<PlayerControl> OnPlayerSpawned;  // ✅ AGREGA ESTO
+    public static event Action<PlayerControl> OnPlayerSpawned;  
 
     private CharacterInfo currentCharacterInfo;
 
@@ -27,9 +27,18 @@ public class PlayerSpawn_Manager : MonoBehaviour
         var playerControl = playerInstance.GetComponent<PlayerControl>();
         if (playerControl != null)
         {
-            // ✅ GUARDAR LA REFERENCIA
             playerControl.CurrentCharacterInfo = currentCharacterInfo;
             OnPlayerSpawned?.Invoke(playerControl);
+        }
+
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.SetMode(GameMode.Gameplay);
+            Debug.Log("🎮 Cambiado a GameMode.Gameplay - Cursor bloqueado");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ GameModeManager no encontrado. Inicializando...");
         }
     }
 }

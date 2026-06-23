@@ -106,6 +106,14 @@ public class PauseManager : MonoBehaviour
 
     private void OnPauseInput(InputAction.CallbackContext context)
     {
+        // ✅ SI SETTINGS ESTÁ ABIERTO, EL PADRE (PauseManager) CIERRA PRIMERO
+        if (gameplaySettingsUI != null && gameplaySettingsUI.IsOpen)
+        {
+            gameplaySettingsUI.Close();
+            return;  // ← No pausar/reanudar aún
+        }
+
+        // ✅ SI NO, PROCEDER CON PAUSA/REANUDACIÓN NORMAL
         if (isPaused)
             Resume();
         else

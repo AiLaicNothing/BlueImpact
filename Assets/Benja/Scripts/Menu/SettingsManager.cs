@@ -2,18 +2,30 @@ using UnityEngine;
 using System.IO;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// 🎮 SettingsManager - Gestor centralizado de configuración
+/// 
+/// ⚠️ UBICACIÓN: Escena de MENU (como DontDestroyOnLoad)
+/// 
+/// Características:
+/// ✅ Integración con Audio_Manager para cambios de volumen
+/// ✅ Persistencia de configuración en JSON
+/// ✅ Aplicación automática de settings al cargar
+/// ✅ Auto-save en cambios (configurable)
+/// </summary>
 public class SettingsManager : MonoBehaviour
 {
     public static SettingsManager Instance { get; private set; }
 
     private SettingsData currentSettings;
     private string settingsPath;
-    private InputActionAsset inputActions;
+    private Audio_Manager audioManager;
 
     [SerializeField] private bool autoSaveOnChange = true;
 
     private void Awake()
     {
+        // ✅ SINGLETON
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -23,18 +35,31 @@ public class SettingsManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        // ✅ OBTENER RUTA DE PERSISTENCIA
         settingsPath = Path.Combine(Application.persistentDataPath, "settings.json");
 
-        // ✅ AGREGA: Validar que settingsPath existe
         if (!Directory.Exists(Application.persistentDataPath))
         {
             Directory.CreateDirectory(Application.persistentDataPath);
         }
 
+        // ✅ CARGAR Y APLICAR CONFIGURACIÓN
         LoadSettings();
         ApplyAllSettings();
+
+        Debug.Log($"✅ SettingsManager inicializado");
+        Debug.Log($"📂 Ruta de configuración: {settingsPath}");
     }
 
+    private void Start()
+    {
+        // ✅ OBTENER AUDIO_MANAGER (después de que ambos Awake hayan terminado)
+        audioManager = Audio_Manager.Instance;
+        if (audioManager == null)
+        {
+            Debug.LogError("❌ Audio_Manager no encontrado. Asegúrate de que esté en la escena del MENU.");
+        }
+    }
 
     // ==================== LOAD & SAVE ====================
 
@@ -46,24 +71,24 @@ public class SettingsManager : MonoBehaviour
             {
                 string json = File.ReadAllText(settingsPath);
                 currentSettings = JsonUtility.FromJson<SettingsData>(json);
-                Debug.Log("Configuración cargada desde: " + settingsPath);
+                Debug.Log("✅ Configuración cargada desde: " + settingsPath);
             }
-            catch
+            catch (System.Exception ex)
             {
-                Debug.LogWarning("Error al cargar configuración, usando valores por defecto");
+                Debug.LogWarning($"⚠️ Error al cargar configuración: {ex.Message}. Usando valores por defecto.");
                 currentSettings = new SettingsData();
-                SetDefault1920x1080();  // ✅ AGREGA ESTO
+                SetDefault1920x1080();
             }
         }
         else
         {
             currentSettings = new SettingsData();
-            SetDefault1920x1080();  // ✅ AGREGA ESTO
+            SetDefault1920x1080();
             SaveSettings();
+            Debug.Log("✅ Archivo de configuración creado por primera vez");
         }
     }
 
-    // ✅ AGREGA ESTE MÉTODO
     private void SetDefault1920x1080()
     {
         Resolution[] resolutions = Screen.resolutions;
@@ -94,29 +119,32 @@ public class SettingsManager : MonoBehaviour
         }
 
         currentSettings.video.resolutionIndex = closestIndex;
-        Debug.LogWarning($"⚠️ 1920x1080 no disponible, usando: {resolutions[closestIndex].width}x{resolutions[closestIndex].height}");
+        Debug.LogWarning($"⚠️ 1920x1080 no disponible. Usando: {resolutions[closestIndex].width}x{resolutions[closestIndex].height}");
     }
+
     public void SaveSettings()
     {
         try
         {
             string json = JsonUtility.ToJson(currentSettings, true);
             File.WriteAllText(settingsPath, json);
-            Debug.Log("Configuración guardada en: " + settingsPath);
+            Debug.Log("✅ Configuración guardada");
         }
-        catch
+        catch (System.Exception ex)
         {
-            Debug.LogError("Error al guardar configuración");
+            Debug.LogError($"❌ Error al guardar configuración: {ex.Message}");
         }
     }
 
     public void ResetToDefaults()
     {
         currentSettings = new SettingsData();
-        SetDefault1920x1080();  // ✅ AGREGA ESTO - Resetear a 1920x1080
+        SetDefault1920x1080();
         ApplyAllSettings();
         SaveSettings();
+        Debug.Log("✅ Configuración resetada a valores por defecto");
     }
+
     // ==================== APPLY SETTINGS ====================
 
     private void ApplyAllSettings()
@@ -131,64 +159,98 @@ public class SettingsManager : MonoBehaviour
     {
         var videoSettings = currentSettings.video;
 
-        // Resolución
+        // ✅ RESOLUCIÓN
         var resolutions = Screen.resolutions;
         if (videoSettings.resolutionIndex >= 0 && videoSettings.resolutionIndex < resolutions.Length)
         {
             Resolution res = resolutions[videoSettings.resolutionIndex];
             Screen.SetResolution(res.width, res.height, videoSettings.fullscreen);
-            Debug.Log($"✅ Resolución aplicada: {res.width}x{res.height} | Pantalla completa: {videoSettings.fullscreen}");
-        }
-        else
-        {
-            Debug.LogWarning("⚠️ Índice de resolución inválido");
+            Debug.Log($"✅ Video: {res.width}x{res.height} | Fullscreen: {videoSettings.fullscreen}");
         }
 
-        // Brillo
-        float brightness = videoSettings.brightnessLevel / 100f;  // ✅ CAMBIÉ: 10000f → 100f (rango más realista)
+        // ✅ BRILLO (se aplicará en tu sistema de post-processing)
+        float brightness = videoSettings.brightnessLevel / 100f;
         ApplyBrightness(brightness);
 
-        Debug.Log("Video settings aplicadas");
+        Debug.Log($"✅ Brillo: {videoSettings.brightnessLevel}% | Contraste: {videoSettings.contrastLevel}%");
     }
 
     private void ApplyAudioSettings()
     {
         var audioSettings = currentSettings.audio;
-        
-        // Aquí integrarás con tu sistema de audio
-        // Ejemplo si usas AudioMixer:
-        // audioMixer.SetFloat("MasterVolume", Mathf.Log10(audioSettings.masterVolume) * 20);
-        
-        Debug.Log($"Audio settings aplicadas - Master: {audioSettings.masterVolume}");
+
+        // ✅ APLICAR A AUDIO_MANAGER
+        if (audioManager != null)
+        {
+            audioManager.SetMasterVolume(audioSettings.masterVolume);
+            audioManager.SetMusicVolume(audioSettings.musicVolume);
+            audioManager.SetSFXVolume(audioSettings.sfxVolume);
+            audioManager.SetUIVolume(audioSettings.uiVolume);
+            audioManager.SetPlayerSFXVolume(audioSettings.playerSFXVolume);
+            audioManager.SetEnemySFXVolume(audioSettings.enemySFXVolume);
+            audioManager.SetAmbientVolume(audioSettings.ambientVolume);
+
+            Debug.Log($"✅ Audio settings aplicadas al AudioMixer");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Audio_Manager no disponible, settings de audio no aplicados");
+        }
     }
 
     private void ApplyControlsSettings()
     {
         var controlSettings = currentSettings.controls;
-        
-        // Esto se aplicará cuando cargues el Input System
-        // Por ahora, solo guardamos los datos
-        Debug.Log($"Controls settings aplicadas - Sensibilidad: {controlSettings.mouseSensitivity}");
+        Debug.Log($"✅ Sensibilidad del mouse: {controlSettings.mouseSensitivity}x");
     }
 
     private void ApplyGameplaySettings()
     {
         var gameplaySettings = currentSettings.gameplay;
-        Debug.Log($"Gameplay settings aplicadas - Dificultad: {gameplaySettings.gameplayDifficulty}");
+        Debug.Log($"✅ Screen Shake: {gameplaySettings.screenShake} | Dificultad: {gameplaySettings.gameplayDifficulty}");
     }
 
     private void ApplyBrightness(float brightness)
     {
-        // Implementar según tu sistema de post-processing
-        // Ejemplo simple:
+        // ✅ TODO: Implementar según tu sistema de post-processing
+        // Ejemplo:
         // RenderSettings.ambientLight = Color.white * brightness;
+        // O si usas post-processing: postProcessVolume.profile.GetSetting<Exposure>().postExposure.value = brightness;
     }
 
-    // ==================== GETTERS & SETTERS ====================
+    // ==================== GETTERS ====================
 
     public SettingsData GetSettings() => currentSettings;
 
-    // Video
+    public Resolution[] GetAvailableResolutions() => Screen.resolutions;
+
+    public string GetResolutionString(int index)
+    {
+        if (index < Screen.resolutions.Length)
+        {
+            var res = Screen.resolutions[index];
+            return $"{res.width}x{res.height}";
+        }
+        return "Default";
+    }
+
+    public int GetCurrentResolutionIndex()
+    {
+        Resolution current = new Resolution { width = Screen.width, height = Screen.height };
+
+        for (int i = Screen.resolutions.Length - 1; i >= 0; i--)
+        {
+            if (Screen.resolutions[i].width == current.width &&
+                Screen.resolutions[i].height == current.height)
+            {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    // ==================== VIDEO SETTERS ====================
+
     public void SetResolution(int index)
     {
         currentSettings.video.resolutionIndex = index;
@@ -217,51 +279,79 @@ public class SettingsManager : MonoBehaviour
         if (autoSaveOnChange) SaveSettings();
     }
 
-    // Audio
+    // ==================== AUDIO SETTERS ====================
+
     public void SetMasterVolume(float value)
     {
         currentSettings.audio.masterVolume = Mathf.Clamp01(value);
-        ApplyAudioSettings();
-        if (autoSaveOnChange) SaveSettings();
-    }
-
-    public void SetVoiceVolume(float value)
-    {
-        currentSettings.audio.voiceVolume = Mathf.Clamp01(value);
-        ApplyAudioSettings();
-        if (autoSaveOnChange) SaveSettings();
-    }
-
-    public void SetSFXVolume(float value)
-    {
-        currentSettings.audio.sfxVolume = Mathf.Clamp01(value);
-        ApplyAudioSettings();
+        if (audioManager != null) audioManager.SetMasterVolume(value);
         if (autoSaveOnChange) SaveSettings();
     }
 
     public void SetMusicVolume(float value)
     {
         currentSettings.audio.musicVolume = Mathf.Clamp01(value);
-        ApplyAudioSettings();
+        if (audioManager != null) audioManager.SetMusicVolume(value);
         if (autoSaveOnChange) SaveSettings();
     }
 
-    // Controls
+    public void SetSFXVolume(float value)
+    {
+        currentSettings.audio.sfxVolume = Mathf.Clamp01(value);
+        if (audioManager != null) audioManager.SetSFXVolume(value);
+        if (autoSaveOnChange) SaveSettings();
+    }
+
+    public void SetUIVolume(float value)
+    {
+        currentSettings.audio.uiVolume = Mathf.Clamp01(value);
+        if (audioManager != null) audioManager.SetUIVolume(value);
+        if (autoSaveOnChange) SaveSettings();
+    }
+
+    public void SetPlayerSFXVolume(float value)
+    {
+        currentSettings.audio.playerSFXVolume = Mathf.Clamp01(value);
+        if (audioManager != null) audioManager.SetPlayerSFXVolume(value);
+        if (autoSaveOnChange) SaveSettings();
+    }
+
+    public void SetEnemySFXVolume(float value)
+    {
+        currentSettings.audio.enemySFXVolume = Mathf.Clamp01(value);
+        if (audioManager != null) audioManager.SetEnemySFXVolume(value);
+        if (autoSaveOnChange) SaveSettings();
+    }
+
+    public void SetAmbientVolume(float value)
+    {
+        currentSettings.audio.ambientVolume = Mathf.Clamp01(value);
+        if (audioManager != null) audioManager.SetAmbientVolume(value);
+        if (autoSaveOnChange) SaveSettings();
+    }
+
+    public void SetVoiceVolume(float value)
+    {
+        currentSettings.audio.voiceVolume = Mathf.Clamp01(value);
+        if (autoSaveOnChange) SaveSettings();
+    }
+
+    // ==================== CONTROLS SETTERS ====================
+
     public void SetMouseSensitivity(float value)
     {
         currentSettings.controls.mouseSensitivity = Mathf.Clamp(value, 0.1f, 3f);
-        ApplyControlsSettings();
         if (autoSaveOnChange) SaveSettings();
     }
 
     public void SetInvertMouseY(bool invert)
     {
         currentSettings.controls.invertMouseY = invert;
-        ApplyControlsSettings();
         if (autoSaveOnChange) SaveSettings();
     }
 
-    // Gameplay
+    // ==================== GAMEPLAY SETTERS ====================
+
     public void SetScreenShake(bool enabled)
     {
         currentSettings.gameplay.screenShake = enabled;
@@ -274,32 +364,9 @@ public class SettingsManager : MonoBehaviour
         if (autoSaveOnChange) SaveSettings();
     }
 
-    // ==================== HELPERS ====================
-
-    public Resolution[] GetAvailableResolutions() => Screen.resolutions;
-
-    public string GetResolutionString(int index)
+    public void SetGameplayDifficulty(float value)
     {
-        if (index < Screen.resolutions.Length)
-        {
-            var res = Screen.resolutions[index];
-            return $"{res.width}x{res.height}";
-        }
-        return "Default";
-    }
-
-    public int GetCurrentResolutionIndex()
-    {
-        Resolution current = new Resolution { width = Screen.width, height = Screen.height };
-        
-        for (int i = Screen.resolutions.Length - 1; i >= 0; i--)
-        {
-            if (Screen.resolutions[i].width == current.width && 
-                Screen.resolutions[i].height == current.height)
-            {
-                return i;
-            }
-        }
-        return 0;
+        currentSettings.gameplay.gameplayDifficulty = Mathf.Clamp01(value);
+        if (autoSaveOnChange) SaveSettings();
     }
 }

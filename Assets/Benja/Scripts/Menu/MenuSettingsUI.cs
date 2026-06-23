@@ -2,6 +2,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// 🎮 MenuSettingsUI - UI de configuración en escena MENU
+/// 
+/// ⚠️ UBICACIÓN: Escena de MENU
+/// 
+/// Características:
+/// ✅ Tabs: Video, Audio, Controls
+/// ✅ Control de volúmenes: Master, Music, SFX, UI, Player, Enemy, Ambient
+/// ✅ Cambio de dispositivo (teclado/gamepad) en tiempo real
+/// ✅ Integración con SettingsManager
+/// </summary>
 public class MenuSettingsUI : MonoBehaviour
 {
     [SerializeField] private CanvasGroup canvasGroup;
@@ -10,19 +21,28 @@ public class MenuSettingsUI : MonoBehaviour
 
     [SerializeField] private CanvasGroup mainMenuPanelCanvasGroup;
 
-    // VIDEO
+    // ==================== VIDEO ====================
+    [Header("VIDEO")]
     [SerializeField] private SettingDropdown resolutionDropdown;
     [SerializeField] private SettingSlider brightnessSlider;
     [SerializeField] private SettingSlider contrastSlider;
     [SerializeField] private SettingToggle fullscreenToggle;
 
-    // AUDIO
+    // ==================== AUDIO ====================
+    [Header("AUDIO")]
     [SerializeField] private SettingSlider masterVolumeSlider;
-    [SerializeField] private SettingSlider voiceVolumeSlider;
-    [SerializeField] private SettingSlider sfxVolumeSlider;
     [SerializeField] private SettingSlider musicVolumeSlider;
+    [SerializeField] private SettingSlider sfxVolumeSlider;
+    [SerializeField] private SettingSlider uiVolumeSlider;
 
-    // CONTROLS
+    // ✅ NUEVOS: Volúmenes específicos
+    [SerializeField] private SettingSlider playerSFXVolumeSlider;
+    [SerializeField] private SettingSlider enemySFXVolumeSlider;
+    [SerializeField] private SettingSlider ambientVolumeSlider;
+    [SerializeField] private SettingSlider voiceVolumeSlider;
+
+    // ==================== CONTROLS ====================
+    [Header("CONTROLS")]
     [SerializeField] private SettingSlider mouseSensitivitySlider;
     [SerializeField] private SettingToggle invertMouseYToggle;
     [SerializeField] private Transform keybindsContainer;
@@ -30,21 +50,21 @@ public class MenuSettingsUI : MonoBehaviour
 
     private SettingsManager settingsManager;
     private bool isOpen = false;
-
-    // ✅ NUEVO: Detectar dispositivo
     private bool isGamepadActive = false;
+
+    // ==================== INICIALIZACIÓN ====================
 
     private void Awake()
     {
-        // Obtener CanvasGroup si no está asignado
+        // ✅ OBTENER CANVAS GROUP
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
 
-        // Conectar botón Back
+        // ✅ CONECTAR BOTÓN BACK
         if (backButton != null)
             backButton.onClick.AddListener(Close);
 
-        // Inicializar oculto
+        // ✅ INICIALIZAR OCULTO
         if (canvasGroup != null)
         {
             canvasGroup.alpha = 0;
@@ -58,7 +78,7 @@ public class MenuSettingsUI : MonoBehaviour
 
     private void Update()
     {
-        // ✅ DETECTAR DISPOSITIVO CADA FRAME
+        // ✅ DETECTAR CAMBIO DE DISPOSITIVO
         if (isOpen)
         {
             bool wasGamepadActive = isGamepadActive;
@@ -72,7 +92,7 @@ public class MenuSettingsUI : MonoBehaviour
                 isGamepadActive = false;
             }
 
-            // ✅ SI CAMBIA DE DISPOSITIVO, ACTUALIZAR KEYBINDS
+            // ✅ SI CAMBIA DISPOSITIVO, ACTUALIZAR KEYBINDS
             if (wasGamepadActive != isGamepadActive)
             {
                 CreateKeybinds();
@@ -84,7 +104,7 @@ public class MenuSettingsUI : MonoBehaviour
     {
         if (settingsManager == null)
         {
-            Debug.LogError("SettingsManager no encontrado");
+            Debug.LogError("❌ SettingsManager no encontrado");
             return;
         }
 
@@ -93,13 +113,15 @@ public class MenuSettingsUI : MonoBehaviour
         InitializeControlsSettings();
     }
 
+    // ==================== VIDEO ====================
+
     private void InitializeVideoSettings()
     {
         if (settingsManager == null) return;
 
         var settings = settingsManager.GetSettings();
 
-        // Resolución
+        // ✅ RESOLUCIÓN
         if (resolutionDropdown != null)
         {
             var resolutions = settingsManager.GetAvailableResolutions();
@@ -117,7 +139,7 @@ public class MenuSettingsUI : MonoBehaviour
             );
         }
 
-        // Brillo
+        // ✅ BRILLO
         float brightnessNormalized = settings.video.brightnessLevel / 100f;
         if (brightnessSlider != null)
         {
@@ -131,7 +153,7 @@ public class MenuSettingsUI : MonoBehaviour
             );
         }
 
-        // Contraste
+        // ✅ CONTRASTE
         float contrastNormalized = settings.video.contrastLevel / 100f;
         if (contrastSlider != null)
         {
@@ -145,7 +167,7 @@ public class MenuSettingsUI : MonoBehaviour
             );
         }
 
-        // Pantalla completa
+        // ✅ PANTALLA COMPLETA
         if (fullscreenToggle != null)
         {
             fullscreenToggle.Initialize(
@@ -156,13 +178,15 @@ public class MenuSettingsUI : MonoBehaviour
         }
     }
 
+    // ==================== AUDIO ====================
+
     private void InitializeAudioSettings()
     {
         if (settingsManager == null) return;
 
         var settings = settingsManager.GetSettings();
 
-        // Todos los volúmenes van de 0-1, mostrados como porcentaje
+        // ✅ MASTER VOLUME
         if (masterVolumeSlider != null)
         {
             masterVolumeSlider.Initialize(
@@ -175,18 +199,20 @@ public class MenuSettingsUI : MonoBehaviour
             );
         }
 
-        if (voiceVolumeSlider != null)
+        // ✅ MUSIC VOLUME
+        if (musicVolumeSlider != null)
         {
-            voiceVolumeSlider.Initialize(
-                "Volumen de Voz",
+            musicVolumeSlider.Initialize(
+                "Volumen de Música",
                 0f,
                 1f,
-                settings.audio.voiceVolume,
-                (value) => settingsManager.SetVoiceVolume(value),
+                settings.audio.musicVolume,
+                (value) => settingsManager.SetMusicVolume(value),
                 SettingSlider.DisplayFormat.Percentage
             );
         }
 
+        // ✅ SFX VOLUME
         if (sfxVolumeSlider != null)
         {
             sfxVolumeSlider.Initialize(
@@ -199,18 +225,73 @@ public class MenuSettingsUI : MonoBehaviour
             );
         }
 
-        if (musicVolumeSlider != null)
+        // ✅ UI VOLUME
+        if (uiVolumeSlider != null)
         {
-            musicVolumeSlider.Initialize(
-                "Volumen de Música",
+            uiVolumeSlider.Initialize(
+                "Volumen UI",
                 0f,
                 1f,
-                settings.audio.musicVolume,
-                (value) => settingsManager.SetMusicVolume(value),
+                settings.audio.uiVolume,
+                (value) => settingsManager.SetUIVolume(value),
+                SettingSlider.DisplayFormat.Percentage
+            );
+        }
+
+        // ✅ PLAYER SFX VOLUME
+        if (playerSFXVolumeSlider != null)
+        {
+            playerSFXVolumeSlider.Initialize(
+                "Volumen del Jugador",
+                0f,
+                1f,
+                settings.audio.playerSFXVolume,
+                (value) => settingsManager.SetPlayerSFXVolume(value),
+                SettingSlider.DisplayFormat.Percentage
+            );
+        }
+
+        // ✅ ENEMY SFX VOLUME
+        if (enemySFXVolumeSlider != null)
+        {
+            enemySFXVolumeSlider.Initialize(
+                "Volumen de Enemigos",
+                0f,
+                1f,
+                settings.audio.enemySFXVolume,
+                (value) => settingsManager.SetEnemySFXVolume(value),
+                SettingSlider.DisplayFormat.Percentage
+            );
+        }
+
+        // ✅ AMBIENT VOLUME
+        if (ambientVolumeSlider != null)
+        {
+            ambientVolumeSlider.Initialize(
+                "Volumen de Ambiente",
+                0f,
+                1f,
+                settings.audio.ambientVolume,
+                (value) => settingsManager.SetAmbientVolume(value),
+                SettingSlider.DisplayFormat.Percentage
+            );
+        }
+
+        // ✅ VOICE VOLUME
+        if (voiceVolumeSlider != null)
+        {
+            voiceVolumeSlider.Initialize(
+                "Volumen de Voz",
+                0f,
+                1f,
+                settings.audio.voiceVolume,
+                (value) => settingsManager.SetVoiceVolume(value),
                 SettingSlider.DisplayFormat.Percentage
             );
         }
     }
+
+    // ==================== CONTROLS ====================
 
     private void InitializeControlsSettings()
     {
@@ -218,7 +299,7 @@ public class MenuSettingsUI : MonoBehaviour
 
         var settings = settingsManager.GetSettings();
 
-        // Sensibilidad
+        // ✅ SENSIBILIDAD
         if (mouseSensitivitySlider != null)
         {
             mouseSensitivitySlider.Initialize(
@@ -231,6 +312,7 @@ public class MenuSettingsUI : MonoBehaviour
             );
         }
 
+        // ✅ INVERTIR Y
         if (invertMouseYToggle != null)
         {
             invertMouseYToggle.Initialize(
@@ -248,13 +330,13 @@ public class MenuSettingsUI : MonoBehaviour
         if (keybindsContainer == null || keybindButtonPrefab == null)
             return;
 
-        // Limpiar contenedor
+        // ✅ LIMPIAR CONTENEDOR
         foreach (Transform child in keybindsContainer)
         {
             Destroy(child.gameObject);
         }
 
-        // ✅ MOSTRAR KEYBINDS SEGÚN DISPOSITIVO
+        // ✅ CREAR SEGÚN DISPOSITIVO
         if (isGamepadActive)
         {
             CreateGamepadKeybinds();
@@ -267,11 +349,6 @@ public class MenuSettingsUI : MonoBehaviour
 
     private void CreateKeyboardKeybinds()
     {
-        // ✅ KEYBINDS PARA TECLADO
-        // [1] = WASD/Up (W - adelante)
-        // [2] = WASD/Down (S - atrás)
-        // [3] = WASD/Left (A - izquierda)
-        // [4] = WASD/Right (D - derecha)
         var keybinds = new[]
         {
             ("Adelante", "Player/Move", 1),
@@ -294,8 +371,6 @@ public class MenuSettingsUI : MonoBehaviour
 
     private void CreateGamepadKeybinds()
     {
-        // ✅ KEYBINDS PARA GAMEPAD
-        // [5] = Left Stick (movimiento)
         var keybinds = new[]
         {
             ("Movimiento", "Player/Move", 5),
@@ -312,6 +387,8 @@ public class MenuSettingsUI : MonoBehaviour
             keybindButton.Initialize(label, action, binding);
         }
     }
+
+    // ==================== ABRIR / CERRAR ====================
 
     public void Open()
     {
@@ -338,7 +415,7 @@ public class MenuSettingsUI : MonoBehaviour
 
         RefreshAllSettings();
 
-        Debug.Log("MenuSettingsUI abierto");
+        Debug.Log("🔧 MenuSettingsUI abierto");
     }
 
     public void Close()
@@ -365,7 +442,7 @@ public class MenuSettingsUI : MonoBehaviour
             settingsManager.SaveSettings();
         }
 
-        Debug.Log("MenuSettingsUI cerrado");
+        Debug.Log("🔧 MenuSettingsUI cerrado");
     }
 
     public void NextTab()
@@ -382,14 +459,13 @@ public class MenuSettingsUI : MonoBehaviour
 
     private void RefreshAllSettings()
     {
-        // Actualizar todos los valores mostrados
-        if (keybindsContainer != null)
+        if (keybindsContainer == null)
+            return;
+
+        var keybinds = keybindsContainer.GetComponentsInChildren<KeybindButton>();
+        foreach (var keybind in keybinds)
         {
-            var keybinds = keybindsContainer.GetComponentsInChildren<KeybindButton>();
-            foreach (var keybind in keybinds)
-            {
-                keybind.RefreshDisplay();
-            }
+            keybind.RefreshDisplay();
         }
     }
 }

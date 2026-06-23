@@ -48,7 +48,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     [SerializeField] private int maxSkillSlot = 4;
     [SerializeField] private Skill[] skills = new Skill[4];
     private EventSystem eventSystem;
-    [SerializeField]private PlayerInput playerInput;
+    [SerializeField] private PlayerInput playerInput;
 
     private List<Skill> unlockedSkills = new List<Skill>();
 
@@ -57,7 +57,12 @@ public class PlayerControl : MonoBehaviour, IDamageable
     [SerializeField] public AudioClip walk;
     [SerializeField] public AudioClip dash;
     [SerializeField] public AudioClip jump;
+    [SerializeField] public AudioClip land;
     [SerializeField] public AudioClip onHit;
+    [SerializeField] public AudioClip onDead;
+    [SerializeField] public AudioClip meleeAttack;
+    [SerializeField] public AudioClip shootSound;
+    [SerializeField] private float sfxVolume = 0.8f;
 
     private void InitializeSkills()
     {
@@ -365,6 +370,9 @@ public class PlayerControl : MonoBehaviour, IDamageable
         Vector3 velocity = rb.linearVelocity;
         velocity.y = jumpForce;
         rb.linearVelocity = velocity;
+
+        // 🔊 Sonido de salto
+        PlayAudio(jump, sfxVolume);
     }
 
     private void ApplyGravity()
@@ -389,6 +397,9 @@ public class PlayerControl : MonoBehaviour, IDamageable
         {
             hasUsedAirAttack = false;
             hasUsedDash = false;
+
+            // 🔊 Sonido de aterrizaje
+            PlayAudio(land, sfxVolume);
         }
     }
 
@@ -399,6 +410,9 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public void DoHit(int comboIndex, bool isGroundAttack)
     {
         AttackStep attack = isGroundAttack ? normalCombo.attackSteps[comboIndex] : airCombo.attackSteps[comboIndex];
+
+        // 🔊 Sonido de ataque melee
+        PlayAudio(meleeAttack, sfxVolume);
 
         Vector3 center = playerModel.transform.position + playerModel.transform.forward * attack.hitBoxOffSet.z + Vector3.up * attack.hitBoxOffSet.y;
 
@@ -581,11 +595,14 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         GameObject projectile = Instantiate(shootData.proyectilePrefab, spawnPosition, Quaternion.LookRotation(direction));
 
+        // 🔊 Sonido de disparo
+        PlayAudio(shootSound, sfxVolume);
+
         P_Projectile proyectile = projectile.GetComponent<P_Projectile>();
 
         if (proyectile != null)
         {
-            proyectile.Initialize(shootData.hitData, this ,direction, shootData.proyectileSpeed,Vector3.zero);
+            proyectile.Initialize(shootData.hitData, this, direction, shootData.proyectileSpeed, Vector3.zero);
         }
     }
 
@@ -762,6 +779,9 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         playerStatsManager.Consume(StatType.Vida, (int)info.damage);
 
+        // 🔊 Sonido de recibir daño
+        PlayAudio(onHit, sfxVolume);
+
         if (playerStatsManager.IsDead())
         {
             OnDead();
@@ -781,20 +801,24 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         Debug.Log("💀 Player muere");
 
+        // 🔊 Sonido de muerte
+        PlayAudio(onDead, sfxVolume);
+
         // ✅ USAR EL SPAWNPOINT DEL CHECKPOINT ACTUAL
         if (RespawnManager.Instance != null)
         {
             RespawnManager.Instance.Respawn();
         }
         else
-        {   
+        {
             Debug.LogError("❌ RespawnManager no encontrado");
         }
     }
 
     public void PlayAudio(AudioClip audio, float volume = 1)
     {
-        Audio_Manager.Instance.PlayAudio(audio, volume);
+        if (audio == null || Audio_Manager.Instance == null) return;
+        Audio_Manager.Instance.PlayPlayerSound(audio, volume);
     }
 
     public void PlayConstantAudio(AudioClip audio, float volume, bool ended)
