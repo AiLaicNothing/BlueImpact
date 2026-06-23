@@ -130,6 +130,9 @@ MonoBehaviour:
   airHangDuration: 0.75
   revengeThreshold: 3
   revengeDecayDelay: 2
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
   debug: 1
   currentHp: 0
   currentStaggerBuild: 0
@@ -153,12 +156,9 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
-  detectionRange: 8
-  maxChaseDistance: 15
+  detectionRange: 27.5
+  maxChaseDistance: 40
   detectionDelay: 0.25
-  safeZone: {fileID: 0}
-  hasPatrol: 0
-  patrolZones: []
   stopDistance: 0.5
 --- !u!195 &1046320319683683077
 NavMeshAgent:
