@@ -6,6 +6,9 @@ public class Heal_Skill : Skill
     [Header("Buff")]
     [SerializeField] private int ammount;
 
+    [Header("Vfx")]
+    [SerializeField] private GameObject vfx;
+    [SerializeField] private Vector3 offset = Vector3.zero;
     [Header("Sfx")]
     [SerializeField] private GameObject sfx;
 
@@ -27,10 +30,10 @@ public class Heal_Skill : Skill
         Debug.Log($"Healed -> {ammount}");
 
 
-        if (sfx != null)
+        if (vfx != null)
         {
-            GameObject obj = Instantiate(sfx, player.transform.position, Quaternion.identity);
-            Destroy(obj, 3f);
+            GameObject obj = Instantiate(vfx, player.transform.position + offset, Quaternion.identity, player.transform);
+            Destroy(obj, 1.25f);
         }
     }
 }
