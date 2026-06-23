@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
@@ -10,6 +9,7 @@ public class UIPopUp : MonoBehaviour
     public static UIPopUp Instance;
 
     [SerializeField] private GameObject popUpPanel;
+    [SerializeField] private CanvasGroup panelCanvasGroup;
     [SerializeField] private RawImage videoScreen;
     [SerializeField] private VideoPlayer videoPlayer;
     [SerializeField] private TextMeshProUGUI tittleText;
@@ -26,12 +26,13 @@ public class UIPopUp : MonoBehaviour
     {
         Instance = this;
 
+        if (panelCanvasGroup == null)
+            panelCanvasGroup = popUpPanel.GetComponent<CanvasGroup>();
+
         if (popUpPanel != null) popUpPanel.SetActive(false);
 
         if (closeButton != null) closeButton.onClick.AddListener(ClosePopUp);
-
         if (nextPage != null) nextPage.onClick.AddListener(NextPage);
-
         if (previousPage != null) previousPage.onClick.AddListener(PreviousPage);
     }
 
@@ -45,9 +46,20 @@ public class UIPopUp : MonoBehaviour
         popUpPanel.SetActive(true);
         LoadPage();
 
-        Time.timeScale = 0f;
+        // ✅ CAMBIAR GAMEMODE A UI
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.SetMode(GameMode.UI);
+        }
 
-        //if (UIBlockingManager.Instance != null) UIBlockingManager.Instance.Register(this);
+        // ✅ ASEGURAR QUE EL PANEL RECIBE INPUT
+        if (panelCanvasGroup != null)
+        {
+            panelCanvasGroup.interactable = true;
+            panelCanvasGroup.blocksRaycasts = true;
+        }
+
+        Time.timeScale = 0f;
     }
 
     private void LoadPage()
@@ -78,9 +90,7 @@ public class UIPopUp : MonoBehaviour
         bool isLastPage = currentPageIndex == currentPages.Count - 1;
 
         if (previousPage != null) previousPage.gameObject.SetActive(hasPrevious);
-
         if (nextPage != null) nextPage.gameObject.SetActive(hasNext);
-
         if (closeButton != null) closeButton.gameObject.SetActive(isLastPage);
     }
 
@@ -109,18 +119,27 @@ public class UIPopUp : MonoBehaviour
         }
 
         if (videoScreen != null) videoScreen.texture = null;
-
         if (tittleText != null) tittleText.text = string.Empty;
-
         if (descriptionText != null) descriptionText.text = string.Empty;
 
         popUpPanel.SetActive(false);
+
+        // ✅ DESACTIVAR INPUT DEL PANEL
+        if (panelCanvasGroup != null)
+        {
+            panelCanvasGroup.interactable = false;
+            panelCanvasGroup.blocksRaycasts = false;
+        }
+
+        // ✅ RESTAURAR GAMEMODE
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.SetMode(GameMode.Gameplay);
+        }
+
         currentPages.Clear();
         currentPageIndex = 0;
 
-
         Time.timeScale = 1f;
-
-        //if (UIBlockingManager.Instance != null) UIBlockingManager.Instance.Unregister(this);
     }
 }
