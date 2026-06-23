@@ -8,6 +8,7 @@ public class AttackStep
     public float vfxSpawnTime;
     public float vfxDuration;
     public Vector3 vfxOffset = Vector3.zero;
+    public Vector3 vfxScale = Vector3.one;
     public Vector3 vfxRotOffset = Vector3.zero;
 
     [Header("Animation")]

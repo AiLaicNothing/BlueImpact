@@ -107,7 +107,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
-  m_Actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  m_Actions: {fileID: 0}
   m_NotificationBehavior: 2
   m_UIInputModule: {fileID: 0}
   m_DeviceLostEvent:
@@ -419,8 +419,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edcd9569de8c54d4ab5ad2c43a137885, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  movementSpeed: 10
-  jumpForce: 10
+  movementSpeed: 6
+  jumpForce: 8
   moveMultiplier: 1
   whatIsGround:
     serializedVersion: 2
@@ -434,8 +434,8 @@ MonoBehaviour:
   dashCost: 20
   rotSpeed: 10
   playerModel: {fileID: 2898645153592624050}
-  normalCombo: {fileID: 11400000, guid: 5410044dba8a5d44eb46f85f2268bb18, type: 2}
-  airCombo: {fileID: 11400000, guid: de8886feca16a934f90ecb3d76375df1, type: 2}
+  normalCombo: {fileID: 11400000, guid: b3d0a4e1ca080734c9703b773250b27a, type: 2}
+  airCombo: {fileID: 11400000, guid: 2895de9264fc06c4bbd7aac2749d585c, type: 2}
   isRange: 1
   firePoint: {fileID: 4885850215814589803}
   shootData: {fileID: 11400000, guid: 70e6b130d22b8184399950c3aba81a1d, type: 2}
@@ -774,7 +774,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4757472050106491939}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.0009178938, y: 0.99854255, z: -0.018019201, w: -0.05086552}
+  m_LocalRotation: {x: -0.0009178938, y: 0.99854255, z: -0.018019201, w: -0.050865516}
   m_LocalPosition: {x: 0.4857512, y: 1.172581, z: 4.7555265}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

@@ -10,25 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a612534dd15bbba42babc450ea7088d9, type: 3}
-  m_Name: Solis_AirCombo
+  m_Name: Lune_NormalCombo
   m_EditorClassIdentifier: Assembly-CSharp::MeleeAttackCombo
   attackSteps:
-  - attackVfx: {fileID: 5313456068782518071, guid: 50f1354827c77ef4b99c4dca0ee3411d, type: 3}
+  - attackVfx: {fileID: 856368647163548680, guid: 724d151229932ba47931fcc83c083470, type: 3}
     vfxSpawnTime: 0
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 0}
-    vfxScale: {x: 1.5, y: 1.5, z: 1.5}
-    vfxRotOffset: {x: 45, y: 0, z: -30}
-    name: AIR 01
+    vfxScale: {x: 1.5, y: 1, z: 1.5}
+    vfxRotOffset: {x: 0, y: 90, z: 0}
+    name: basic_01
     duration: 0.6
     comboWindowStart: 0.3
     comboWindowEnd: 0.8
     hitTime: 0.2
     hitBoxSize: {x: 2, y: 2.5, z: 2}
     hitBoxOffSet: {x: 0, y: 0, z: 1}
-    moveDis: 0
-    moveStartTime: 0
-    moveDuration: 0
+    moveDis: 0.5
+    moveStartTime: 0.05
+    moveDuration: 0.12
     moveCurve:
       serializedVersion: 2
       m_Curve:
@@ -61,29 +61,29 @@ MonoBehaviour:
       damageMultiplier: 1
       staggerCharge: 10
       throwType: 0
-      stunDuration: 0.2
-      keepInAir: 1
-      airHangDuration: 0.2
-      airLiftForce: 2
+      stunDuration: 0
+      keepInAir: 0
+      airHangDuration: 0
+      airLiftForce: 0
       pushForce: 8
       knockDownForce: 10
       knockDownForwardScale: 0.15
-  - attackVfx: {fileID: 5313456068782518071, guid: 50f1354827c77ef4b99c4dca0ee3411d, type: 3}
+  - attackVfx: {fileID: 856368647163548680, guid: 724d151229932ba47931fcc83c083470, type: 3}
     vfxSpawnTime: 0
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 0}
-    vfxScale: {x: 1.5, y: 1.5, z: 1.5}
-    vfxRotOffset: {x: -180, y: 90, z: 1}
-    name: AIR 02
-    duration: 0.6
+    vfxScale: {x: 2, y: 1, z: 2}
+    vfxRotOffset: {x: -180, y: 90, z: 0}
+    name: basic 02
+    duration: 0.8
     comboWindowStart: 0.4
     comboWindowEnd: 0.9
     hitTime: 0.2
-    hitBoxSize: {x: 2, y: 2.5, z: 2}
+    hitBoxSize: {x: 2.5, y: 2.5, z: 2}
     hitBoxOffSet: {x: 0, y: 0, z: 1}
     moveDis: 0
-    moveStartTime: 0
-    moveDuration: 0
+    moveStartTime: 0.1
+    moveDuration: 0.12
     moveCurve:
       serializedVersion: 2
       m_Curve:
@@ -116,65 +116,10 @@ MonoBehaviour:
       damageMultiplier: 1
       staggerCharge: 10
       throwType: 0
-      stunDuration: 0.2
-      keepInAir: 1
-      airHangDuration: 0.2
-      airLiftForce: 2
-      pushForce: 8
-      knockDownForce: 10
-      knockDownForwardScale: 0.15
-  - attackVfx: {fileID: 5313456068782518071, guid: 50f1354827c77ef4b99c4dca0ee3411d, type: 3}
-    vfxSpawnTime: 0
-    vfxDuration: 1
-    vfxOffset: {x: 0, y: 0, z: 0}
-    vfxScale: {x: 2, y: 2, z: 2}
-    vfxRotOffset: {x: 0, y: 90, z: 0}
-    name: AIR 03
-    duration: 0.6
-    comboWindowStart: 0.4
-    comboWindowEnd: 0.6
-    hitTime: 0.2
-    hitBoxSize: {x: 3, y: 3, z: 2.5}
-    hitBoxOffSet: {x: 0, y: 0, z: 1}
-    moveDis: 0
-    moveStartTime: 0
-    moveDuration: 0
-    moveCurve:
-      serializedVersion: 2
-      m_Curve:
-      - serializedVersion: 3
-        time: 0
-        value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      - serializedVersion: 3
-        time: 1
-        value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
-        weightedMode: 0
-        inWeight: 0
-        outWeight: 0
-      m_PreInfinity: 2
-      m_PostInfinity: 2
-      m_RotationOrder: 4
-    turnSpeed: 80
-    lockOnStopDistance: 1.5
-    hitData:
-      physicalScale: 1
-      magicalScale: 1
-      damageMultiplier: 1
-      staggerCharge: 10
-      throwType: 0
-      stunDuration: 0.2
-      keepInAir: 1
-      airHangDuration: 0.2
-      airLiftForce: 3
+      stunDuration: 0.1
+      keepInAir: 0
+      airHangDuration: 0
+      airLiftForce: 0
       pushForce: 8
       knockDownForce: 10
       knockDownForwardScale: 0.15

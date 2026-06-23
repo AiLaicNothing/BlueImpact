@@ -423,6 +423,11 @@ public class PlayerControl : MonoBehaviour, IDamageable
             ShowHitbox(center, attack.hitBoxSize, playerModel.rotation);
         }
 
+        if (attack.attackVfx != null)
+        {
+            StartCoroutine(SpawnVfxAttack(attack));
+        }
+
         foreach (var hit in hits)
         {
             if (hit.CompareTag("Enemy"))
@@ -576,6 +581,21 @@ public class PlayerControl : MonoBehaviour, IDamageable
         }
 
         attackMovementRoutine = null;
+    }
+
+    private IEnumerator SpawnVfxAttack(AttackStep attack)
+    {
+        if (attack.vfxSpawnTime > 0f) yield return new WaitForSeconds(attack.vfxSpawnTime);
+
+        Transform root = playerModel != null ? playerModel : transform;
+
+        Vector3 spawnPos = root.TransformPoint(attack.vfxOffset);
+        Quaternion spawnRot = root.rotation * Quaternion.Euler(attack.vfxRotOffset);
+
+        GameObject vfx = Instantiate(attack.attackVfx, spawnPos, spawnRot);
+        vfx.transform.localScale = attack.vfxScale;
+
+        if (attack.vfxDuration > 0f) Destroy(vfx, attack.vfxDuration);
     }
 
     //===================================================================================

@@ -87,7 +87,7 @@ public class P_Projectile : MonoBehaviour
         }
 
         // Auto destroy after some time
-        Destroy(gameObject, 3f);
+        Destroy(gameObject, 2.5f);
     }
 
     private void FixedUpdate()
@@ -181,6 +181,10 @@ public class P_Projectile : MonoBehaviour
                 target.TakeDamage(info);
             }
 
+            Destroy(gameObject);
+        }
+        if (other.CompareTag("Wall") || other.CompareTag("Ground"))
+        {
             Destroy(gameObject);
         }
     }

@@ -43,13 +43,6 @@ public class MagicBullet_Skill : Skill
 
     private IEnumerator CastSkill(PlayerControl player, Vector3 pos, Vector3 targetPoint, Vector3 lockTargetPos)
     {
-        if (vfxPrefab != null)
-        {
-            GameObject vfx = Instantiate(vfxPrefab, pos, player.Model.rotation);
-        }
-
-        yield return new WaitForSeconds(0.2f);
-
         Vector3 finalTarget;
 
         if (lockTargetPos != Vector3.zero)
@@ -62,6 +55,15 @@ public class MagicBullet_Skill : Skill
         }
 
         Vector3 baseDir = (finalTarget - pos).normalized;
+
+        if (vfxPrefab != null)
+        {
+            GameObject vfx = Instantiate(vfxPrefab, pos, Quaternion.LookRotation(baseDir));
+
+            Destroy(vfx, 1.5f);
+        }
+
+        yield return new WaitForSeconds(0.2f);
 
         for (int i = 0; i < proyectilePerNode; i++)
         {
