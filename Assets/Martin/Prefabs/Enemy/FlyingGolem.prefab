@@ -169,9 +169,14 @@ MonoBehaviour:
   launchResistance: 1
   knockDownResistance: 1
   immuneToMovement: 0
-  vfxHit: {fileID: 0}
+  vfxHit: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
   hitVfxOffset: {x: 0, y: 1.2, z: 0}
   hitVfxDuration: 1.5
+  staggerVfx: {fileID: 6823302871133167919, guid: 65ab97382a4aeae49b5ec3b7fbe89102, type: 3}
+  staggerVfxOffset: {x: 0, y: 1.2, z: 0}
+  staggerVfxDuration: 1.5
+  audio_Source: {fileID: 0}
+  onHit: {fileID: 0}
   whatIsGround:
     serializedVersion: 2
     m_Bits: 1024
@@ -184,6 +189,10 @@ MonoBehaviour:
   airHangDuration: 0.75
   revengeThreshold: 3
   revengeDecayDelay: 2
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
+  debug: 1
   currentHp: 0
   currentStaggerBuild: 0
   revengeMeter: 0
@@ -217,13 +226,10 @@ MonoBehaviour:
   bombPosOffset: {x: 0, y: 3.5, z: 0}
   bombPrefab: {fileID: 721332422176556820, guid: b0c8138e97d419341ae38f57fa5c3cb7, type: 3}
   chargeTime: 1
-  detectionRange: 18
-  maxChaseDistance: 28
+  detectionRange: 28
+  maxChaseDistance: 30
   detectionDelay: 0.2
   instantDetection: 0
-  safeZone: {fileID: 0}
-  hasPatrol: 0
-  patrolZones: []
   stopDistance: 1.5
   minFallTimeBeforeRecovery: 0.35
   groundedRecoveryDelay: 0.15

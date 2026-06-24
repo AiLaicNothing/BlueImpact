@@ -535,6 +535,9 @@ MonoBehaviour:
   airHangDuration: 0.75
   revengeThreshold: 3
   revengeDecayDelay: 2
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
   debug: 1
   currentHp: 0
   currentStaggerBuild: 0
@@ -557,12 +560,9 @@ MonoBehaviour:
   hitTime: 0.35
   attackAnimDuration: 0.8
   recoveryTime: 0.2
-  detectionRange: 8
-  maxChaseDistance: 15
+  detectionRange: 32
+  maxChaseDistance: 35
   detectionDelay: 0.25
-  safeZone: {fileID: 0}
-  hasPatrol: 0
-  patrolZones: []
   stopDistance: 0.5
 --- !u!195 &7623889144146140120
 NavMeshAgent:

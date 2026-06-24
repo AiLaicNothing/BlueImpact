@@ -31,7 +31,7 @@ Transform:
   m_GameObject: {fileID: 836079941225019311}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.67, y: 0.64, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -129,6 +129,11 @@ MonoBehaviour:
   airHangDuration: 0.75
   revengeThreshold: 3
   revengeDecayDelay: 2
+  safeZone: {fileID: 0}
+  patrolZones:
+  - {fileID: 0}
+  - {fileID: 0}
+  hasPatrol: 1
   debug: 1
   currentHp: 0
   currentStaggerBuild: 0
@@ -155,12 +160,9 @@ MonoBehaviour:
   consecutiveCutsHpThreshold: 0.8
   consecutiveCutsChance: 0.75
   consecutiveCutsSFX: {fileID: 0}
-  detectionRange: 8
-  maxChaseDistance: 15
+  detectionRange: 25
+  maxChaseDistance: 40
   detectionDelay: 0.25
-  safeZone: {fileID: 0}
-  hasPatrol: 0
-  patrolZones: []
   stopDistance: 0.5
   hitBoxPrefab: {fileID: 65547742025389114, guid: b60a9548e8b1aba4497aeaf2c3ebe7a9, type: 3}
 --- !u!195 &5645680525476756212

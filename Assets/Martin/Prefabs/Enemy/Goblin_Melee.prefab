@@ -470,6 +470,9 @@ MonoBehaviour:
   airHangDuration: 0.75
   revengeThreshold: 3
   revengeDecayDelay: 2
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
   debug: 1
   currentHp: 0
   currentStaggerBuild: 0
@@ -486,12 +489,9 @@ MonoBehaviour:
   hitTime: 0.35
   attackAnimDuration: 0.8
   recoveryTime: 0.2
-  detectionRange: 8
-  maxChaseDistance: 15
+  detectionRange: 30
+  maxChaseDistance: 35
   detectionDelay: 0.25
-  safeZone: {fileID: 0}
-  hasPatrol: 0
-  patrolZones: []
   stopDistance: 0.5
   hitBoxPrefab: {fileID: 65547742025389114, guid: b60a9548e8b1aba4497aeaf2c3ebe7a9, type: 3}
 --- !u!195 &7549215209311878705
