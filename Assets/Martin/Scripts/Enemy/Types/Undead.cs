@@ -54,12 +54,15 @@ public class Undead : EnemyBase
     private int patrolIndex = 0;
     private int patrolDir = 1;
 
+    private Animator anim;
+
     private Coroutine attackRoutine;
     private Coroutine consecutiveCutsRoutine;
 
     protected override void Awake()
     {
         base.Awake();
+        anim = GetComponentInChildren<Animator>();
 
         if (agent != null)
         {
@@ -189,6 +192,7 @@ public class Undead : EnemyBase
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
                 RotateToVelocity();
+                anim.Play("Walk");
             }
             else
             {
@@ -204,10 +208,12 @@ public class Undead : EnemyBase
                 agent.isStopped = false;
                 HandlePatrol();
                 RotateToVelocity();
+                anim.Play("Walk");
             }
             else
             {
                 agent.ResetPath();
+                anim.Play("Idle");
             }
         }
     }
@@ -279,6 +285,8 @@ public class Undead : EnemyBase
         agent.isStopped = true;
         agent.ResetPath();
         isPerformingAction = true;
+
+        anim.Play("Attack");
 
         FaceTargetInstant();
 
