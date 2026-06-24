@@ -97,6 +97,20 @@ public class P_AirAttack_AState : PlayerState
         canCombo = false;
         hasHit = false;
 
+        if (player.Anim != null)
+        {
+            int attack = Animator.StringToHash($"{attackSteps.name}");
+
+            if (player.Anim.HasState(1, attack))
+            {
+                player.Anim.Play(attack);
+            }
+            else
+            {
+                Debug.Log("[PlayerAnimator] is missing AirAttack_Animation State");
+            }
+        }
+
         player.isPerformingAct = true;
         player.blockVelocity = true;
 

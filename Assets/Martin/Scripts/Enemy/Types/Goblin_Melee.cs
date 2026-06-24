@@ -41,9 +41,12 @@ public class Goblin_Melee : EnemyBase
     private int patrolIndex;
     private int patrolDir = 1;
 
+    private Animator anim;
+
     protected override void Awake()
     {
         base.Awake();
+        anim = GetComponentInChildren<Animator>();
 
         if (agent != null)
         {
@@ -150,6 +153,7 @@ public class Goblin_Melee : EnemyBase
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
                 RotateToVelocity();
+                anim.Play("Walk");
             }
             else
             {
@@ -165,10 +169,12 @@ public class Goblin_Melee : EnemyBase
                 agent.isStopped = false;
                 HandlePatrol();
                 RotateToVelocity();
+                anim.Play("Walk");
             }
             else
             {
                 agent.ResetPath();
+                anim.Play("Idle");
             }
         }
     }
@@ -225,7 +231,7 @@ public class Goblin_Melee : EnemyBase
 
         FaceTargetInstant();
 
-        // anim.SetTrigger("Attack");
+        anim.Play("Attack");
 
         yield return new WaitForSeconds(hitTime);
 
@@ -237,6 +243,8 @@ public class Goblin_Melee : EnemyBase
         {
             yield return new WaitForSeconds(remaining);
         }
+
+        anim.Play("Idle");
 
         yield return new WaitForSeconds(recoveryTime);
 
