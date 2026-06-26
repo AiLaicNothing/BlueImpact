@@ -2,55 +2,71 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// SettingSlider - Wrapper de Slider con label, valor visible y formato configurable
+/// </summary>
 public class SettingSlider : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI labelText;
     [SerializeField] private Slider slider;
     [SerializeField] private TextMeshProUGUI valueText;
 
-    // Formato de visualización
     public enum DisplayFormat
     {
-        Percentage,      // 0-100%
-        Decimal,         // 0.1, 0.2, 0.3
-        DecimalTwoPlaces // 0.10, 0.20, 0.30
+        Percentage,         // 0-1   → "75%"
+        Percentage0to200,   // 0-2   → "100%" (brillo/contraste)
+        Decimal,            // x.x   → "0.8"  (sensibilidad)
+        DecimalTwoPlaces    // x.xx  → "1.50"
     }
 
     private DisplayFormat displayFormat = DisplayFormat.Percentage;
     private System.Action<float> onValueChanged;
 
+    // Listener registrado UNA sola vez en Awake, nunca se borra.
     private void Awake()
     {
         if (slider != null)
-        {
             slider.onValueChanged.AddListener(OnSliderChanged);
-        }
     }
 
-    /// <summary>
-    /// Inicializa el slider con formato de porcentaje
-    /// </summary>
-    public void Initialize(string label, float minValue, float maxValue, float currentValue, System.Action<float> callback)
-    {
-        Initialize(label, minValue, maxValue, currentValue, callback, DisplayFormat.Percentage);
-    }
+    // ================================================================
+    //  INITIALIZE
+    // ================================================================
 
-    /// <summary>
-    /// Inicializa el slider con formato especificado
-    /// </summary>
-    public void Initialize(string label, float minValue, float maxValue, float currentValue, System.Action<float> callback, DisplayFormat format)
+    public void Initialize(string label, float minValue, float maxValue,
+                           float currentValue, System.Action<float> callback)
+        => Initialize(label, minValue, maxValue, currentValue, callback, DisplayFormat.Percentage);
+
+    public void Initialize(string label, float minValue, float maxValue,
+                           float currentValue, System.Action<float> callback,
+                           DisplayFormat format)
     {
         if (labelText != null)
             labelText.text = label;
 
-        slider.minValue = minValue;
-        slider.maxValue = maxValue;
-        slider.value = currentValue;
-
         displayFormat = format;
         onValueChanged = callback;
+
+        if (slider != null)
+        {
+            slider.wholeNumbers = false;
+
+            // Asignar rango ANTES del valor para que el handle se posicione correctamente
+            slider.minValue = minValue;
+            slider.maxValue = maxValue;
+
+            // SetValueWithoutNotify: no dispara OnSliderChanged durante la inicialización
+            float clamped = Mathf.Clamp(currentValue, minValue, maxValue);
+            slider.SetValueWithoutNotify(clamped);
+        }
+
+        // Mostrar el texto correcto desde el primer frame sin esperar input del usuario
         UpdateValueDisplay();
     }
+
+    // ================================================================
+    //  CALLBACKS
+    // ================================================================
 
     private void OnSliderChanged(float value)
     {
@@ -58,34 +74,34 @@ public class SettingSlider : MonoBehaviour
         onValueChanged?.Invoke(value);
     }
 
+    // ================================================================
+    //  DISPLAY
+    // ================================================================
+
     private void UpdateValueDisplay()
     {
-        if (valueText == null) return;
+        if (valueText == null || slider == null) return;
 
-        string displayValue = "";
-
-        switch (displayFormat)
+        valueText.text = displayFormat switch
         {
-            case DisplayFormat.Percentage:
-                // Muestra como porcentaje (0-100%)
-                displayValue = $"{(slider.value * 100):F0}%";
-                break;
-
-            case DisplayFormat.Decimal:
-                // Muestra con 1 decimal (0.1, 0.2, 0.3)
-                displayValue = slider.value.ToString("F1");
-                break;
-
-            case DisplayFormat.DecimalTwoPlaces:
-                // Muestra con 2 decimales (0.10, 0.20, 0.30)
-                displayValue = slider.value.ToString("F2");
-                break;
-
-            default:
-                displayValue = slider.value.ToString("F1");
-                break;
-        }
-
-        valueText.text = displayValue;
+            DisplayFormat.Percentage => $"{slider.value * 100f:F0}%",
+            DisplayFormat.Percentage0to200 => $"{slider.value * 100f:F0}%",
+            DisplayFormat.Decimal => slider.value.ToString("F1"),
+            DisplayFormat.DecimalTwoPlaces => slider.value.ToString("F2"),
+            _ => slider.value.ToString("F1")
+        };
     }
+
+    // ================================================================
+    //  ACCESO EXTERNO
+    // ================================================================
+
+    public void SetValueWithoutNotify(float value)
+    {
+        if (slider == null) return;
+        slider.SetValueWithoutNotify(Mathf.Clamp(value, slider.minValue, slider.maxValue));
+        UpdateValueDisplay();
+    }
+
+    public float Value => slider != null ? slider.value : 0f;
 }

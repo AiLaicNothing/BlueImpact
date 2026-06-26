@@ -838,7 +838,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public void PlayAudio(AudioClip audio, float volume = 1)
     {
         if (audio == null || Audio_Manager.Instance == null) return;
-        Audio_Manager.Instance.PlayPlayerSound(audio, volume);
+        Audio_Manager.Instance.PlaySFX(audio, volume);
     }
 
     public void PlayConstantAudio(AudioClip audio, float volume, bool ended)

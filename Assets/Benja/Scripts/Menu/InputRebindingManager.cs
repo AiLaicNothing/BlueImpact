@@ -3,12 +3,20 @@ using UnityEngine.InputSystem;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+/// <summary>
+/// 🎮 InputRebindingManager - Gestión de remapeo de controles
+/// 
+/// ✅ Protección anti-duplicados: impide asignar una tecla ya en uso
+/// ✅ Reset a defaults del diseño original del juego
+/// ✅ Persistencia en PlayerPrefs
+/// </summary>
 public class InputRebindingManager : MonoBehaviour
 {
     public static InputRebindingManager Instance { get; private set; }
 
     private InputActionAsset inputActions;
-    private Dictionary<string, string> rebindingOverrides = new();
+    // Snapshot de los bindings originales del juego para poder resetear
+    private string defaultBindingsSnapshot;
 
     private void Awake()
     {
@@ -44,6 +52,10 @@ public class InputRebindingManager : MonoBehaviour
             return;
         }
 
+        // ✅ GUARDAR SNAPSHOT DE DEFAULTS ANTES DE CARGAR OVERRIDES GUARDADOS
+        // Esto captura exactamente como diseñamos el juego originalmente
+        defaultBindingsSnapshot = inputActions.SaveBindingOverridesAsJson();
+
         inputActions.Enable();
         LoadRebindings();
     }
@@ -51,123 +63,143 @@ public class InputRebindingManager : MonoBehaviour
     // ==================== REBINDING ====================
 
     /// <summary>
-    /// ✅ ARREGLADO: Deshabilita la acción antes de hacer rebinding
+    /// Remapea una acción con protección anti-duplicados.
+    /// Si la tecla presionada ya está asignada a otra acción, cancela y avisa.
+    /// Retorna (success, conflictMessage).
     /// </summary>
-    public async Task<bool> RemapActionAsync(string actionName, int bindingIndex = 0)
+    public async Task<(bool success, string conflictMessage)> RemapActionAsync(string actionName, int bindingIndex = 0)
     {
         var action = inputActions.FindAction(actionName);
         if (action == null)
         {
             Debug.LogError($"Acción no encontrada: {actionName}");
-            return false;
+            return (false, null);
         }
 
-        // ✅ DESHABILITAR ANTES
         action.Disable();
 
-        var rebind = action.PerformInteractiveRebinding(bindingIndex);
+        var rebind = action.PerformInteractiveRebinding(bindingIndex)
+            .WithCancelingThrough("<Keyboard>/escape");
 
         bool success = false;
+        string conflictMessage = null;
+        bool completed = false;
 
         rebind.OnComplete(operation =>
         {
-            Debug.Log($"Remapeo completado para {actionName}: {action.bindings[bindingIndex].effectivePath}");
-            success = true;
-            SaveRebindings();
-            operation.Dispose();
+            string newPath = action.bindings[bindingIndex].effectivePath;
 
-            // ✅ REHABILITAR AL COMPLETAR
+            // ✅ VERIFICAR DUPLICADO
+            string conflict = FindConflict(actionName, bindingIndex, newPath);
+
+            if (conflict != null)
+            {
+                // Revertir el binding recién asignado
+                action.RemoveBindingOverride(bindingIndex);
+                conflictMessage = conflict;
+                success = false;
+                Debug.LogWarning($"⚠️ Conflicto: '{newPath}' ya está asignado a '{conflict}'");
+            }
+            else
+            {
+                success = true;
+                SaveRebindings();
+                Debug.Log($"✅ Remapeo completado: {actionName}[{bindingIndex}] → {newPath}");
+            }
+
+            operation.Dispose();
             action.Enable();
+            completed = true;
         });
 
         rebind.OnCancel(operation =>
         {
             Debug.Log($"Remapeo cancelado para {actionName}");
             operation.Dispose();
-
-            // ✅ REHABILITAR SI SE CANCELA
             action.Enable();
+            completed = true;
         });
 
         rebind.Start();
 
-        while (rebind.completed == false)
-        {
+        while (!completed)
             await Task.Delay(10);
-        }
 
-        return success;
+        return (success, conflictMessage);
     }
 
     /// <summary>
-    /// Obtiene todas las acciones del Input System
+    /// Busca si una ruta (path) ya está asignada a otra acción/binding.
+    /// Retorna el nombre de la acción en conflicto, o null si no hay conflicto.
     /// </summary>
-    public List<string> GetAllActions()
+    private string FindConflict(string currentActionName, int currentBindingIndex, string newPath)
     {
-        List<string> actions = new();
-
-        if (inputActions == null) return actions;
+        if (string.IsNullOrEmpty(newPath)) return null;
 
         foreach (var map in inputActions.actionMaps)
         {
-            foreach (var action in map.actions)
+            foreach (var otherAction in map.actions)
             {
-                actions.Add($"{map.name}/{action.name}");
+                string fullName = $"{map.name}/{otherAction.name}";
+
+                for (int i = 0; i < otherAction.bindings.Count; i++)
+                {
+                    // Saltar el binding que estamos modificando
+                    if (fullName == currentActionName && i == currentBindingIndex)
+                        continue;
+
+                    // Saltar composite parts que son parte del mismo composite
+                    if (otherAction.bindings[i].isPartOfComposite)
+                        continue;
+
+                    string existingPath = otherAction.bindings[i].effectivePath;
+                    if (string.Equals(existingPath, newPath, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        return $"{map.name}/{otherAction.name}";
+                    }
+                }
             }
         }
 
-        return actions;
+        return null;
     }
 
-    /// <summary>
-    /// Obtiene los bindings de una acción específica
-    /// </summary>
-    public List<string> GetActionBindingPaths(string actionName)
-    {
-        var action = inputActions.FindAction(actionName);
-        if (action == null) return new();
-
-        List<string> paths = new();
-        foreach (var binding in action.bindings)
-        {
-            paths.Add(binding.effectivePath);
-        }
-
-        return paths;
-    }
+    // ==================== RESET ====================
 
     /// <summary>
-    /// Resetea todas las teclas a sus valores por defecto
+    /// Resetea TODOS los bindings al diseño original del juego.
+    /// Usa el snapshot guardado al arrancar, antes de cargar overrides del jugador.
     /// </summary>
-    public void ResetAllBindings()
+    public void ResetAllBindingsToDefault()
     {
         if (inputActions == null) return;
 
         foreach (var actionMap in inputActions.actionMaps)
-        {
             foreach (var action in actionMap.actions)
-            {
                 action.RemoveAllBindingOverrides();
-            }
-        }
 
-        rebindingOverrides.Clear();
-        SaveRebindings();
-        Debug.Log("Todos los bindings han sido reseteados");
+        // Si existía un snapshot, restaurarlo (por si los defaults incluían overrides de diseño)
+        if (!string.IsNullOrEmpty(defaultBindingsSnapshot))
+            inputActions.LoadBindingOverridesFromJson(defaultBindingsSnapshot);
+
+        // Borrar los overrides guardados del jugador
+        PlayerPrefs.DeleteKey("InputRebindings");
+        PlayerPrefs.Save();
+
+        Debug.Log("✅ Todos los bindings reseteados al diseño original del juego");
     }
 
     /// <summary>
-    /// Resetea una acción específica a su valor por defecto
+    /// Resetea una acción específica a su binding por defecto.
     /// </summary>
     public void ResetActionBinding(string actionName)
     {
         var action = inputActions.FindAction(actionName);
-        if (action != null)
-        {
-            action.RemoveAllBindingOverrides();
-            SaveRebindings();
-            Debug.Log($"Binding reseteado para {actionName}");
-        }
+        if (action == null) return;
+
+        action.RemoveAllBindingOverrides();
+        SaveRebindings();
+        Debug.Log($"✅ Binding reseteado para {actionName}");
     }
 
     // ==================== SAVE & LOAD ====================
@@ -175,7 +207,6 @@ public class InputRebindingManager : MonoBehaviour
     public void SaveRebindings()
     {
         if (inputActions == null) return;
-
         var rebindData = inputActions.SaveBindingOverridesAsJson();
         PlayerPrefs.SetString("InputRebindings", rebindData);
         PlayerPrefs.Save();
@@ -185,8 +216,8 @@ public class InputRebindingManager : MonoBehaviour
     public void LoadRebindings()
     {
         if (inputActions == null) return;
-
         string rebindData = PlayerPrefs.GetString("InputRebindings", "");
+
         if (!string.IsNullOrEmpty(rebindData))
         {
             try
@@ -203,6 +234,14 @@ public class InputRebindingManager : MonoBehaviour
 
     // ==================== HELPERS ====================
 
+    public string GetBindingPath(string actionName, int bindingIndex = 0)
+    {
+        var action = inputActions.FindAction(actionName);
+        if (action == null || bindingIndex >= action.bindings.Count)
+            return "";
+        return action.bindings[bindingIndex].effectivePath;
+    }
+
     public static string GetDisplayName(string path)
     {
         if (string.IsNullOrEmpty(path)) return "No asignado";
@@ -212,40 +251,39 @@ public class InputRebindingManager : MonoBehaviour
                    .Replace("<Gamepad>/", "")
                    .Replace("/", "");
 
-        var nameMap = new Dictionary<string, string>()
+        var nameMap = new Dictionary<string, string>
         {
-            { "w", "W" },
-            { "a", "A" },
-            { "s", "S" },
-            { "d", "D" },
+            { "w", "W" }, { "a", "A" }, { "s", "S" }, { "d", "D" },
             { "space", "Espacio" },
-            { "leftShift", "Shift" },
-            { "leftCtrl", "Ctrl" },
-            { "leftAlt", "Alt" },
-            { "enter", "Enter" },
-            { "escape", "Esc" },
-            { "leftButton", "Click Izq" },
-            { "rightButton", "Click Der" },
-            { "buttonWest", "X (Gamepad)" },
-            { "buttonSouth", "A (Gamepad)" },
-            { "buttonNorth", "Y (Gamepad)" },
-            { "buttonEast", "B (Gamepad)" },
-            { "leftStickPress", "L3 (Gamepad)" },
-            { "rightStickPress", "R3 (Gamepad)" },
-            { "leftStick", "L-Stick (Gamepad)" },
-            { "rightStick", "R-Stick (Gamepad)" },
+            { "leftShift", "Shift" }, { "rightShift", "Shift Der" },
+            { "leftCtrl", "Ctrl" }, { "rightCtrl", "Ctrl Der" },
+            { "leftAlt", "Alt" }, { "rightAlt", "Alt Der" },
+            { "enter", "Enter" }, { "escape", "Esc" },
+            { "e", "E" }, { "f", "F" }, { "r", "R" }, { "q", "Q" },
+            { "1", "1" }, { "2", "2" }, { "3", "3" }, { "4", "4" },
+            { "leftButton", "Click Izq" }, { "rightButton", "Click Der" },
+            { "buttonWest", "X (Gamepad)" }, { "buttonSouth", "A (Gamepad)" },
+            { "buttonNorth", "Y (Gamepad)" }, { "buttonEast", "B (Gamepad)" },
+            { "leftStickPress", "L3" }, { "rightStickPress", "R3" },
+            { "leftStick", "L-Stick" }, { "rightStick", "R-Stick" },
+            { "leftShoulder", "LB" }, { "rightShoulder", "RB" },
+            { "leftTrigger", "LT" }, { "rightTrigger", "RT" },
+            { "start", "Start" }, { "select", "Select" },
         };
 
         return nameMap.ContainsKey(path) ? nameMap[path] : path;
     }
 
-    public string GetBindingPath(string actionName, int bindingIndex = 0)
+    public List<string> GetAllActions()
     {
-        var action = inputActions.FindAction(actionName);
-        if (action == null || bindingIndex >= action.bindings.Count)
-            return "";
+        List<string> actions = new();
+        if (inputActions == null) return actions;
 
-        return action.bindings[bindingIndex].effectivePath;
+        foreach (var map in inputActions.actionMaps)
+            foreach (var action in map.actions)
+                actions.Add($"{map.name}/{action.name}");
+
+        return actions;
     }
 
     public InputActionAsset GetInputActions() => inputActions;

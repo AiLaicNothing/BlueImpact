@@ -17,7 +17,7 @@ public class PauseManager : MonoBehaviour
     [SerializeField] private Button exitMenuButton;
 
     [Header("Settings")]
-    [SerializeField] private GameplaySettingsUI gameplaySettingsUI;
+    [SerializeField] private MenuSettingsUI gameplaySettingsUI;
 
     [Header("UI")]
     [SerializeField] private EventSystem eventSystem;
