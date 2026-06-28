@@ -28,11 +28,19 @@ public class InteractionUI : MonoBehaviour
             return;
         }
 
+        string text = interactable.GetInteractionText();
+
+        if (string.IsNullOrEmpty(text))
+        {
+            Clear();
+            return;
+        }
+
         root.SetActive(true);
 
         string inputLabel = GetInputLabel();
 
-        interactionText.text = $"[{inputLabel}] {interactable.GetInteractionText()}";
+        interactionText.text = $"[{inputLabel}] {text}";
     }
 
     public void Clear()

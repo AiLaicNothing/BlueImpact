@@ -1,16 +1,13 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Cinemachine;
-using System;
-using System.Xml.Linq;
 
 public class PuzzleReceiver : MonoBehaviour
 {
     [System.Serializable]
-
     public class ActivatorRequirement
     {
-
         [Header("Activator")]
         public MonoBehaviour activatorObject;
 
@@ -22,28 +19,26 @@ public class PuzzleReceiver : MonoBehaviour
     [SerializeField] private string receiverID;
     public string ReceiverID => receiverID;
 
-    public enum LogicMode
-    {
-        AND,
-        OR
-    }
+    public enum LogicMode { AND, OR }
 
     [Header("Legacy Logic")]
     public LogicMode logicMode = LogicMode.AND;
 
     [Header("Advanced Requirements")]
-    [SerializeField]
-    private List<ActivatorRequirement> requirements = new();
+    [SerializeField] private List<ActivatorRequirement> requirements = new();
 
     [Header("Targets")]
-    [SerializeField]
-    private List<PuzzleDoor> targets = new();
+    [SerializeField] private List<PuzzleDoor> targets = new();
 
     [Header("Camera - On Activation")]
-    [SerializeField] private bool useCameraOnActivation = true;  // ✅ TOGGLE
+    [SerializeField] private bool useCameraOnActivation = true;
     [SerializeField] private CameraRequest activationCamera;
 
+    [Header("Fallo y Cooldown")]
+    [SerializeField] private float failCooldownDuration = 3f;
+
     private readonly List<IActivator> _activators = new();
+    private readonly List<Lever> _levers = new();
     private bool _currentState = false;
 
     public bool IsActive => _currentState;
@@ -51,164 +46,162 @@ public class PuzzleReceiver : MonoBehaviour
     private void Awake()
     {
         _currentState = false;
-        Debug.Log(
-            $"[PuzzleReceiver] Requirements count = {requirements.Count}");
+        Debug.Log($"[PuzzleReceiver] Requirements count = {requirements.Count}");
     }
 
     public void RegisterActivator(IActivator activator)
     {
         if (!_activators.Contains(activator))
             _activators.Add(activator);
+
+        // Guardamos referencia a Lever para poder resetear/cooldown
+        if (activator is Lever lever && !_levers.Contains(lever))
+            _levers.Add(lever);
     }
 
     public void Evaluate()
     {
-        bool shouldBeActive;
-
-        // =====================================================
-        // ADVANCED REQUIREMENTS SYSTEM
-        // =====================================================
-
+        // ── ADVANCED REQUIREMENTS ──────────────────────────────────────────
         if (requirements.Count > 0)
         {
-            Debug.Log(
-                "[PuzzleReceiver] USING ADVANCED SYSTEM");
+            Debug.Log("[PuzzleReceiver] USING ADVANCED SYSTEM");
 
-            shouldBeActive = true;
+            bool puzzleSolved = true;
 
             foreach (var req in requirements)
             {
                 if (req.activatorObject == null)
                 {
-                    Debug.LogWarning(
-                        "[PuzzleReceiver] ActivatorObject NULL");
-
-                    shouldBeActive = false;
+                    Debug.LogWarning("[PuzzleReceiver] ActivatorObject NULL");
+                    puzzleSolved = false;
                     break;
                 }
 
-                IActivator activator =
-                    req.activatorObject.GetComponent<IActivator>();
-
+                IActivator activator = req.activatorObject.GetComponent<IActivator>();
                 if (activator == null)
                 {
-                    Debug.LogWarning(
-                        $"[PuzzleReceiver] {req.activatorObject.name} NO implementa IActivator");
-
-                    shouldBeActive = false;
+                    Debug.LogWarning($"[PuzzleReceiver] {req.activatorObject.name} NO implementa IActivator");
+                    puzzleSolved = false;
                     break;
                 }
 
-                bool currentState = activator.IsActive;
+                bool current = activator.IsActive;
+                bool required = req.requiredState;
 
-                Debug.Log(
-                    $"[PuzzleReceiver] " +
-                    $"{req.activatorObject.name} -> " +
-                    $"Current={currentState} | " +
-                    $"Required={req.requiredState}");
+                Debug.Log($"[PuzzleReceiver] {req.activatorObject.name} -> Current={current} | Required={required}");
 
-                if (currentState != req.requiredState)
+                if (current != required)
                 {
-                    Debug.Log(
-                        $"[PuzzleReceiver] FAIL -> " +
-                        $"{req.activatorObject.name}");
+                    // Solo falla si la palanca está ACTIVA y no debería
+                    // (fallo inmediato al encender algo incorrecto)
+                    if (current == true && required == false)
+                    {
+                        Debug.Log($"[PuzzleReceiver] FALLO INMEDIATO -> {req.activatorObject.name} activa sin ser requerida");
+                        TriggerFail();
+                        return;
+                    }
 
-                    shouldBeActive = false;
-                    break;
+                    puzzleSolved = false;
+                    // No es fallo aún: simplemente el puzzle no está completo
                 }
             }
+
+            if (!puzzleSolved)
+            {
+                Debug.Log("[PuzzleReceiver] Puzzle incompleto (sin fallo)");
+                return;
+            }
+
+            // Todas las condiciones se cumplen → resolver
+            ResolvePuzzle();
         }
 
-        // =====================================================
-        // LEGACY SYSTEM
-        // =====================================================
-
+        // ── LEGACY SYSTEM ─────────────────────────────────────────────────
         else
         {
-            Debug.Log(
-                "[PuzzleReceiver] USING LEGACY SYSTEM");
+            Debug.Log("[PuzzleReceiver] USING LEGACY SYSTEM");
 
-            shouldBeActive = logicMode switch
+            bool shouldBeActive = logicMode switch
             {
-                LogicMode.AND =>
-                    _activators.TrueForAll(a => a.IsActive),
-
-                LogicMode.OR =>
-                    _activators.Exists(a => a.IsActive),
-
+                LogicMode.AND => _activators.TrueForAll(a => a.IsActive),
+                LogicMode.OR => _activators.Exists(a => a.IsActive),
                 _ => false
             };
+
+            if (shouldBeActive == _currentState) return;
+
+            _currentState = shouldBeActive;
+            ApplyTargets();
+
+            if (_currentState) TriggerCamera();
         }
+    }
 
-        // =====================================================
+    // ── RESOLVER PUZZLE ───────────────────────────────────────────────────
 
-        Debug.Log(
-            $"[PuzzleReceiver] shouldBeActive = {shouldBeActive}");
+    private void ResolvePuzzle()
+    {
+        if (_currentState) return; // Ya estaba resuelto
 
-        if (shouldBeActive == _currentState)
-        {
-            Debug.Log(
-                "[PuzzleReceiver] Estado no cambió");
+        _currentState = true;
+        Debug.Log("[PuzzleReceiver] ¡Puzzle resuelto!");
 
-            return;
-        }
+        // Bloquear palancas permanentemente — el puzzle ya no es interactuable
+        foreach (var lever in _levers)
+            lever.SetCooldown(true);
 
-        _currentState = shouldBeActive;
+        ApplyTargets();
+        TriggerCamera();
+    }
 
-        Debug.Log(
-            $"[PuzzleReceiver] Nuevo estado -> {_currentState}");
+    // ── FALLO ─────────────────────────────────────────────────────────────
 
-        Debug.Log(
-            $"[PuzzleReceiver] Activando targets...");
+    private void TriggerFail()
+    {
+        Debug.Log($"[PuzzleReceiver] Fail → reseteando palancas. Cooldown: {failCooldownDuration}s");
+        StartCoroutine(FailRoutine());
+    }
 
+    private IEnumerator FailRoutine()
+    {
+        // 1. Bloquear todas las palancas
+        foreach (var lever in _levers)
+            lever.SetCooldown(true);
+
+        // 2. Resetear estado visual y lógico de cada palanca
+        foreach (var lever in _levers)
+            lever.ResetState();
+
+        // 3. Esperar cooldown
+        yield return new WaitForSeconds(failCooldownDuration);
+
+        // 4. Desbloquear
+        foreach (var lever in _levers)
+            lever.SetCooldown(false);
+
+        Debug.Log("[PuzzleReceiver] Cooldown terminado. Palancas disponibles.");
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────────────────
+
+    private void ApplyTargets()
+    {
         foreach (var target in targets)
         {
-            if (target == null)
-            {
-                Debug.LogWarning(
-                    "[PuzzleReceiver] Target NULL");
+            if (target == null) { Debug.LogWarning("[PuzzleReceiver] Target NULL"); continue; }
 
-                continue;
-            }
-
-            Debug.Log(
-                $"[PuzzleReceiver] Target -> {target.name}");
-
-            if (_currentState)
-            {
-                Debug.Log(
-                    $"[PuzzleReceiver] Activate -> {target.name}");
-
-                target.Activate();
-            }
-            else
-            {
-                Debug.Log(
-                    $"[PuzzleReceiver] Deactivate -> {target.name}");
-
-                target.Deactivate();
-            }
-        }
-
-        // ✅ TRIGGER CAMERA CUANDO SE ACTIVA
-        if (_currentState)
-        {
-            Debug.Log(
-                "[PuzzleReceiver] Triggering activation camera");
-
-            TriggerCamera();
+            if (_currentState) target.Activate();
+            else target.Deactivate();
         }
     }
 
     private void TriggerCamera()
     {
-        // ✅ SI NO QUIERE USAR CÁMARAS, SALIR SIN WARNING
-        if (!useCameraOnActivation)
-            return;
+        if (!useCameraOnActivation) return;
 
         if (activationCamera == null)
         {
-            Debug.LogWarning("[PuzzleReceiver] Activation camera asignado pero NULL");
+            Debug.LogWarning("[PuzzleReceiver] Activation camera asignada pero NULL");
             return;
         }
 
@@ -218,22 +211,11 @@ public class PuzzleReceiver : MonoBehaviour
             Debug.Log("[PuzzleReceiver] Camera played");
         }
     }
+
     public void SetStateDirectly(bool active)
     {
         _currentState = active;
-
-        foreach (var target in targets)
-        {
-            if (target == null)
-                continue;
-
-            if (_currentState)
-                target.Activate();
-            else
-                target.Deactivate();
-        }
-
-        Debug.Log(
-            $"[PuzzleReceiver] Estado restaurado: {_currentState}");
+        ApplyTargets();
+        Debug.Log($"[PuzzleReceiver] Estado restaurado: {_currentState}");
     }
 }
