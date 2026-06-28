@@ -50,6 +50,8 @@ public class BossEvent : MonoBehaviour
 
         var boss = Instantiate(bossPrefab, spawnPos.position, Quaternion.identity);
 
+        boss.GetComponent<Boss_ChimeraGolem>().SetCinematic(true);
+
         //Call camara event to show boss
 
         while (Vector3.Distance(boss.transform.position, desiredGroundPos.position) > 0.01f)
@@ -65,6 +67,8 @@ public class BossEvent : MonoBehaviour
         }
 
         yield return new WaitForSeconds(2.5f);
+
+        boss.GetComponent<Boss_ChimeraGolem>().SetCinematic(false);
 
         // End camera event
     }

@@ -32,10 +32,11 @@ public class Boss_ChimeraGolem : EnemyBase
     [SerializeField] private float hitBoxRadius;
     [SerializeField] private GameObject smokeVfx;
 
+    private bool inCinematic;
 
     private void HandelAi()
     {
-        
+        if (inCinematic) return;
     }
 
     private IEnumerator HeavyBlow()
@@ -166,5 +167,10 @@ public class Boss_ChimeraGolem : EnemyBase
         }
 
         yield return new WaitForSeconds(1.5f);
+    }
+
+    public void SetCinematic(bool value)
+    {
+        inCinematic = value;
     }
 }
