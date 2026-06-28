@@ -15,6 +15,9 @@ public class Boss_ChimeraGolem : EnemyBase
     [SerializeField] private float startUpDuration;
     [SerializeField] private float channelDuration;
     [SerializeField] private float rainRadius;
+    [SerializeField] private int fireballsPerWave = 4;
+    [SerializeField] private float waveInterval = 0.5f;
+    [SerializeField] private float spawnHeight = 18f;
     [SerializeField] private GameObject fireballPrefab;
     [SerializeField] private GameObject magicCircleVfx;
 
@@ -76,23 +79,24 @@ public class Boss_ChimeraGolem : EnemyBase
         }
 
         float timer = 0f;
-        float spawnInterval = 0.2f;
-        float spawnHeight = 10f;
 
         while (timer < channelDuration)
         {
-            timer += spawnInterval;
-
-            Vector2 randomCircle = Random.insideUnitCircle * rainRadius;
-
-            Vector3 spawnPos = transform.position + new Vector3(randomCircle.x, spawnHeight, randomCircle.y);
-
-            if (fireballPrefab != null)
+            for (int i = 0; i < fireballsPerWave; i++)
             {
-                var proj = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+                Vector2 randomPoint = Random.insideUnitCircle * rainRadius;
+
+                Vector3 spawnPos = transform.position + new Vector3(randomPoint.x, spawnHeight, randomPoint.y);
+
+                if (fireballPrefab != null)
+                {
+                    var proj = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+                }
             }
 
-            yield return new WaitForSeconds(spawnInterval);
+            timer += waveInterval;
+
+            yield return new WaitForSeconds(waveInterval);
         }
 
         yield return new WaitForSeconds(1.5f);
