@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 21742392}
   - component: {fileID: 21742393}
   - component: {fileID: 21742394}
+  - component: {fileID: 21742395}
   m_Layer: 0
   m_Name: ChimeraGolem
   m_TagString: Untagged
@@ -202,6 +203,70 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &21742395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 21742391}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4da977fcc6bc84546b21a0a79598cd7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Boss_ChimeraGolem
+  stats: {fileID: 0}
+  weight: 100
+  pushResistance: 1
+  launchResistance: 1
+  knockDownResistance: 1
+  immuneToMovement: 1
+  vfxHit: {fileID: 0}
+  hitVfxOffset: {x: 0, y: 1.2, z: 0}
+  hitVfxDuration: 1.5
+  staggerVfx: {fileID: 0}
+  staggerVfxOffset: {x: 0, y: 1.2, z: 0}
+  staggerVfxDuration: 1.5
+  audio_Source: {fileID: 0}
+  onHit: {fileID: 0}
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 1024
+  groundCheck: {fileID: 0}
+  isGroundEnemy: 1
+  groundCheckDistance: 0.2
+  airRecoverDelay: 0.05
+  knockDownRecoverDelay: 0.15
+  airGravityMultiplier: 0.7
+  airHangDuration: 0.75
+  revengeThreshold: 3
+  revengeDecayDelay: 2
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
+  debug: 1
+  currentHp: 0
+  currentStaggerBuild: 0
+  revengeMeter: 0
+  hitBoxHit: {x: 0, y: 0, z: 0}
+  hitVfx: {fileID: 0}
+  fieldDuration: 0
+  fieldVfx: {fileID: 0}
+  startUpDuration: 0
+  channelDuration: 0
+  rainRadius: 0
+  fireballsPerWave: 4
+  waveInterval: 0.5
+  spawnHeight: 18
+  fireballPrefab: {fileID: 0}
+  magicCircleVfx: {fileID: 0}
+  bulletPerShoot: 0
+  timeBtwShoot: 0
+  firePoint: {fileID: 0}
+  bulletPrefab: {fileID: 0}
+  shootVfx: {fileID: 0}
+  hitBoxRadius: 0
+  smokeVfx: {fileID: 0}
 --- !u!1 &38894127
 GameObject:
   m_ObjectHideFlags: 0
