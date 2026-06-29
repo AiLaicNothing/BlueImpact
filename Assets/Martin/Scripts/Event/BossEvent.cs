@@ -10,6 +10,7 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private Transform desiredGroundPos;
     [SerializeField] private float fallSpeed;
     [SerializeField] private GameObject smokeVfx;
+    private GameObject bossObject;
 
     [SerializeField] private Transform center;
     [SerializeField] private Transform[] corners;
@@ -20,9 +21,12 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private Transform openPos;
     [SerializeField] private Transform closePos;
 
+    [Header("End Event")]
+    [SerializeField] private GameObject secret;
+
     private bool eventActive = false;
 
-    private PlayerControl player;
+    private GameObject player;
     private void Awake()
     {
         
@@ -45,15 +49,25 @@ public class BossEvent : MonoBehaviour
         yield return SpawnBoss();
 
         GameModeManager.Instance.SetMode(GameMode.Gameplay);
+
+        //var boss = bossObject.GetComponent<Boss_ChimeraGolem>();
+
+        //if (boss.IsDead)
+        //{
+        //    Debug.Log("Try dead boss event");
+        //    yield return OnDeathEvent();
+        //}
+        //Debug.Log("Try end event");
+
     }
 
     private IEnumerator SpawnBoss()
     {
         if (bossPrefab == null) yield break;
 
-        var prefab = Instantiate(bossPrefab, spawnPos.position, Quaternion.identity);
+        bossObject = Instantiate(bossPrefab, spawnPos.position, Quaternion.identity);
 
-        var boss = bossPrefab.GetComponent<Boss_ChimeraGolem>();
+        var boss = bossObject.GetComponent<Boss_ChimeraGolem>();
 
         if (boss != null)
         {
@@ -61,13 +75,15 @@ public class BossEvent : MonoBehaviour
             Debug.Log($"{boss.inCinematic}");
             boss.GetPositions(center, corners);
             boss.OnSpawn(null, center, false);
+            Debug.Log($"{player.name}");
+            boss.target = player;
         }
 
         //Call camara event to show boss
 
-        while (Vector3.Distance(prefab.transform.position, desiredGroundPos.position) > 0.01f)
+        while (Vector3.Distance(bossObject.transform.position, desiredGroundPos.position) > 0.01f)
         {
-            prefab.transform.position = Vector3.MoveTowards(prefab.transform.position, desiredGroundPos.position, fallSpeed * Time.deltaTime);
+            bossObject.transform.position = Vector3.MoveTowards(bossObject.transform.position, desiredGroundPos.position, fallSpeed * Time.deltaTime);
             yield return null;
         }
 
@@ -111,15 +127,28 @@ public class BossEvent : MonoBehaviour
         doorTransform.position = desiredPos;
     }
 
+    private IEnumerator OnDeathEvent()
+    {
+        yield return new WaitForSeconds(1.5f);
+
+        GameModeManager.Instance.SetMode(GameMode.Cutscene);
+
+        secret.SetActive(true);
+
+        GameModeManager.Instance.SetMode(GameMode.Gameplay);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (eventActive) return;
 
         if (other.gameObject.CompareTag("Player"))
         {
-            player = other.GetComponent<PlayerControl>();
+            player = other.gameObject;
 
-            if (player != null)
+            var playerControl = player.GetComponent<PlayerControl>();
+
+            if (playerControl != null)
             {
                 eventActive = true;
 

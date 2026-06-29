@@ -4,6 +4,9 @@ using UnityEngine;
 public class Boss_ChimeraGolem : EnemyBase
 {
     [Header("Heavy Blow")]
+    [SerializeField] private float dashSpeed = 8f;
+    [SerializeField] private float stopDistance = 2f;
+    [SerializeField] private float attackDelay = 0.5f;
     [SerializeField] private Vector3 hitBoxHit;
     [SerializeField] private GameObject hitVfx;
 
@@ -37,13 +40,14 @@ public class Boss_ChimeraGolem : EnemyBase
     [SerializeField] private Transform centerArena;
     [SerializeField] private Transform[] corners;
 
+    public GameObject target;
     public bool inCinematic;
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.M))
         {
-            StartCoroutine(GroundSlam());
+            StartCoroutine(HeavyBlow());
         }
     }
 
@@ -59,9 +63,61 @@ public class Boss_ChimeraGolem : EnemyBase
         //Logic -> Do a hitbox, a boxcast that check player
         //Logic -> while it last, move/dash toward the player
         //Logic -> When it end wait for 1.5f secs
-        yield break;
+        if (target == null) yield break;
 
-        Debug.Log("End Heavy blow attack");
+        // Lock the player's position at the start.
+        Vector3 playerPos = target.transform.position;
+        playerPos.y = transform.position.y;
+
+        Vector3 dir = (playerPos - transform.position).normalized;
+
+        // Final destination.
+        Vector3 stopPos = playerPos - dir * stopDistance;
+
+        while (Vector3.Distance(transform.position, stopPos) > 0.05f)
+        {
+            transform.forward = dir;
+            transform.position = Vector3.MoveTowards(transform.position, stopPos, dashSpeed * Time.deltaTime);
+
+            yield return null;
+        }
+
+        // Wind-up before striking.
+        float timer = 0f;
+
+        while (timer < attackDelay)
+        {
+            timer += Time.deltaTime;
+
+            FaceTarget(6);
+
+            yield return null;
+        }
+
+        // Spawn hit VFX.
+        if (hitVfx != null)
+        {
+            Instantiate(hitVfx, transform.position + transform.forward * hitBoxHit.z, Quaternion.identity);
+        }
+
+        // Check hit.
+        Vector3 center = transform.position + transform.forward * hitBoxHit.z;
+
+        Collider[] hits = Physics.OverlapBox(center, hitBoxHit * 0.5f, transform.rotation, targerLayer);
+
+        foreach (Collider hit in hits)
+        {
+            DamageInfo info = new DamageInfo
+            {
+                damage = stats.damage,
+            };
+
+            hit.GetComponent<PlayerControl>().TakeDamage(info);
+        }
+
+        yield return new WaitForSeconds(1.5f);
+
+        Debug.Log("End Heavy Blow attack");
     }
 
     private IEnumerator WhitheredField()
@@ -143,9 +199,9 @@ public class Boss_ChimeraGolem : EnemyBase
 
         for (int i = 0; i < bulletPerShoot; i++)
         {
-            if (player != null)
+            if (target != null)
             {
-                Vector3 dir = (player.transform.position - firePoint.position).normalized;
+                Vector3 dir = (target.transform.position - firePoint.position).normalized;
 
                 transform.forward = new Vector3(dir.x, 0f, dir.z);
 
@@ -156,10 +212,22 @@ public class Boss_ChimeraGolem : EnemyBase
 
                 if (bulletPrefab != null)
                 {
-                    var proj = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(dir));
+                    var projPrefab = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(dir));
+                    var  proj = projPrefab.GetComponent<E_Projectile>();
+
+                    proj.InitProj(10f, dir);
                 }
 
-                yield return new WaitForSeconds(timeBtwShoot);
+                float timer = 0f;
+
+                while (timer < timeBtwShoot)
+                {
+                    timer += Time.deltaTime;
+
+                    FaceTarget(6);
+
+                    yield return null;
+                }
             }
         }
 
@@ -199,6 +267,19 @@ public class Boss_ChimeraGolem : EnemyBase
         yield return new WaitForSeconds(1.5f);
 
         Debug.Log("End Ground Slam attack");
+    }
+
+    private void FaceTarget(float speed)
+    {
+        if (target == null) return;
+
+        Vector3 dir = target.transform.position - transform.position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.01f) return;
+
+        Quaternion targetRot = Quaternion.LookRotation(dir);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, speed * Time.deltaTime);
     }
 
     public void SetCinematic(bool value)

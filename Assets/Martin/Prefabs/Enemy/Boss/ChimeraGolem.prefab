@@ -250,6 +250,37 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!1 &6042008571969152964
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6882840736087324763}
+  m_Layer: 0
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6882840736087324763
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6042008571969152964}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 2.453}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7234911921980922091}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6395441284657150504
 GameObject:
   m_ObjectHideFlags: 0
@@ -373,6 +404,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6129183676000030921}
+  - {fileID: 6882840736087324763}
   - {fileID: 6107374306239597843}
   - {fileID: 720179260866161089}
   m_Father: {fileID: 0}
@@ -470,7 +502,10 @@ MonoBehaviour:
   currentHp: 0
   currentStaggerBuild: 0
   revengeMeter: 0
-  hitBoxHit: {x: 0, y: 0, z: 0}
+  dashSpeed: 8
+  stopDistance: 4
+  attackDelay: 0.5
+  hitBoxHit: {x: 4, y: 4, z: 4}
   hitVfx: {fileID: 0}
   fieldDuration: 0
   fieldVfx: {fileID: 0}
@@ -482,10 +517,10 @@ MonoBehaviour:
   spawnHeight: 18
   fireballPrefab: {fileID: 8952754787391683549, guid: 9e77a5905b9e599469cd2f227fb220e0, type: 3}
   magicCircleVfx: {fileID: 7689881771256709887, guid: 785b7f2a4565599458d1decbdfda92c7, type: 3}
-  bulletPerShoot: 0
-  timeBtwShoot: 0
-  firePoint: {fileID: 0}
-  bulletPrefab: {fileID: 0}
+  bulletPerShoot: 6
+  timeBtwShoot: 0.2
+  firePoint: {fileID: 6882840736087324763}
+  bulletPrefab: {fileID: 8499267714821707363, guid: 71e2044fa01baca4cbfcc18c220214e7, type: 3}
   shootVfx: {fileID: 0}
   hitBoxRadius: 5
   smokeVfx: {fileID: 5610010966355794069, guid: 803ecf87f61d9fb4f84ba6319ba95c9c, type: 3}
@@ -494,6 +529,8 @@ MonoBehaviour:
     m_Bits: 128
   centerArena: {fileID: 0}
   corners: []
+  target: {fileID: 0}
+  inCinematic: 0
 --- !u!1 &7130762509570270426
 GameObject:
   m_ObjectHideFlags: 0
