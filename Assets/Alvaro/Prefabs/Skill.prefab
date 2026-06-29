@@ -71,7 +71,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1279739731333964356}
-  - component: {fileID: 208043711866097173}
   - component: {fileID: 5956968050326778290}
   - component: {fileID: 8689710263977708689}
   - component: {fileID: 7233031349416417071}
@@ -100,24 +99,6 @@ Transform:
   - {fileID: 9183675318711069576}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &208043711866097173
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6314557747112082960}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 071b464c3589bc24cbfdc348cf55d926, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SkillPickup
-  skillsByCharacter:
-  - characterName: Lune
-    skill: {fileID: 11400000, guid: 9799f9906959a9c42a26a07bc8fc16f3, type: 2}
-  - characterName: Solis
-    skill: {fileID: 11400000, guid: 04b967174595230429f47d7adc90145d, type: 2}
-  destroyOnPickup: 1
 --- !u!65 &5956968050326778290
 BoxCollider:
   m_ObjectHideFlags: 0
