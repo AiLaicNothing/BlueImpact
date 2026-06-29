@@ -176,12 +176,14 @@ public class Automata : EnemyBase
             {
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
+                anim.Play("Walk");
                 RotateToVelocity();
             }
             else
             {
                 agent.isStopped = true;
                 agent.ResetPath();
+                anim.Play("Idle");
                 RotateToPlayer();
             }
         }
@@ -196,6 +198,7 @@ public class Automata : EnemyBase
             else
             {
                 agent.ResetPath();
+                anim.Play("Idle");
             }
         }
     }
@@ -206,6 +209,7 @@ public class Automata : EnemyBase
 
         Transform posDesired = patrolZones[patrolIndex];
         agent.SetDestination(posDesired.position);
+        anim.Play("Walk");
         RotateToVelocity();
 
         float dist = Vector3.Distance(transform.position, posDesired.position);
@@ -248,6 +252,8 @@ public class Automata : EnemyBase
     {
         isPerformingAction = true;
 
+        anim.Play("Disparo_1");
+
         if (agent != null)
         {
             agent.isStopped = true;
@@ -271,7 +277,7 @@ public class Automata : EnemyBase
     private IEnumerator PerformAttack_2()
     {
         isPerformingAction = true;
-
+        
         if (agent != null)
         {
             agent.isStopped = true;
@@ -282,6 +288,8 @@ public class Automata : EnemyBase
 
         Vector3 dashDir = GetAttackForward();
         float moved = 0f;
+
+        anim.Play("Dash");
 
         while (moved < dashDistance)
         {
@@ -294,6 +302,8 @@ public class Automata : EnemyBase
         if (agent != null && agent.enabled) agent.Warp(transform.position);
 
         FaceTargetInstant();
+
+        anim.Play("Disparo_dash");
 
         int count = Mathf.Max(1, ammountPerAttack2);
         for (int i = 0; i < count; i++)
@@ -312,6 +322,8 @@ public class Automata : EnemyBase
     private IEnumerator PerformAttack_3()
     {
         isPerformingAction = true;
+
+        anim.Play("Disparo_3");
 
         if (agent != null)
         {

@@ -11,6 +11,9 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private float fallSpeed;
     [SerializeField] private GameObject smokeVfx;
 
+    [SerializeField] private Transform center;
+    [SerializeField] private Transform[] corners;
+
     [Header("Door Event")]
     [SerializeField] private Transform doorTransform;
     [SerializeField] private float moveSpeed;
@@ -48,28 +51,41 @@ public class BossEvent : MonoBehaviour
     {
         if (bossPrefab == null) yield break;
 
-        var boss = Instantiate(bossPrefab, spawnPos.position, Quaternion.identity);
+        var prefab = Instantiate(bossPrefab, spawnPos.position, Quaternion.identity);
 
-        boss.GetComponent<Boss_ChimeraGolem>().SetCinematic(true);
+        var boss = bossPrefab.GetComponent<Boss_ChimeraGolem>();
+
+        if (boss != null)
+        {
+            boss.SetCinematic(true);
+            Debug.Log($"{boss.inCinematic}");
+            boss.GetPositions(center, corners);
+            boss.OnSpawn(null, center, false);
+        }
 
         //Call camara event to show boss
 
-        while (Vector3.Distance(boss.transform.position, desiredGroundPos.position) > 0.01f)
+        while (Vector3.Distance(prefab.transform.position, desiredGroundPos.position) > 0.01f)
         {
-            boss.transform.position = Vector3.MoveTowards(boss.transform.position, desiredGroundPos.position, fallSpeed * Time.deltaTime);
+            prefab.transform.position = Vector3.MoveTowards(prefab.transform.position, desiredGroundPos.position, fallSpeed * Time.deltaTime);
             yield return null;
         }
+
+        Debug.Log("Desires pos arrived");
 
         if (smokeVfx != null)
         {
             var vfx = Instantiate(smokeVfx, desiredGroundPos.position, Quaternion.identity);
+            Debug.Log("Get vfx");
             Destroy(vfx, 1.5f);
         }
 
         yield return new WaitForSeconds(2.5f);
 
-        boss.GetComponent<Boss_ChimeraGolem>().SetCinematic(false);
+        boss.SetCinematic(false);
+        Debug.Log($"{boss.inCinematic}");
 
+        Debug.Log("Start combat");
         // End camera event
     }
 

@@ -31,8 +31,21 @@ public class Boss_ChimeraGolem : EnemyBase
     [Header("Ground Slam")]
     [SerializeField] private float hitBoxRadius;
     [SerializeField] private GameObject smokeVfx;
+    [SerializeField] private LayerMask targerLayer;
 
-    private bool inCinematic;
+    [Header("Locations")]
+    [SerializeField] private Transform centerArena;
+    [SerializeField] private Transform[] corners;
+
+    public bool inCinematic;
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            StartCoroutine(GroundSlam());
+        }
+    }
 
     private void HandelAi()
     {
@@ -47,6 +60,8 @@ public class Boss_ChimeraGolem : EnemyBase
         //Logic -> while it last, move/dash toward the player
         //Logic -> When it end wait for 1.5f secs
         yield break;
+
+        Debug.Log("End Heavy blow attack");
     }
 
     private IEnumerator WhitheredField()
@@ -61,6 +76,8 @@ public class Boss_ChimeraGolem : EnemyBase
         }
 
         yield return new WaitForSeconds(fieldDuration);
+
+        Debug.Log("End Withered Field attack");
     }
 
     private IEnumerator UelFlare()
@@ -76,7 +93,11 @@ public class Boss_ChimeraGolem : EnemyBase
 
         if (magicCircleVfx  != null)
         {
-            var vfx = Instantiate(magicCircleVfx, transform.position, Quaternion.identity);
+            Vector3 circlePos = transform.position + Vector3.up * spawnHeight;
+
+            var vfx = Instantiate(magicCircleVfx, circlePos, Quaternion.identity);
+
+            Destroy(vfx, channelDuration);
         }
 
         float timer = 0f;
@@ -91,7 +112,11 @@ public class Boss_ChimeraGolem : EnemyBase
 
                 if (fireballPrefab != null)
                 {
-                    var proj = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+                    var prefab = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+
+                    var proj = prefab.GetComponent<E_Projectile>();
+
+                    proj.InitProj(10f, Vector3.down);
                 }
             }
 
@@ -101,6 +126,8 @@ public class Boss_ChimeraGolem : EnemyBase
         }
 
         yield return new WaitForSeconds(1.5f);
+
+        Debug.Log("Attack Uel Flare end");
     }
 
     private IEnumerator CarFlare()
@@ -137,6 +164,8 @@ public class Boss_ChimeraGolem : EnemyBase
         }
 
         yield return new WaitForSeconds(1.5f);
+
+        Debug.Log("End Car Flare attack");
     }
 
     private IEnumerator GroundSlam()
@@ -152,9 +181,10 @@ public class Boss_ChimeraGolem : EnemyBase
         if (smokeVfx != null)
         {
             var vfx = Instantiate(smokeVfx, transform.position, Quaternion.identity);
+            Destroy(vfx, 1.5f);
         }
 
-        Collider[] hits = Physics.OverlapSphere(transform.position, hitBoxRadius);
+        Collider[] hits = Physics.OverlapSphere(transform.position, hitBoxRadius, targerLayer);
 
         foreach (Collider hit in hits)
         {
@@ -167,10 +197,18 @@ public class Boss_ChimeraGolem : EnemyBase
         }
 
         yield return new WaitForSeconds(1.5f);
+
+        Debug.Log("End Ground Slam attack");
     }
 
     public void SetCinematic(bool value)
     {
         inCinematic = value;
+    }
+
+    public void GetPositions(Transform center, Transform[] Corners)
+    {
+        centerArena = center;
+        corners = Corners;
     }
 }
