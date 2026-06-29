@@ -24,6 +24,7 @@ public class FireSlash_Skill : Skill
         Quaternion rot = Quaternion.LookRotation(dir);
 
         GameObject prefab = Object.Instantiate(projectilePrefab, spawnPos, rot);
+        player.PlayAudio(actionSound, 0.8f); // ✅ justo después del Instantiate
 
         P_Projectile proyectile = prefab.GetComponent<P_Projectile>();
 

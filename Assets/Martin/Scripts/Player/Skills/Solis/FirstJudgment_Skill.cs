@@ -37,6 +37,7 @@ public class FirstJudgment_Skill : Skill
         Vector3 spawnPos = finalTarget + Vector3.up * spawnHeight;
 
         GameObject sword = Instantiate(swordPrefab, spawnPos, Quaternion.identity);
+        player.PlayAudio(actionSound, 0.8f); // ✅ justo después del Instantiate
 
         FirstJudgmentSword proj = sword.GetComponent<FirstJudgmentSword>();
 

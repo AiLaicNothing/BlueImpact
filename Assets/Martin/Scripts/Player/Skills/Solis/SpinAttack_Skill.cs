@@ -29,15 +29,19 @@ public class SpinAttack_Skill : Skill
     private IEnumerator SpinRoutine(PlayerControl player)
     {
         player.blockVelocity = true;
-
         float timer = 0;
+        bool soundPlayed = false; 
 
         while (timer < duration)
         {
+            if (!soundPlayed)
+            {
+                player.PlayAudio(actionSound, 0.8f); 
+                soundPlayed = true;
+            }
+
             DealDamage(player);
-
             yield return new WaitForSeconds(tickRate);
-
             timer += tickRate;
         }
 

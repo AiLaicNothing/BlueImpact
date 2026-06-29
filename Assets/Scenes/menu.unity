@@ -1022,7 +1022,7 @@ AudioSource:
   m_GameObject: {fileID: 786403939}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 572597225495360103, guid: cabe997dde1c4294ebc81b6f96928f1f, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: af7a152d5f97ed6408fee327fe133109, type: 3}
   m_PlayOnAwake: 1
@@ -1829,28 +1829,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 984668444}
   m_CullTransparentMesh: 1
---- !u!114 &1321318875 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7228959615363455965, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
-  m_PrefabInstance: {fileID: 2889432515980411226}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5639537b16ead54fa8ec0797b67d156, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SettingSlider
---- !u!114 &1324847942 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1768924807043796907, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
-  m_PrefabInstance: {fileID: 2889432515980411226}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5639537b16ead54fa8ec0797b67d156, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SettingSlider
 --- !u!114 &1415139064 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4524560413575527468, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
@@ -3616,7 +3594,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3031346611491545574, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.00001335144
+      value: -0.00004005432
       objectReference: {fileID: 0}
     - target: {fileID: 3204009615599984094, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
       propertyPath: m_AnchorMax.x
@@ -3798,6 +3776,10 @@ PrefabInstance:
       propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6247584930817657052, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
+      propertyPath: m_text
+      value: ' Pantalla completa'
+      objectReference: {fileID: 0}
     - target: {fileID: 6290248129433569202, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
@@ -3841,7 +3823,7 @@ PrefabInstance:
     - target: {fileID: 6912549134842262635, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
       propertyPath: contrastSlider
       value: 
-      objectReference: {fileID: 1324847942}
+      objectReference: {fileID: 0}
     - target: {fileID: 6912549134842262635, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
       propertyPath: sfxVolumeSlider
       value: 
@@ -3849,7 +3831,7 @@ PrefabInstance:
     - target: {fileID: 6912549134842262635, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
       propertyPath: brightnessSlider
       value: 
-      objectReference: {fileID: 1321318875}
+      objectReference: {fileID: 0}
     - target: {fileID: 6912549134842262635, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
       propertyPath: musicVolumeSlider
       value: 
@@ -3999,7 +3981,9 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 831932070006267270, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
+    - {fileID: 6915918170563310858, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c6991e17bf17497409d7ec0d40395e74, type: 3}

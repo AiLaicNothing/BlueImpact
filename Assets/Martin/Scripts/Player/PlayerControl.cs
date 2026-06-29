@@ -656,6 +656,8 @@ public class PlayerControl : MonoBehaviour, IDamageable
             lockTargetPos = lockOnTarget.CurrentTarget.position;
         }
 
+        // Línea 659, antes de ExecuteSkill:
+        PlayAudio(skill.castSound, sfxVolume);
         skill.ExecuteSkill(this, targetPoint, lockTargetPos);
     }
 

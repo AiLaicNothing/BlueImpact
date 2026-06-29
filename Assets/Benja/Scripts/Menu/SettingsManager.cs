@@ -101,11 +101,7 @@ public class SettingsManager : MonoBehaviour
         if (currentSettings.controls.mouseSensitivity <= 0f)
             currentSettings.controls.mouseSensitivity = 1f;
 
-        // Brillo y contraste nunca pueden ser 0 (default = 100)
-        if (currentSettings.video.brightnessLevel <= 0)
-            currentSettings.video.brightnessLevel = 100;
-        if (currentSettings.video.contrastLevel <= 0)
-            currentSettings.video.contrastLevel = 100;
+
     }
 
     private void ResetToDefaultsInternal()
@@ -175,6 +171,7 @@ public class SettingsManager : MonoBehaviour
                                  v.fullscreen);
     }
 
+
     private void ApplyAudioSettings()
     {
         if (audioManager == null) return;
@@ -210,18 +207,6 @@ public class SettingsManager : MonoBehaviour
     {
         currentSettings.video.resolutionIndex = index;
         ApplyVideoSettings();
-        if (autoSaveOnChange) SaveSettings();
-    }
-
-    public void SetBrightness(int level)
-    {
-        currentSettings.video.brightnessLevel = Mathf.Clamp(level, 0, 100);
-        if (autoSaveOnChange) SaveSettings();
-    }
-
-    public void SetContrast(int level)
-    {
-        currentSettings.video.contrastLevel = Mathf.Clamp(level, 0, 100);
         if (autoSaveOnChange) SaveSettings();
     }
 
@@ -268,7 +253,7 @@ public class SettingsManager : MonoBehaviour
     {
         currentSettings.controls.mouseSensitivity = Mathf.Clamp(value, 0.1f, 1f);
         if (autoSaveOnChange) SaveSettings();
-    }
+    } 
 
     public void SetInvertMouseY(bool invert)
     {

@@ -37,6 +37,7 @@ public class BloodMoon_Skill : Skill
         Vector3 spawnPos = player.transform.position + player.Model.forward * offset.z + player.Model.right * offset.x + Vector3.up * height;
 
         GameObject moon = Instantiate(moonPrefab, spawnPos, Quaternion.identity);
+        player.PlayAudio(actionSound, 0.8f); 
 
         BloodMoon moonProj = moon.GetComponent<BloodMoon>();
 

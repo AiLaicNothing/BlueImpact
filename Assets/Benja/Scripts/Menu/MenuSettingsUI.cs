@@ -16,8 +16,6 @@ public class MenuSettingsUI : MonoBehaviour
 
     [Header("VIDEO")]
     [SerializeField] private TMP_Dropdown resolutionDropdown;
-    [SerializeField] private SettingSlider brightnessSlider;
-    [SerializeField] private SettingSlider contrastSlider;
     [SerializeField] private Toggle fullscreenToggle;
 
     [Header("AUDIO")]
@@ -89,14 +87,6 @@ public class MenuSettingsUI : MonoBehaviour
             resolutionDropdown.onValueChanged.RemoveAllListeners();
             resolutionDropdown.onValueChanged.AddListener(i => settingsManager.SetResolution(i));
         }
-
-        if (brightnessSlider != null)
-            brightnessSlider.Initialize("Brillo", 0f, 2f, s.video.brightnessLevel / 100f,
-                v => settingsManager.SetBrightness((int)(v * 100)), SettingSlider.DisplayFormat.Percentage0to200);
-
-        if (contrastSlider != null)
-            contrastSlider.Initialize("Contraste", 0f, 2f, s.video.contrastLevel / 100f,
-                v => settingsManager.SetContrast((int)(v * 100)), SettingSlider.DisplayFormat.Percentage0to200);
 
         if (fullscreenToggle != null)
         {
@@ -295,4 +285,4 @@ public class MenuSettingsUI : MonoBehaviour
         cg.interactable = !block;
         cg.blocksRaycasts = !block;
     }
-}
+}       

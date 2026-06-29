@@ -1,10 +1,7 @@
-﻿using System.Collections.Generic;
-
-/// <summary>
+﻿/// <summary>
 /// 📊 SettingsData - Estructura serializable de configuración
 ///
 /// Audio simplificado: Master, Music, SFX, Ambient
-/// (eliminados: UI, Player, Enemy, Voice)
 /// </summary>
 [System.Serializable]
 public class SettingsData
@@ -13,8 +10,6 @@ public class SettingsData
     public class VideoSettings
     {
         public int resolutionIndex = 0;
-        public int brightnessLevel = 100;   // 0-200 → slider 0.0-2.0
-        public int contrastLevel = 100;   // 0-200 → slider 0.0-2.0
         public bool fullscreen = true;
     }
 
@@ -48,4 +43,4 @@ public class SettingsData
     public AudioSettings audio = new();
     public ControlsSettings controls = new();
     public GameplaySettings gameplay = new();
-}
+}       

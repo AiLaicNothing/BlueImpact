@@ -72,6 +72,7 @@ public class AriaAqua_Skill : Skill
         yield return new WaitUntil(() => arrivedCount >= 3);
 
         yield return new WaitForSeconds(explosionDelay);
+        player.PlayAudio(actionSound, 0.8f);
 
         if (explosionVFX != null)
         {

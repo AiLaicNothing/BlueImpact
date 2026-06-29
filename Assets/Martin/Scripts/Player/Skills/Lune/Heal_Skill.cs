@@ -26,6 +26,7 @@ public class Heal_Skill : Skill
 
         // apply heal
         player.Heal(ammount);
+        player.PlayAudio(actionSound, 0.8f); 
 
         Debug.Log($"Healed -> {ammount}");
 

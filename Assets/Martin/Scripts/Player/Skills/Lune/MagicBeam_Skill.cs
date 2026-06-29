@@ -38,13 +38,18 @@ public class MagicBeam_Skill : Skill
         player.blockVelocity = true;
 
         float timer = 0f;
+        bool soundPlayed = false;
 
         while (timer < duration)
         {
+            if (!soundPlayed)
+            {
+                player.PlayAudio(actionSound, 0.8f);
+                soundPlayed = true;
+            }
+
             FireBeam(player, targetPoint, lockTargetPos);
-
             yield return new WaitForSeconds(tickRate);
-
             timer += tickRate;
         }
 

@@ -21,6 +21,8 @@ public class SuperNova_Skill : Skill
     {
         SpawnOrb(player, 0f);
         SpawnOrb(player, 180f);
+        player.PlayAudio(actionSound, 0.8f); // ✅ una vez después de spawnear ambos orbs
+
     }
     void SpawnOrb(PlayerControl player, float startAngle)
     {

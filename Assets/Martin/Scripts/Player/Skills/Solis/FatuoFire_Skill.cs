@@ -58,5 +58,6 @@ public class FatuoFire_Skill : Skill
                 damageable.TakeDamage(info);
             }
         }
+        player.PlayAudio(actionSound, 0.8f); 
     }
 }

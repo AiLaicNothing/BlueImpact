@@ -24,7 +24,7 @@ public class BashShield_Skill : Skill
                 player.Model.rotation = Quaternion.LookRotation(dir);
             }
         }
-
+         
         //if (actionSound != null)
         //{
         //    AudioManager.Instance.PlaySFX(actionSound);
@@ -36,6 +36,7 @@ public class BashShield_Skill : Skill
     private IEnumerator BashRoutine(PlayerControl player)
     {
         player.blockVelocity = false;
+        player.PlayAudio(actionSound, 0.8f); // ✅ al inicio del dash
 
         float timer = duration;
 

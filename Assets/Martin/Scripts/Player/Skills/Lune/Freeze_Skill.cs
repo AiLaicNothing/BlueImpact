@@ -61,5 +61,7 @@ public class Freeze_Skill : Skill
                 damageable.TakeDamage(info);
             }
         }
+        player.PlayAudio(actionSound, 0.8f); 
+
     }
 }

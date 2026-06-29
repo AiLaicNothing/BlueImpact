@@ -64,7 +64,7 @@ public class MagicBullet_Skill : Skill
         }
 
         yield return new WaitForSeconds(0.2f);
-
+        player.PlayAudio(actionSound, 0.8f); 
         for (int i = 0; i < proyectilePerNode; i++)
         {
             GameObject proj = Instantiate(proyectilePrefab, pos, Quaternion.LookRotation(baseDir));
