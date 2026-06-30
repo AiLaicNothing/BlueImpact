@@ -142,16 +142,15 @@ public class PlayerStatsManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Consume el valor actual (no el máximo) y resetea el timer
+    /// Consume el valor actual (no el máximo) y resetea el timer.
+    /// Si amount excede el valor actual, lo clampea a 0 en vez de bloquear el consumo.
     /// </summary>
     public bool Consume(StatType statType, int amount)
     {
-        if (!CanConsume(statType, amount))
-            return false;
-
         StatDefinition statDef = GetStatDefinition(statType);
+        if (statDef == null) return false;
 
-        actualValues[statDef] = Mathf.Max(actualValues[statDef] - amount,0);
+        actualValues[statDef] = Mathf.Max(actualValues[statDef] - amount, 0);
 
         regenTimers[statDef] = 0f;
 

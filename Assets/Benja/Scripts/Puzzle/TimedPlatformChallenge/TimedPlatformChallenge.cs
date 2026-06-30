@@ -23,6 +23,14 @@ public class TimedPlatformChallenge : MonoBehaviour
     [SerializeField]
     private List<ChallengeDoor> rewardDoors = new();
 
+    [Header("Blocking Doors")]
+    [Tooltip("Puertas que bloquean una entrada mientras el puzzle está activo. " +
+             "Posiciona la puerta en la escena en su posición ABIERTA. " +
+             "El 'Open Point' de cada ChallengeDoor debe apuntar a la posición BLOQUEADA " +
+             "(a donde baja al iniciar el puzzle).")]
+    [SerializeField]
+    private List<ChallengeDoor> blockingDoors = new();
+
     [Header("Challenge")]
     [SerializeField] private float challengeDuration = 30f;
 
@@ -94,6 +102,14 @@ public class TimedPlatformChallenge : MonoBehaviour
 
         HideUI();
 
+        foreach (var door in blockingDoors)
+        {
+            if (door == null)
+                continue;
+
+            door.SetClosedState(); // Instantáneo: posición inicial (abierta)
+        }
+
         foreach (var platform in platforms)
         {
             if (platform == null)
@@ -132,6 +148,14 @@ public class TimedPlatformChallenge : MonoBehaviour
         if (startCamera != null)
         {
             CameraEventRelay.Instance?.Play(startCamera);
+        }
+
+        foreach (var door in blockingDoors)
+        {
+            if (door == null)
+                continue;
+
+            door.Open(); // "Open" mueve la puerta hacia openPoint, que en este caso es la posición de BLOQUEO
         }
 
         foreach (var platform in platforms)
@@ -188,11 +212,39 @@ public class TimedPlatformChallenge : MonoBehaviour
     {
         Debug.Log("[Challenge] Timeout");
 
-        _timerRoutine = null;
+        ResetChallenge();
+    }
+
+    //====================================================
+    // RESET (Timeout, caída del jugador, etc.)
+    //====================================================
+
+    public void ResetChallenge()
+    {
+        if (_timerRoutine != null)
+        {
+            StopCoroutine(_timerRoutine);
+            _timerRoutine = null;
+        }
+
+        _remainingTime = 0f;
 
         _state = ChallengeState.Idle;
 
         HideUI();
+
+        foreach (var door in blockingDoors)
+        {
+            if (door == null)
+                continue;
+
+            door.Close(); // Regresa a su posición inicial (abierta)
+        }
+
+        if (_hideRoutine != null)
+        {
+            StopCoroutine(_hideRoutine);
+        }
 
         _hideRoutine =
             StartCoroutine(HidePlatformsRoutine());
@@ -218,6 +270,14 @@ public class TimedPlatformChallenge : MonoBehaviour
         _state = ChallengeState.Completed;
 
         HideUI();
+
+        foreach (var door in blockingDoors)
+        {
+            if (door == null)
+                continue;
+
+            door.Close(); // Regresa la puerta de bloqueo a su posición inicial (abierta)
+        }
 
         if (completeCamera != null)
         {
