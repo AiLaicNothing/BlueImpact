@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-3978815996610896975
+--- !u!114 &-2389542672708447944
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: libro
+  m_Name: madera
   m_Shader: {fileID: 4800000, guid: be891319084e9d147b09d89e80ce60e0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -29,25 +29,22 @@ Material:
   - _IS_CLIPPING_OFF
   - _IS_OUTLINE_CLIPPING_NO
   - _OUTLINE_NML
-  m_InvalidKeywords:
-  - _ENVIRONMENTREFLECTIONS_OFF
-  - _SPECULARHIGHLIGHTS_OFF
-  - _SPECULAR_SETUP
+  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 1
+  m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap:
     IgnoreProjection: False
     RenderType: Opaque
   disabledShaderPasses:
   - MOTIONVECTORS
-  m_LockedProperties: _1st_ShadeColor _1st_ShadeMap
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _1st_ShadeMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: a7cb3e6139f62b44795b179c36986a22, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _2nd_ShadeMap:
@@ -71,7 +68,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: cd12751a0c26e81458546fb1f294d048, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BentNormalMap:
@@ -139,7 +136,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: cd12751a0c26e81458546fb1f294d048, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskMap:
@@ -300,7 +297,7 @@ Material:
     - _CoatMask: 0
     - _ColorShift_Speed: 0
     - _ComposerMaskMode: 0
-    - _Cull: 0
+    - _Cull: 2
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
@@ -328,7 +325,7 @@ Material:
     - _EmissiveExposureWeight: 1
     - _EnableGeometricSpecularAA: 0
     - _EnergyConservingSpecularColor: 1
-    - _EnvironmentReflections: 0
+    - _EnvironmentReflections: 1
     - _Farthest_Distance: 100
     - _FirstShadeOverridden: 0
     - _FirstShadeVisible: 1
@@ -396,7 +393,7 @@ Material:
     - _Offset_Z: 0
     - _OutlineOverridden: 0
     - _OutlineVisible: 1
-    - _Outline_Width: 0
+    - _Outline_Width: 300
     - _PPDLodThreshold: 5
     - _PPDMaxSamples: 15
     - _PPDMinSamples: 5
@@ -426,7 +423,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularAAScreenSpaceVariance: 0.1
     - _SpecularAAThreshold: 0.2
-    - _SpecularHighlights: 0
+    - _SpecularHighlights: 1
     - _SpecularOcclusionMode: 1
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
@@ -468,8 +465,8 @@ Material:
     - _Unlit_Intensity: 1
     - _UseShadowThreshold: 0
     - _Use_1stAs2nd: 1
-    - _Use_BaseAs1st: 1
-    - _WorkflowMode: 0
+    - _Use_BaseAs1st: 0
+    - _WorkflowMode: 1
     - _XRMotionVectorsPass: 1
     - _ZOverDrawMode: 0
     - _ZTestDepthEqualForOpaque: 4
@@ -481,15 +478,15 @@ Material:
     - _simpleUI: 0
     - _utsTechnique: 0
     m_Colors:
-    - _1st_ShadeColor: {r: 0.18490559, g: 0.16153073, b: 0.16153073, a: 1}
+    - _1st_ShadeColor: {r: 0.4188679, g: 0.13596848, b: 0, a: 1}
     - _2nd_ShadeColor: {r: 0, g: 0, b: 0, a: 1}
     - _AngelRingMaskColor: {r: 0, g: 1, b: 0, a: 1}
     - _AngelRing_Color: {r: 1, g: 1, b: 1, a: 1}
     - _Ap_RimLightColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.5169811, g: 0.22296342, b: 0, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
     - _BaseColorMaskColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.5169811, g: 0.2229634, b: 0, a: 1}
     - _ColorShift: {r: 0, g: 0, b: 0, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
@@ -502,7 +499,7 @@ Material:
     - _IridescenceThicknessRemap: {r: 0, g: 1, b: 0, a: 0}
     - _MatCapColor: {r: 1, g: 1, b: 1, a: 1}
     - _OutlineMaskColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Outline_Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _Outline_Color: {r: 0.4641509, g: 0.10826665, b: 0.0026272312, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
     - _RimLightMaskColor: {r: 1, g: 0, b: 1, a: 1}
     - _SecondShadeMaskColor: {r: 0, g: 0, b: 1, a: 1}
