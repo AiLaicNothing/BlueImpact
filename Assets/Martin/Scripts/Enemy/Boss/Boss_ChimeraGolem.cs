@@ -36,6 +36,10 @@ public class Boss_ChimeraGolem : EnemyBase
     [SerializeField] private GameObject smokeVfx;
     [SerializeField] private LayerMask targerLayer;
 
+    private bool isAttacking;
+    private int normalAttackCount;
+    private int nextSpecialThreshold;
+
     [Header("Locations")]
     [SerializeField] private Transform centerArena;
     [SerializeField] private Transform[] corners;
@@ -43,26 +47,82 @@ public class Boss_ChimeraGolem : EnemyBase
     public GameObject target;
     public bool inCinematic;
 
-    private void Update()
+    protected override void Start()
     {
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-            StartCoroutine(HeavyBlow());
-        }
+        base.Start();
+        nextSpecialThreshold = Random.Range(3, 6);
     }
 
-    private void HandelAi()
+    protected override void Update()
+    {
+        if (isDead) return;
+
+        base.Update();
+
+        HandleAi();
+    }
+
+    private void HandleAi()
     {
         if (inCinematic) return;
+
+        if (isAttacking) return;
+
+        StartCoroutine(AttackRoutine());
+    }
+
+    private IEnumerator AttackRoutine()
+    {
+        Debug.Log("Deciding Attack");
+        isAttacking = true;
+
+        // Decide attack
+        if (normalAttackCount >= nextSpecialThreshold)
+        {
+            normalAttackCount = 0;
+            nextSpecialThreshold = Random.Range(3, 6);
+
+            yield return UelFlare();
+        }
+        else
+        {
+            int attack = Random.Range(0, 4);
+
+            switch (attack)
+            {
+                case 0:
+                    Debug.Log("Deciding HeavyBlow");
+                    yield return HeavyBlow();
+                    break;
+
+                case 1:
+                    Debug.Log("Deciding carflare");
+                    yield return CarFlare();
+                    break;
+
+                case 2:
+                    Debug.Log("GroundSlam");
+                    yield return GroundSlam();
+                    break;
+
+                case 3:
+                    yield return WhitheredField();
+                    break;
+            }
+
+            normalAttackCount++;
+        }
+
+        // Small delay before choosing another attack.
+        yield return new WaitForSeconds(0.75f);
+
+        isAttacking = false;
     }
 
     private IEnumerator HeavyBlow()
     {
         // Do a melee hit
 
-        //Logic -> Do a hitbox, a boxcast that check player
-        //Logic -> while it last, move/dash toward the player
-        //Logic -> When it end wait for 1.5f secs
         if (target == null) yield break;
 
         // Lock the player's position at the start.
@@ -140,10 +200,7 @@ public class Boss_ChimeraGolem : EnemyBase
     {
         //While channeling for x secs, make a area where fire fall to the ground like rain
 
-        //Logic -> wait startUpDuration,
-        //Logic -> above the enemy, x distance, make a circle/ radius of rain radius, call vfx
-        //Logic -> after that spawn randomly inside that circle the fireballs, falling to the ground
-        //Logic -> Channel duration end, stop doing attack and wait 1.5f secs
+        yield return MoveToPoint(centerArena);
 
         yield return new WaitForSeconds(startUpDuration);
 
@@ -190,10 +247,9 @@ public class Boss_ChimeraGolem : EnemyBase
     {
         // Shoot toward the player
 
-        //Logic -> wait for x secs to synch with animation
-        //Logic -> Shoot untill reaching the bullePerShot
-        //Logic -> There is a time between the instante of bullets -> timeBtwShoot
-        //Logic -> Stop doing attack and wait 1.5f secs
+        Transform randomPos = corners[Random.Range(0, corners.Length)];
+
+        yield return MoveToPoint(randomPos);
 
         yield return new WaitForSeconds(0.6f);
 
@@ -240,10 +296,25 @@ public class Boss_ChimeraGolem : EnemyBase
     {
         // Hit the ground causing a ground explosion(hit)
 
-        //Logic -> Wait for x secs to synch with animation
-        //Logic -> Make a sphere in base of hitBoxRadius, then check if player
-        //Logic -> Do damage if inside
-        //Logic -> Stop doing attack and wait 1.5f secs
+        if (target == null) yield break;
+
+        // Lock the player's position at the start.
+        Vector3 playerPos = target.transform.position;
+        playerPos.y = transform.position.y;
+
+        Vector3 dir = (playerPos - transform.position).normalized;
+
+        // Final destination.
+        Vector3 stopPos = playerPos - dir * stopDistance;
+
+        while (Vector3.Distance(transform.position, stopPos) > 0.05f)
+        {
+            transform.forward = dir;
+            transform.position = Vector3.MoveTowards(transform.position, stopPos, dashSpeed * Time.deltaTime);
+
+            yield return null;
+        }
+
         yield return new WaitForSeconds(0.7f);
 
         if (smokeVfx != null)
@@ -261,12 +332,45 @@ public class Boss_ChimeraGolem : EnemyBase
                 damage = stats.damage,
             };
 
-            player.TakeDamage(info);
+            hit.gameObject.GetComponent<PlayerControl>().TakeDamage(info);
         }
 
         yield return new WaitForSeconds(1.5f);
 
         Debug.Log("End Ground Slam attack");
+    }
+
+    private IEnumerator MoveToPoint(Transform target)
+    {
+        if (target == null) yield break;
+
+        while (true)
+        {
+            Vector3 currentPos = transform.position;
+
+            Vector3 targetPos = new Vector3(target.position.x, currentPos.y, target.position.z);
+
+            Vector3 dir = (targetPos - currentPos).normalized;
+
+            if (dir.sqrMagnitude > 0.001f)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(dir);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 25f * Time.deltaTime); // Rotation speed
+            }
+
+            transform.position = Vector3.MoveTowards(currentPos, targetPos, 10f * Time.deltaTime);
+
+            Vector2 currentXZ = new Vector2(transform.position.x, transform.position.z);
+            Vector2 targetXZ = new Vector2(targetPos.x, targetPos.z);
+
+            if (Vector2.Distance(currentXZ, targetXZ) <= 0.01f)
+            {
+                transform.position = targetPos;
+                yield break;
+            }
+
+            yield return null;
+        }
     }
 
     private void FaceTarget(float speed)
