@@ -44,6 +44,7 @@ public class Automata : EnemyBase
 
     private bool hasDetectedPlayer;
     private bool isFollowingPlayer;
+    private bool returningHome;
     private bool isPerformingAction;
     private float detectionTimer;
 
@@ -172,34 +173,46 @@ public class Automata : EnemyBase
         {
             float distance = DistanceToPlayer();
 
-            if (distance > attackRange || !HasLineOfSightToPlayer())
+            if (distance > attackRange)
             {
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
-                anim.Play("Walk");
                 RotateToVelocity();
+                anim.Play("Walk");
             }
             else
             {
                 agent.isStopped = true;
                 agent.ResetPath();
-                anim.Play("Idle");
                 RotateToPlayer();
             }
         }
-        else
+        else if (returningHome)
         {
-            if (hasPatrol)
+            agent.isStopped = false;
+            agent.SetDestination(spawnPos.position);
+
+            RotateToVelocity();
+            anim.Play("Walk");
+
+            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
             {
-                agent.isStopped = false;
-                HandlePatrol();
-                RotateToVelocity();
-            }
-            else
-            {
+                returningHome = false;
                 agent.ResetPath();
                 anim.Play("Idle");
             }
+        }
+        else if (hasPatrol)
+        {
+            agent.isStopped = false;
+            HandlePatrol();
+            RotateToVelocity();
+            anim.Play("Walk");
+        }
+        else
+        {
+            agent.ResetPath();
+            anim.Play("Idle");
         }
     }
 

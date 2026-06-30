@@ -68,6 +68,7 @@ public class FlyingGolem : EnemyBase
     private bool isPerformingAction;
     private bool hasDetectedPlayer;
     private bool isFollowingPlayer;
+    private bool returningHome;
 
     private bool isFalling;
     private bool isRecovering;
@@ -281,18 +282,16 @@ public class FlyingGolem : EnemyBase
 
     private void HandleMovement()
     {
-        if (agent == null || !agent.enabled)
-            return;
-
         if (isFollowingPlayer && HasValidPlayer())
         {
-            float distance = HorizontalDistance(transform.position, player.transform.position);
+            float distance = DistanceToPlayer();
 
-            if (distance > attackRange || !HasLineOfSightToPlayer())
+            if (distance > attackRange)
             {
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
                 RotateToVelocity();
+                anim.Play("Walk");
             }
             else
             {
@@ -301,19 +300,32 @@ public class FlyingGolem : EnemyBase
                 RotateToTarget();
             }
         }
+        else if (returningHome)
+        {
+            agent.isStopped = false;
+            agent.SetDestination(spawnPos.position);
+
+            RotateToVelocity();
+            anim.Play("Walk");
+
+            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
+            {
+                returningHome = false;
+                agent.ResetPath();
+                anim.Play("Idle");
+            }
+        }
+        else if (hasPatrol)
+        {
+            agent.isStopped = false;
+            HandlePatrol();
+            RotateToVelocity();
+            anim.Play("Walk");
+        }
         else
         {
-            if (hasPatrol)
-            {
-                agent.isStopped = false;
-                HandlePatrol();
-                RotateToVelocity();
-            }
-            else
-            {
-                agent.isStopped = true;
-                agent.ResetPath();
-            }
+            agent.ResetPath();
+            anim.Play("Idle");
         }
     }
 
