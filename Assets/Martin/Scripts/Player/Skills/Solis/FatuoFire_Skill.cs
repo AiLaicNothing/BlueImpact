@@ -16,8 +16,9 @@ public class FatuoFire_Skill : Skill
     [SerializeField] private LayerMask enemyLayer;
     private GameObject debugBox;
 
-    [Header("Sfx")]
-    [SerializeField] private GameObject sfx;
+    [Header("Vfx")]
+    [SerializeField] private GameObject vfx;
+    [SerializeField] private Vector3 vfxOffset;
 
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
@@ -29,6 +30,13 @@ public class FatuoFire_Skill : Skill
     private void DealDamage(PlayerControl player)
     {
         Vector3 startPos = player.transform.position + player.Model.right * startOffset.x + player.Model.up * startOffset.y + player.Model.forward * startOffset.z;
+        Vector3 vfxPos = player.transform.position + player.Model.right * vfxOffset.x + player.Model.up * vfxOffset.y + player.Model.forward * vfxOffset.z;
+
+        if (vfx != null)
+        {
+            var vfxPrefab = Instantiate(vfx, vfxPos, player.Model.rotation);
+            Destroy(vfxPrefab, 0.8f);
+        }
 
         player.ShowHitbox(startPos, hitBoxSize, player.Model.transform.rotation);
 

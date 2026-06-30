@@ -9,28 +9,28 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67b7874eac2b7f243bbfe114da676591, type: 3}
-  m_Name: Freeze
-  m_EditorClassIdentifier: Assembly-CSharp::Freeze_Skill
+  m_Script: {fileID: 11500000, guid: 2599c092a62a56f4b9bd8b6ee51205ff, type: 3}
+  m_Name: Ice Burst
+  m_EditorClassIdentifier: Assembly-CSharp::IceBurst_Skill
   skillId: 
   skillSprite: {fileID: 0}
-  skillName: Congelar
+  skillName: Explosion de hielo
   resourceType: 4
-  cost: 15
-  castTime: 0.4
-  cooldown: 0
-  actionTime: 0.4
-  castAnimation: Freeze
+  cost: 20
+  castTime: 0.5
+  cooldown: 10
+  actionTime: 1
+  castAnimation: 
   actionAnimation: 
   castSound: {fileID: 0}
   actionSound: {fileID: 0}
-  hitBoxSize: {x: 3, y: 1.5, z: 6}
-  startOffset: {x: 0, y: 0, z: 2.5}
+  hitBoxSize: {x: 10, y: 5, z: 10}
+  startOffset: {x: 0, y: 0, z: 0}
   hitData:
-    physicalScale: 1
-    magicalScale: 1
+    physicalScale: 0
+    magicalScale: 2
     damageMultiplier: 1
-    staggerCharge: 10
+    staggerCharge: 20
     throwType: 0
     stunDuration: 0.15
     keepInAir: 0
@@ -39,10 +39,10 @@ MonoBehaviour:
     pushForce: 8
     knockDownForce: 10
     knockDownForwardScale: 0.15
-  hitTime: 0.32
+  hitTime: 0.365
   enemyLayer:
     serializedVersion: 2
     m_Bits: 256
-  vfx: {fileID: 5102154503187128767, guid: 0dea22761c1287d45ab5db48c44081f5, type: 3}
+  vfx: {fileID: 584207449403360073, guid: b1ae5055f08b8284d9e996465d1d37e3, type: 3}
   vfxOffset: {x: 0, y: -0.5, z: 0}
   debug: 1
