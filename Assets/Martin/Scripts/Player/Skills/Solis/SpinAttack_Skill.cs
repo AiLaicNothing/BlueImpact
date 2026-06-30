@@ -18,6 +18,7 @@ public class SpinAttack_Skill : Skill
 
     [Header("Vfx")]
     [SerializeField] private GameObject vfx;
+    [SerializeField] private Vector3 vfxPos;
     [SerializeField] private GameObject debugBox;
     [SerializeField] private bool debug;
 
@@ -30,8 +31,15 @@ public class SpinAttack_Skill : Skill
     {
         player.blockVelocity = true;
         float timer = 0;
-        bool soundPlayed = false; 
+        bool soundPlayed = false;
 
+        Vector3 vfxOffset = player.transform.position + player.Model.right * vfxPos.x + player.Model.up * vfxPos.y + player.Model.forward * vfxPos.z;
+
+        if (vfx != null)
+        {
+            var vfxPrefab = Instantiate(vfx, vfxOffset, player.Model.rotation);
+            Destroy(vfxPrefab, duration);
+        }
         while (timer < duration)
         {
             if (!soundPlayed)
