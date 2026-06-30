@@ -23,7 +23,7 @@ MonoBehaviour:
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
-        m_RotationOrder: 0
+        m_RotationOrder: 4
   - From: Player_FreeLook_Cam
     To: StartPuzzle
     Blend:
@@ -34,7 +34,7 @@ MonoBehaviour:
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
-        m_RotationOrder: 0
+        m_RotationOrder: 4
   - From: Player_FreeLook_Cam
     To: CompletePuzzle
     Blend:
@@ -45,7 +45,7 @@ MonoBehaviour:
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
-        m_RotationOrder: 0
+        m_RotationOrder: 4
   - From: Player_FreeLook_Cam
     To: DoorPuzzle
     Blend:
@@ -56,7 +56,7 @@ MonoBehaviour:
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
-        m_RotationOrder: 0
+        m_RotationOrder: 4
   - From: CompletePuzzle
     To: Player_FreeLook_Cam
     Blend:
@@ -67,7 +67,7 @@ MonoBehaviour:
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
-        m_RotationOrder: 0
+        m_RotationOrder: 4
   - From: DoorPuzzle
     To: Player_FreeLook_Cam
     Blend:
@@ -78,7 +78,7 @@ MonoBehaviour:
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
-        m_RotationOrder: 0
+        m_RotationOrder: 4
   - From: StartPuzzle
     To: Player_FreeLook_Cam
     Blend:
@@ -89,4 +89,59 @@ MonoBehaviour:
         m_Curve: []
         m_PreInfinity: 0
         m_PostInfinity: 0
-        m_RotationOrder: 0
+        m_RotationOrder: 4
+  - From: Player_FreeLook_Cam
+    To: AmbushCam
+    Blend:
+      Style: 0
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 4
+  - From: AmbushCam
+    To: AmbushZoneCam2
+    Blend:
+      Style: 2
+      Time: 1.5
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 4
+  - From: AmbushZoneCam2
+    To: Player_FreeLook_Cam
+    Blend:
+      Style: 2
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 4
+  - From: Player_FreeLook_Cam
+    To: GolemBossCam
+    Blend:
+      Style: 0
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 4
+  - From: GolemBossCam
+    To: Player_FreeLook_Cam
+    Blend:
+      Style: 0
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 4

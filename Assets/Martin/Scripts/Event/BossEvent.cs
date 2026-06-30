@@ -75,7 +75,7 @@ public class BossEvent : MonoBehaviour
 
         if (bossPrefab == null) yield break;
 
-        bossObject = Instantiate(bossPrefab, spawnPos.position, Quaternion.identity);
+        bossObject = Instantiate(bossPrefab, spawnPos.position, spawnPos.rotation);
 
         var boss = bossObject.GetComponent<Boss_ChimeraGolem>();
 

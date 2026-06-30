@@ -14,6 +14,7 @@ public class AmbushEvent : MonoBehaviour
     [SerializeField] private Transform[] openPos;
 
     [SerializeField] private CameraRequest cameraEvent;
+    [SerializeField] private CameraRequest cameraShowSpawn;
 
     private List<GameObject> enemies = new();
 
@@ -77,6 +78,11 @@ public class AmbushEvent : MonoBehaviour
 
     private IEnumerator StartWave()
     {
+        if (cameraShowSpawn != null)
+        {
+            CameraEventRelay.Instance.Play(cameraShowSpawn);
+        }
+
         enemies.Clear();
 
         for (int i = 0; i < spawnEntries.Count; i++)
