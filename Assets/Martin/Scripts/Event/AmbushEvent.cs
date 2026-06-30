@@ -92,7 +92,7 @@ public class AmbushEvent : MonoBehaviour
 
         EnemyBase enemy = enemyObj.GetComponent<EnemyBase>();
 
-        enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol);
+        enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint);
 
         entry.hasSpawned = true;
         entry.spawnedEnemy = enemy;

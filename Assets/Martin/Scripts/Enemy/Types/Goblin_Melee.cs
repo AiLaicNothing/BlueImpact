@@ -35,6 +35,7 @@ public class Goblin_Melee : EnemyBase
 
     private bool hasDetectedPlayer;
     private bool isFollowingPlayer;
+    private bool returningHome;
     private bool isPerformingAction;
     private float detectionTimer;
 
@@ -111,7 +112,7 @@ public class Goblin_Melee : EnemyBase
             return;
         }
 
-        float distHome = Vector3.Distance(transform.position, safeZone.position);
+        float playerDistHome = Vector3.Distance(player.transform.position, safeZone.position);
         float distPlayer = DistanceToPlayer();
 
         if (!hasDetectedPlayer)
@@ -133,10 +134,11 @@ public class Goblin_Melee : EnemyBase
         }
         else
         {
-            if (distHome > maxChaseDistance)
+            if (playerDistHome > maxChaseDistance)
             {
                 hasDetectedPlayer = false;
                 isFollowingPlayer = false;
+                returningHome = true;
                 detectionTimer = 0f;
             }
         }
@@ -162,20 +164,32 @@ public class Goblin_Melee : EnemyBase
                 RotateToTarget();
             }
         }
-        else
+        else if (returningHome)
         {
-            if (hasPatrol)
+            agent.isStopped = false;
+            agent.SetDestination(spawnPos.position);
+
+            RotateToVelocity();
+            anim.Play("Walk");
+
+            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
             {
-                agent.isStopped = false;
-                HandlePatrol();
-                RotateToVelocity();
-                anim.Play("Walk");
-            }
-            else
-            {
+                returningHome = false;
                 agent.ResetPath();
                 anim.Play("Idle");
             }
+        }
+        else if (hasPatrol)
+        {
+            agent.isStopped = false;
+            HandlePatrol();
+            RotateToVelocity();
+            anim.Play("Walk");
+        }
+        else
+        {
+            agent.ResetPath();
+            anim.Play("Idle");
         }
     }
 

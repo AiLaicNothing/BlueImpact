@@ -32,7 +32,7 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
-        enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol);
+        enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint);
 
         entry.hasSpawned = true;
         entry.spawnedEnemy = enemy;

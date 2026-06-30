@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -40,6 +41,7 @@ public class Goblin_Range : EnemyBase
 
     private bool hasDetectedPlayer;
     private bool isFollowingPlayer;
+    private bool returningHome;
     private bool isPerformingAction;
     private bool isEscaping;
     private bool isRepositioning;
@@ -141,7 +143,7 @@ public class Goblin_Range : EnemyBase
             return;
         }
 
-        float distHome = Vector3.Distance(transform.position, safeZone.position);
+        float playerDistHome = Vector3.Distance(player.transform.position, safeZone.position);
         float distPlayer = DistanceToPlayer();
 
         if (!hasDetectedPlayer)
@@ -163,10 +165,11 @@ public class Goblin_Range : EnemyBase
         }
         else
         {
-            if (distHome > maxChaseDistance)
+            if (playerDistHome > maxChaseDistance)
             {
                 hasDetectedPlayer = false;
                 isFollowingPlayer = false;
+                returningHome = true;
                 detectionTimer = 0f;
                 isEscaping = false;
                 isRepositioning = false;
@@ -232,16 +235,32 @@ public class Goblin_Range : EnemyBase
             RotateToTargetSmooth();
             return;
         }
+        else if (returningHome)
+        {
+            agent.isStopped = false;
+            agent.SetDestination(spawnPos.position);
+            RotateToVelocity();
 
-        if (hasPatrol)
+            anim.Play("Walk");
+
+            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
+            {
+                returningHome = false;
+                agent.ResetPath();
+                anim.Play("Idle");
+            }
+        }
+        else if (hasPatrol)
         {
             agent.isStopped = false;
             HandlePatrol();
+            agent.SetDestination(spawnPos.position);
+            anim.Play("Walk");
         }
         else
         {
-            agent.isStopped = true;
             agent.ResetPath();
+            anim.Play("Idle");
         }
     }
 
@@ -469,6 +488,17 @@ public class Goblin_Range : EnemyBase
         Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
 
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, turnSpeed * 60f * Time.deltaTime);
+    }
+
+    private void RotateToVelocity()
+    {
+        Vector3 vel = agent.velocity;
+        vel.y = 0f;
+
+        if (vel.sqrMagnitude < 0.01f) return;
+
+        Quaternion rot = Quaternion.LookRotation(vel.normalized);
+        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
     }
 
     private void OnDrawGizmos()

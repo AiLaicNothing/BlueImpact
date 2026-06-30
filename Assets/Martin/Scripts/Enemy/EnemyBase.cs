@@ -58,6 +58,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [SerializeField] protected Transform safeZone;
     [SerializeField] protected Transform[] patrolZones;
     [SerializeField] protected bool hasPatrol;
+    protected Transform spawnPos;
 
     [Header("Debug")]
     [SerializeField] protected bool debug = true;
@@ -675,10 +676,11 @@ public class EnemyBase : MonoBehaviour, IDamageable
         Destroy(gameObject);
     }
 
-    public void OnSpawn(Transform[] PatrolPoints, Transform safePoint, bool hasPatrol)
+    public void OnSpawn(Transform[] PatrolPoints, Transform safePoint, bool hasPatrol, Transform spawnPos)
     {
         patrolZones = PatrolPoints;
         safeZone = safePoint;
         this.hasPatrol = hasPatrol;
+        this.spawnPos = spawnPos;
     }
 }

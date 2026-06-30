@@ -143,7 +143,7 @@ public class ElevetorEvent : MonoBehaviour
 
             if (enemy != null)
             {
-                enemy.OnSpawn(spawnPoints, safePoint, false);
+                enemy.OnSpawn(spawnPoints, safePoint, false, spawnPoint);
             }
 
             spawnedEnemies.Add(enemyObj);

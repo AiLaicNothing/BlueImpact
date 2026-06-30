@@ -74,7 +74,7 @@ public class BossEvent : MonoBehaviour
             boss.SetCinematic(true);
             Debug.Log($"{boss.inCinematic}");
             boss.GetPositions(center, corners);
-            boss.OnSpawn(null, center, false);
+            boss.OnSpawn(null, center, false, spawnPos);
             Debug.Log($"{player.name}");
             boss.target = player;
         }
