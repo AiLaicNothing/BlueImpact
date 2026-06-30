@@ -24,6 +24,10 @@ public class BossEvent : MonoBehaviour
     [Header("End Event")]
     [SerializeField] private GameObject secret;
 
+    [Header("Cameras")]
+    [SerializeField] private CameraRequest bossCamera;
+    [SerializeField] private CameraRequest RewardCamera;
+
     private bool eventActive = false;
 
     private GameObject player;
@@ -63,6 +67,12 @@ public class BossEvent : MonoBehaviour
 
     private IEnumerator SpawnBoss()
     {
+
+        if (bossCamera != null)
+        {
+            CameraEventRelay.Instance.Play(bossCamera);
+        }
+
         if (bossPrefab == null) yield break;
 
         bossObject = Instantiate(bossPrefab, spawnPos.position, Quaternion.identity);
@@ -81,6 +91,10 @@ public class BossEvent : MonoBehaviour
 
         //Call camara event to show boss
 
+        var anim = bossObject.GetComponentInChildren<Animator>();
+
+        anim.Play("Caida");
+
         while (Vector3.Distance(bossObject.transform.position, desiredGroundPos.position) > 0.01f)
         {
             bossObject.transform.position = Vector3.MoveTowards(bossObject.transform.position, desiredGroundPos.position, fallSpeed * Time.deltaTime);
@@ -88,6 +102,7 @@ public class BossEvent : MonoBehaviour
         }
 
         Debug.Log("Desires pos arrived");
+        anim.Play("Aterrizaje");
 
         if (smokeVfx != null)
         {

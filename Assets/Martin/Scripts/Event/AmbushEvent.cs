@@ -13,6 +13,8 @@ public class AmbushEvent : MonoBehaviour
     [SerializeField] private Transform[] closePos;
     [SerializeField] private Transform[] openPos;
 
+    [SerializeField] private CameraRequest cameraEvent;
+
     private List<GameObject> enemies = new();
 
     private IEnumerator Ambush()
@@ -45,6 +47,11 @@ public class AmbushEvent : MonoBehaviour
     private IEnumerator MoveDoor(Transform[] targets)
     {
         if (targets == null || targets.Length != doors.Length) yield break;
+
+        if (cameraEvent != null)
+        {
+            CameraEventRelay.Instance.Play(cameraEvent);
+        }
 
         bool moving = true;
 

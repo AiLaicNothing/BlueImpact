@@ -73,6 +73,8 @@ public class Boss_ChimeraGolem : EnemyBase
 
     private IEnumerator AttackRoutine()
     {
+        anim.Play("Idle");
+
         Debug.Log("Deciding Attack");
         isAttacking = true;
 
@@ -134,6 +136,8 @@ public class Boss_ChimeraGolem : EnemyBase
         // Final destination.
         Vector3 stopPos = playerPos - dir * stopDistance;
 
+        anim.Play("Dash");
+
         while (Vector3.Distance(transform.position, stopPos) > 0.05f)
         {
             transform.forward = dir;
@@ -141,6 +145,8 @@ public class Boss_ChimeraGolem : EnemyBase
 
             yield return null;
         }
+
+        anim.Play("Golpe_Sis");
 
         // Wind-up before striking.
         float timer = 0f;
@@ -202,6 +208,8 @@ public class Boss_ChimeraGolem : EnemyBase
 
         yield return MoveToPoint(centerArena);
 
+        anim.Play("Llamarada_Uel");
+
         yield return new WaitForSeconds(startUpDuration);
 
         if (magicCircleVfx  != null)
@@ -250,6 +258,8 @@ public class Boss_ChimeraGolem : EnemyBase
         Transform randomPos = corners[Random.Range(0, corners.Length)];
 
         yield return MoveToPoint(randomPos);
+
+        anim.Play("Llamarada_Car");
 
         yield return new WaitForSeconds(0.6f);
 
@@ -315,6 +325,8 @@ public class Boss_ChimeraGolem : EnemyBase
             yield return null;
         }
 
+        anim.Play("Golpe_Suelo");
+
         yield return new WaitForSeconds(0.7f);
 
         if (smokeVfx != null)
@@ -343,6 +355,8 @@ public class Boss_ChimeraGolem : EnemyBase
     private IEnumerator MoveToPoint(Transform target)
     {
         if (target == null) yield break;
+
+        anim.Play("Walk_2");
 
         while (true)
         {
