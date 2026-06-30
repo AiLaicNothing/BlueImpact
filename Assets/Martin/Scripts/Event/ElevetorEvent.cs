@@ -22,12 +22,21 @@ public class ElevetorEvent : MonoBehaviour
     [SerializeField] private bool triggerAmbushOnlyOnce = true;
     [SerializeField] private bool moveToTopOnReStart = false;
 
+    [Header("Free Movement Texts")]
+    [SerializeField] private string goUpText = "Subir";
+    [SerializeField] private string goDownText = "Bajar";
+    [SerializeField] private string activateText = "Activar elevador";
+
     private bool ambushCompleted;
     private bool eventRunning;
     private bool platformMoving;
+    private bool isAtTop = true; // El elevador arranca arriba (ver Start())
     private Coroutine eventRoutine;
 
     private readonly List<GameObject> spawnedEnemies = new();
+
+    public bool IsRunning => eventRunning;
+    public bool AmbushCompleted => ambushCompleted;
 
     private void Start()
     {
@@ -35,21 +44,69 @@ public class ElevetorEvent : MonoBehaviour
         {
             plattform.position = topDestination.position;
         }
+
+        isAtTop = true;
+    }
+
+    private void OnEnable()
+    {
+        PlayerControl.OnPlayerDied += HandlePlayerDied;
+    }
+
+    private void OnDisable()
+    {
+        PlayerControl.OnPlayerDied -= HandlePlayerDied;
+    }
+
+    private void HandlePlayerDied()
+    {
+        // Si el evento del elevador está corriendo (ambush o movimiento libre) cuando el player muere, se reinicia
+        if (eventRunning)
+        {
+            Debug.Log("Player murió durante el evento del elevador, reiniciando");
+            ReStart();
+        }
     }
 
     public void Update()
     {
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            ActivateElevator();
-        }
+
     }
 
+    // Mantengo el método viejo como alias por compatibilidad con lo que ya lo llame (input de prueba, etc.)
     public void ActivateElevator()
+    {
+        ToggleElevator();
+    }
+
+    /// <summary>
+    /// Punto de entrada único para el lever. Primera vez: dispara el evento completo de ambush.
+    /// Después de completado: mueve el elevador libremente entre arriba y abajo sin enemigos.
+    /// </summary>
+    public void ToggleElevator()
     {
         if (eventRunning) return;
 
-        eventRoutine = StartCoroutine(RunElevatorEvent());
+        if (!ambushCompleted)
+        {
+            eventRoutine = StartCoroutine(RunElevatorEvent());
+        }
+        else
+        {
+            eventRoutine = StartCoroutine(FreeMove());
+        }
+    }
+
+    /// <summary>
+    /// Texto a mostrar en el prompt de interacción, según el estado actual.
+    /// </summary>
+    public string GetNextActionText()
+    {
+        if (eventRunning) return null;
+
+        if (!ambushCompleted) return activateText;
+
+        return isAtTop ? goDownText : goUpText;
     }
 
     private IEnumerator RunElevatorEvent()
@@ -62,18 +119,43 @@ public class ElevetorEvent : MonoBehaviour
         {
             Debug.Log("Moving to ambush stop");
             yield return MovePlatformTo(stopDisAmbush.position);
+            isAtTop = false;
 
             Debug.Log("Starting ambush");
             yield return StartCoroutine(Ambush());
 
             Debug.Log("Ambush done, moving down");
             yield return MovePlatformTo(bottonDestination.position);
+            isAtTop = false;
 
             ambushCompleted = true;
         }
         else
         {
-            if (topDestination != null) yield return MovePlatformTo(topDestination.position);
+            if (topDestination != null)
+            {
+                yield return MovePlatformTo(topDestination.position);
+                isAtTop = true;
+            }
+        }
+
+        eventRunning = false;
+    }
+
+    /// <summary>
+    /// Movimiento libre (sin ambush) entre arriba y abajo, usado una vez ambushCompleted == true.
+    /// </summary>
+    private IEnumerator FreeMove()
+    {
+        eventRunning = true;
+
+        Transform target = isAtTop ? bottonDestination : topDestination;
+
+        if (target != null)
+        {
+            Debug.Log(isAtTop ? "Bajando elevador (libre)" : "Subiendo elevador (libre)");
+            yield return MovePlatformTo(target.position);
+            isAtTop = !isAtTop;
         }
 
         eventRunning = false;
@@ -113,7 +195,7 @@ public class ElevetorEvent : MonoBehaviour
 
         Debug.Log($"{waveName} spawned. Count = {spawnedEnemies.Count}");
 
-        yield return null; 
+        yield return null;
 
         yield return new WaitUntil(() => AreAllSpawnedEnemiesCleared());
 
@@ -194,9 +276,16 @@ public class ElevetorEvent : MonoBehaviour
 
         if (plattform != null)
         {
-            if (moveToTopOnReStart && topDestination != null) plattform.position = topDestination.position;
-
-            else if (bottonDestination != null) plattform.position = bottonDestination.position;
+            if (moveToTopOnReStart && topDestination != null)
+            {
+                plattform.position = topDestination.position;
+                isAtTop = true;
+            }
+            else if (bottonDestination != null)
+            {
+                plattform.position = bottonDestination.position;
+                isAtTop = false;
+            }
         }
     }
 }

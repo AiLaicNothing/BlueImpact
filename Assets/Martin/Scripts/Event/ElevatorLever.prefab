@@ -58,7 +58,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 9016ab48722ba064f8539f609fcbefdd, type: 2}
     - target: {fileID: 919132149155446097, guid: 7e5eadc3d68b7554ea28151f16a81b18, type: 3}
       propertyPath: m_Name
-      value: Palanca
+      value: ElevatorLever
       objectReference: {fileID: 0}
     - target: {fileID: 6819435763304028618, guid: 7e5eadc3d68b7554ea28151f16a81b18, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -73,10 +73,10 @@ PrefabInstance:
       addedObject: {fileID: 2335387701217167157}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7e5eadc3d68b7554ea28151f16a81b18, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 6070954611776404359}
+      addedObject: {fileID: -862165807559989237}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7e5eadc3d68b7554ea28151f16a81b18, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5771641447313117944}
+      addedObject: {fileID: 6070954611776404359}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7e5eadc3d68b7554ea28151f16a81b18, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4416840632041806961}
@@ -111,6 +111,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-862165807559989237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5552335143282718795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64951b5cde2db0342ae4179b13fa9044, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElevatorLever
+  elevatorEvent: {fileID: 0}
+  animator: {fileID: 0}
 --- !u!65 &6070954611776404359
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -132,27 +146,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 250, y: 250, z: 250}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &5771641447313117944
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5552335143282718795}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7dc6eb87a4ff414ca37903b5ca51889, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Lever
-  canToggleOff: 1
-  receiver: {fileID: 0}
-  persistent: 0
-  leverID: 
-  animator: {fileID: 2335387701217167157}
-  useVisualIndicator: 0
-  indicatorSprite: {fileID: 0}
-  offColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  onColor: {r: 0, g: 1, b: 0, a: 1}
 --- !u!108 &4416840632041806961
 Light:
   m_ObjectHideFlags: 0

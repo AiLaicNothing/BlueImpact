@@ -9,6 +9,11 @@ using static UnityEngine.Analytics.IAnalytic;
 
 public class PlayerControl : MonoBehaviour, IDamageable
 {
+    // Evento global: cualquier sistema (ej. ElevetorEvent) puede suscribirse
+    // para reaccionar a la muerte del jugador sin acoplarse directamente.
+    public static event System.Action OnPlayerDied;
+
+
     [Header("Movement")]
     [SerializeField] private float movementSpeed = 10f;
     [SerializeField] private float jumpForce = 8f;
@@ -825,6 +830,9 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         // 🔊 Sonido de muerte
         PlayAudio(onDead, sfxVolume);
+
+        // 📢 Avisar a cualquier sistema suscrito (ej. eventos de elevador) que el jugador murió
+        OnPlayerDied?.Invoke();
 
         // ✅ USAR EL SPAWNPOINT DEL CHECKPOINT ACTUAL
         if (RespawnManager.Instance != null)
