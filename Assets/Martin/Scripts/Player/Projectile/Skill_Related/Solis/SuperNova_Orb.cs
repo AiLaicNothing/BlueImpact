@@ -21,8 +21,9 @@ public class SuperNova_Orb : MonoBehaviour
     private float explosionRadius;
 
     private LayerMask enemyLayer;
+    private GameObject explosionVfx;
 
-    public void Initialize(PlayerControl player, HitData hitData, float r, float speed, float time, float startAngle, float explodeRadius, HitData explosionData, LayerMask enemies)
+    public void Initialize(PlayerControl player, HitData hitData, float r, float speed, float time, float startAngle, float explodeRadius, HitData explosionData, LayerMask enemies, GameObject explosionVfx)
     {
         info = new DamageInfo
         {
@@ -60,6 +61,7 @@ public class SuperNova_Orb : MonoBehaviour
         angle = startAngle;
         explosionRadius = explodeRadius;
         enemyLayer = enemies;
+        this.explosionVfx = explosionVfx;
 
         orbitForward = player.Model.forward;
         orbitRight = player.Model.right;
@@ -78,6 +80,11 @@ public class SuperNova_Orb : MonoBehaviour
         if (timer >= duration)
         {
             Explode();
+            if (explosionVfx != null)
+            {
+                var vfx = Instantiate(explosionVfx, transform.position, Quaternion.identity);
+                Destroy(vfx, 1.2f);
+            }
 
             Destroy(gameObject);
             return;

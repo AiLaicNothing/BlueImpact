@@ -17,6 +17,9 @@ public class SuperNova_Skill : Skill
     public float explosionRadius = 5f;
     public LayerMask enemyLayer;
 
+    [Header("Vfx")]
+    [SerializeField] private GameObject explosionVfx;
+
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         SpawnOrb(player, 0f);
@@ -38,6 +41,6 @@ public class SuperNova_Skill : Skill
         GameObject orb = Instantiate(orbPrefab, spawnPos, Quaternion.identity);
 
         SuperNova_Orb orbScript = orb.GetComponent<SuperNova_Orb>();
-        orbScript.Initialize(player, hitData, radius, angularSpeed, duration, startAngle, explosionRadius, explosionData, enemyLayer);
+        orbScript.Initialize(player, hitData, radius, angularSpeed, duration, startAngle, explosionRadius, explosionData, enemyLayer, explosionVfx);
     }
 }
