@@ -2640,7 +2640,7 @@ VideoPlayer:
   m_ControlledAudioTrackCount: 1
   m_PlayOnAwake: 1
   m_SkipOnDrop: 1
-  m_Looping: 0
+  m_Looping: 1
   m_WaitForFirstFrame: 1
   m_FrameReadyEventEnabled: 0
   m_VideoShaders: []
@@ -4525,7 +4525,7 @@ MonoBehaviour:
       del rompecabezas, necesitaras activar una cantidad o una patr\xF3n de palancas
       para activar el mecanismo."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 0aa93cca2714eb64691ba0edd92a55cd, type: 3}
 --- !u!65 &298467498
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5144,7 +5144,7 @@ MonoBehaviour:
     description: "A lo largo de tu aventura encontrar\xE1s placas de presi\xF3n,
       estas pueden ser activadas poniendote encima de ella o colocando una caja."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: e9c28058ce92ffa4485875f18eb840a8, type: 3}
 --- !u!65 &327331003
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -16061,7 +16061,7 @@ MonoBehaviour:
   - title: Movimiento #2
     description: Con la tecla "Espacio" puedes realizar un salto.
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 3f89dd56c0ad3ec489e639e3526f08e7, type: 3}
 --- !u!65 &772548335
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -24018,23 +24018,23 @@ MonoBehaviour:
       bloquea la c\xE1mara para la direcci\xF3n del enemigo, puedes cambiar de objetivo
       entre enemigos moviendo la rueda del rat\xF3n."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 3756c4061af290d4d950960369238433, type: 3}
   - title: Ataque principal
     description: Dependiendo del personaje con el "click izquierdo "realizara una
       secuencia de ataques.
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 97a0dcc74b67e52489fbc43f30bf4126, type: 3}
   - title: Ataque cuerpo a cuerpo
     description: "Con la tecla \"F\" todos los personajes tienen una opci\xF3n de
       ataque de cuerpo a cuerpo."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 97a0dcc74b67e52489fbc43f30bf4126, type: 3}
   - title: Ruptura de guardia
     description: "Los enemigos tienen una barra de guardia, al recibir golpes subes
       la ruptura de guardia, al llegar al m\xE1ximo entrar\xE1n en un estado de debilidad
       donde son aptos a recibir m\xE1s da\xF1os y a empujes."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 0d55e4a22d95dda48a2dc4b37115f6cf, type: 3}
 --- !u!65 &1197659645
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -28431,7 +28431,7 @@ MonoBehaviour:
     description: Con la tecla "LeftShift" puedes dashear para desplazarte una mayor
       distancia.
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 87d01b15fe1737a489fa066ec545966a, type: 3}
 --- !u!65 &1351485722
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -29857,17 +29857,17 @@ MonoBehaviour:
   - title: Puntos de guardado
     description: Puedes interactuar con esta estructura para obtener ciertas funciones.
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 6a882ccddce07704dbe27aa723df7c6a, type: 3}
   - title: Ajustes de estadisticas
     description: "En la opci\xF3n de estad\xEDsticas puedes subir tus estad\xEDsticas
       en base a la cantidad de puntos disponibles que tienes."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: eefbf745cfd638c4ca597c3d04c3fb18, type: 3}
   - title: Equipamiento de habilidades
     description: Selecciona una habilidad de la casilla de habilidades disponibles,
       luego selecciona la casilla de espacio de habilidad del jugador.
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: 9917f62eb05d1bf46ab87516d466d332, type: 3}
 --- !u!65 &1425359158
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -45478,7 +45478,7 @@ MonoBehaviour:
     description: "Puedes desplazarte con las teclas \"WASD\" dependiendo de la direcci\xF3n
       de la c\xE1mara."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
-    video: {fileID: 0}
+    video: {fileID: 32900000, guid: b76a820c430c2164eb5c67e87991e289, type: 3}
 --- !u!65 &2140203989
 BoxCollider:
   m_ObjectHideFlags: 0
