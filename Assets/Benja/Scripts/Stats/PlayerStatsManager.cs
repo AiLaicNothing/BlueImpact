@@ -100,12 +100,17 @@ public class PlayerStatsManager : MonoBehaviour
         // Solo regenerar si pasó el delay
         if (regenTimers[statDef] >= regenDelay)
         {
-            int regenAmount = Mathf.CeilToInt(regenRate * Time.deltaTime);
-            int maxValue = runtimeStats[statDef].currentValue;  // ✅ El máximo actual de la stat
-            int currentActualValue = actualValues[statDef];
+            //int regenAmount = Mathf.CeilToInt(regenRate);
+            //int maxValue = runtimeStats[statDef].currentValue;  // ✅ El máximo actual de la stat
+            //int currentActualValue = actualValues[statDef];
 
-            // No exceder el máximo actual
-            actualValues[statDef] = Mathf.Min(currentActualValue + regenAmount, maxValue);
+            //// No exceder el máximo actual
+            //actualValues[statDef] = Mathf.Min(currentActualValue + regenAmount, maxValue);
+            regenTimers[statDef] -= regenDelay;
+
+            actualValues[statDef] = Mathf.Min(
+                actualValues[statDef] + Mathf.CeilToInt(regenRate),
+                runtimeStats[statDef].currentValue);
         }
     }
 
