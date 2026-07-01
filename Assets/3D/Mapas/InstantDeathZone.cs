@@ -1,8 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Collider (debe estar marcado como Trigger) que aplica daño masivo al player
-/// apenas lo toca, matándolo a través del flujo normal de TakeDamage/IDamageable.
+/// Collider (NO debe ser Trigger) que aplica daño masivo al player
+/// apenas colisiona con él, matándolo a través del flujo normal de TakeDamage/IDamageable.
 /// Pensado para zonas de agua, lava, abismos, etc.
 /// </summary>
 public class InstantDeathZone : MonoBehaviour
@@ -12,14 +12,14 @@ public class InstantDeathZone : MonoBehaviour
 
     private void Reset()
     {
-        // Asegura que el collider sea trigger apenas se agrega el componente
+        // Asegura que el collider NO sea trigger apenas se agrega el componente
         var col = GetComponent<Collider>();
-        if (col != null) col.isTrigger = true;
+        if (col != null) col.isTrigger = false;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
-        IDamageable damageable = other.GetComponentInParent<IDamageable>();
+        IDamageable damageable = collision.collider.GetComponentInParent<IDamageable>();
         if (damageable == null) return;
 
         DamageInfo info = new DamageInfo
