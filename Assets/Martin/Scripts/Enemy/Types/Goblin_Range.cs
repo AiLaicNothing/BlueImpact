@@ -54,6 +54,8 @@ public class Goblin_Range : EnemyBase
     private int patrolIndex = 0;
     private int patrolDir = 1;
 
+    private float actionTimer;
+
     private Coroutine attackRoutine;
 
     protected override void Awake()
@@ -84,6 +86,15 @@ public class Goblin_Range : EnemyBase
         if (isPerformingAction) return;
 
         HandleMovement();
+
+        if (agent.velocity.sqrMagnitude >= 0.01f)
+        {
+            anim.Play("Walk");
+        }
+        else
+        {
+            anim.Play("Idle");
+        }
     }
 
     // ==================================================
@@ -197,7 +208,6 @@ public class Goblin_Range : EnemyBase
 
                 agent.isStopped = false;
                 agent.SetDestination(currentMoveDestination);
-                anim.Play("Walk");
                 RotateAwayFromTarget();
                 return;
             }
@@ -210,7 +220,6 @@ public class Goblin_Range : EnemyBase
 
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
-                anim.Play("Walk");
                 RotateToTargetSmooth();
                 return;
             }
@@ -224,12 +233,10 @@ public class Goblin_Range : EnemyBase
 
                 agent.isStopped = false;
                 agent.SetDestination(currentMoveDestination);
-                anim.Play("Walk");
                 RotateToTargetSmooth();
                 return;
             }
 
-            anim.Play("Idle");
             agent.isStopped = true;
             agent.ResetPath();
             RotateToTargetSmooth();
@@ -241,13 +248,11 @@ public class Goblin_Range : EnemyBase
             agent.SetDestination(spawnPos.position);
             RotateToVelocity();
 
-            anim.Play("Walk");
 
             if (!agent.pathPending && agent.remainingDistance <= stopDistance)
             {
                 returningHome = false;
                 agent.ResetPath();
-                anim.Play("Idle");
             }
         }
         else if (hasPatrol)
@@ -255,12 +260,10 @@ public class Goblin_Range : EnemyBase
             agent.isStopped = false;
             HandlePatrol();
             agent.SetDestination(spawnPos.position);
-            anim.Play("Walk");
         }
         else
         {
             agent.ResetPath();
-            anim.Play("Idle");
         }
     }
 
@@ -360,11 +363,15 @@ public class Goblin_Range : EnemyBase
     {
         if (isPerformingAction || !hasDetectedPlayer || !HasValidPlayer()) return;
 
+        actionTimer += Time.deltaTime;
         float distance = DistanceToPlayer();
 
-        if (distance <= attackRange && HasLineOfSightToPlayer() && !isEscaping &&!isRepositioning && attackRoutine == null)
+        if (actionTimer >= 0.5)
         {
-            attackRoutine = StartCoroutine(PerformAttack());
+            if (distance <= attackRange && HasLineOfSightToPlayer() && !isEscaping && !isRepositioning && attackRoutine == null)
+            {
+                attackRoutine = StartCoroutine(PerformAttack());
+            }
         }
     }
 
@@ -432,6 +439,7 @@ public class Goblin_Range : EnemyBase
         {
             agent.isStopped = false;
         }
+
     }
 
     private void Shoot()
@@ -456,6 +464,9 @@ public class Goblin_Range : EnemyBase
         {
             projectile.InitProj(stats.damage, dir);
         }
+
+        actionTimer = 0f;
+
     }
 
     // ==================================================

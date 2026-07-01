@@ -39,6 +39,8 @@ public class Goblin_Melee : EnemyBase
     private bool isPerformingAction;
     private float detectionTimer;
 
+    private float actionTimer;
+
     private int patrolIndex;
     private int patrolDir = 1;
 
@@ -70,6 +72,15 @@ public class Goblin_Melee : EnemyBase
         if (isPerformingAction) return;
 
         HandleMovement();
+
+        if (agent.velocity.sqrMagnitude >= 0.01f)
+        {
+            anim.Play("Walk");
+        }
+        else
+        {
+            anim.Play("Idle");
+        }
     }
 
     private void UpdateTarget()
@@ -155,7 +166,6 @@ public class Goblin_Melee : EnemyBase
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
                 RotateToVelocity();
-                anim.Play("Walk");
             }
             else
             {
@@ -170,13 +180,11 @@ public class Goblin_Melee : EnemyBase
             agent.SetDestination(spawnPos.position);
 
             RotateToVelocity();
-            anim.Play("Walk");
 
             if (!agent.pathPending && agent.remainingDistance <= stopDistance)
             {
                 returningHome = false;
                 agent.ResetPath();
-                anim.Play("Idle");
             }
         }
         else if (hasPatrol)
@@ -184,12 +192,10 @@ public class Goblin_Melee : EnemyBase
             agent.isStopped = false;
             HandlePatrol();
             RotateToVelocity();
-            anim.Play("Walk");
         }
         else
         {
             agent.ResetPath();
-            anim.Play("Idle");
         }
     }
 
@@ -227,9 +233,14 @@ public class Goblin_Melee : EnemyBase
 
         float distance = DistanceToPlayer();
 
+        actionTimer += Time.deltaTime;
+
         if (distance <= attackRange && IsFacingTarget())
         {
-            StartCoroutine(PerformAttack());
+            if (actionTimer >= 0.8f)
+            {
+                StartCoroutine(PerformAttack());
+            }
         }
     }
 
@@ -274,6 +285,7 @@ public class Goblin_Melee : EnemyBase
         }
 
         isPerformingAction = false;
+        actionTimer = 0f;
     }
 
     private void DoHit()

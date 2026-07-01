@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class Undead : EnemyBase
 {
@@ -55,6 +56,8 @@ public class Undead : EnemyBase
     private int patrolIndex = 0;
     private int patrolDir = 1;
 
+    private float actionTimer;
+
     private Animator anim;
 
     private Coroutine attackRoutine;
@@ -90,6 +93,15 @@ public class Undead : EnemyBase
 
         HandleActions();
         HandleMovement();
+
+        if (agent.velocity.sqrMagnitude >= 0.01f)
+        {
+            anim.Play("Walk");
+        }
+        else
+        {
+            anim.Play("Idle");
+        }
     }
 
     // =========================================================
@@ -193,7 +205,7 @@ public class Undead : EnemyBase
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
                 RotateToVelocity();
-                anim.Play("Walk");
+                //anim.Play("Walk");
             }
             else
             {
@@ -208,13 +220,13 @@ public class Undead : EnemyBase
             agent.SetDestination(spawnPos.position);
 
             RotateToVelocity();
-            anim.Play("Walk");
+            //anim.Play("Walk");
 
             if (!agent.pathPending && agent.remainingDistance <= stopDistance)
             {
                 returningHome = false;
                 agent.ResetPath();
-                anim.Play("Idle");
+                //anim.Play("Idle");
             }
         }
         else if (hasPatrol)
@@ -222,12 +234,12 @@ public class Undead : EnemyBase
             agent.isStopped = false;
             HandlePatrol();
             RotateToVelocity();
-            anim.Play("Walk");
+            //anim.Play("Walk");
         }
         else
         {
             agent.ResetPath();
-            anim.Play("Idle");
+            //anim.Play("Idle");
         }
     }
 
@@ -266,24 +278,29 @@ public class Undead : EnemyBase
     {
         if (isPerformingAction || !hasDetectedPlayer || !HasValidPlayer()) return;
 
+        actionTimer += Time.deltaTime;
+
         float distance = DistanceToPlayer();
         float hpPercent = CurrentHp / stats.maxHp;
 
-        if (hpPercent <= consecutiveCutsHpThreshold && canUseConsecutiveCuts)
+        if (actionTimer >= 5)
         {
-            if (Random.value <= consecutiveCutsChance && consecutiveCutsRoutine == null)
+            if (hpPercent <= consecutiveCutsHpThreshold && canUseConsecutiveCuts)
             {
-                Debug.Log("[Undead] Use consecutive Attacks");
+                if (Random.value <= consecutiveCutsChance && consecutiveCutsRoutine == null)
+                {
+                    Debug.Log("[Undead] Use consecutive Attacks");
 
-                consecutiveCutsRoutine = StartCoroutine(PerformConsecutiveCuts());
-                return;
+                    consecutiveCutsRoutine = StartCoroutine(PerformConsecutiveCuts());
+                    return;
+                }
             }
-        }
 
-        if (distance <= attackRange && HasLineOfSightToPlayer() && IsFacingTarget() && attackRoutine == null)
-        {
-            Debug.Log("[Undead] Use Attacks");
-            attackRoutine = StartCoroutine(PerformAttack());
+            if (distance <= attackRange && HasLineOfSightToPlayer() && IsFacingTarget() && attackRoutine == null)
+            {
+                Debug.Log("[Undead] Use Attacks");
+                attackRoutine = StartCoroutine(PerformAttack());
+            }
         }
     }
 
@@ -344,6 +361,8 @@ public class Undead : EnemyBase
         {
             agent.isStopped = false;
         }
+
+        actionTimer = 0f;
     }
 
     private IEnumerator PerformConsecutiveCuts()
@@ -444,6 +463,8 @@ public class Undead : EnemyBase
         }
 
         StartCoroutine(ConsecutiveCutsCooldownRoutine());
+
+        actionTimer = 0f;
     }
 
     private IEnumerator ConsecutiveCutsCooldownRoutine()

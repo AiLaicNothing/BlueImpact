@@ -42,6 +42,8 @@ public class Automata : EnemyBase
     private int patrolIndex = 0;
     private int patrolDir = 1;
 
+    private float actionTimer;
+
     private bool hasDetectedPlayer;
     private bool isFollowingPlayer;
     private bool returningHome;
@@ -77,6 +79,15 @@ public class Automata : EnemyBase
 
         HandleActions();
         HandleMovement();
+
+        if (agent.velocity.sqrMagnitude >= 0.01f)
+        {
+            anim.Play("Walk");
+        }
+        else
+        {
+            anim.Play("Idle");
+        }
     }
 
     // =========================================================
@@ -178,7 +189,6 @@ public class Automata : EnemyBase
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
                 RotateToVelocity();
-                anim.Play("Walk");
             }
             else
             {
@@ -193,13 +203,11 @@ public class Automata : EnemyBase
             agent.SetDestination(spawnPos.position);
 
             RotateToVelocity();
-            anim.Play("Walk");
 
             if (!agent.pathPending && agent.remainingDistance <= stopDistance)
             {
                 returningHome = false;
                 agent.ResetPath();
-                anim.Play("Idle");
             }
         }
         else if (hasPatrol)
@@ -207,12 +215,10 @@ public class Automata : EnemyBase
             agent.isStopped = false;
             HandlePatrol();
             RotateToVelocity();
-            anim.Play("Walk");
         }
         else
         {
             agent.ResetPath();
-            anim.Play("Idle");
         }
     }
 
@@ -254,11 +260,16 @@ public class Automata : EnemyBase
 
         float roll = Random.value;
 
-        if (roll < 0.4f) StartCoroutine(PerformAttack_1());
+        actionTimer += Time.deltaTime;
 
-        else if (roll < 0.8f) StartCoroutine(PerformAttack_2());
+        if (actionTimer >= 0.65f)
+        {
+            if (roll < 0.4f) StartCoroutine(PerformAttack_1());
 
-        else StartCoroutine(PerformAttack_3());
+            else if (roll < 0.8f) StartCoroutine(PerformAttack_2());
+
+            else StartCoroutine(PerformAttack_3());
+        }
     }
 
     private IEnumerator PerformAttack_1()
@@ -285,6 +296,7 @@ public class Automata : EnemyBase
 
         yield return new WaitForSeconds(1.5f);
         isPerformingAction = false;
+        actionTimer = 0f;
     }
 
     private IEnumerator PerformAttack_2()
@@ -330,6 +342,7 @@ public class Automata : EnemyBase
 
         yield return new WaitForSeconds(1.5f);
         isPerformingAction = false;
+        actionTimer = 0f;
     }
 
     private IEnumerator PerformAttack_3()
@@ -349,6 +362,7 @@ public class Automata : EnemyBase
 
         yield return new WaitForSeconds(1.5f);
         isPerformingAction = false;
+        actionTimer = 0f;
     }
 
     private void FireProjectile(GameObject prefab, Vector3 direction)
