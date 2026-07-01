@@ -28,6 +28,7 @@ public class ElevetorEvent : MonoBehaviour
     [SerializeField] private string activateText = "Activar elevador";
 
     private bool ambushCompleted;
+    private bool eventComplete;
     private bool eventRunning;
     private bool platformMoving;
     private bool isAtTop = true; // El elevador arranca arriba (ver Start())
@@ -186,6 +187,8 @@ public class ElevetorEvent : MonoBehaviour
         yield return new WaitForSeconds(1.5f);
 
         yield return SpawnWaveAndWait(wave2_enemies, "Wave 2");
+
+        eventComplete = true;
     }
 
     private IEnumerator SpawnWaveAndWait(GameObject[] wave, string waveName)
@@ -256,36 +259,33 @@ public class ElevetorEvent : MonoBehaviour
 
     public void ReStart()
     {
-        if (eventRoutine != null)
-        {
-            StopCoroutine(eventRoutine);
-            eventRoutine = null;
-        }
+        // Stop every coroutine running on this component
+        StopAllCoroutines();
 
+        eventRoutine = null;
         eventRunning = false;
         platformMoving = false;
 
+        // Destroy every spawned enemy
         for (int i = spawnedEnemies.Count - 1; i >= 0; i--)
         {
-            if (spawnedEnemies[i] != null) Destroy(spawnedEnemies[i]);
+            if (spawnedEnemies[i] != null)
+            {
+                Destroy(spawnedEnemies[i]);
+            }
         }
 
         spawnedEnemies.Clear();
 
+        // Reset event state
         ambushCompleted = false;
 
-        if (plattform != null)
+        // Return elevator to its initial position (top)
+        if (plattform != null && topDestination != null)
         {
-            if (moveToTopOnReStart && topDestination != null)
-            {
-                plattform.position = topDestination.position;
-                isAtTop = true;
-            }
-            else if (bottonDestination != null)
-            {
-                plattform.position = bottonDestination.position;
-                isAtTop = false;
-            }
+            plattform.position = topDestination.position;
         }
+
+        isAtTop = true;
     }
 }

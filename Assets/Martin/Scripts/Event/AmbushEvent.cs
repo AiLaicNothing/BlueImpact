@@ -18,6 +18,16 @@ public class AmbushEvent : MonoBehaviour
 
     private List<GameObject> enemies = new();
 
+    private void OnEnable()
+    {
+        PlayerControl.OnPlayerDied += ResetEvent;
+    }
+
+    private void OnDisable()
+    {
+        PlayerControl.OnPlayerDied -= ResetEvent;
+    }
+
     private IEnumerator Ambush()
     {
         hasStarted = true;
@@ -121,5 +131,34 @@ public class AmbushEvent : MonoBehaviour
         {
             StartCoroutine(Ambush());
         }
+    }
+
+    public void ResetEvent()
+    {
+        if (!hasStarted || hasFinished) return;
+        StopAllCoroutines();
+
+        foreach (GameObject enemy in enemies)
+        {
+            if (enemy != null) Destroy(enemy);
+        }
+
+        enemies.Clear();
+
+        foreach (SpawnEntry entry in spawnEntries)
+        {
+            entry.hasSpawned = false;
+            entry.spawnedEnemy = null;
+        }
+
+        for (int i = 0; i < doors.Length && i < openPos.Length; i++)
+        {
+            if (doors[i] != null && openPos[i] != null) doors[i].position = openPos[i].position;
+        }
+
+        hasStarted = false;
+        hasFinished = false;
+
+        GameModeManager.Instance.SetMode(GameMode.Gameplay);
     }
 }

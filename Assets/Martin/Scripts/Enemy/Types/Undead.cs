@@ -283,7 +283,7 @@ public class Undead : EnemyBase
         float distance = DistanceToPlayer();
         float hpPercent = CurrentHp / stats.maxHp;
 
-        if (actionTimer >= 5)
+        if (actionTimer >= 0.8f)
         {
             if (hpPercent <= consecutiveCutsHpThreshold && canUseConsecutiveCuts)
             {
