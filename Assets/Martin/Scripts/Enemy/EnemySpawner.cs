@@ -4,13 +4,22 @@ using UnityEngine;
 public class EnemySpawner : MonoBehaviour
 {
     [SerializeField] private List<SpawnEntry> spawnEntries = new();
+    public bool hasSpawnedAlready = false;
 
     private void Start()
     {
+    }
+
+    public void SpawnEnemies()
+    {
+        if (hasSpawnedAlready) return;
+
         for (int i = 0; i < spawnEntries.Count; i++)
         {
             if (spawnEntries[i].spawnOnStart) Spawn(i);
         }
+
+        hasSpawnedAlready = true;
     }
 
     public void Spawn(int index)

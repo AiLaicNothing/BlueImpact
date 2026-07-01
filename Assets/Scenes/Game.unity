@@ -234,6 +234,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &5052732
 GameObject:
   m_ObjectHideFlags: 0
@@ -1156,6 +1157,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 112280002}
+  - component: {fileID: 112280004}
+  - component: {fileID: 112280003}
   m_Layer: 0
   m_Name: "\u2500\u2500\u2500\u2500ZONE LEVEL 1\u2500\u2500\u2500\u2500  "
   m_TagString: Untagged
@@ -1186,6 +1189,46 @@ Transform:
   - {fileID: 1818854239}
   m_Father: {fileID: 1080695483}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &112280003
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112280001}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 23.24, y: 8.8, z: 70.49}
+--- !u!114 &112280004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112280001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94b399a42d5e97f49914cb435b7f81c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnerManager
+  spawnEntries:
+  - {fileID: 4234819}
+  - {fileID: 1542740764}
+  - {fileID: 1535162315}
+  - {fileID: 1212751559}
+  - {fileID: 424781491}
+  - {fileID: 1778232313}
 --- !u!1 &121020239
 GameObject:
   m_ObjectHideFlags: 0
@@ -5867,6 +5910,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 389008076}
+  - component: {fileID: 389008077}
+  - component: {fileID: 389008078}
   m_Layer: 0
   m_Name: "\u2500\u2500\u2500\u2500ZONE LEVEL 2\u2500\u2500\u2500\u2500  "
   m_TagString: Untagged
@@ -5897,6 +5942,48 @@ Transform:
   - {fileID: 1891258332}
   m_Father: {fileID: 1080695483}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &389008077
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389008075}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94b399a42d5e97f49914cb435b7f81c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnerManager
+  spawnEntries:
+  - {fileID: 763000568}
+  - {fileID: 578128838}
+  - {fileID: 632456680}
+  - {fileID: 1786814788}
+  - {fileID: 1129614283}
+  - {fileID: 1978138949}
+  - {fileID: 1587261931}
+  - {fileID: 1891258333}
+--- !u!65 &389008078
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 389008075}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 26.61, y: 14.6, z: 43.84}
+  m_Center: {x: 294.68, y: 0, z: -289.1}
 --- !u!1001 &389050872
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7028,6 +7115,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1001 &429633927
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8459,6 +8547,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 525360624}
+  - component: {fileID: 525360626}
+  - component: {fileID: 525360625}
   m_Layer: 0
   m_Name: "\u2500\u2500\u2500\u2500ZONE LEVEL 3\u2500\u2500\u2500\u2500  "
   m_TagString: Untagged
@@ -8484,6 +8574,42 @@ Transform:
   - {fileID: 1234826805}
   m_Father: {fileID: 1080695483}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &525360625
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 525360623}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 74.49, y: 10, z: 78.9}
+  m_Center: {x: 0, y: 215.03, z: -242.98}
+--- !u!114 &525360626
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 525360623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94b399a42d5e97f49914cb435b7f81c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnerManager
+  spawnEntries:
+  - {fileID: 979020923}
+  - {fileID: 1234826806}
 --- !u!1 &532869460
 GameObject:
   m_ObjectHideFlags: 0
@@ -9786,6 +9912,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &579353933
 GameObject:
   m_ObjectHideFlags: 0
@@ -11043,6 +11170,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &633955091
 GameObject:
   m_ObjectHideFlags: 0
@@ -13460,6 +13588,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &759549848
 GameObject:
   m_ObjectHideFlags: 0
@@ -13738,6 +13867,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &772548332
 GameObject:
   m_ObjectHideFlags: 0
@@ -17929,6 +18059,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &985005321
 GameObject:
   m_ObjectHideFlags: 0
@@ -20420,6 +20551,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &1132870285
 GameObject:
   m_ObjectHideFlags: 0
@@ -20656,6 +20788,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1152486657}
+  - component: {fileID: 1152486658}
+  - component: {fileID: 1152486659}
   m_Layer: 0
   m_Name: "\u2500\u2500\u2500\u2500ZONE TUTORIAL\u2500\u2500\u2500\u2500  "
   m_TagString: Untagged
@@ -20683,6 +20817,42 @@ Transform:
   - {fileID: 2042062728}
   m_Father: {fileID: 1080695483}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1152486658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152486656}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94b399a42d5e97f49914cb435b7f81c0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnerManager
+  spawnEntries:
+  - {fileID: 1709827023}
+  - {fileID: 752723138}
+--- !u!65 &1152486659
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152486656}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 0, z: -32.37}
 --- !u!1001 &1155553778
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21794,6 +21964,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1001 &1213182876
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22578,6 +22749,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1001 &1250099345
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -29467,6 +29639,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &1537117554
 GameObject:
   m_ObjectHideFlags: 0
@@ -29944,6 +30117,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1001 &1546913100
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30533,6 +30707,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1001 &1590155588
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -32341,6 +32516,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &1722124717
 GameObject:
   m_ObjectHideFlags: 0
@@ -33785,6 +33961,7 @@ MonoBehaviour:
     oneTimeSpawn: 1
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &1778749471
 GameObject:
   m_ObjectHideFlags: 0
@@ -33928,6 +34105,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &1787561495 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4660583917104360155, guid: cb4d10f5f3aaa7748a150ed78f3b870e, type: 3}
@@ -36001,6 +36179,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1 &1891895022
 GameObject:
   m_ObjectHideFlags: 0
@@ -37608,6 +37787,7 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
+  hasSpawnedAlready: 0
 --- !u!1001 &1979148555
 PrefabInstance:
   m_ObjectHideFlags: 0
