@@ -59,7 +59,21 @@ public class UIPopUp : MonoBehaviour
             panelCanvasGroup.blocksRaycasts = true;
         }
 
+        // ✅ CORTAR SONIDOS EN LOOP DEL PLAYER (ej. caminar)
+        // Time.timeScale = 0 no pausa AudioSources que ya están sonando,
+        // así que hay que detenerlos a mano.
+        MutePlayerLoopAudio();
+
         Time.timeScale = 0f;
+    }
+
+    private void MutePlayerLoopAudio()
+    {
+        PlayerControl player = FindFirstObjectByType<PlayerControl>();
+
+        if (player == null || player.audioLoopSource == null) return;
+
+        player.audioLoopSource.Stop();
     }
 
     private void LoadPage()
