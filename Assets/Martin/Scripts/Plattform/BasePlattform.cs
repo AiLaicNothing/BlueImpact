@@ -2,19 +2,27 @@ using UnityEngine;
 
 public class BasePlattform : MonoBehaviour
 {
+    [SerializeField] private Transform plattform;
+    private Transform player;
+    
+
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.CompareTag("Player"))
+        if (other.CompareTag("Player"))
         {
-            other.gameObject.transform.SetParent(transform);
+            if (player == null) player = other.transform;
+
+            player.parent = plattform;
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.gameObject.CompareTag("Player"))
+        if (other.CompareTag("Player"))
         {
-            other.gameObject.transform.SetParent(null);
+            if (player == null) player = other.transform;
+
+            player.parent = null;
         }
     }
 }
