@@ -13,6 +13,11 @@ public class ChallengeDoor : MonoBehaviour
     [SerializeField] private AudioClip openClip;
     [SerializeField] private AudioClip closeClip;
 
+    [Header("Completion Behavior")]
+    [SerializeField] private bool keepOpenOnCompletion = false;
+    [Tooltip("Si está marcado, la puerta se mantendrá en su posición ACTUAL al completar el puzzle. " +
+             "Si no está marcado, volverá a su posición INICIAL.")]
+
     private Vector3 closedPosition;
     private Vector3 targetPosition;
 
@@ -86,5 +91,25 @@ public class ChallengeDoor : MonoBehaviour
         targetPosition = closedPosition;
 
         isMoving = false;
+    }
+
+    /// <summary>
+    /// Establece la puerta en su estado final basado en la configuración de completion.
+    /// Si keepOpenOnCompletion es true, la puerta se mantiene en su posición actual (abierta).
+    /// Si es false, la puerta vuelve a su posición inicial (cerrada).
+    /// </summary>
+    public void SetCompletionState()
+    {
+        if (keepOpenOnCompletion)
+        {
+            // Mantener en posición actual (abierta)
+            targetPosition = transform.position;
+            isMoving = false;
+        }
+        else
+        {
+            // Volver a posición inicial (cerrada)
+            SetClosedState();
+        }
     }
 }

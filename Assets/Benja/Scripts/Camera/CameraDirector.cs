@@ -24,6 +24,8 @@ public class CameraDirector : MonoBehaviour
 
     private Coroutine activeRoutine;
 
+    private PlayerControl playerControl;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -39,6 +41,19 @@ public class CameraDirector : MonoBehaviour
     {
         RegisterAllCameras();
 
+        // 🎮 IMPORTANTE: NO buscar PlayerControl aquí
+        // El jugador NO existe aún (se instancia después del selector de personajes)
+        // En su lugar, suscribirse al evento de spawn
+        if (PlayerSpawn_Manager.Instance != null)
+        {
+            PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
+            Debug.Log("[CameraDirector] ✅ Suscrito al evento OnPlayerSpawned");
+        }
+        else
+        {
+            Debug.LogWarning("[CameraDirector] ⚠️ PlayerSpawn_Manager no encontrado");
+        }
+
         if (CameraEventSystem.Instance != null)
         {
             CameraEventSystem.Instance.OnCameraRequest +=
@@ -53,6 +68,21 @@ public class CameraDirector : MonoBehaviour
             CameraEventSystem.Instance.OnCameraRequest -=
                 HandleRequest;
         }
+
+        // Desuscribirse del evento
+        if (PlayerSpawn_Manager.Instance != null)
+        {
+            PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
+        }
+    }
+
+    /// <summary>
+    /// Se ejecuta cuando el jugador es instanciado (después de seleccionar personaje)
+    /// </summary>
+    private void OnPlayerSpawned(PlayerControl player)
+    {
+        playerControl = player;
+        Debug.Log("[CameraDirector] ✅ PlayerControl obtenido después del spawn: " + player.gameObject.name);
     }
 
     public void RegisterPlayerCamera(
@@ -141,6 +171,24 @@ public class CameraDirector : MonoBehaviour
     {
         currentCamera = cam;
 
+        // 🎮 Pausa al jugador si está configurado
+        if (request.pausePlayer && playerControl != null)
+        {
+            playerControl.LockPlayerControl();
+            Debug.Log("[CameraDirector] ✅ Jugador pausado");
+        }
+        else if (request.pausePlayer && playerControl == null)
+        {
+            Debug.LogError("[CameraDirector] ❌ pausePlayer activado pero PlayerControl es NULL. ¿El jugador fue instanciado?");
+        }
+
+        // 🔇 Silencia audio del jugador si está configurado
+        if (request.mutePlayerAudio && playerControl != null)
+        {
+            playerControl.MutePlayerAudio(true);
+            Debug.Log("[CameraDirector] ✅ Audio del jugador silenciado");
+        }
+
         if (request.followTarget != null)
         {
             cam.Follow =
@@ -170,6 +218,20 @@ public class CameraDirector : MonoBehaviour
 
         cam.Priority =
             request.inactivePriority;
+
+        // 🎮 Reanudar control del jugador si estaba pausado
+        if (request.pausePlayer && playerControl != null)
+        {
+            playerControl.UnlockPlayerControl();
+            Debug.Log("[CameraDirector] ✅ Jugador desbloqueado");
+        }
+
+        // 🔊 Reactivar audio del jugador si estaba silenciado
+        if (request.mutePlayerAudio && playerControl != null)
+        {
+            playerControl.MutePlayerAudio(false);
+            Debug.Log("[CameraDirector] ✅ Audio del jugador reactivado");
+        }
 
         if (request.restoreGameplayCamera)
         {

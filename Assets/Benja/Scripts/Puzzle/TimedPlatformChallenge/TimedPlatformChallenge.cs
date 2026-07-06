@@ -276,7 +276,8 @@ public class TimedPlatformChallenge : MonoBehaviour
             if (door == null)
                 continue;
 
-            door.Close(); // Regresa la puerta de bloqueo a su posición inicial (abierta)
+            // Usa SetCompletionState para respetar la configuración de cada puerta
+            door.SetCompletionState();
         }
 
         if (completeCamera != null)

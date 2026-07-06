@@ -131,6 +131,8 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public bool isDead { get; private set; }
     public CharacterInfo CurrentCharacterInfo { get; set; }
     private PlayerStatsManager playerStatsManager;
+    private bool isAudioMuted = false;
+    private RigidbodyConstraints previousConstraints = RigidbodyConstraints.None;
 
     private Rigidbody rb;
     private Animator anim;
@@ -307,15 +309,55 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         IsInputLocked = true;
 
+        // 🔒 Guardar constraints previos
+        previousConstraints = rb.constraints;
+
+        // Congelar completamente el Rigidbody
         rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.constraints = RigidbodyConstraints.FreezeAll;
 
         input.ClearInputs();
+
+        if (showDebug)
+        {
+            Debug.Log("[PlayerControl] 🔒 CONTROL BLOQUEADO - Rigidbody congelado");
+        }
     }
+
     public void UnlockPlayerControl()
     {
         IsInputLocked = false;
 
+        // 🔓 Restaurar constraints previos
+        rb.constraints = previousConstraints;
+
         input.ClearInputs();
+
+        if (showDebug)
+        {
+            Debug.Log("[PlayerControl] 🔓 CONTROL DESBLOQUEADO");
+        }
+    }
+
+    /// <summary>
+    /// Silencia o reactiva todos los sonidos del jugador (movimiento, ataque, habilidades, etc.)
+    /// Útil para cinemáticas y eventos de cámara
+    /// </summary>
+    public void MutePlayerAudio(bool mute)
+    {
+        isAudioMuted = mute;
+
+        if (mute)
+        {
+            // Detener audio de loop (caminar)
+            if (audioLoopSource != null && audioLoopSource.isPlaying)
+            {
+                audioLoopSource.Stop();
+            }
+
+
+        }
     }
     public void ChangeState(PlayerState nextState)
     {
@@ -847,6 +889,9 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     public void PlayAudio(AudioClip audio, float volume = 1)
     {
+        // No reproducir si el audio del jugador está silenciado
+        if (isAudioMuted) return;
+
         if (audio == null || Audio_Manager.Instance == null) return;
         Audio_Manager.Instance.PlaySFX(audio, volume);
     }
@@ -855,6 +900,9 @@ public class PlayerControl : MonoBehaviour, IDamageable
     {
         if (!ended)
         {
+            // No reproducir si el audio está silenciado
+            if (isAudioMuted) return;
+
             if (rb.linearVelocity.magnitude < 0.01f) return;
 
             if (audioLoopSource.isPlaying) return;
