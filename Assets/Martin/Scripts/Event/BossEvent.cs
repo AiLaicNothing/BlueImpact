@@ -21,10 +21,14 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private Transform openPos;
     [SerializeField] private Transform closePos;
 
+    [SerializeField] private GameObject barrier;
+
     [Header("End Event")]
     [SerializeField] private GameObject secret;
 
     [Header("Cameras")]
+    [SerializeField] private CameraRequest doorCamera;
+    [SerializeField] private CameraRequest barrierCamera;
     [SerializeField] private CameraRequest bossCamera;
     [SerializeField] private CameraRequest RewardCamera;
 
@@ -48,6 +52,9 @@ public class BossEvent : MonoBehaviour
 
         Debug.Log("Close door");
         yield return MoveDoor(closePos.position);
+
+        Debug.Log("Create Barrier");
+        yield return DoBarrier(true);
 
         Debug.Log("Try spawn boss");
         yield return SpawnBoss();
@@ -120,17 +127,13 @@ public class BossEvent : MonoBehaviour
         // End camera event
     }
 
-    private void OpenDoor()
-    {
-        StartCoroutine(MoveDoor(openPos.position));
-    }
-    private void CloseDoor()
-    {
-        StartCoroutine(MoveDoor(closePos.position));
-    }
-
     private IEnumerator MoveDoor(Vector3 desiredPos)
     {
+        if (doorCamera != null)
+        {
+            CameraEventRelay.Instance.Play(doorCamera);
+        }
+
         if (doorTransform == null) yield break;
 
         while (Vector3.Distance(doorTransform.position, desiredPos) > 0.01f)
@@ -140,6 +143,21 @@ public class BossEvent : MonoBehaviour
         }
 
         doorTransform.position = desiredPos;
+    }
+
+    private IEnumerator DoBarrier(bool isActive)
+    {
+        if (barrierCamera != null)
+        {
+            CameraEventRelay.Instance.Play(barrierCamera);
+        }
+
+        if (barrier != null)
+        {
+            barrier.SetActive(isActive);
+        }
+
+        yield return new WaitForSeconds(1f);
     }
 
     private IEnumerator OnDeathEvent()
