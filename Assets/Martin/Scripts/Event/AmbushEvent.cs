@@ -17,6 +17,33 @@ public class AmbushEvent : MonoBehaviour
     [SerializeField] private CameraRequest cameraShowSpawn;
 
     private List<GameObject> enemies = new();
+    private PlayerControl playerControl;
+
+    private void Awake()
+    {
+        // Suscribirse a OnPlayerSpawned para obtener referencia al jugador
+        if (PlayerSpawn_Manager.Instance != null)
+        {
+            PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Desuscribirse para evitar memory leaks
+        if (PlayerSpawn_Manager.Instance != null)
+        {
+            PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
+        }
+    }
+
+    /// <summary>
+    /// Se ejecuta cuando el jugador es instanciado (después de seleccionar personaje)
+    /// </summary>
+    private void OnPlayerSpawned(PlayerControl control)
+    {
+        playerControl = control;
+    }
 
     private void OnEnable()
     {
@@ -33,12 +60,28 @@ public class AmbushEvent : MonoBehaviour
         hasStarted = true;
 
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
+        // 📌 SetMode(Cutscene) llama automáticamente a LockPlayerControl()
+
+        // 🔇 Silenciar audio
+        if (playerControl != null)
+        {
+            playerControl.MutePlayerAudio(true);
+            Debug.Log("[AmbushEvent] 🔒 Jugador pausado y silenciado");
+        }
 
         yield return MoveDoor(closePos);
 
         yield return StartWave();
 
+        // 🔓 Reactivar jugador para que pueda combatir
         GameModeManager.Instance.SetMode(GameMode.Gameplay);
+        // 📌 SetMode(Gameplay) llama automáticamente a UnlockPlayerControl()
+
+        if (playerControl != null)
+        {
+            playerControl.MutePlayerAudio(false);
+            Debug.Log("[AmbushEvent] 🔓 Jugador reactivado para combate");
+        }
 
         while (enemies.Count > 0)
         {
@@ -47,10 +90,26 @@ public class AmbushEvent : MonoBehaviour
         }
 
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
+        // 📌 SetMode(Cutscene) llama automáticamente a LockPlayerControl()
+
+        // 🔒 Pausar nuevamente al terminar la ola
+        if (playerControl != null)
+        {
+            playerControl.MutePlayerAudio(true);
+            Debug.Log("[AmbushEvent] 🔒 Jugador pausado después de combate");
+        }
 
         yield return MoveDoor(openPos);
 
+        // 🔓 Reactivar jugador definitivamente
         GameModeManager.Instance.SetMode(GameMode.Gameplay);
+        // 📌 SetMode(Gameplay) llama automáticamente a UnlockPlayerControl()
+
+        if (playerControl != null)
+        {
+            playerControl.MutePlayerAudio(false);
+            Debug.Log("[AmbushEvent] 🔓 Jugador reactivado - Evento completado");
+        }
 
         hasFinished = true;
     }
@@ -61,6 +120,7 @@ public class AmbushEvent : MonoBehaviour
 
         if (cameraEvent != null)
         {
+            // 📌 Asegurar que cameraEvent tenga pausePlayer=true y mutePlayerAudio=true en inspector
             CameraEventRelay.Instance.Play(cameraEvent);
         }
 
@@ -90,6 +150,7 @@ public class AmbushEvent : MonoBehaviour
     {
         if (cameraShowSpawn != null)
         {
+            // 📌 Asegurar que cameraShowSpawn tenga pausePlayer=true y mutePlayerAudio=true en inspector
             CameraEventRelay.Instance.Play(cameraShowSpawn);
         }
 
@@ -136,7 +197,18 @@ public class AmbushEvent : MonoBehaviour
     public void ResetEvent()
     {
         if (!hasStarted || hasFinished) return;
+
         StopAllCoroutines();
+
+        // 🔓 Reactivar jugador si el evento se cancela por muerte
+        GameModeManager.Instance.SetMode(GameMode.Gameplay);
+        // 📌 SetMode(Gameplay) llama automáticamente a UnlockPlayerControl()
+
+        if (playerControl != null)
+        {
+            playerControl.MutePlayerAudio(false);
+            Debug.Log("[AmbushEvent] 🔓 Jugador reactivado tras reset");
+        }
 
         foreach (GameObject enemy in enemies)
         {
@@ -158,7 +230,5 @@ public class AmbushEvent : MonoBehaviour
 
         hasStarted = false;
         hasFinished = false;
-
-        GameModeManager.Instance.SetMode(GameMode.Gameplay);
     }
 }

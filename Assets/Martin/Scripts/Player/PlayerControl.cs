@@ -307,9 +307,19 @@ public class PlayerControl : MonoBehaviour, IDamageable
     }
     public void LockPlayerControl()
     {
+        // 🔒 IMPORTANTE: Si ya está bloqueado, NO sobrescribir previousConstraints
+        if (IsInputLocked)
+        {
+            if (showDebug)
+            {
+                Debug.Log("[PlayerControl] ⚠️ Ya estaba bloqueado, ignorando segunda llamada");
+            }
+            return;
+        }
+
         IsInputLocked = true;
 
-        // 🔒 Guardar constraints previos
+        // 🔒 Guardar constraints previos SOLO si no estaba bloqueado
         previousConstraints = rb.constraints;
 
         // Congelar completamente el Rigidbody
