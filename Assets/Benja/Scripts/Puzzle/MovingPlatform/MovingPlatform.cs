@@ -177,15 +177,15 @@ public class MovingPlatform : MonoBehaviour
     //=====================      TRANSPORTE DE PLAYER (parenting)     ===================
     //===================================================================================
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        TryAttachPlayer(collision.transform);
-    }
+    //private void OnCollisionEnter(Collision collision)
+    //{
+    //    TryAttachPlayer(collision.transform);
+    //}
 
-    private void OnCollisionExit(Collision collision)
-    {
-        TryDetachPlayer(collision.transform);
-    }
+    //private void OnCollisionExit(Collision collision)
+    //{
+    //    TryDetachPlayer(collision.transform);
+    //}
 
     // Si tu plataforma usa un Collider "isTrigger" en vez de colisión sólida normal
     // (por ejemplo un trigger extra arriba de la plataforma para detectar al player),
