@@ -71,7 +71,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1279739731333964356}
-  - component: {fileID: 5956968050326778290}
   - component: {fileID: 8689710263977708689}
   - component: {fileID: 7233031349416417071}
   m_Layer: 14
@@ -99,27 +98,6 @@ Transform:
   - {fileID: 9183675318711069576}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &5956968050326778290
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6314557747112082960}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 5, y: 5, z: 5}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!108 &8689710263977708689
 Light:
   m_ObjectHideFlags: 0
@@ -314,5 +292,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   poseA: {fileID: 830770451209892583}
   poseB: {fileID: 9183675318711069576}
-  speed: 0.4
-  rotSpeed: 5
+  moveSpeed: 1
+  rotSpeedY: 360
+  rotSpeedX: 30
+  rotSpeedZ: 15
+  bobHeight: 0.5
+  bobSpeed: 2
+  pulseScale: 0.1
