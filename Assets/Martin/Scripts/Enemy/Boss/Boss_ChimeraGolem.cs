@@ -237,7 +237,7 @@ public class Boss_ChimeraGolem : EnemyBase
 
                     var proj = prefab.GetComponent<E_Projectile>();
 
-                    proj.InitProj(10f, Vector3.down);
+                    proj.InitProj(22f, Vector3.down);
                 }
             }
 
@@ -281,7 +281,7 @@ public class Boss_ChimeraGolem : EnemyBase
                     var projPrefab = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(dir));
                     var  proj = projPrefab.GetComponent<E_Projectile>();
 
-                    proj.InitProj(10f, dir);
+                    proj.InitProj(15f, dir);
                 }
 
                 float timer = 0f;
@@ -341,7 +341,7 @@ public class Boss_ChimeraGolem : EnemyBase
         {
             DamageInfo info = new DamageInfo
             {
-                damage = stats.damage,
+                damage = stats.damage * 1.5f
             };
 
             hit.gameObject.GetComponent<PlayerControl>().TakeDamage(info);
