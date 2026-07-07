@@ -32,6 +32,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [Header("Sfx")]
     [SerializeField] private AudioSource audio_Source;
     [SerializeField] private AudioClip onHit;
+    [SerializeField] private AudioClip onStagger;
 
     [Header("Ground")]
     [SerializeField] protected LayerMask whatIsGround;
@@ -250,6 +251,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         if (currentStaggerBuild >= stats.staggerThreshold)
         {
+            audio_Source.PlayOneShot(onStagger);
             ShowStaggerVfx();
             TriggerStagger();
             return true;
