@@ -1,5 +1,7 @@
-using UnityEngine;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using UnityEngine;
 
 /// <summary>
 /// SettingsManager - Gestor centralizado de configuración
@@ -12,6 +14,7 @@ public class SettingsManager : MonoBehaviour
     private SettingsData currentSettings;
     private string settingsPath;
     private Audio_Manager audioManager;
+    private Resolution[] cachedBestResolutions;
 
     [SerializeField] private bool autoSaveOnChange = true;
 
@@ -23,6 +26,9 @@ public class SettingsManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         settingsPath = Path.Combine(Application.persistentDataPath, "settings.json");
+
+        // ✅ CACHEAR RESOLUCIONES ÚNICAS CON MEJOR REFRESH RATE (MÁXIMA PRIMERO)
+        cachedBestResolutions = GetBestResolutionsInternal();
 
         LoadSettings();
         ApplyAllSettings();
@@ -112,23 +118,19 @@ public class SettingsManager : MonoBehaviour
 
     private void SetDefault1920x1080()
     {
-        Resolution[] resolutions = Screen.resolutions;
-        for (int i = 0; i < resolutions.Length; i++)
+        // ✅ BUSCAR 1920x1080 EN LAS RESOLUCIONES FILTRADAS
+        for (int i = 0; i < cachedBestResolutions.Length; i++)
         {
-            if (resolutions[i].width == 1920 && resolutions[i].height == 1080)
+            if (cachedBestResolutions[i].width == 1920 && cachedBestResolutions[i].height == 1080)
             {
                 currentSettings.video.resolutionIndex = i;
                 return;
             }
         }
-        // Fallback: resolución más cercana
-        int closest = 0; float minDist = float.MaxValue;
-        for (int i = 0; i < resolutions.Length; i++)
-        {
-            float d = Mathf.Abs(resolutions[i].width - 1920) + Mathf.Abs(resolutions[i].height - 1080);
-            if (d < minDist) { minDist = d; closest = i; }
-        }
-        currentSettings.video.resolutionIndex = closest;
+
+        // Fallback: la máxima resolución disponible (índice 0)
+        currentSettings.video.resolutionIndex = 0;
+        Debug.LogWarning("⚠️ 1920x1080 no disponible — usando máxima resolución");
     }
 
     public void SaveSettings()
@@ -164,11 +166,13 @@ public class SettingsManager : MonoBehaviour
     private void ApplyVideoSettings()
     {
         var v = currentSettings.video;
-        var resolutions = Screen.resolutions;
-        if (v.resolutionIndex >= 0 && v.resolutionIndex < resolutions.Length)
-            Screen.SetResolution(resolutions[v.resolutionIndex].width,
-                                 resolutions[v.resolutionIndex].height,
-                                 v.fullscreen);
+
+        // ✅ USAR RESOLUCIONES CACHEADAS (FILTRADAS)
+        if (v.resolutionIndex >= 0 && v.resolutionIndex < cachedBestResolutions.Length)
+        {
+            var resolution = cachedBestResolutions[v.resolutionIndex];
+            Screen.SetResolution(resolution.width, resolution.height, v.fullscreen);
+        }
     }
 
 
@@ -185,29 +189,77 @@ public class SettingsManager : MonoBehaviour
     // ==================== GETTERS ====================
 
     public SettingsData GetSettings() => currentSettings;
+
+    // ✅ OBTENER TODAS LAS RESOLUCIONES DEL SISTEMA
     public Resolution[] GetAvailableResolutions() => Screen.resolutions;
 
-    public string GetResolutionString(int index)
+    // ✅ OBTENER RESOLUCIONES FILTRADAS (ÚNICAS + MEJOR REFRESH RATE, MÁXIMA PRIMERO)
+    public Resolution[] GetBestResolutions() => cachedBestResolutions;
+
+    // ✅ MÉTODO INTERNO PARA CACHEAR RESOLUCIONES
+    private Resolution[] GetBestResolutionsInternal()
     {
-        var r = Screen.resolutions;
-        return index < r.Length ? $"{r[index].width}x{r[index].height}" : "Default";
+        Resolution[] allResolutions = Screen.resolutions;
+        var bestByResolution = new Dictionary<string, Resolution>();
+
+        foreach (var res in allResolutions)
+        {
+            string key = $"{res.width}x{res.height}";
+
+            if (!bestByResolution.ContainsKey(key) ||
+                res.refreshRateRatio.numerator > bestByResolution[key].refreshRateRatio.numerator)
+            {
+                bestByResolution[key] = res;
+            }
+        }
+
+        // ✅ ORDENAR DE MAYOR A MENOR (máxima primero)
+        return bestByResolution.Values.OrderByDescending(r => r.width * r.height).ToArray();
     }
 
+    // ✅ OBTENER STRING DE RESOLUCIÓN
+    public string GetResolutionString(int index)
+    {
+        if (index < cachedBestResolutions.Length)
+        {
+            var r = cachedBestResolutions[index];
+            return $"{r.width}x{r.height}";
+        }
+        return "Default";
+    }
+
+    // ✅ OBTENER ÍNDICE DE RESOLUCIÓN MÁXIMA
+    public int GetMaxResolutionIndex() => 0;
+
+    // ✅ OBTENER ÍNDICE DE RESOLUCIÓN ACTUAL
     public int GetCurrentResolutionIndex()
     {
-        for (int i = Screen.resolutions.Length - 1; i >= 0; i--)
-            if (Screen.resolutions[i].width == Screen.width &&
-                Screen.resolutions[i].height == Screen.height) return i;
-        return 0;
+        for (int i = 0; i < cachedBestResolutions.Length; i++)
+        {
+            if (cachedBestResolutions[i].width == Screen.width &&
+                cachedBestResolutions[i].height == Screen.height)
+                return i;
+        }
+        return GetMaxResolutionIndex(); // Fallback a máxima
     }
+
 
     // ==================== VIDEO SETTERS ====================
 
     public void SetResolution(int index)
     {
-        currentSettings.video.resolutionIndex = index;
-        ApplyVideoSettings();
-        if (autoSaveOnChange) SaveSettings();
+        // ✅ VALIDAR CONTRA RESOLUCIONES FILTRADAS
+        if (index >= 0 && index < cachedBestResolutions.Length)
+        {
+            currentSettings.video.resolutionIndex = index;
+            ApplyVideoSettings();
+            if (autoSaveOnChange) SaveSettings();
+            Debug.Log($"✅ Resolución cambiada a: {GetResolutionString(index)}");
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ Índice de resolución inválido: {index}");
+        }
     }
 
     public void SetFullscreen(bool fullscreen)
@@ -253,7 +305,7 @@ public class SettingsManager : MonoBehaviour
     {
         currentSettings.controls.mouseSensitivity = Mathf.Clamp(value, 0.1f, 1f);
         if (autoSaveOnChange) SaveSettings();
-    } 
+    }
 
     public void SetInvertMouseY(bool invert)
     {
