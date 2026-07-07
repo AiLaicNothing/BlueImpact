@@ -697,13 +697,13 @@ public class PlayerControl : MonoBehaviour, IDamageable
         if (!IsSkillReady(skillIndex)) return;
 
         // ✅ USAR PlayerStatsManager
-        if (!playerStatsManager.CanConsume(skill.resourceType, skill.cost))
-        {
-            Debug.Log($"No hay suficiente {skill.resourceType}");
-            return;
-        }
+        //if (!playerStatsManager.CanConsume(skill.resourceType, skill.cost))
+        //{
+        //    Debug.Log($"No hay suficiente {skill.resourceType}");
+        //    return;
+        //}
 
-        playerStatsManager.Consume(skill.resourceType, skill.cost);
+        //playerStatsManager.Consume(skill.resourceType, skill.cost);
 
         TriggerCooldown(skillIndex);
 
