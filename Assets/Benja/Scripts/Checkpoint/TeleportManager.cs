@@ -9,35 +9,35 @@ public class TeleportManager : MonoBehaviour
         private set;
     }
 
-    [SerializeField]
-    private Transform player;
-
     private void Awake()
     {
         Instance = this;
     }
 
-    public void Teleport(
-        Checkpoint destination)
+    public void Teleport(Checkpoint destination)
     {
-        StartCoroutine(
-            TeleportRoutine(destination));
+        StartCoroutine(TeleportRoutine(destination));
     }
 
-    private IEnumerator TeleportRoutine(
-        Checkpoint destination)
+    private IEnumerator TeleportRoutine(Checkpoint destination)
     {
-        yield return FadeUI.Instance.FadeOut();
+        // ✅ BUSCAR EL PLAYER DINÁMICAMENTE (por tag)
+        Transform player = GameObject.FindGameObjectWithTag("Player")?.transform;
 
+        if (player == null)
+        {
+            Debug.LogError("❌ Player no encontrado");
+            yield break;
+        }
+
+        // ✅ TELETRANSPORTAR DIRECTAMENTE (sin fade)
         player.SetPositionAndRotation(
             destination.SpawnPoint.position,
             destination.SpawnPoint.rotation);
 
-        yield return new WaitForSecondsRealtime(
-            0.2f);
+        yield return new WaitForSecondsRealtime(0.1f);
 
-        CheckpointMenuUI.Instance.CloseMenu();
-
-        yield return FadeUI.Instance.FadeIn();
+        // ✅ CERRAR MENÚ
+        CheckpointMenuUI.Instance?.CloseMenu();
     }
 }

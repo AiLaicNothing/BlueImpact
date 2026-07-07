@@ -12,7 +12,11 @@ public class BashShield_Skill : Skill
     public Vector3 hitBoxSize;
     public Vector3 hitBoxOffset;
 
-    public override void ExecuteSkill(PlayerControl player, Vector3  targetPoint, Vector3 lockTargetPos)
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
+    public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
+
+    public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         if (lockTargetPos != Vector3.zero)
         {
@@ -24,7 +28,7 @@ public class BashShield_Skill : Skill
                 player.Model.rotation = Quaternion.LookRotation(dir);
             }
         }
-         
+
         //if (actionSound != null)
         //{
         //    AudioManager.Instance.PlaySFX(actionSound);

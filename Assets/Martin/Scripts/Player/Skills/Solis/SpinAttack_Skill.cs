@@ -22,6 +22,10 @@ public class SpinAttack_Skill : Skill
     [SerializeField] private GameObject debugBox;
     [SerializeField] private bool debug;
 
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
+    public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
+
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         player.StartCoroutine(SpinRoutine(player));
@@ -44,7 +48,7 @@ public class SpinAttack_Skill : Skill
         {
             if (!soundPlayed)
             {
-                player.PlayAudio(actionSound, 0.8f); 
+                player.PlayAudio(actionSound, 0.8f);
                 soundPlayed = true;
             }
 

@@ -84,7 +84,7 @@ public class TeleportPanelUI : MonoBehaviour
         foreach (Checkpoint checkpoint in CheckpointManager.Instance.GetDiscoveredCheckpoints())
         {
             CheckpointEntryUI entry = Instantiate(entryPrefab, content);
-            bool isCurrent = checkpoint == current;     
+            bool isCurrent = checkpoint == current;
 
             entry.Initialize(checkpoint, this, isCurrent);
             entries.Add(entry);
@@ -96,13 +96,7 @@ public class TeleportPanelUI : MonoBehaviour
         if (selectedCheckpoint == null)
             return;
 
-        TeleportConfirmPopup.Instance.Open(
-            selectedCheckpoint.Data.checkpointName,
-            ConfirmTravel);
-    }
-
-    private void ConfirmTravel()
-    {
+        // ✅ TELETRANSPORTAR DIRECTAMENTE (sin popup)
         TeleportManager.Instance.Teleport(selectedCheckpoint);
     }
 

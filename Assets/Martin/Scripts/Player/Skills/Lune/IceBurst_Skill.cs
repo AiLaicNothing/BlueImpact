@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Diagnostics;
 using UnityEngine;
-using static UnityEngine.Analytics.IAnalytic;
 
 [CreateAssetMenu(menuName = "Player/Skills/Lune/IceBurst")]
 public class IceBurst_Skill : Skill
@@ -23,6 +21,10 @@ public class IceBurst_Skill : Skill
     [SerializeField] private GameObject vfx;
     [SerializeField] private Vector3 vfxOffset;
     [SerializeField] private bool debug;
+
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
+    public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
 
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {

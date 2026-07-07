@@ -11,6 +11,11 @@ public class FireSlash_Skill : Skill
 
     [Header("Spawn")]
     [SerializeField] private Vector3 spawnOffSet = new Vector3(0, 0, 1.5f);
+
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
+    public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
+
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         Vector3 finalTarget = lockTargetPos != Vector3.zero ? lockTargetPos : targetPoint;

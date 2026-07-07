@@ -12,6 +12,17 @@ public class Heal_Skill : Skill
     [Header("Sfx")]
     [SerializeField] private GameObject sfx;
 
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override int GetBaseDamage() => ammount; // Mostramos el monto de heal
+
+    /// <summary>
+    /// Override para mostrar descripción especial de Heal
+    /// </summary>
+    public override string GetDamageDescription()
+    {
+        return $"<b>Restaura:</b> {ammount} HP";
+    }
+
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         HealPlayer(player);
@@ -26,7 +37,7 @@ public class Heal_Skill : Skill
 
         // apply heal
         player.Heal(ammount);
-        player.PlayAudio(actionSound, 0.8f); 
+        player.PlayAudio(actionSound, 0.8f);
 
         Debug.Log($"Healed -> {ammount}");
 

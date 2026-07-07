@@ -13,6 +13,10 @@ public class NovaOrbita_Skill : Skill
     public float angularSpeed = 180f; // degrees per second
     public float duration = 5f;
 
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
+    public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
+
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         SpawnOrb(player, 0f);

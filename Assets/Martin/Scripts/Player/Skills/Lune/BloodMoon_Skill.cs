@@ -14,6 +14,10 @@ public class BloodMoon_Skill : Skill
     [Header("Sfx")]
     [SerializeField] private GameObject sfx;
 
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
+    public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
+
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         SummonMoon(player, targetPoint, lockTargetPos);
@@ -37,7 +41,7 @@ public class BloodMoon_Skill : Skill
         Vector3 spawnPos = player.transform.position + player.Model.forward * offset.z + player.Model.right * offset.x + Vector3.up * height;
 
         GameObject moon = Instantiate(moonPrefab, spawnPos, Quaternion.identity);
-        player.PlayAudio(actionSound, 0.8f); 
+        player.PlayAudio(actionSound, 0.8f);
 
         BloodMoon moonProj = moon.GetComponent<BloodMoon>();
 

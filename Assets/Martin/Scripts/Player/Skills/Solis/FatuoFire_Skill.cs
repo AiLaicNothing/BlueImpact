@@ -20,6 +20,10 @@ public class FatuoFire_Skill : Skill
     [SerializeField] private GameObject vfx;
     [SerializeField] private Vector3 vfxOffset;
 
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
+    public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
+
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         player.blockVelocity = true;
@@ -56,7 +60,7 @@ public class FatuoFire_Skill : Skill
                     stunDuration = hitData.stunDuration,
                     keepInAir = hitData.keepInAir,
                     airHangDuration = hitData.airHangDuration,
-                    airLiftForce = hitData.airLiftForce,    
+                    airLiftForce = hitData.airLiftForce,
                     pushForce = hitData.pushForce,
                     knockDownForce = hitData.knockDownForce,
                     knockDownForwardScale = hitData.knockDownForwardScale,
@@ -66,6 +70,6 @@ public class FatuoFire_Skill : Skill
                 damageable.TakeDamage(info);
             }
         }
-        player.PlayAudio(actionSound, 0.8f); 
+        player.PlayAudio(actionSound, 0.8f);
     }
 }

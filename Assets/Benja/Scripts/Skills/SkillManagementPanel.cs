@@ -149,7 +149,7 @@ public class SkillManagementPanel : MonoBehaviour
         if (selectedSkill != null)
         {
             skillNameText.text = selectedSkill.skillName;
-            skillInfoText.text = $"Cost: {selectedSkill.cost}\nCooldown: {selectedSkill.cooldown}";
+            skillInfoText.text = BuildSkillDescription(selectedSkill);
             return;
         }
 
@@ -159,7 +159,7 @@ public class SkillManagementPanel : MonoBehaviour
             if (skill != null)
             {
                 skillNameText.text = skill.skillName;
-                skillInfoText.text = $"Cost: {skill.cost}\nCooldown: {skill.cooldown}";
+                skillInfoText.text = BuildSkillDescription(skill);
             }
             else
             {
@@ -171,6 +171,26 @@ public class SkillManagementPanel : MonoBehaviour
 
         skillNameText.text = "Skills";
         skillInfoText.text = "Selecciona una habilidad o slot";
+    }
+
+    // ==================== NUEVO: CONSTRUIR DESCRIPCIÓN ====================
+
+    private string BuildSkillDescription(Skill skill)
+    {
+        string description = "";
+
+        // Costo
+        description += $"<b>Costo:</b> {skill.cost}\n";
+        description += $"<b>Cooldown:</b> {skill.cooldown}s\n";
+
+        // ✅ DAÑO Y ESCALADO (NUEVO)
+        string damageInfo = skill.GetDamageDescription();
+        if (!string.IsNullOrEmpty(damageInfo))
+        {
+            description += "\n" + damageInfo;
+        }
+
+        return description;
     }
 
     public void SelectSkill(Skill skill)

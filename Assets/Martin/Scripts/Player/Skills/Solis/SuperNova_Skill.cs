@@ -20,6 +20,38 @@ public class SuperNova_Skill : Skill
     [Header("Vfx")]
     [SerializeField] private GameObject explosionVfx;
 
+    // ==================== NUEVOS: DAÑO Y ESCALADO ====================
+    public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
+    public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
+
+    /// <summary>
+    /// Override para mostrar información de daño + explosión
+    /// </summary>
+    public override string GetDamageDescription()
+    {
+        string description = "";
+
+        // Daño orbital
+        if (!string.IsNullOrEmpty(GetPhysicalScaling()) || !string.IsNullOrEmpty(GetMagicScaling()))
+        {
+            description += "<b>Daño Orbital:</b>\n";
+            if (!string.IsNullOrEmpty(GetPhysicalScaling()))
+                description += $"  <b>Escalado Físico:</b> {GetPhysicalScaling()}\n";
+            if (!string.IsNullOrEmpty(GetMagicScaling()))
+                description += $"  <b>Escalado Mágico:</b> {GetMagicScaling()}\n";
+        }
+
+        // Daño explosión
+        if (explosionData != null)
+        {
+            description += "\n<b>Daño Explosión:</b>\n";
+            description += $"  <b>Escalado Físico:</b> {explosionData.physicalScale * 100:F0}%\n";
+            description += $"  <b>Escalado Mágico:</b> {explosionData.magicalScale * 100:F0}%\n";
+        }
+
+        return description;
+    }
+
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         SpawnOrb(player, 0f);

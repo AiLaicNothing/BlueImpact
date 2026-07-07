@@ -221,6 +221,13 @@ public class TimedPlatformChallenge : MonoBehaviour
 
     public void ResetChallenge()
     {
+        // ✅ NUEVO: No resetear si ya fue completado
+        if (_state == ChallengeState.Completed)
+        {
+            Debug.Log($"[Challenge] {challengeID} ya fue completado — no se resetea");
+            return;
+        }
+
         if (_timerRoutine != null)
         {
             StopCoroutine(_timerRoutine);
