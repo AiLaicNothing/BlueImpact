@@ -6179,7 +6179,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60.000004
+  field of view: 66.6871
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -6205,8 +6205,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 209218820}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.00091789366, y: 0.99854255, z: -0.018019201, w: -0.05086551}
-  m_LocalPosition: {x: 0.4857512, y: 1.172581, z: 4.7555265}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 27.25, y: 7.1800003, z: 51.29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11228,6 +11228,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71d2e92f457dc8a4ca3d46821f3fc31f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasePlattform
+  plattform: {fileID: 0}
 --- !u!1 &1341736911
 GameObject:
   m_ObjectHideFlags: 0
@@ -11905,7 +11906,30 @@ MonoBehaviour:
   moveSpeed: 5
   openPos: {fileID: 172002554}
   closePos: {fileID: 1044373789}
+  barrier: {fileID: 0}
   secret: {fileID: 0}
+  doorCamera:
+    cameraID: 0
+    duration: 3
+    activePriority: 100
+    inactivePriority: 0
+    followTarget: {fileID: 0}
+    lookAtTarget: {fileID: 0}
+    restoreGameplayCamera: 1
+    interruptCurrent: 1
+    pausePlayer: 1
+    mutePlayerAudio: 1
+  barrierCamera:
+    cameraID: 0
+    duration: 3
+    activePriority: 100
+    inactivePriority: 0
+    followTarget: {fileID: 0}
+    lookAtTarget: {fileID: 0}
+    restoreGameplayCamera: 1
+    interruptCurrent: 1
+    pausePlayer: 1
+    mutePlayerAudio: 1
   bossCamera:
     cameraID: 2
     duration: 1.5
@@ -11916,6 +11940,7 @@ MonoBehaviour:
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
+    mutePlayerAudio: 1
   RewardCamera:
     cameraID: 0
     duration: 3
@@ -11926,6 +11951,7 @@ MonoBehaviour:
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
+    mutePlayerAudio: 1
 --- !u!65 &1418889422
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -14993,6 +15019,7 @@ MonoBehaviour:
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
+    mutePlayerAudio: 1
   cameraShowSpawn:
     cameraID: 0
     duration: 3
@@ -15003,6 +15030,7 @@ MonoBehaviour:
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
+    mutePlayerAudio: 1
 --- !u!4 &2134188185
 Transform:
   m_ObjectHideFlags: 0
