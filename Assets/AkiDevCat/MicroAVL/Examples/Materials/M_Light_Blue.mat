@@ -25,13 +25,13 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _ENABLE_HDR_CORRECTION
+  - _ENABLE_BLINKING
   m_InvalidKeywords:
   - _SURFACE_TYPE_TRANSPARENT
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses:
   - DepthOnly
@@ -102,7 +102,7 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _BlinkingAmplitude: 0.5
+    - _BlinkingAmplitude: 0
     - _BumpScale: 1
     - _CastShadows: 1
     - _ClearCoatMask: 0
@@ -113,13 +113,13 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 10
     - _DstBlendAlpha: 0
-    - _ENABLE_BLINKING: 0
-    - _ENABLE_HDR_CORRECTION: 1
+    - _ENABLE_BLINKING: 1
+    - _ENABLE_HDR_CORRECTION: 0
     - _EnvironmentReflections: 1
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _Intensity: 4.92
+    - _Intensity: 1
     - _MaskHeight: 0
     - _Metallic: 0
     - _OcclusionStrength: 1
@@ -127,10 +127,10 @@ Material:
     - _QueueControl: 0
     - _QueueOffset: 0
     - _RampOffset: 0
-    - _RampPower: 1
+    - _RampPower: 0.9
     - _RampSmooth: 0.149
     - _ReceiveShadows: 1
-    - _Scattering: 0.03
+    - _Scattering: 0.1
     - _Smoothness: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -143,7 +143,7 @@ Material:
     - _ZWriteControl: 2
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _Color: {r: 0.35978103, g: 0.5419137, b: 0.990566, a: 1}
+    - _Color: {r: 0.7216981, g: 1, b: 0.9165566, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
