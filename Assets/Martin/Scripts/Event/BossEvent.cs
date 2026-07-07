@@ -53,7 +53,7 @@ public class BossEvent : MonoBehaviour
         Debug.Log("Close door");
         yield return MoveDoor(closePos.position);
 
-        Debug.Log("Create Barrier");
+        //Debug.Log("Create Barrier");
         yield return DoBarrier(true);
 
         Debug.Log("Try spawn boss");
