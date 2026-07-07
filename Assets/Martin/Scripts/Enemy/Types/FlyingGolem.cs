@@ -174,6 +174,15 @@ public class FlyingGolem : EnemyBase
 
         HandleMovement();
         UpdateHoverVisual();
+
+        if (agent.velocity.sqrMagnitude >= 0.01f)
+        {
+            anim.Play("Patrol");
+        }
+        else
+        {
+            anim.Play("Idle");
+        }
     }
 
     // =========================================================
@@ -291,7 +300,6 @@ public class FlyingGolem : EnemyBase
                 agent.isStopped = false;
                 agent.SetDestination(player.transform.position);
                 RotateToVelocity();
-                anim.Play("Walk");
             }
             else
             {
@@ -306,13 +314,11 @@ public class FlyingGolem : EnemyBase
             agent.SetDestination(spawnPos.position);
 
             RotateToVelocity();
-            anim.Play("Walk");
 
             if (!agent.pathPending && agent.remainingDistance <= stopDistance)
             {
                 returningHome = false;
                 agent.ResetPath();
-                anim.Play("Idle");
             }
         }
         else if (hasPatrol)
@@ -320,12 +326,10 @@ public class FlyingGolem : EnemyBase
             agent.isStopped = false;
             HandlePatrol();
             RotateToVelocity();
-            anim.Play("Walk");
         }
         else
         {
             agent.ResetPath();
-            anim.Play("Idle");
         }
     }
 
@@ -482,6 +486,8 @@ public class FlyingGolem : EnemyBase
 
         if (!HasValidPlayer()) yield break;
 
+        anim.Play("Bomb");
+
         Vector3 targetDir = GetFlatTargetDirection();
         Vector3 right = transform.right;
         right.y = 0f;
@@ -537,6 +543,8 @@ public class FlyingGolem : EnemyBase
         Debug.Log("Flying Golem: attack 2");
 
         if (!HasValidPlayer()) yield break;
+
+        anim.Play("Attack 0");
 
         Vector3 targetDir = GetFlatTargetDirection();
         Vector3 spawnPos = transform.TransformPoint(bombPosOffset);
