@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5335451704511596875}
+  - component: {fileID: 3412418627701704635}
   m_Layer: 0
   m_Name: altar tutorial
   m_TagString: Obstacle
@@ -44,6 +45,26 @@ Transform:
   - {fileID: 5096160975663515474}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3412418627701704635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3238157699080732215}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 1
+  m_Area: 1
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 0
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff
 --- !u!1001 &522020164804487451
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -111,6 +132,14 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
       propertyPath: m_Name
       value: library table
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
+      propertyPath: m_TagString
+      value: Ground
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 3451118302482216456, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
@@ -225,6 +254,14 @@ PrefabInstance:
     - target: {fileID: 6005343814844044147, guid: 88ac964f153b07148b9b5346a2ea2244, type: 3}
       propertyPath: m_Name
       value: arco de piedra
+      objectReference: {fileID: 0}
+    - target: {fileID: 6005343814844044147, guid: 88ac964f153b07148b9b5346a2ea2244, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 6005343814844044147, guid: 88ac964f153b07148b9b5346a2ea2244, type: 3}
+      propertyPath: m_TagString
+      value: Wall
       objectReference: {fileID: 0}
     - target: {fileID: 6349113184475810249, guid: 88ac964f153b07148b9b5346a2ea2244, type: 3}
       propertyPath: m_LocalPosition.x
@@ -783,38 +820,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: -3921924550619363990, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2601563776186084735}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
---- !u!1 &2298916670845916220 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -3921924550619363990, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
-  m_PrefabInstance: {fileID: 6230135174211670358}
-  m_PrefabAsset: {fileID: 0}
---- !u!64 &2601563776186084735
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2298916670845916220}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -9218733256361674265, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
 --- !u!4 &5908541926662010557 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
@@ -831,6 +838,14 @@ PrefabInstance:
     - target: {fileID: 8638610132495139854, guid: cc258b8afc4f359468671ff6349e11f7, type: 3}
       propertyPath: m_Name
       value: estatua de serpiente
+      objectReference: {fileID: 0}
+    - target: {fileID: 8638610132495139854, guid: cc258b8afc4f359468671ff6349e11f7, type: 3}
+      propertyPath: m_Layer
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 8638610132495139854, guid: cc258b8afc4f359468671ff6349e11f7, type: 3}
+      propertyPath: m_TagString
+      value: Obstacle
       objectReference: {fileID: 0}
     - target: {fileID: 8982801684271390388, guid: cc258b8afc4f359468671ff6349e11f7, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1011,38 +1026,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: -3921924550619363990, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8299458621121133105}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
---- !u!1 &3978335380073447152 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: -3921924550619363990, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
-  m_PrefabInstance: {fileID: 9126373764002904986}
-  m_PrefabAsset: {fileID: 0}
---- !u!64 &8299458621121133105
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3978335380073447152}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -9218733256361674265, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}
 --- !u!4 &8731879244472982641 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6e4ea50c8ac029e43a3adf16cbcf88c8, type: 3}

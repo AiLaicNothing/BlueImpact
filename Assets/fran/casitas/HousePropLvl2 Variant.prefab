@@ -1331,6 +1331,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 281753504541329745, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 13400000, guid: fbbc35b5cb2cb47478d1db093016dd33, type: 2}
+    - target: {fileID: 2528774645361860601, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 13400000, guid: fbbc35b5cb2cb47478d1db093016dd33, type: 2}
+    - target: {fileID: 2851697055043183922, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 13400000, guid: fbbc35b5cb2cb47478d1db093016dd33, type: 2}
+    - target: {fileID: 3137031859867114731, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 13400000, guid: fbbc35b5cb2cb47478d1db093016dd33, type: 2}
     - target: {fileID: 5021427902262257800, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
       propertyPath: m_Name
       value: HousePropLvl2 Variant
@@ -1375,6 +1391,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5913513960665887237, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 13400000, guid: fbbc35b5cb2cb47478d1db093016dd33, type: 2}
     - target: {fileID: 6822758146478180701, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -1383,6 +1403,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
       objectReference: {fileID: 2100000, guid: a77d208079916cc45b9b4b7750dd721a, type: 2}
+    - target: {fileID: 8824606138240074299, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
+      propertyPath: m_Material
+      value: 
+      objectReference: {fileID: 13400000, guid: fbbc35b5cb2cb47478d1db093016dd33, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -1449,13 +1473,41 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5684777198119285298, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8541919531938076504}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5021427902262257800, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7252772467512186438}
   m_SourcePrefab: {fileID: 100100000, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
 --- !u!4 &1265947802819369810 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5684777198119285298, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
   m_PrefabInstance: {fileID: 6878666169912387936}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1934960683352080872 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5021427902262257800, guid: b4c24950eed763249a5028e95e4051f7, type: 3}
+  m_PrefabInstance: {fileID: 6878666169912387936}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7252772467512186438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1934960683352080872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 1
+  m_Area: 1
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 0
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff
 --- !u!1001 &7516205948612700882
 PrefabInstance:
   m_ObjectHideFlags: 0

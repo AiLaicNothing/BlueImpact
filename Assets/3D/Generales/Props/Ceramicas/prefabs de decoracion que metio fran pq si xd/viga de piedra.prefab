@@ -64,21 +64,32 @@ PrefabInstance:
       propertyPath: m_Name
       value: viga de piedra
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 28dc749ed73bbb24da8eb78533711b57, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 28dc749ed73bbb24da8eb78533711b57, type: 3}
+      propertyPath: m_TagString
+      value: Wall
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 28dc749ed73bbb24da8eb78533711b57, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 3138450863588352674}
+      addedObject: {fileID: 4044339155588563479}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 28dc749ed73bbb24da8eb78533711b57, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5522437841546820283}
   m_SourcePrefab: {fileID: 100100000, guid: 28dc749ed73bbb24da8eb78533711b57, type: 3}
 --- !u!1 &1551359781125538957 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 28dc749ed73bbb24da8eb78533711b57, type: 3}
   m_PrefabInstance: {fileID: 1821389740044057052}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &3138450863588352674
-BoxCollider:
+--- !u!64 &4044339155588563479
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -95,6 +106,27 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 7.740121, y: 21.499311, z: 8.797177}
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4068373912626513877, guid: 28dc749ed73bbb24da8eb78533711b57, type: 3}
+--- !u!114 &5522437841546820283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1551359781125538957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 1
+  m_Area: 1
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 0
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff

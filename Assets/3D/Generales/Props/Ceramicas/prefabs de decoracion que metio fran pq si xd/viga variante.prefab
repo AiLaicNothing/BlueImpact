@@ -69,8 +69,12 @@ PrefabInstance:
       value: viga variante
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 39480e1ec3e91da4791d008546e4f39a, type: 3}
+      propertyPath: m_Layer
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 39480e1ec3e91da4791d008546e4f39a, type: 3}
       propertyPath: m_TagString
-      value: Ground
+      value: Wall
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -78,21 +82,21 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 39480e1ec3e91da4791d008546e4f39a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 138773777370351931}
+      addedObject: {fileID: 99657033134072082}
   m_SourcePrefab: {fileID: 100100000, guid: 39480e1ec3e91da4791d008546e4f39a, type: 3}
 --- !u!1 &8247172606276857259 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 39480e1ec3e91da4791d008546e4f39a, type: 3}
   m_PrefabInstance: {fileID: 9129568421472358650}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &138773777370351931
-BoxCollider:
+--- !u!64 &99657033134072082
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8247172606276857259}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: fbbc35b5cb2cb47478d1db093016dd33, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -103,6 +107,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 129.002, y: 532.49194, z: 146.61961}
-  m_Center: {x: 0.0078125, y: 30.645067, z: -0.001953125}
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4068373912626513877, guid: 39480e1ec3e91da4791d008546e4f39a, type: 3}
