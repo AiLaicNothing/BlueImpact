@@ -9,8 +9,8 @@ using static UnityEngine.Analytics.IAnalytic;
 
 public class PlayerControl : MonoBehaviour, IDamageable
 {
-    // Evento global: cualquier sistema (ej. ElevetorEvent) puede suscribirse
-    // para reaccionar a la muerte del jugador sin acoplarse directamente.
+    // 💀 Evento global: cualquier sistema puede suscribirse para reaccionar a la muerte
+    // (ej. DeathScreenUI, ElevatorEvent) sin acoplarse directamente.
     public static event System.Action OnPlayerDied;
 
 
@@ -128,7 +128,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public bool IsInputLocked { get; private set; }
     public bool isPerformingAct = false;
     public bool blockVelocity = false;
-    public bool isDead { get; private set; }
+    public bool isDead { get; set; }  // ✅ CAMBIO: private set → public set
     public CharacterInfo CurrentCharacterInfo { get; set; }
     private PlayerStatsManager playerStatsManager;
     private bool isAudioMuted = false;
@@ -878,23 +878,18 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     private void OnDead()
     {
+        isDead = true;  // ✅ SETEAR PRIMERO
+
         Debug.Log("💀 Player muere");
 
         // 🔊 Sonido de muerte
         PlayAudio(onDead, sfxVolume);
 
-        // 📢 Avisar a cualquier sistema suscrito (ej. eventos de elevador) que el jugador murió
+        // 📢 Avisar a cualquier sistema suscrito (ej. DeathScreenUI, eventos de elevador)
         OnPlayerDied?.Invoke();
 
-        // ✅ USAR EL SPAWNPOINT DEL CHECKPOINT ACTUAL
-        if (RespawnManager.Instance != null)
-        {
-            RespawnManager.Instance.Respawn();
-        }
-        else
-        {
-            Debug.LogError("❌ RespawnManager no encontrado");
-        }
+        // ✅ DeathScreenUI ahora controla el respawn después de la cuenta atrás
+        // No llamar a Respawn() aquí - déjalo para el DeathScreenUI
     }
 
     public void PlayAudio(AudioClip audio, float volume = 1)
