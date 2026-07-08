@@ -44,20 +44,35 @@ public class CheckpointManager : MonoBehaviour
             return;
         }
 
-        // 🔍 DEBUG: ¿Existen los singletons?
-        Debug.Log($"PopupUI.Instance: {PopupUI.Instance}");
-        Debug.Log($"CheckpointMenuUI.Instance: {CheckpointMenuUI.Instance}");
-
         SetActiveCheckpoint(checkpoint);
         bool firstDiscovery = DiscoverCheckpoint(checkpoint);
 
+        // ✅ PRIMER DESCUBRIMIENTO: Mostrar popup y dar upgrade points
         if (firstDiscovery)
         {
             playerStats.AddUpgradePoints(checkpoint.Data.upgradePointsReward);
-            PopupUI.Instance.Show("..."); // ← Aquí explota
+
+            // ✅ NULL CHECK para PopupUI
+            if (PopupUI.Instance != null)
+            {
+                PopupUI.Instance.Show($"¡Checkpoint Descubierto!\n+{checkpoint.Data.upgradePointsReward} Puntos de Mejora");
+                Debug.Log($"✅ Popup mostrado para checkpoint: {checkpoint.Data.checkpointName}");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ PopupUI.Instance es null - popup no mostrado");
+            }
         }
 
-        CheckpointMenuUI.Instance.Open(checkpoint);
+        // ✅ NULL CHECK para CheckpointMenuUI
+        if (CheckpointMenuUI.Instance != null)
+        {
+            CheckpointMenuUI.Instance.Open(checkpoint);
+        }
+        else
+        {
+            Debug.LogError("❌ CheckpointMenuUI.Instance es null");
+        }
     }
 
     private bool DiscoverCheckpoint(Checkpoint checkpoint)
@@ -73,8 +88,14 @@ public class CheckpointManager : MonoBehaviour
     {
         activeCheckpoint = checkpoint;
 
-        RespawnManager.Instance.SetRespawn(
-            checkpoint.SpawnPoint);
+        if (RespawnManager.Instance != null)
+        {
+            RespawnManager.Instance.SetRespawn(checkpoint.SpawnPoint);
+        }
+        else
+        {
+            Debug.LogError("❌ RespawnManager.Instance es null");
+        }
     }
 
     public IReadOnlyList<Checkpoint> GetDiscoveredCheckpoints()

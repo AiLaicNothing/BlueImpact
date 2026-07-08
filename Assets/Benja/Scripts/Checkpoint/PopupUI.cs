@@ -48,7 +48,11 @@ public class PopupUI : MonoBehaviour
     {
         messageText.text = message;
         yield return Fade(0, 1);
-        yield return new WaitForSeconds(visibleTime);
+
+        // ✅ CAMBIO: WaitForSeconds → WaitForSecondsRealtime
+        // (Ignora timeScale, así funciona incluso cuando el juego está pausado)
+        yield return new WaitForSecondsRealtime(visibleTime);
+
         yield return Fade(1, 0);
         currentRoutine = null;
     }
@@ -59,7 +63,7 @@ public class PopupUI : MonoBehaviour
 
         while (elapsed < fadeDuration)
         {
-            elapsed += Time.unscaledDeltaTime;
+            elapsed += Time.unscaledDeltaTime;  // ✅ Ya usa unscaledDeltaTime
             canvasGroup.alpha = Mathf.Lerp(from, to, elapsed / fadeDuration);
             yield return null;
         }
