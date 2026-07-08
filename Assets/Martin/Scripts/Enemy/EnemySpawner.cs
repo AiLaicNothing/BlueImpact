@@ -34,7 +34,7 @@ public class EnemySpawner : MonoBehaviour
 
         GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation);
 
-        EnemyBase enemy = enemyObj.GetComponent<EnemyBase>();
+        EnemyBase enemy = enemyObj.GetComponentInChildren<EnemyBase>();
         if (enemy == null)
         {
             Destroy(enemyObj);

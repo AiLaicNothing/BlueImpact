@@ -65,6 +65,8 @@ public class FlyingGolem : EnemyBase
     [SerializeField] private float maxFallTime = 3f;
     [SerializeField] private float recoverDuration = 0.25f;
 
+    [SerializeField] private GameObject father;
+
     private bool isPerformingAction;
     private bool hasDetectedPlayer;
     private bool isFollowingPlayer;
@@ -139,13 +141,28 @@ public class FlyingGolem : EnemyBase
         EnterHoverMode();
     }
 
+    protected override void Die()
+    {
+        if (isDead) return;
+
+        isDead = true;
+
+        if (agent != null)
+        {
+            agent.isStopped = true;
+            agent.enabled = false;
+        }
+
+        Destroy(father);
+    }
+
     protected override void Update()
     {
         if (isDead) return;
 
         base.Update();
 
-        SyncAgentSettings();
+        //SyncAgentSettings();
         UpdateTarget();
         HandleDetection();
 
@@ -168,12 +185,12 @@ public class FlyingGolem : EnemyBase
 
         if (isPerformingAction)
         {
-            UpdateHoverVisual();
+            //UpdateHoverVisual();
             return;
         }
 
         HandleMovement();
-        UpdateHoverVisual();
+        //UpdateHoverVisual();
 
         if (agent.velocity.sqrMagnitude >= 0.01f)
         {
@@ -703,7 +720,7 @@ public class FlyingGolem : EnemyBase
         if (visualRoot != null)
             visualRoot.localPosition = visualBaseLocalPos + Vector3.up * hoverHeight;
 
-        SyncColliderToVisual(hoverHeight);
+        //SyncColliderToVisual(hoverHeight);
 
         isFalling = false;
         isRecovering = false;
@@ -747,7 +764,7 @@ public class FlyingGolem : EnemyBase
         if (visualRoot != null)
             visualRoot.localPosition = visualBaseLocalPos + Vector3.up * hoverHeight;
 
-        SyncColliderToVisual(hoverHeight);
+        //SyncColliderToVisual(hoverHeight);
     }
 
     private Vector3 GetHoverSnapPosition(Vector3 sourcePosition)

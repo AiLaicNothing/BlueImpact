@@ -120,7 +120,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     {
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();
-        agent = GetComponent<NavMeshAgent>();
+        agent = GetComponentInParent<NavMeshAgent>();
 
         barUI = GetComponentInChildren<E_BarHolder_UI>();
         healthUI = GetComponentInChildren<E_HealthBar>();

@@ -9,9 +9,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3375145624891144570}
-  m_Layer: 0
+  - component: {fileID: 1913119511114617901}
+  - component: {fileID: 4275548051056030590}
+  - component: {fileID: 5737293061098367494}
+  m_Layer: 8
   m_Name: Model
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -25,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 258326376559355637}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.501, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -34,6 +37,143 @@ Transform:
   - {fileID: 7307089914519867329}
   m_Father: {fileID: 8560721469373001893}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1913119511114617901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258326376559355637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edcce5f6e9284c0438d7382a7eba67e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FlyingGolem
+  stats: {fileID: 11400000, guid: 6a6d07a1ce468334eac7b71244e74b55, type: 2}
+  weight: 40
+  pushResistance: 1
+  launchResistance: 1
+  knockDownResistance: 1
+  immuneToMovement: 0
+  vfxHit: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
+  hitVfxOffset: {x: 0, y: 0, z: 0}
+  hitVfxDuration: 1.5
+  staggerVfx: {fileID: 6823302871133167919, guid: 65ab97382a4aeae49b5ec3b7fbe89102, type: 3}
+  staggerVfxOffset: {x: 0, y: 0, z: 0}
+  staggerVfxDuration: 1.5
+  audio_Source: {fileID: 8611866586161219905}
+  onHit: {fileID: 0}
+  onStagger: {fileID: 8300000, guid: 6c4f01641b5a5ec4e9a7c9c6f377f0cf, type: 3}
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 1024
+  groundCheck: {fileID: 1229768599095169262}
+  isGroundEnemy: 0
+  groundCheckDistance: 0.2
+  airRecoverDelay: 0.05
+  knockDownRecoverDelay: 0.15
+  airGravityMultiplier: 0.7
+  airHangDuration: 0.75
+  revengeThreshold: 3
+  revengeDecayDelay: 2
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
+  debug: 1
+  currentHp: 0
+  currentStaggerBuild: 0
+  revengeMeter: 0
+  attackRange: 7
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 7168
+  targetRayHeight: 1.2
+  facingAngleThreshold: 15
+  turnSpeed: 15
+  visualRoot: {fileID: 3375145624891144570}
+  hoverHeight: 1.5
+  hoverBobAmplitude: 0.2
+  hoverBobSpeed: 2
+  hoverSmooth: 8
+  hoverMoveSpeed: 4.5
+  hoverStopDistance: 0.75
+  hoverAcceleration: 40
+  bodyCapsule: {fileID: 0}
+  bodyBox: {fileID: 0}
+  firstAttackChance: 0.6
+  hitTime: 0.4
+  attackAnimDuration: 1.2
+  recoveryTime: 0.5
+  magicCircleVfx: {fileID: 0}
+  circleOffset: {x: 1.5, y: 4, z: -1.5}
+  magicBulletPrefab: {fileID: 8499267714821707363, guid: 88ed92b9654630447a74ea261045d139, type: 3}
+  bulletAmmount: 2
+  timeBtwShoot: 0.3
+  chargeVfx: {fileID: 0}
+  bombPosOffset: {x: 0, y: 3.5, z: 0}
+  bombPrefab: {fileID: 721332422176556820, guid: b0c8138e97d419341ae38f57fa5c3cb7, type: 3}
+  chargeTime: 1
+  detectionRange: 28
+  maxChaseDistance: 35
+  detectionDelay: 0.2
+  instantDetection: 0
+  stopDistance: 1.5
+  minFallTimeBeforeRecovery: 0.35
+  groundedRecoveryDelay: 0.15
+  fallForce: 8
+  maxFallTime: 3
+  recoverDuration: 0.25
+  father: {fileID: 3697640618655901685}
+--- !u!54 &4275548051056030590
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258326376559355637}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 112
+  m_CollisionDetection: 0
+--- !u!136 &5737293061098367494
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 258326376559355637}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Height: 1.5
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0.3}
 --- !u!1 &1202737644284280135
 GameObject:
   m_ObjectHideFlags: 0
@@ -74,13 +214,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8560721469373001893}
-  - component: {fileID: 7902550197554874374}
-  - component: {fileID: 1760997114133497528}
-  - component: {fileID: 4038382836492020596}
   - component: {fileID: 4486388363632383108}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: FlyingGolem
-  m_TagString: Enemy
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -103,142 +240,6 @@ Transform:
   - {fileID: 8068949340346337674}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!136 &7902550197554874374
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3697640618655901685}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5
-  m_Height: 1
-  m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!54 &1760997114133497528
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3697640618655901685}
-  serializedVersion: 5
-  m_Mass: 4
-  m_LinearDamping: 1
-  m_AngularDamping: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 112
-  m_CollisionDetection: 0
---- !u!114 &4038382836492020596
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3697640618655901685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: edcce5f6e9284c0438d7382a7eba67e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FlyingGolem
-  stats: {fileID: 11400000, guid: 6a6d07a1ce468334eac7b71244e74b55, type: 2}
-  weight: 30
-  pushResistance: 1
-  launchResistance: 1
-  knockDownResistance: 1
-  immuneToMovement: 0
-  vfxHit: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
-  hitVfxOffset: {x: 0, y: 1.2, z: 0}
-  hitVfxDuration: 1.5
-  staggerVfx: {fileID: 6823302871133167919, guid: 65ab97382a4aeae49b5ec3b7fbe89102, type: 3}
-  staggerVfxOffset: {x: 0, y: 1.2, z: 0}
-  staggerVfxDuration: 1.5
-  audio_Source: {fileID: 8611866586161219905}
-  onHit: {fileID: 0}
-  onStagger: {fileID: 8300000, guid: 6c4f01641b5a5ec4e9a7c9c6f377f0cf, type: 3}
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 1024
-  groundCheck: {fileID: 1229768599095169262}
-  isGroundEnemy: 0
-  groundCheckDistance: 0.2
-  airRecoverDelay: 0.05
-  knockDownRecoverDelay: 0.15
-  airGravityMultiplier: 0.7
-  airHangDuration: 0.75
-  revengeThreshold: 3
-  revengeDecayDelay: 2
-  safeZone: {fileID: 0}
-  patrolZones: []
-  hasPatrol: 0
-  debug: 1
-  currentHp: 0
-  currentStaggerBuild: 0
-  revengeMeter: 0
-  attackRange: 7
-  obstacleLayer:
-    serializedVersion: 2
-    m_Bits: 7168
-  targetRayHeight: 1.2
-  facingAngleThreshold: 15
-  turnSpeed: 15
-  visualRoot: {fileID: 3375145624891144570}
-  hoverHeight: 1.5
-  hoverBobAmplitude: 0.2
-  hoverBobSpeed: 2
-  hoverSmooth: 8
-  hoverMoveSpeed: 4.5
-  hoverStopDistance: 0.75
-  hoverAcceleration: 40
-  bodyCapsule: {fileID: 7902550197554874374}
-  bodyBox: {fileID: 0}
-  firstAttackChance: 0.6
-  hitTime: 0.4
-  attackAnimDuration: 1.2
-  recoveryTime: 0.5
-  magicCircleVfx: {fileID: 0}
-  circleOffset: {x: 1.5, y: 4, z: -1.5}
-  magicBulletPrefab: {fileID: 8499267714821707363, guid: 88ed92b9654630447a74ea261045d139, type: 3}
-  bulletAmmount: 2
-  timeBtwShoot: 0.3
-  chargeVfx: {fileID: 0}
-  bombPosOffset: {x: 0, y: 3.5, z: 0}
-  bombPrefab: {fileID: 721332422176556820, guid: b0c8138e97d419341ae38f57fa5c3cb7, type: 3}
-  chargeTime: 1
-  detectionRange: 28
-  maxChaseDistance: 35
-  detectionDelay: 0.2
-  instantDetection: 0
-  stopDistance: 1.5
-  minFallTimeBeforeRecovery: 0.35
-  groundedRecoveryDelay: 0.15
-  fallForce: 8
-  maxFallTime: 3
-  recoverDuration: 0.25
 --- !u!195 &4486388363632383108
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -258,7 +259,7 @@ NavMeshAgent:
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 2
-  m_BaseOffset: 0
+  m_BaseOffset: 1.5
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
 --- !u!1 &4881071179588971649
@@ -488,6 +489,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3375145624891144570}
     m_Modifications:
+    - target: {fileID: 1662817201641095655, guid: 1f1e77ac29f6f324b81d132a4c86e45e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.72
+      objectReference: {fileID: 0}
     - target: {fileID: 1990609712845427158, guid: 1f1e77ac29f6f324b81d132a4c86e45e, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
@@ -518,7 +523,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9079254867595593468, guid: 1f1e77ac29f6f324b81d132a4c86e45e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.20233
+      value: -0.34
       objectReference: {fileID: 0}
     - target: {fileID: 9079254867595593468, guid: 1f1e77ac29f6f324b81d132a4c86e45e, type: 3}
       propertyPath: m_LocalPosition.z
