@@ -10,8 +10,9 @@ public class CharSelector_UI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI description;
     [SerializeField] private Image charImage;
 
-    [Header("Sfx")]
+    [Header("Audio")]
     [SerializeField] private AudioClip music;
+    private AudioSource audioSource;
 
     [Header("Buttons")]
     [SerializeField] private Button[] charButtons;
@@ -22,6 +23,11 @@ public class CharSelector_UI : MonoBehaviour
     private void Awake()
     {
         if (panel != null) panel.SetActive(false);
+
+        // ✅ CREAR AudioSource LOCAL para la música
+        audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.loop = true;  // ✅ LOOP ACTIVO
+        audioSource.playOnAwake = false;
     }
 
     private void Start()
@@ -38,7 +44,15 @@ public class CharSelector_UI : MonoBehaviour
             panel.SetActive(true);
         }
 
-        Audio_Manager.Instance.PlayMusic(music, 0.15f);
+        // ✅ REPRODUCIR MÚSICA EN LOOP
+        if (music != null && !audioSource.isPlaying)
+        {
+            audioSource.clip = music;
+            audioSource.volume = 0.5f;
+            audioSource.Play();
+            Debug.Log("🎵 Música del selector iniciada en loop");
+        }
+
         SelectCharacter(0);
         SetButtons();
     }
@@ -63,7 +77,7 @@ public class CharSelector_UI : MonoBehaviour
         if (data == null) return;
 
         currentIndex = index;
-        
+
         charName.text = data.name;
         description.text = data.description;
         charImage.sprite = data.portrait;
@@ -75,11 +89,27 @@ public class CharSelector_UI : MonoBehaviour
     {
         panel.SetActive(false);
 
+        // ✅ DETENER MÚSICA DEL SELECTOR
+        if (audioSource != null && audioSource.isPlaying)
+        {
+            audioSource.Stop();
+            Debug.Log("⏹️ Música del selector detenida");
+        }
+
         var spawnPoint = CharSelector_Manager.Instance.GetInitialSpawnPoint();
 
         // ✅ CONFIGURAR RESPAWN INICIAL
         CharSelector_Manager.Instance.SetupRespawn();
 
         PlayerSpawn_Manager.Instance.SpawnCharacter(spawnPoint);
+    }
+
+    private void OnDestroy()
+    {
+        // ✅ LIMPIAR AudioSource
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+        }
     }
 }
