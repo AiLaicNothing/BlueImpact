@@ -33,9 +33,21 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private CameraRequest RewardCamera;
 
     private bool eventActive = false;
+    private bool hasStarted;
+    private bool eventComplete;
 
     private GameObject player;
     private PlayerControl playerControl;
+
+    private void OnEnable()
+    {
+        PlayerControl.OnPlayerDied += ResetEvent;
+    }
+
+    private void OnDisable()
+    {
+        PlayerControl.OnPlayerDied -= ResetEvent;
+    }
 
     private void Awake()
     {
@@ -65,11 +77,13 @@ public class BossEvent : MonoBehaviour
 
     private void StartBossEvent()
     {
-        StartCoroutine(bossEvent());
+       StartCoroutine(bossEvent());
     }
 
     private IEnumerator bossEvent()
     {
+        hasStarted = true;
+
         Debug.Log("Block inputs");
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
         // 📌 NOTA: SetMode(GameMode.Cutscene) llama automáticamente a LockPlayerControl()
@@ -200,6 +214,32 @@ public class BossEvent : MonoBehaviour
         }
 
         yield return new WaitForSeconds(1f);
+    }
+
+    public void ResetEvent()
+    {
+        if (!hasStarted || eventComplete) return;
+
+        StopAllCoroutines();
+
+        GameModeManager.Instance.SetMode(GameMode.Gameplay);
+
+        if (playerControl != null)
+        {
+            playerControl.MutePlayerAudio(false);
+        }
+
+        if (bossObject != null)
+        {
+            Destroy(bossObject);
+        }
+
+        doorTransform.position = openPos.position;
+
+        barrier.SetActive(false);
+
+        hasStarted = false;
+        eventActive = false;
     }
 
     private IEnumerator OnDeathEvent()
