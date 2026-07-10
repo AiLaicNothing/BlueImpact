@@ -11,8 +11,8 @@ public class Boss_ChimeraGolem : EnemyBase
     [SerializeField] private GameObject hitVfx;
 
     [Header("Whitered Field")]
-    [SerializeField] private float fieldDuration;
-    [SerializeField] private GameObject fieldVfx;
+    [SerializeField] private Vector3 fieldOffset;
+    [SerializeField] private GameObject withereZone;
 
     [Header("Uel Flare")]
     [SerializeField] private float startUpDuration;
@@ -184,7 +184,7 @@ public class Boss_ChimeraGolem : EnemyBase
             hit.GetComponent<PlayerControl>().TakeDamage(info);
         }
 
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(2f);
 
         Debug.Log("End Heavy Blow attack");
     }
@@ -193,14 +193,19 @@ public class Boss_ChimeraGolem : EnemyBase
     {
         // Create around the boss a Field that inflict damage to player
 
-        if (fieldVfx != null)
-        {
-            var field = Instantiate(fieldVfx, transform.position, Quaternion.identity);
+        if (target == null) yield break;
 
-            field.transform.SetParent(transform, false);
+        if (withereZone != null)
+        {
+            Vector3 rayOrigin = target.transform.position + Vector3.up * 2f;
+
+            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 10f, whatIsGround))
+            {
+                Instantiate(withereZone, hit.point + fieldOffset, Quaternion.identity);
+            }
         }
 
-        yield return new WaitForSeconds(fieldDuration);
+        yield return new WaitForSeconds(1.5f);
 
         Debug.Log("End Withered Field attack");
     }
@@ -262,7 +267,7 @@ public class Boss_ChimeraGolem : EnemyBase
                 yield return new WaitForSeconds(waveInterval);
             }
 
-            yield return new WaitForSeconds(1.5f);
+            yield return new WaitForSeconds(2.25f);
 
             Debug.Log("Attack Uel Flare end");
         }
@@ -364,7 +369,7 @@ public class Boss_ChimeraGolem : EnemyBase
             hit.gameObject.GetComponent<PlayerControl>().TakeDamage(info);
         }
 
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(2.5f);
 
         Debug.Log("End Ground Slam attack");
     }
