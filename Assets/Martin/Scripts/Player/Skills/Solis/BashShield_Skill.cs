@@ -40,7 +40,7 @@ public class BashShield_Skill : Skill
     private IEnumerator BashRoutine(PlayerControl player)
     {
         player.blockVelocity = false;
-        player.PlayAudio(actionSound, 0.8f); // ✅ al inicio del dash
+        player.PlayAudio(actionSound, 0.8f);
 
         float timer = duration;
 
@@ -52,7 +52,7 @@ public class BashShield_Skill : Skill
             velocity.y = player.Rb.linearVelocity.y;
             player.Rb.linearVelocity = velocity;
 
-            CheckHits(player);
+            if (CheckHits(player)) yield break;
 
             yield return new WaitForFixedUpdate();
         }
@@ -60,27 +60,24 @@ public class BashShield_Skill : Skill
         player.blockVelocity = false;
     }
 
-    private void CheckHits(PlayerControl player)
+    private bool CheckHits(PlayerControl player)
     {
         Vector3 center = player.Model.position + player.Model.forward * hitBoxOffset.z + Vector3.up * hitBoxOffset.y;
 
         Collider[] hits = Physics.OverlapBox(center, hitBoxSize * 0.5f, player.Model.rotation);
 
-        player.ShowHitbox(center, hitBoxSize, player.Model.transform.rotation);
+        player.ShowHitbox(center, hitBoxSize, player.Model.rotation);
 
         foreach (Collider hit in hits)
         {
             if (!hit.CompareTag("Enemy")) continue;
 
-            IDamageable damageable = hit.GetComponent<IDamageable>();
-            if (damageable == null) continue;
-
-            Vector3 hitDir = player.Model.transform.forward;
+            if (!hit.TryGetComponent(out IDamageable damageable)) continue;
 
             DamageInfo info = new DamageInfo
             {
-                damage = ((player.PlayerStatsManager.GetActualValue(StatType.DañoFísico) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.DañoMágico) * hitData.magicalScale)),
-                hitDirection = hitDir,
+                damage = (player.PlayerStatsManager.GetActualValue(StatType.DañoFísico) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.DañoMágico) * hitData.magicalScale),
+                hitDirection = player.Model.forward,
                 throwType = hitData.throwType,
                 stunDuration = hitData.stunDuration,
                 keepInAir = hitData.keepInAir,
@@ -93,8 +90,9 @@ public class BashShield_Skill : Skill
             };
 
             damageable.TakeDamage(info);
-
-            break;
+            return true;
         }
+
+        return false;
     }
 }

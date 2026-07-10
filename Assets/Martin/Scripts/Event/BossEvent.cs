@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class BossEvent : MonoBehaviour
 {
@@ -24,7 +25,8 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private GameObject barrier;
 
     [Header("End Event")]
-    [SerializeField] private GameObject secret;
+    [SerializeField] private GameObject secretUI;
+    [SerializeField] private GameObject continueUI;
 
     [Header("Cameras")]
     [SerializeField] private CameraRequest doorCamera;
@@ -93,7 +95,6 @@ public class BossEvent : MonoBehaviour
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(true);
-            Debug.Log("[BossEvent] 🔒 Jugador pausado y silenciado (GameMode + Audio)");
         }
 
         Debug.Log("Close door");
@@ -105,24 +106,20 @@ public class BossEvent : MonoBehaviour
         Debug.Log("Try spawn boss");
         yield return SpawnBoss();
 
-        // 🔓 Reactivar jugador
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(false);
-            Debug.Log("[BossEvent] 🔓 Audio del jugador reactivado");
         }
 
         GameModeManager.Instance.SetMode(GameMode.Gameplay);
         // 📌 NOTA: SetMode(GameMode.Gameplay) llama automáticamente a UnlockPlayerControl()
 
-        //var boss = bossObject.GetComponent<Boss_ChimeraGolem>();
+        while (bossObject != null)
+        {
+            yield return null;
+        }
 
-        //if (boss.IsDead)
-        //{
-        //    Debug.Log("Try dead boss event");
-        //    yield return OnDeathEvent();
-        //}
-        //Debug.Log("Try end event");
+        yield return OnDeathEvent();
 
     }
 
@@ -244,9 +241,7 @@ public class BossEvent : MonoBehaviour
 
     private IEnumerator OnDeathEvent()
     {
-        // 🔒 Pausar jugador para evento de muerte
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
-        // 📌 SetMode(Cutscene) llama automáticamente a LockPlayerControl()
 
         // 🔇 Silenciar audio
         if (playerControl != null)
@@ -257,17 +252,15 @@ public class BossEvent : MonoBehaviour
 
         yield return new WaitForSeconds(1.5f);
 
-        secret.SetActive(true);
+        secretUI.SetActive(true);
 
-        // 🔓 Reactivar jugador después del evento
-        if (playerControl != null)
-        {
-            playerControl.MutePlayerAudio(false);
-            Debug.Log("[BossEvent] 🔓 Audio reactivado después de evento de muerte");
-        }
+        yield return new WaitForSeconds(3f);
 
-        GameModeManager.Instance.SetMode(GameMode.Gameplay);
-        // 📌 SetMode(Gameplay) llama automáticamente a UnlockPlayerControl()
+        secretUI.SetActive(false);
+        continueUI.SetActive(true);
+
+        yield return new WaitForSeconds(1.5f);
+        SceneManager.LoadScene("menu");
     }
 
     private void OnTriggerEnter(Collider other)

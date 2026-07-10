@@ -23,12 +23,12 @@ public class BloodMoon : MonoBehaviour
     [SerializeField] private float duration = 5f;
     [SerializeField] private float tickRate = 0.5f;
     [SerializeField] private float radius = 5f;
+    [SerializeField] private GameObject vfx;
 
     [SerializeField] private LayerMask enemyLayer;
 
     private HitData hitData;
     private PlayerControl player;
-    private float damage;
     private bool hasLanded;
     private float timer;
 
@@ -40,6 +40,7 @@ public class BloodMoon : MonoBehaviour
     public void Initialize(PlayerControl player, HitData hitData, Vector3 targetPos )
     {
         this.hitData = hitData;
+        this.player = player;
 
         Vector3 targetPoint = targetPos;
 
@@ -109,6 +110,10 @@ public class BloodMoon : MonoBehaviour
         while (timer < duration)
         {
             DealDamage();
+
+            var vfxPrefab = Instantiate(vfx, transform.position, Quaternion.identity);
+
+            Destroy(vfxPrefab, 1f);
 
             yield return new WaitForSeconds(tickRate);
 

@@ -27,16 +27,16 @@ public class BloodMoon_Skill : Skill
     {
         player.blockVelocity = true;
 
-        //Vector3 finalTarget = lockTargetPos != Vector3.zero ? lockTargetPos : targetPoint;
+        Vector3 finalTarget = lockTargetPos != Vector3.zero ? lockTargetPos : targetPoint;
 
-        //// clamp range
-        //Vector3 dir = (finalTarget - player.transform.position);
-        //float dist = dir.magnitude;
+        // clamp range
+        Vector3 dir = (finalTarget - player.transform.position);
+        float dist = dir.magnitude;
 
-        //if (dist > maxRange)
-        //{
-        //    finalTarget = player.transform.position + dir.normalized * maxRange;
-        //}
+        if (dist > maxRange)
+        {
+            finalTarget = player.transform.position + dir.normalized * maxRange;
+        }
 
         Vector3 spawnPos = player.transform.position + player.Model.forward * offset.z + player.Model.right * offset.x + Vector3.up * height;
 
@@ -47,7 +47,7 @@ public class BloodMoon_Skill : Skill
 
         if (moonProj != null)
         {
-            moonProj.Initialize(player, hitData, targetPoint);
+            moonProj.Initialize(player, hitData, finalTarget);
         }
     }
 }
