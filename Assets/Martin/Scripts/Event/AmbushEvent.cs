@@ -167,7 +167,7 @@ public class AmbushEvent : MonoBehaviour
                 var desiredPos = vfxPos[i];
                 GameObject vfx = Instantiate(spawnVfx, desiredPos.position, desiredPos.rotation);
 
-                Destroy(vfx, 0.6f);
+                Destroy(vfx, 2.25f);
             }
 
             Spawn(i);
