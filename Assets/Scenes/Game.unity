@@ -24281,6 +24281,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 995819620}
   m_Mesh: {fileID: 4766777807855040723, guid: 4df58dd743e7d6d419e6c75edebb04b4, type: 3}
+--- !u!1 &1000761918
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1000761919}
+  m_Layer: 0
+  m_Name: Safe_Zone (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1000761919
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000761918}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.12999916, y: -0.6700001, z: 1.1500015}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1197316938}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1008385816
 GameObject:
   m_ObjectHideFlags: 0
@@ -27389,6 +27420,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1197316938}
   - {fileID: 1709827022}
   - {fileID: 347990947}
   - {fileID: 752723137}
@@ -27428,7 +27460,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 15, y: 10, z: 15}
   m_Center: {x: 0, y: 0, z: -27.88}
@@ -28684,6 +28716,119 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 77147997533388448, guid: 0428d77dee0212444952d5a04bf478b4, type: 3}
   m_PrefabInstance: {fileID: 1187778930}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1197316937
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1197316938}
+  - component: {fileID: 1197316939}
+  - component: {fileID: 1197316940}
+  m_Layer: 0
+  m_Name: TutorialCombat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1197316938
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1197316937}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 7.92, y: 3.88, z: 37.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1839855440}
+  - {fileID: 1000761919}
+  - {fileID: 1899822726}
+  m_Father: {fileID: 1152486657}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1197316939
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1197316937}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87919307934767a49a07202ce58c450e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatTutoEvent
+  spawnEntries:
+  - enemyPrefab: {fileID: 7353159426421426004, guid: ed8878aba28c7ae4fb349ef1a55e9cfc, type: 3}
+    spawnPoint: {fileID: 1899822726}
+    safePoint: {fileID: 1000761919}
+    patrolPoints: []
+    hasPatrol: 0
+    spawnOnStart: 0
+    oneTimeSpawn: 0
+    hasSpawned: 0
+    spawnedEnemy: {fileID: 0}
+  spawnVfx: {fileID: 2886950366143268859, guid: 253510ecf8d65454aa4d811cffb5a8f8, type: 3}
+  cameraShowSpawn:
+    cameraID: 10
+    duration: 1.5
+    activePriority: 100
+    inactivePriority: -2
+    followTarget: {fileID: 0}
+    lookAtTarget: {fileID: 0}
+    restoreGameplayCamera: 1
+    interruptCurrent: 1
+    pausePlayer: 1
+    mutePlayerAudio: 1
+  pages:
+  - title: "Bloque de c\xE1mara en objetivo"
+    description: "Con la tecla \"Q\" si tienes enemigos en tu campo de visi\xF3n,
+      bloquea la c\xE1mara para la direcci\xF3n del enemigo."
+    texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
+    video: {fileID: 32900000, guid: 3756c4061af290d4d950960369238433, type: 3}
+  - title: Ataque principal
+    description: Dependiendo del personaje con el "click izquierdo "realizara una
+      secuencia de ataques.
+    texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
+    video: {fileID: 32900000, guid: 3756c4061af290d4d950960369238433, type: 3}
+  - title: Ataque cuerpo a cuerpo
+    description: "Con la tecla \"F\" todos los personajes tienen una opci\xF3n de
+      ataque de cuerpo a cuerpo."
+    texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
+    video: {fileID: 32900000, guid: 15b14a5da566c5a4a8742c853486033c, type: 3}
+  - title: Ruptura de guardia
+    description: "Los enemigos tienen una barra de guardia, que al recibir da\xF1o
+      , al llegar al m\xE1ximo entrar\xE1n en un estado de debilidad donde pueden
+      recibir m\xE1s da\xF1os."
+    texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
+    video: {fileID: 32900000, guid: 0d55e4a22d95dda48a2dc4b37115f6cf, type: 3}
+--- !u!65 &1197316940
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1197316937}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 18, y: 10, z: 18}
+  m_Center: {x: 0, y: 5, z: 0}
 --- !u!1 &1197659642
 GameObject:
   m_ObjectHideFlags: 0
@@ -28701,7 +28846,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1197659643
 Transform:
   m_ObjectHideFlags: 0
@@ -30561,7 +30706,6 @@ MonoBehaviour:
   waypoints:
   - {fileID: 846247848}
   - {fileID: 684463129}
-  - {fileID: 0}
   speed: 15
   loopMode: 0
   waitTimeAtPoint: 1.5
@@ -32980,7 +33124,6 @@ MonoBehaviour:
   waypoints:
   - {fileID: 472293081}
   - {fileID: 909849282}
-  - {fileID: 0}
   speed: 15
   loopMode: 0
   waitTimeAtPoint: 1.5
@@ -48282,6 +48425,96 @@ Transform:
   m_Children: []
   m_Father: {fileID: 139758999}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1839855439
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1839855440}
+  - component: {fileID: 1839855441}
+  - component: {fileID: 1839855442}
+  m_Layer: 0
+  m_Name: CinemachineCamera
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1839855440
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839855439}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.32825354, y: -0, z: -0, w: 0.9445897}
+  m_LocalPosition: {x: -0.84, y: 10.22, z: -8.057079}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1197316938}
+  m_LocalEulerAnglesHint: {x: 38.326, y: 0, z: 0}
+--- !u!114 &1839855441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839855439}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9dfa5b682dcd46bda6128250e975f58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineCamera
+  Priority:
+    Enabled: 1
+    m_Value: -2
+  OutputChannel: 1
+  StandbyUpdate: 2
+  m_StreamingVersion: 20241001
+  m_LegacyPriority: 0
+  Target:
+    TrackingTarget: {fileID: 0}
+    LookAtTarget: {fileID: 0}
+    CustomLookAtTarget: 0
+  Lens:
+    FieldOfView: 60.000004
+    OrthographicSize: 5
+    NearClipPlane: 0.3
+    FarClipPlane: 1000
+    Dutch: 0
+    ModeOverride: 0
+    PhysicalProperties:
+      GateFit: 2
+      SensorSize: {x: 21.946, y: 16.002}
+      LensShift: {x: 0, y: 0}
+      FocusDistance: 10
+      Iso: 200
+      ShutterSpeed: 0.005
+      Aperture: 16
+      BladeCount: 5
+      Curvature: {x: 2, y: 11}
+      BarrelClipping: 0.25
+      Anamorphism: 0
+  BlendHint: 0
+--- !u!114 &1839855442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839855439}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31d00c6ecbcfd834eb34d1358636c093, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraID
+  id: 10
+  cameraReference: {fileID: 1839855441}
 --- !u!1 &1846440043
 GameObject:
   m_ObjectHideFlags: 0
@@ -49761,6 +49994,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 752723137}
   m_LocalEulerAnglesHint: {x: 0, y: 145, z: 0}
+--- !u!1 &1899822725
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1899822726}
+  m_Layer: 0
+  m_Name: SpawnPoint (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1899822726
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1899822725}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
+  m_LocalPosition: {x: 0.12999916, y: 0.52999973, z: 7.970001}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1197316938}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1 &1902652050
 GameObject:
   m_ObjectHideFlags: 0
