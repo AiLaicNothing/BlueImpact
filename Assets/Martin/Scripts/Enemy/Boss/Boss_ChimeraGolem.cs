@@ -24,6 +24,9 @@ public class Boss_ChimeraGolem : EnemyBase
     [SerializeField] private GameObject fireballPrefab;
     [SerializeField] private GameObject magicCircleVfx;
 
+    [SerializeField] private GameObject warningVfx;
+    [SerializeField] private Vector3 offsetWarning;
+
     [Header("Car Flare")]
     [SerializeField] private int bulletPerShoot;
     [SerializeField] private float timeBtwShoot;
@@ -212,7 +215,7 @@ public class Boss_ChimeraGolem : EnemyBase
 
         yield return new WaitForSeconds(startUpDuration);
 
-        if (magicCircleVfx  != null)
+        if (magicCircleVfx != null)
         {
             Vector3 circlePos = transform.position + Vector3.up * spawnHeight;
 
@@ -231,24 +234,38 @@ public class Boss_ChimeraGolem : EnemyBase
 
                 Vector3 spawnPos = transform.position + new Vector3(randomPoint.x, spawnHeight, randomPoint.y);
 
-                if (fireballPrefab != null)
+                if (Physics.Raycast(spawnPos, Vector3.down, out RaycastHit hit, Mathf.Infinity, whatIsGround))
                 {
-                    var prefab = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+                    float distance = Vector3.Distance(spawnPos, hit.point);
+                    float travelTime = distance / 14f;
 
-                    var proj = prefab.GetComponent<E_Projectile>();
+                    if (warningVfx != null)
+                    {
+                        GameObject warning = Instantiate(warningVfx, hit.point + offsetWarning, Quaternion.identity);
 
-                    proj.InitProj(22f, Vector3.down);
+                        Destroy(warning, travelTime);
+                    }
+
+
+                    if (fireballPrefab != null)
+                    {
+                        var prefab = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+
+                        var proj = prefab.GetComponent<E_Projectile>();
+
+                        proj.InitProj(22f, Vector3.down);
+                    }
                 }
+
+                timer += waveInterval;
+
+                yield return new WaitForSeconds(waveInterval);
             }
 
-            timer += waveInterval;
+            yield return new WaitForSeconds(1.5f);
 
-            yield return new WaitForSeconds(waveInterval);
+            Debug.Log("Attack Uel Flare end");
         }
-
-        yield return new WaitForSeconds(1.5f);
-
-        Debug.Log("Attack Uel Flare end");
     }
 
     private IEnumerator CarFlare()
