@@ -3,6 +3,7 @@ using UnityEngine;
 public class CheatManager : MonoBehaviour
 {
     [SerializeField] private Transform level1Pos;
+    [SerializeField] private Transform level1_5Pos;
     [SerializeField] private Transform level2Pos;
     [SerializeField] private Transform level2_5;
     [SerializeField] private Transform level3Pos;
@@ -10,7 +11,7 @@ public class CheatManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.P))
         {
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
@@ -18,13 +19,17 @@ public class CheatManager : MonoBehaviour
             }
             else if (Input.GetKeyDown(KeyCode.Alpha2))
             {
-                TeleportToLevel2();
+                TeleportToLevel1_5();
             }
             else if (Input.GetKeyDown(KeyCode.Alpha3))
             {
-                TeleportToLevel2_5();
+                TeleportToLevel2();
             }
             else if (Input.GetKeyDown(KeyCode.Alpha4))
+            {
+                TeleportToLevel2_5();
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha5))
             {
                 TeleportToLevel3();
             }
@@ -40,6 +45,13 @@ public class CheatManager : MonoBehaviour
         Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
 
         player.transform.position = level1Pos.position;
+    }
+
+    private void TeleportToLevel1_5()
+    {
+        Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
+
+        player.transform.position = level1_5Pos.position;
     }
 
     private void TeleportToLevel2()

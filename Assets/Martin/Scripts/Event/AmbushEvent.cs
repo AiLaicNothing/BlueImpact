@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +8,9 @@ public class AmbushEvent : MonoBehaviour
     [SerializeField] private List<SpawnEntry> spawnEntries = new();
     [SerializeField] private bool hasStarted;
     [SerializeField] private bool hasFinished;
+
+    [SerializeField] private GameObject spawnVfx;
+    [SerializeField] private Transform[] vfxPos;
 
     [SerializeField] private float doorSpeed;
     [SerializeField] private Transform[] doors;
@@ -158,6 +162,14 @@ public class AmbushEvent : MonoBehaviour
 
         for (int i = 0; i < spawnEntries.Count; i++)
         {
+            if (spawnVfx != null)
+            {
+                var desiredPos = vfxPos[i];
+                GameObject vfx = Instantiate(spawnVfx, desiredPos.position, desiredPos.rotation);
+
+                Destroy(vfx, 0.6f);
+            }
+
             Spawn(i);
         }
 
