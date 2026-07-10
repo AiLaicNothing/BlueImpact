@@ -14,6 +14,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Cinemachine::Cinemachine.CinemachineBlenderSettings
   CustomBlends:
   - From: Player_FreeLook_Cam
+    To: Tutorial-Combat_Cam
+    Blend:
+      Style: 2
+      Time: 0.6
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 4
+  - From: Tutorial-Combat_Cam
+    To: Player_FreeLook_Cam
+    Blend:
+      Style: 2
+      Time: 0.6
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 0
+        m_PostInfinity: 0
+        m_RotationOrder: 4
+  - From: Player_FreeLook_Cam
     To: StartPuzzle
     Blend:
       Style: 0
