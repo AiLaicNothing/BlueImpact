@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DeathScreenUI : MonoBehaviour
 {
@@ -9,6 +10,12 @@ public class DeathScreenUI : MonoBehaviour
     [SerializeField] private TMP_Text countdownText;
     [SerializeField] private float deathScreenDuration = 3f;
     [SerializeField] private float fadeInDuration = 0.5f;
+
+    [SerializeField] private Image gifImage;
+    [SerializeField] private Sprite[] gifFrames;
+    [SerializeField] private float gifFPS = 12f;
+
+    private Coroutine gifCoroutine;
 
     private void Awake()
     {
@@ -39,6 +46,12 @@ public class DeathScreenUI : MonoBehaviour
     private void ShowDeathScreen()
     {
         Debug.Log("💀 DeathScreenUI - ShowDeathScreen() EJECUTADO");
+
+        if (gifCoroutine != null)
+            StopCoroutine(gifCoroutine);
+
+        gifCoroutine = StartCoroutine(PlayGif());
+
         StartCoroutine(DeathScreenRoutine());
     }
 
@@ -81,6 +94,13 @@ public class DeathScreenUI : MonoBehaviour
         Debug.Log("📢 Llamando a RespawnManager.Respawn()");
         RespawnManager.Instance?.Respawn();
 
+
+        if (gifCoroutine != null)
+        {
+            StopCoroutine(gifCoroutine);
+            gifCoroutine = null;
+        }
+
         // Fade out
         elapsedTime = 0f;
         while (elapsedTime < fadeInDuration)
@@ -91,6 +111,24 @@ public class DeathScreenUI : MonoBehaviour
         }
 
         canvasGroup.alpha = 0f;
-        // ✅ NO usar SetActive(false), dejar el GameObject activo con alpha = 0
+
+         
+    }
+
+    private IEnumerator PlayGif()
+    {
+        int index = 0;
+        float wait = 1f / gifFPS;
+
+        while (true)
+        {
+            gifImage.sprite = gifFrames[index];
+
+            index++;
+            if (index >= gifFrames.Length)
+                index = 0;
+
+            yield return new WaitForSeconds(wait);
+        }
     }
 }
