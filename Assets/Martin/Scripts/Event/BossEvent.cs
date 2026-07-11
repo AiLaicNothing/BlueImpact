@@ -254,17 +254,14 @@ public class BossEvent : MonoBehaviour
 
         ending.ShowCutscene();
 
-        yield return new WaitForSeconds(10f);
+        yield return new WaitForSeconds(8.5f);
 
         ending.activeVideo(false);
         ending.ContinueVideo(true);
 
         yield return new WaitForSeconds(6f);
 
-        secretUI.SetActive(false);
         continueUI.SetActive(true);
-
-        yield return new WaitForSeconds(1.5f);
         SceneManager.LoadScene("menu");
     }
 

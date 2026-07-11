@@ -33,6 +33,8 @@ public class Ending_Cinematic : MonoBehaviour
 
     public void ShowCutscene()
     {
+        activePanel(true);
+
         info = PlayerSpawn_Manager.Instance.GetCharacter();
 
         if (panel == null) return;

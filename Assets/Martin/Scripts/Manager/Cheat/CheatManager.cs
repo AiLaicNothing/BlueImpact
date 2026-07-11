@@ -33,7 +33,7 @@ public class CheatManager : MonoBehaviour
             {
                 TeleportToLevel3();
             }
-            else if (Input.GetKeyDown(KeyCode.Alpha5))
+            else if (Input.GetKeyDown(KeyCode.Alpha6))
             {
                 TeleportToLevel3_5();
             }
