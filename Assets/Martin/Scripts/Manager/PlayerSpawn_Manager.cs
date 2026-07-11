@@ -19,6 +19,11 @@ public class PlayerSpawn_Manager : MonoBehaviour
         currentCharacterInfo = info;
     }
 
+    public CharacterInfo GetCharacter()
+    {
+        return currentCharacterInfo;
+    }
+
     public void SpawnCharacter(Transform spawnPoint)
     {
         var charPrefab = currentCharacterInfo.prefab;

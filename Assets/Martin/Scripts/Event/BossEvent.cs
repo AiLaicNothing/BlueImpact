@@ -241,6 +241,8 @@ public class BossEvent : MonoBehaviour
 
     private IEnumerator OnDeathEvent()
     {
+        var ending = secretUI.GetComponent<Ending_Cinematic>();
+
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
 
         // 🔇 Silenciar audio
@@ -250,11 +252,14 @@ public class BossEvent : MonoBehaviour
             Debug.Log("[BossEvent] 🔒 Jugador pausado para evento de muerte");
         }
 
-        yield return new WaitForSeconds(1.5f);
+        ending.ShowCutscene();
 
-        secretUI.SetActive(true);
+        yield return new WaitForSeconds(10f);
 
-        yield return new WaitForSeconds(3f);
+        ending.activeVideo(false);
+        ending.ContinueVideo(true);
+
+        yield return new WaitForSeconds(6f);
 
         secretUI.SetActive(false);
         continueUI.SetActive(true);
