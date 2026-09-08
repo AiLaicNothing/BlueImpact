@@ -21,7 +21,8 @@ public class P_Iddle_AState : PlayerState
             }
         }
     }
-
+    bool isProjecting;
+    int trueIndex = -1;
     public override void OnUpdate()
     {
         //if (player.Input.hasDashed && player.HasStamina(player.DashCost))
@@ -78,16 +79,44 @@ public class P_Iddle_AState : PlayerState
             }
 
         }
-
         int index = player.Input.skillPressedIndex;
+        if (isProjecting)
+        {
+            var skill = player.GetSkill(trueIndex);
+            if (player.Input.skillCanceled)
+            {
+                player.skill_AState.SetSkill(skill, trueIndex);
+                player.blockVelocity = true;
+                player.ChangeActionState(player.skill_AState);
+                Debug.Log("Skill Canceled & Projection finish");
+                Debug.Log("index" + trueIndex);
+                trueIndex = -1;
+                isProjecting = false;
+            }
+            else
+            {
+                Debug.Log("Update proyeccion");
+                skill.UpdateProjectionPosition(player);
+            }
+            return;
+        }
 
         if (index != -1)
         {
+            trueIndex = index;
             Debug.Log($"Player: Try change to skill state {index}");
             var skill = player.GetSkill(index);
 
             if (skill != null && player.IsSkillReady(index))
             {
+                if (skill.haveProjection)
+                {
+                    Debug.Log("Hay proyeccion");
+                    skill.CreateProjection(player);
+                    skill.UpdateProjectionPosition(player);
+                    isProjecting = true;
+                    return;
+                }
                 player.skill_AState.SetSkill(skill, index);
                 player.ChangeActionState(player.skill_AState);
                 return;

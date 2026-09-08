@@ -18,6 +18,7 @@ public abstract class Skill : ScriptableObject
     public float castTime;
     public float cooldown;
     public float actionTime;
+    public bool haveProjection;
 
     [Header("Animation")]
     public string castAnimation;
@@ -73,4 +74,6 @@ public abstract class Skill : ScriptableObject
 
         return description;
     }
+    public virtual void CreateProjection(PlayerControl player) { return; }
+    public virtual void UpdateProjectionPosition(PlayerControl player) { return; }
 }

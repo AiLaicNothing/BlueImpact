@@ -17,6 +17,7 @@ public class PlayerInputHandler : MonoBehaviour
     public bool AttackBuffered => attackBufferCounter > 0;
     public bool onMelee { get; private set; }
     public bool skill1Pressed { get; private set; }
+    public bool skillCanceled { get; private set; }
     public int skillPressedIndex { get; private set; } = -1;
 
     // ✅ AGREGAR ESTO: Acción Pause
@@ -135,7 +136,15 @@ public class PlayerInputHandler : MonoBehaviour
     {
         if (context.started)
         {
+            Debug.Log("Skill 1");
             skillPressedIndex = 0;
+            skillCanceled = false;
+        }
+        if (context.canceled)
+        {
+            Debug.Log("Skill Canceled");
+            skillCanceled = true;
+            skillPressedIndex = -1;
         }
     }
 
@@ -143,7 +152,15 @@ public class PlayerInputHandler : MonoBehaviour
     {
         if (context.started)
         {
+            Debug.Log("Skill 2");
             skillPressedIndex = 1;
+            skillCanceled = false;
+        }
+        if (context.canceled)
+        {
+            Debug.Log("Skill Canceled");
+            skillCanceled = true;
+            skillPressedIndex = -1;
         }
     }
 
@@ -151,7 +168,15 @@ public class PlayerInputHandler : MonoBehaviour
     {
         if (context.started)
         {
+            Debug.Log("Skill 3");
             skillPressedIndex = 2;
+            skillCanceled = false;
+        }
+        if (context.canceled)
+        {
+            Debug.Log("Skill Canceled");
+            skillCanceled = true;
+            skillPressedIndex = -1;
         }
     }
 
@@ -159,7 +184,15 @@ public class PlayerInputHandler : MonoBehaviour
     {
         if (context.started)
         {
+            Debug.Log("Skill 4");
             skillPressedIndex = 3;
+            skillCanceled = false;
+        }
+        if (context.canceled)
+        {
+            Debug.Log("Skill Canceled");
+            skillCanceled = true;
+            skillPressedIndex = -1;
         }
     }
 
@@ -180,7 +213,6 @@ public class PlayerInputHandler : MonoBehaviour
         onLockTarget = false;
 
         scrollInput = 0f;
-        skillPressedIndex = -1;
     }
 
     private void BufferAttack(AttackInputType type)
