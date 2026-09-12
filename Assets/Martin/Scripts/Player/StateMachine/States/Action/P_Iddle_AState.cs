@@ -88,14 +88,11 @@ public class P_Iddle_AState : PlayerState
                 player.skill_AState.SetSkill(skill, trueIndex);
                 player.blockVelocity = true;
                 player.ChangeActionState(player.skill_AState);
-                Debug.Log("Skill Canceled & Projection finish");
-                Debug.Log("index" + trueIndex);
                 trueIndex = -1;
                 isProjecting = false;
             }
             else
             {
-                Debug.Log("Update proyeccion");
                 skill.UpdateProjectionPosition(player);
             }
             return;
@@ -111,7 +108,6 @@ public class P_Iddle_AState : PlayerState
             {
                 if (skill.haveProjection)
                 {
-                    Debug.Log("Hay proyeccion");
                     skill.CreateProjection(player);
                     skill.UpdateProjectionPosition(player);
                     isProjecting = true;

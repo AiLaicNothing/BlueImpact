@@ -98,7 +98,7 @@ public class Automata : EnemyBase
     {
         if (!HasValidPlayer())
         {
-            player = FindFirstObjectByType<PlayerControl>();
+            //player = FindFirstObjectByType<PlayerControl>();
         }
     }
 

@@ -112,7 +112,7 @@ public class Undead : EnemyBase
     {
         if (!HasValidPlayer())
         {
-            player = FindFirstObjectByType<PlayerControl>();
+            //player = FindFirstObjectByType<PlayerControl>();
         }
     }
 

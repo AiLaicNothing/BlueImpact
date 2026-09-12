@@ -37,7 +37,6 @@ public class TauntIllusion_Skill : Skill
             mat.DisableKeyword("ALPHAPREMULTIPLY_ON");
             mat.renderQueue = 3000;
         }
-        Debug.Log("De verdad Hay proyeccion");
     }
     public override void UpdateProjectionPosition(PlayerControl player)
     {
@@ -46,7 +45,6 @@ public class TauntIllusion_Skill : Skill
 
         projectionObjectSave.transform.position = point;
         projectionObjectSave.transform.rotation = player.Model.rotation;
-        Debug.Log("De verdad update proyecciomj");
         if (occupiedPositions.Contains(point))
         {
             SetProjectionColor(Color.red);
@@ -54,7 +52,7 @@ public class TauntIllusion_Skill : Skill
 
         else
         {
-            SetProjectionColor(new Color(1f, 1f, 1f, 0.5f));                
+            SetProjectionColor(new Color(1f, 1f, 1f, 0.3f));                
         }
 
         
@@ -74,7 +72,6 @@ public class TauntIllusion_Skill : Skill
         if (!occupiedPositions.Contains(placementPosition))
         {
             var prefab = Instantiate(objectToPlace, placementPosition, player.Model.rotation);
-            Debug.Log("Wbd creaada");
             occupiedPositions.Add(placementPosition);
             DestroyObject(placementPosition, prefab);
             exist = true;
@@ -84,7 +81,6 @@ public class TauntIllusion_Skill : Skill
     void DestroyProjectionObject()
     {
         Destroy(projectionObjectSave); 
-        Debug.Log("proyeccion destruida");
     }
     void DestroyObject(Vector3 placementPosition, GameObject prefab)
     {

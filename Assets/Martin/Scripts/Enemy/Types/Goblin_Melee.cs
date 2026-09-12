@@ -87,7 +87,7 @@ public class Goblin_Melee : EnemyBase
     {
         if (!HasValidPlayer())
         {
-            player = FindFirstObjectByType<PlayerControl>();
+            //player = FindFirstObjectByType<PlayerControl>();
         }
     }
     private bool HasLineOfSight()

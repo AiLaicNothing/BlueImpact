@@ -704,10 +704,73 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3298384718926308587, guid: 2eba9ba3946a87a468c14f8048e2bed8, type: 3}
       insertIndex: 0
       addedObject: {fileID: 6448093771465036146}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2eba9ba3946a87a468c14f8048e2bed8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7482568579456107328}
   m_SourcePrefab: {fileID: 100100000, guid: 2eba9ba3946a87a468c14f8048e2bed8, type: 3}
 --- !u!4 &6296332889257525291 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3298384718926308587, guid: 2eba9ba3946a87a468c14f8048e2bed8, type: 3}
   m_PrefabInstance: {fileID: 8838074619805050048}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8531594348396878225 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2eba9ba3946a87a468c14f8048e2bed8, type: 3}
+  m_PrefabInstance: {fileID: 8838074619805050048}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7482568579456107328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8531594348396878225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa47c40197907fe4ab27083716ab8673, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TauntEnemies
+  movementSpeed: 0
+  jumpForce: 0
+  moveMultiplier: 0
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 0
+  GroundCheck: {fileID: 0}
+  groundCheckRange: 0
+  baseGravity: 0
+  fallGravityMultiplier: 0
+  dashDistance: 0
+  dashDuration: 0
+  dashCost: 0
+  rotSpeed: 0
+  playerModel: {fileID: 0}
+  normalCombo: {fileID: 0}
+  airCombo: {fileID: 0}
+  isRange: 0
+  firePoint: {fileID: 0}
+  shootData: {fileID: 0}
+  whatIsHitable:
+    serializedVersion: 2
+    m_Bits: 0
+  maxSkillSlot: 0
+  skills: []
+  playerInput: {fileID: 0}
+  audioLoopSource: {fileID: 0}
+  walk: {fileID: 0}
+  dash: {fileID: 0}
+  jump: {fileID: 0}
+  land: {fileID: 0}
+  onHit: {fileID: 0}
+  onDead: {fileID: 0}
+  meleeAttack: {fileID: 0}
+  shootSound: {fileID: 0}
+  sfxVolume: 0
+  showDebug: 0
+  hitboxPrefab: {fileID: 0}
+  hasUsedAirAttack: 0
+  hasUsedDash: 0
+  isPerformingAct: 0
+  blockVelocity: 0
+  radius: 10
