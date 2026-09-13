@@ -18,7 +18,7 @@ public class P_Move_State : PlayerState
 
             if (player.Anim.HasState(0, walk))
             {
-                player.Anim.Play(walk);
+                player.Anim.SetBool("Walking", true);
             }
             else
             {
@@ -29,6 +29,7 @@ public class P_Move_State : PlayerState
 
     public override void OnUpdate()
     {
+        base.OnUpdate();
         player.PlayConstantAudio(player.walk, 1, false);
 
         if (!player.IsGrounded)
@@ -52,6 +53,7 @@ public class P_Move_State : PlayerState
 
     public override void OnExit()
     {
+        player.Anim.SetBool("Walking", false);
         player.PlayConstantAudio(player.walk, 1, true);
     }
 }

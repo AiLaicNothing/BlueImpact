@@ -47,9 +47,9 @@ public class P_Dash_AState : PlayerState
         {
             int dash = Animator.StringToHash("Dash");
 
-            if (player.Anim.HasState(1, dash))
+            if (player.Anim.HasState(0, dash))
             {
-                player.Anim.Play(dash);
+                player.Anim.SetTrigger("Dashing");
             }
             else
             {
@@ -70,6 +70,7 @@ public class P_Dash_AState : PlayerState
         {
             player.ChangeActionState(player.iddle_AState);
         }
+        base.OnUpdate();
     }
 
     public override void OnExit()
@@ -77,5 +78,7 @@ public class P_Dash_AState : PlayerState
         player.Rb.linearVelocity = Vector3.zero;
 
         player.isPerformingAct = false;
+        base.OnExit();
+
     }
 }

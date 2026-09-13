@@ -9,11 +9,11 @@ public class P_Iddle_AState : PlayerState
 
         if (player.Anim != null)
         {
-            int empty = Animator.StringToHash("Empty");
+            int idle = Animator.StringToHash("Idle");
 
-            if (player.Anim.HasState(1, empty))
+            if (player.Anim.HasState(0, idle) && player.IsGrounded)
             {
-                player.Anim.Play(empty);
+                player.Anim.SetBool("Idle", true);
             }
             else
             {
@@ -27,6 +27,15 @@ public class P_Iddle_AState : PlayerState
     {
         //if (player.Input.hasDashed && player.HasStamina(player.DashCost))
 
+        if (player.Input.moveInput.magnitude > 0.1f && player.IsGrounded)
+        {
+            player.Anim.SetBool("Walking", true);
+        }
+        else
+        {
+            player.Anim.SetBool("Walking", false);
+            player.Anim.SetBool("Idle", true);
+        }
         if (player.Input.hasDashed)
         {
             player.ChangeActionState(player.dash_AState);
@@ -122,6 +131,7 @@ public class P_Iddle_AState : PlayerState
 
     public override void OnExit()
     {
-        base.OnExit();
+        player.Anim.SetBool("Walking", false);
+        player.Anim.SetBool("Idle", false);
     }
 }

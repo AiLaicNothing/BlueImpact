@@ -21,7 +21,7 @@ public class P_Jump_State : PlayerState
 
             if (player.Anim.HasState(0, jump))
             {
-                player.Anim.Play(jump);
+                player.Anim.SetTrigger("Jump");
             }
             else
             {

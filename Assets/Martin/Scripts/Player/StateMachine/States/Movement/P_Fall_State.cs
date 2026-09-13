@@ -21,7 +21,7 @@ public class P_Fall_State : PlayerState
 
             if (player.Anim.HasState(0, fall))
             {
-                player.Anim.Play(fall);
+                player.Anim.SetBool("Falling", true);
             }
             else
             {
@@ -49,7 +49,7 @@ public class P_Fall_State : PlayerState
     public override void OnExit()
     {
         Debug.Log("Exit Fall State");
-
+        player.Anim.SetBool("Falling", false);
         player.SetGravityMultiplier(1f);
     }
 }

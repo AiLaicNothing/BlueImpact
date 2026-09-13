@@ -857,7 +857,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
         if (isDead) return;
 
         playerStatsManager.Consume(StatType.Vida, (int)info.damage);
-
+        Anim.SetTrigger("Attacked");
         // 🔊 Sonido de recibir daño
         PlayAudio(onHit, sfxVolume);
 
