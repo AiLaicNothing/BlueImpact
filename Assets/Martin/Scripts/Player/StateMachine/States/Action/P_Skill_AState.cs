@@ -98,6 +98,8 @@ public class P_Skill_AState : PlayerState
                 player.ChangeActionState(player.iddle_AState);
             }
         }
+
+        base.OnUpdate();
     }
 
     public override void OnExit()

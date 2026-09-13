@@ -127,6 +127,8 @@ public class P_Iddle_AState : PlayerState
                 return;
             }
         }
+
+        base.OnUpdate();
     }
 
     public override void OnExit()
