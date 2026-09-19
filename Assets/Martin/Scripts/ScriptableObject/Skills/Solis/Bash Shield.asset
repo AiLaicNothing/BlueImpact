@@ -20,6 +20,7 @@ MonoBehaviour:
   castTime: 0
   cooldown: 2.5
   actionTime: 0.3
+  haveProjection: 0
   castAnimation: Carga_Solar
   actionAnimation: 
   castSound: {fileID: 0}
@@ -41,3 +42,11 @@ MonoBehaviour:
     knockDownForwardScale: 0.15
   hitBoxSize: {x: 1, y: 1, z: 1}
   hitBoxOffset: {x: 0, y: 0, z: 1}
+  refreshRate: 0.02
+  trailAmount: 10
+  shaderVarRef: _Alpha
+  shaderVarRate: 0.01
+  shaderVarRefreshRate: 0.05
+  skinnedMeshRenderers: []
+  gameObjects: []
+  shaderMaterial: {fileID: 2100000, guid: 7ca83ec629caa294aac4e2dcf573bb67, type: 2}
