@@ -47,8 +47,6 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
         if (closeButton != null) closeButton.onClick.AddListener(ClosePopUp);
         if (nextPage != null) nextPage.onClick.AddListener(NextPage);
         if (previousPage != null) previousPage.onClick.AddListener(PreviousPage);
-
-        if (videoPlayer == null) videoPlayer = FindAnyObjectByType<VideoPlayer>();
     }
 
     private void Update()
