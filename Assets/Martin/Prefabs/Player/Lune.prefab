@@ -1080,10 +1080,30 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2898645153592624050}
     m_Modifications:
+    - target: {fileID: 6268789218193252081, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 18cd3f0c731b00c418a856931dbfd7ff, type: 2}
+    - target: {fileID: 6448093771465036146, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 19.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6448093771465036146, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -22.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6448093771465036146, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 59.5
+      objectReference: {fileID: 0}
     - target: {fileID: 8531594348396878225, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
       propertyPath: m_Name
       value: Lune - FBX
       objectReference: {fileID: 0}
+    - target: {fileID: 8972367369000124378, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: dfb590f3bfda9294f9ab02cdceb432d7, type: 2}
     - target: {fileID: 9020040962635547435, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.5
@@ -1143,6 +1163,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 881972894369011758, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 197749929156762730}
+    - targetCorrespondingSourceObject: {fileID: 8454222231962154343, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6558009529742365888}
     - targetCorrespondingSourceObject: {fileID: 1741313388367730273, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5550620228793747730}
@@ -1271,7 +1294,7 @@ MonoBehaviour:
   m_EndBones:
   - {fileID: 3653543295226310178}
   m_Material: {fileID: 0}
-  m_StartDepth: 1
+  m_StartDepth: 0
   m_SiblingConstraints: 0
   m_ClosedSiblings: 0
   m_SiblingRotationConstraints: 1
@@ -1324,6 +1347,71 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 9020040962635547435, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
   m_PrefabInstance: {fileID: 4429842621135888905}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5200136082278111086 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8454222231962154343, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+  m_PrefabInstance: {fileID: 4429842621135888905}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6558009529742365888
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5200136082278111086}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8aa2b9bccfefda549bd1cf67fd922ad8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: EZhex1991.EZSoftBone::EZhex1991.EZSoftBone.EZSoftBone
+  m_RootBones:
+  - {fileID: 8151942276991328697}
+  m_EndBones:
+  - {fileID: 3653543295226310178}
+  m_Material: {fileID: 0}
+  m_StartDepth: 0
+  m_SiblingConstraints: 0
+  m_ClosedSiblings: 0
+  m_SiblingRotationConstraints: 1
+  m_LengthUnification: 0
+  m_CollisionLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  m_ExtraColliders: []
+  m_Radius: 0
+  m_RadiusCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  m_DeltaTimeMode: 0
+  m_ConstantDeltaTime: 0.03
+  m_Iterations: 1
+  m_SleepThreshold: 0.005
+  m_GravityAligner: {fileID: 0}
+  m_Gravity: {x: 0, y: 0, z: 0}
+  m_ForceModule: {fileID: 0}
+  m_ForceScale: 1
+  m_SimulateSpace: {fileID: 0}
 --- !u!4 &8151942276991328697 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5501272476564194224, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}

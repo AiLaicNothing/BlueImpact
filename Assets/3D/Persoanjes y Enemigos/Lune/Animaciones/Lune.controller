@@ -2,6 +2,9 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1101 &-9116949670373237961
 AnimatorStateTransition:
+--- !u!1102 &-8850169289318781039
+AnimatorState:
+  serializedVersion: 6
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -31,6 +34,25 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+  m_Name: Take 001
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours: []
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 1
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 1827226128182048838, guid: b37c9287a269fc949b85491e7db5eb4d, type: 3}
+  m_Tag: 
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
 --- !u!1107 &-8735148164945937520
 AnimatorStateMachine:
   serializedVersion: 6
@@ -63,6 +85,15 @@ AnimatorStateMachine:
   - {fileID: 5547208713895258365}
   - {fileID: 7026614120076186603}
   - {fileID: -670714763610855559}
+    m_Position: {x: 120, y: 150, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -8850169289318781039}
+    m_Position: {x: 155, y: 215, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: -8496640686993379857}
+    m_Position: {x: 190, y: 280, z: 0}
+  m_ChildStateMachines: []
+  m_AnyStateTransitions: []
   m_EntryTransitions: []
   m_StateMachineTransitions:
   - first: {fileID: 9073552134375384939}
@@ -75,6 +106,9 @@ AnimatorStateMachine:
   m_DefaultState: {fileID: -8487155562447813611}
 --- !u!1101 &-8666400043963524944
 AnimatorStateTransition:
+--- !u!1102 &-8496640686993379857
+AnimatorState:
+  serializedVersion: 6
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -104,6 +138,25 @@ AnimatorStateTransition:
   m_InterruptionSource: 0
   m_OrderedInterruption: 1
   m_CanTransitionToSelf: 1
+  m_Name: Take 001 0
+  m_Speed: 1
+  m_CycleOffset: 0
+  m_Transitions: []
+  m_StateMachineBehaviours: []
+  m_Position: {x: 50, y: 50, z: 0}
+  m_IKOnFeet: 0
+  m_WriteDefaultValues: 1
+  m_Mirror: 0
+  m_SpeedParameterActive: 0
+  m_MirrorParameterActive: 0
+  m_CycleOffsetParameterActive: 0
+  m_TimeParameterActive: 0
+  m_Motion: {fileID: 1827226128182048838, guid: b37c9287a269fc949b85491e7db5eb4d, type: 3}
+  m_Tag: 
+  m_SpeedParameter: 
+  m_MirrorParameter: 
+  m_CycleOffsetParameter: 
+  m_TimeParameter: 
 --- !u!1102 &-8487155562447813611
 AnimatorState:
   serializedVersion: 6
