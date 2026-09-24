@@ -40,6 +40,7 @@ public class TauntIllusion_Skill : Skill
     }
     public override void UpdateProjectionPosition(PlayerControl player)
     {
+        if (projectionObjectSave == null) return;
         Vector3 point = player.transform.position + player.Model.right * projectionOffset.x + player.Model.up * projectionOffset.y + player.Model.forward * projectionOffset.z;
 
 
@@ -54,7 +55,10 @@ public class TauntIllusion_Skill : Skill
         {
             SetProjectionColor(new Color(1f, 1f, 1f, 0.3f));                
         }
-
+        if (!player.PlayerStatsManager.CanConsume(resourceType, cost))
+        {
+            DestroyProjectionObject();
+        }
         
     }
     void SetProjectionColor(Color color)

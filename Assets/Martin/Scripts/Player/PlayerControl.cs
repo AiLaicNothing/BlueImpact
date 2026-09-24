@@ -285,8 +285,11 @@ public class PlayerControl : MonoBehaviour, IDamageable
         //  Actualizar cooldowns
         for (int i = 0; i < skillsCD.Length; i++)
         {
+
             if (skillsCD[i] > 0)
+            {
                 skillsCD[i] -= Time.fixedDeltaTime;
+            }
         }
 
         ApplyGravity();
