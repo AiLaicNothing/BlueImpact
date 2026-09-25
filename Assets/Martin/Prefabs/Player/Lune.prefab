@@ -1160,6 +1160,9 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8531594348396878225, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4670984455263138957}
     - targetCorrespondingSourceObject: {fileID: 881972894369011758, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 197749929156762730}
@@ -1347,6 +1350,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 9020040962635547435, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
   m_PrefabInstance: {fileID: 4429842621135888905}
   m_PrefabAsset: {fileID: 0}
+--- !u!137 &4755157929324076499 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8972367369000124378, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+  m_PrefabInstance: {fileID: 4429842621135888905}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5200136082278111086 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8454222231962154343, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
@@ -1412,6 +1420,31 @@ MonoBehaviour:
   m_ForceModule: {fileID: 0}
   m_ForceScale: 1
   m_SimulateSpace: {fileID: 0}
+--- !u!1 &5413249508259511192 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8531594348396878225, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
+  m_PrefabInstance: {fileID: 4429842621135888905}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4670984455263138957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5413249508259511192}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 564bd6a435360f249969de49fc2ac608, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::luneblinkingeyes
+  cuerpo: {fileID: 4755157929324076499}
+  materialesParpadeo:
+  - {fileID: 2100000, guid: 6531c825def2c0548b3473fde4440fbf, type: 2}
+  - {fileID: 2100000, guid: 704f5da730301344ea38255305fbe3c9, type: 2}
+  - {fileID: 2100000, guid: 6b7967f940671604aa3756175ae433c7, type: 2}
+  tiempoMinimo: 2.5
+  tiempoMaximo: 6
+  velocidadFotograma: 0.05
 --- !u!4 &8151942276991328697 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5501272476564194224, guid: 30d0d4c15dc87084a96339b2d8fc54b4, type: 3}
