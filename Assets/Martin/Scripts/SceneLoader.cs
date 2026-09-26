@@ -23,14 +23,19 @@ public class SceneLoader : MonoBehaviour
 
     private void Start()
     {
-        LoadScene("Zone_01_Tutorial");
-        LoadScene("Zone_02");
-        LoadScene("Testing4");
+        StartCoroutine(LoadTestScenes());
     }
 
     public void LoadScene(string sceneName)
     {
         StartCoroutine(LoadSceneAsync(sceneName));
+    }
+
+    private IEnumerator LoadTestScenes()
+    {
+        yield return StartCoroutine(LoadSceneAsync("Zone_01_Tutorial"));
+        yield return StartCoroutine(LoadSceneAsync("Zone_02"));
+        yield return StartCoroutine(LoadSceneAsync("Testing4"));
     }
 
     private IEnumerator LoadSceneAsync(string sceneName)
