@@ -25,6 +25,7 @@ public class Freeze_Skill : Skill
 
     [Header("Projection")]
     [SerializeField] private GameObject projectionObject;
+    //[SerializeField] private Color projectioColor;
     GameObject projectionObjectSave;
     bool exist = false;
     [SerializeField] private Vector3 projectionOffset;
@@ -108,7 +109,7 @@ public class Freeze_Skill : Skill
     {
         //projectionObject.GetComponent<Collider>().enabled = false;
         projectionObjectSave = Instantiate(projectionObject);
-        Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
+        /*Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
             Material mat = renderer.sharedMaterial;
@@ -124,7 +125,7 @@ public class Freeze_Skill : Skill
             mat.EnableKeyword("_ALPHABLEND_ON");
             mat.DisableKeyword("ALPHAPREMULTIPLY_ON");
             mat.renderQueue = 3000;
-        }
+        }*/
     }
     public override void UpdateProjectionPosition(PlayerControl player)
     {
@@ -135,7 +136,7 @@ public class Freeze_Skill : Skill
         projectionObjectSave.transform.position = point;
         projectionObjectSave.transform.rotation = player.Model.rotation;
         
-        SetProjectionColor(new Color(1f, 1f, 1f, 0.2f));
+        //SetProjectionColor(projectioColor);
         if (!player.PlayerStatsManager.CanConsume(resourceType, cost))
         {
             DestroyProjectionObject();

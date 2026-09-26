@@ -495,6 +495,10 @@ MonoBehaviour:
   collisionLayers:
     serializedVersion: 2
     m_Bits: 23553
+  startBeam: {fileID: 0}
+  vfxBeam: {fileID: 0}
+  lineRenderer: {fileID: 0}
+  duration: 0
   impactEffect: {fileID: 0}
 --- !u!1 &141851853
 GameObject:
@@ -3004,6 +3008,10 @@ MonoBehaviour:
   collisionLayers:
     serializedVersion: 2
     m_Bits: 23553
+  startBeam: {fileID: 0}
+  vfxBeam: {fileID: 0}
+  lineRenderer: {fileID: 0}
+  duration: 0
   impactEffect: {fileID: 0}
 --- !u!199 &718448746
 ParticleSystemRenderer:
@@ -8276,6 +8284,10 @@ MonoBehaviour:
   collisionLayers:
     serializedVersion: 2
     m_Bits: 23553
+  startBeam: {fileID: 0}
+  vfxBeam: {fileID: 0}
+  lineRenderer: {fileID: 0}
+  duration: 0
   impactEffect: {fileID: 0}
 --- !u!120 &1635791958
 LineRenderer:
@@ -9019,6 +9031,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2076045394977722375, guid: 4cef3590232b89341bb0537955486bfe, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2889599657727685249, guid: 4cef3590232b89341bb0537955486bfe, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4803355271209711927, guid: 4cef3590232b89341bb0537955486bfe, type: 3}
       propertyPath: m_Name
       value: MagicBeam
@@ -9033,7 +9053,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4925789401359683964, guid: 4cef3590232b89341bb0537955486bfe, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4925789401359683964, guid: 4cef3590232b89341bb0537955486bfe, type: 3}
       propertyPath: m_LocalRotation.w

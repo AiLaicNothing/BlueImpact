@@ -11,6 +11,7 @@ public class TauntIllusion_Skill : Skill
     private HashSet<Vector3> occupiedPositions = new HashSet<Vector3>();    
     bool exist = false;
     [SerializeField] private Vector3 projectionOffset;
+    [SerializeField] private Material projectionMat;
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         PlaceObject(player);
@@ -66,8 +67,7 @@ public class TauntIllusion_Skill : Skill
         Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
-            Material mat = renderer.sharedMaterial;
-            mat.color = color;
+            renderer.sharedMaterial = projectionMat;
         }
     }
     void PlaceObject(PlayerControl player)
