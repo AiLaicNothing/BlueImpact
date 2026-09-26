@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class CheatManager : MonoBehaviour
 {
@@ -8,6 +9,9 @@ public class CheatManager : MonoBehaviour
     [SerializeField] private Transform level2_5;
     [SerializeField] private Transform level3Pos;
     [SerializeField] private Transform level3_5;
+
+    [SerializeField] private Transform level_Tuto;
+    [SerializeField] private Transform level_Tuto1;
 
     private void Update()
     {
@@ -37,6 +41,25 @@ public class CheatManager : MonoBehaviour
             {
                 TeleportToLevel3_5();
             }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha8))
+        {
+            SceneManager.LoadScene("Testing_Scene");
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha9))
+        {
+            Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
+
+            player.transform.position = level_Tuto.position;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
+
+            player.transform.position = level_Tuto1.position;
         }
     }
 
