@@ -280,7 +280,7 @@ public class SkillManagementPanel : MonoBehaviour, IGamepadPanel
 
     private void RefreshSlots()
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 2; i++)
         {
             var skill = player.GetEquippedSkill(i);
 

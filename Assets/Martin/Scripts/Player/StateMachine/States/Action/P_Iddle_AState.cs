@@ -41,11 +41,6 @@ public class P_Iddle_AState : PlayerState
             player.Anim.SetBool("Idle", true);
         }
 
-        if (player.Input.hasDashed)
-        {
-            player.canDash = true;
-        }
-
         if (player.canDash)
         {
             if (player.Input.hasDashed)

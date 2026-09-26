@@ -66,8 +66,8 @@ public class InteractionUI : MonoBehaviour
     private string GetInputLabel()
     {
         if (isGamepadActive && Gamepad.current != null)
-            return "△"; // Botón Y/Triangle
+            return "Triangle"; // Botón Y/Triangle
 
-        return "E"; // Teclado
+        return "F"; // Teclado
     }
 }
