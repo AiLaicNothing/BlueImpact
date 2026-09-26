@@ -11,6 +11,7 @@ public class CheatManager : MonoBehaviour
     [SerializeField] private Transform level3_5;
 
     [SerializeField] private Transform level_Tuto;
+    [SerializeField] private Transform level_1_2;
     [SerializeField] private Transform level_Tuto1;
 
     private void Update()
@@ -43,17 +44,24 @@ public class CheatManager : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.Alpha8))
+        if (Input.GetKeyDown(KeyCode.Alpha7))
         {
             SceneManager.LoadScene("Testing_Scene");
         }
 
-        if (Input.GetKeyDown(KeyCode.Alpha9))
+        if (Input.GetKeyDown(KeyCode.Alpha8))
         {
             Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
 
             player.transform.position = level_Tuto.position;
         }
+        if (Input.GetKeyDown(KeyCode.Alpha8))
+        {
+            Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
+
+            player.transform.position = level_1_2.position;
+        }
+
 
         if (Input.GetKeyDown(KeyCode.Alpha0))
         {

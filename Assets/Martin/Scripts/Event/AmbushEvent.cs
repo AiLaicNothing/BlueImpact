@@ -17,7 +17,7 @@ public class AmbushEvent : MonoBehaviour
     [SerializeField] private Transform[] closePos;
     [SerializeField] private Transform[] openPos;
 
-    [SerializeField] private CameraRequest cameraEvent;
+    [SerializeField] private CameraRequest closeDoorsEvent;
     [SerializeField] private CameraRequest cameraShowSpawn;
 
     private List<GameObject> enemies = new();
@@ -39,6 +39,12 @@ public class AmbushEvent : MonoBehaviour
         {
             PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
         }
+    }
+
+    private void Start()
+    {
+        doors[0].position = openPos[0].position;
+        doors[1].position = openPos[1].position;
     }
 
     /// <summary>
@@ -64,27 +70,29 @@ public class AmbushEvent : MonoBehaviour
         hasStarted = true;
 
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
-        // 📌 SetMode(Cutscene) llama automáticamente a LockPlayerControl()
 
-        // 🔇 Silenciar audio
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(true);
-            Debug.Log("[AmbushEvent] 🔒 Jugador pausado y silenciado");
+            Debug.Log("[AmbushEvent] Jugador pausado y silenciado");
+        }
+
+        if (closeDoorsEvent != null)
+        {
+            CameraEventRelay.Instance.Play(closeDoorsEvent);
+            Debug.Log("CloseDoor");
         }
 
         yield return MoveDoor(closePos);
 
         yield return StartWave();
 
-        // 🔓 Reactivar jugador para que pueda combatir
         GameModeManager.Instance.SetMode(GameMode.Gameplay);
-        // 📌 SetMode(Gameplay) llama automáticamente a UnlockPlayerControl()
 
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(false);
-            Debug.Log("[AmbushEvent] 🔓 Jugador reactivado para combate");
+            Debug.Log("[AmbushEvent] Jugador reactivado para combate");
         }
 
         while (enemies.Count > 0)
@@ -94,25 +102,21 @@ public class AmbushEvent : MonoBehaviour
         }
 
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
-        // 📌 SetMode(Cutscene) llama automáticamente a LockPlayerControl()
 
-        // 🔒 Pausar nuevamente al terminar la ola
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(true);
-            Debug.Log("[AmbushEvent] 🔒 Jugador pausado después de combate");
+            Debug.Log("[AmbushEvent] Jugador pausado después de combate");
         }
 
         yield return MoveDoor(openPos);
 
-        // 🔓 Reactivar jugador definitivamente
         GameModeManager.Instance.SetMode(GameMode.Gameplay);
-        // 📌 SetMode(Gameplay) llama automáticamente a UnlockPlayerControl()
 
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(false);
-            Debug.Log("[AmbushEvent] 🔓 Jugador reactivado - Evento completado");
+            Debug.Log("[AmbushEvent] Jugador reactivado - Evento completado");
         }
 
         hasFinished = true;
@@ -121,12 +125,6 @@ public class AmbushEvent : MonoBehaviour
     private IEnumerator MoveDoor(Transform[] targets)
     {
         if (targets == null || targets.Length != doors.Length) yield break;
-
-        if (cameraEvent != null)
-        {
-            // 📌 Asegurar que cameraEvent tenga pausePlayer=true y mutePlayerAudio=true en inspector
-            CameraEventRelay.Instance.Play(cameraEvent);
-        }
 
         bool moving = true;
 
@@ -154,7 +152,6 @@ public class AmbushEvent : MonoBehaviour
     {
         if (cameraShowSpawn != null)
         {
-            // 📌 Asegurar que cameraShowSpawn tenga pausePlayer=true y mutePlayerAudio=true en inspector
             CameraEventRelay.Instance.Play(cameraShowSpawn);
         }
 
@@ -212,9 +209,9 @@ public class AmbushEvent : MonoBehaviour
 
         StopAllCoroutines();
 
-        // 🔓 Reactivar jugador si el evento se cancela por muerte
+        // Reactivar jugador si el evento se cancela por muerte
         GameModeManager.Instance.SetMode(GameMode.Gameplay);
-        // 📌 SetMode(Gameplay) llama automáticamente a UnlockPlayerControl()
+        // SetMode(Gameplay) llama automáticamente a UnlockPlayerControl()
 
         if (playerControl != null)
         {
