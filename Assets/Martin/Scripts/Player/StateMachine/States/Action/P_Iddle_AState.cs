@@ -9,11 +9,11 @@ public class P_Iddle_AState : PlayerState
 
         if (player.Anim != null)
         {
-            int empty = Animator.StringToHash("Empty");
+            int idle = Animator.StringToHash("Idle");
 
-            if (player.Anim.HasState(1, empty))
+            if (player.Anim.HasState(0, idle) && player.IsGrounded)
             {
-                player.Anim.Play(empty);
+                player.Anim.SetBool("Idle", true);
             }
             else
             {
@@ -21,12 +21,27 @@ public class P_Iddle_AState : PlayerState
             }
         }
     }
-
+    bool isProjecting;
+    int trueIndex = -1;
     public override void OnUpdate()
     {
-        //if (player.Input.hasDashed && player.HasStamina(player.DashCost))
 
         if (player.IsGrounded)
+        {
+            player.canDash = true;
+        }
+
+        if (player.Input.moveInput.magnitude > 0.1f && player.IsGrounded)
+        {
+            player.Anim.SetBool("Walking", true);
+        }
+        else
+        {
+            player.Anim.SetBool("Walking", false);
+            player.Anim.SetBool("Idle", true);
+        }
+
+        if (player.Input.hasDashed)
         {
             player.canDash = true;
         }
@@ -86,25 +101,52 @@ public class P_Iddle_AState : PlayerState
             }
 
         }
-
         int index = player.Input.skillPressedIndex;
+        if (isProjecting)
+        {
+            var skill = player.GetSkill(trueIndex);
+            if (player.Input.skillCanceled)
+            {
+                player.skill_AState.SetSkill(skill, trueIndex);
+                player.blockVelocity = true;
+                player.ChangeActionState(player.skill_AState);
+                trueIndex = -1;
+                isProjecting = false;
+            }
+            else
+            {
+                skill.UpdateProjectionPosition(player);
+            }
+            return;
+        }
 
         if (index != -1)
         {
+            trueIndex = index;
             Debug.Log($"Player: Try change to skill state {index}");
             var skill = player.GetSkill(index);
 
             if (skill != null && player.IsSkillReady(index))
             {
+                if (skill.haveProjection)
+                {
+                    skill.CreateProjection(player);
+                    skill.UpdateProjectionPosition(player);
+                    isProjecting = true;
+                    return;
+                }
                 player.skill_AState.SetSkill(skill, index);
                 player.ChangeActionState(player.skill_AState);
                 return;
             }
         }
+
+        base.OnUpdate();
     }
 
     public override void OnExit()
     {
-        base.OnExit();
+        player.Anim.SetBool("Walking", false);
+        player.Anim.SetBool("Idle", false);
     }
 }

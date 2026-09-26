@@ -105,7 +105,7 @@ public class Goblin_Range : EnemyBase
     {
         if (!HasValidPlayer())
         {
-            player = FindFirstObjectByType<PlayerControl>();
+            //player = FindFirstObjectByType<PlayerControl>();
         }
     }
 

@@ -104,14 +104,16 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected virtual void OnEnable()
     {
         PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
+        TauntEnemies.OnTauntSpawned += OnPlayerSpawned;
     }
 
     protected virtual void OnDisable()
     {
         PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
+        TauntEnemies.OnTauntSpawned -= OnPlayerSpawned;
     }
 
-    private void OnPlayerSpawned(PlayerControl spawnedPlayer)
+    public void OnPlayerSpawned(PlayerControl spawnedPlayer)
     {
         player = spawnedPlayer;
         Debug.Log($"✅ Enemy encontró al player: {player.name}");
@@ -139,7 +141,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected virtual void Start()
     {
-
+        player = GameObject.FindWithTag("Player").GetComponent<PlayerControl>();
     }
 
     protected virtual void Update()

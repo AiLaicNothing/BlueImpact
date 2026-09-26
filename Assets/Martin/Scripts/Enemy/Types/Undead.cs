@@ -58,7 +58,7 @@ public class Undead : EnemyBase
 
     private float actionTimer;
 
-    private Animator anim;
+   // private Animator anim;
 
     private Coroutine attackRoutine;
     private Coroutine consecutiveCutsRoutine;
@@ -112,7 +112,7 @@ public class Undead : EnemyBase
     {
         if (!HasValidPlayer())
         {
-            player = FindFirstObjectByType<PlayerControl>();
+            //player = FindFirstObjectByType<PlayerControl>();
         }
     }
 

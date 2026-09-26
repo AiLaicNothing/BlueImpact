@@ -80,6 +80,8 @@ public class P_AirAttack_AState : PlayerState
         {
             player.ChangeActionState(player.iddle_AState);
         }
+
+        base.OnUpdate();
     }
 
     public override void OnExit()
@@ -87,6 +89,8 @@ public class P_AirAttack_AState : PlayerState
         player.isPerformingAct = false;
 
         player.blockVelocity = false;
+        player.ChangeState(player.fall_State);
+        base.OnExit();
     }
 
     private void StartAttack()
@@ -101,9 +105,9 @@ public class P_AirAttack_AState : PlayerState
         {
             int attack = Animator.StringToHash($"{attackSteps.name}");
 
-            if (player.Anim.HasState(1, attack))
+            if (player.Anim.HasState(0, attack))
             {
-                player.Anim.Play(attack);
+                player.Anim.SetTrigger("AirPunch");
             }
             else
             {

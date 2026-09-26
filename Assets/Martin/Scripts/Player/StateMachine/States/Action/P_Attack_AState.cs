@@ -22,7 +22,6 @@ public class P_Attack_AState : PlayerState
     {
         //if (player.Input.hasDashed && player.HasStamina(player.DashCost))
         if (player.Input.hasDashed)
-
         {
             player.ChangeActionState(player.dash_AState);
             return;
@@ -89,12 +88,14 @@ public class P_Attack_AState : PlayerState
         {
             player.ChangeActionState(player.iddle_AState);
         }
+        base.OnUpdate();
     }
     public override void OnExit()
     {
 
         player.isPerformingAct = false;
         player.blockVelocity = false;
+        base.OnExit();
     }
 
     private void StartAttack()
@@ -110,9 +111,9 @@ public class P_Attack_AState : PlayerState
         {
             int attack = Animator.StringToHash($"{attackSteps.name}");
 
-            if (player.Anim.HasState(1, attack))
+            if (player.Anim.HasState(0, attack))
             {
-                player.Anim.Play(attack);
+                player.Anim.SetTrigger("Punch");
             }
             else
             {

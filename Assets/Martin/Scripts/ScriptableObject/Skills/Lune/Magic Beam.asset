@@ -20,7 +20,8 @@ MonoBehaviour:
   castTime: 0.3
   cooldown: 5
   actionTime: 1.5
-  castAnimation: 
+  haveProjection: 1
+  castAnimation: Freeze
   actionAnimation: 
   castSound: {fileID: 8300000, guid: e67cc26558e3eb344a13d27459d9b0d7, type: 3}
   actionSound: {fileID: 0}
@@ -46,8 +47,12 @@ MonoBehaviour:
     knockDownForwardScale: 0.15
   obstacleLayer:
     serializedVersion: 2
-    m_Bits: 7168
+    m_Bits: 23553
   enemyLayer:
     serializedVersion: 2
     m_Bits: 256
+  vfx: {fileID: 4803355271209711927, guid: 4cef3590232b89341bb0537955486bfe, type: 3}
+  vfxOffset: {x: 0, y: 0, z: 1}
   sfx: {fileID: 0}
+  projectionObject: {fileID: 1944249924312562686, guid: 71e784aa27eb41e40bd86c3d451b9b08, type: 3}
+  projectionOffset: {x: 0, y: 0, z: 1}

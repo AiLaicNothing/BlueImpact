@@ -19,7 +19,7 @@ public class P_Iddle_State : PlayerState
 
             if (player.Anim.HasState(0, idle))
             {
-                player.Anim.Play(idle);
+                player.Anim.SetBool("Idle", true);
             }
             else
             {
@@ -48,5 +48,10 @@ public class P_Iddle_State : PlayerState
             player.ChangeState(player.jump_State);
             return;
         }
+    }
+
+    public override void OnExit()
+    {
+        player.Anim.SetBool("Idle", false);
     }
 }

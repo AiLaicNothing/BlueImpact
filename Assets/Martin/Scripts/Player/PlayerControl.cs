@@ -286,8 +286,11 @@ public class PlayerControl : MonoBehaviour, IDamageable
         //  Actualizar cooldowns
         for (int i = 0; i < skillsCD.Length; i++)
         {
+
             if (skillsCD[i] > 0)
+            {
                 skillsCD[i] -= Time.fixedDeltaTime;
+            }
         }
 
         ApplyGravity();
@@ -858,7 +861,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
         if (isDead) return;
 
         playerStatsManager.Consume(StatType.Vida, (int)info.damage);
-
+        Anim.SetTrigger("Attacked");
         // 🔊 Sonido de recibir daño
         PlayAudio(onHit, sfxVolume);
 

@@ -49,9 +49,9 @@ public class P_Skill_AState : PlayerState
         {
             int skill = Animator.StringToHash($"{currentSkill.castAnimation}");
 
-            if (player.Anim.HasState(1, skill))
+            if (player.Anim.HasState(0, skill))
             {
-                player.Anim.Play(skill);
+                player.Anim.CrossFade(skill, 0.2f, 0);
             }
             else
             {
@@ -98,12 +98,15 @@ public class P_Skill_AState : PlayerState
                 player.ChangeActionState(player.iddle_AState);
             }
         }
+
+        base.OnUpdate();
     }
 
     public override void OnExit()
     {
         player.isPerformingAct = false;
         player.blockVelocity = false;
+        base.OnExit();
     }
 
     public void SetSkill(Skill desiredSkill, int index)

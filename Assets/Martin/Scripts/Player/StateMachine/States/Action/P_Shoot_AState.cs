@@ -36,6 +36,7 @@ public class P_Shoot_AState : PlayerState
         player.PlayerStatsManager.Consume(player.ShootData.resourceType, player.ShootData.cost);
 
         Debug.Log("Shoot State");
+        player.Anim.SetTrigger("Shoot");
     }
 
     public override void OnUpdate()
@@ -54,15 +55,17 @@ public class P_Shoot_AState : PlayerState
             player.ChangeActionState(player.shoot_AState);
         }
 
-        if (timer >= player.ShootData.shootTime + 0.1f)
+        if (timer >= player.ShootData.shootTime + 0.1f && player.IsGrounded)
         {
             player.ChangeActionState(player.iddle_AState);
         }
+        base.OnUpdate();
     }
 
     public override void OnExit()
     {
 
+        base.OnExit();
     }
 
     private void Shoot()

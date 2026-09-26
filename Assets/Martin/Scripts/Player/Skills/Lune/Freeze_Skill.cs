@@ -23,6 +23,12 @@ public class Freeze_Skill : Skill
     [SerializeField] private bool debug;
     private GameObject debugBox;
 
+    [Header("Projection")]
+    [SerializeField] private GameObject projectionObject;
+    //[SerializeField] private Color projectioColor;
+    GameObject projectionObjectSave;
+    bool exist = false;
+    [SerializeField] private Vector3 projectionOffset;
     // ==================== NUEVOS: DAÑO Y ESCALADO ====================
     public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
     public override string GetMagicScaling() => hitData != null ? $"{hitData.magicalScale * 100:F0}%" : "";
@@ -85,6 +91,8 @@ public class Freeze_Skill : Skill
     {
         player.blockVelocity = true;
 
+        DestroyProjectionObject();
+
         Vector3 vfxPos = player.transform.position + player.Model.right * vfxOffset.x + player.Model.up * vfxOffset.y + player.Model.forward * vfxOffset.z;
 
         if (vfx != null)
@@ -96,5 +104,55 @@ public class Freeze_Skill : Skill
         yield return new WaitForSeconds(hitTime);
 
         DealDamage(player);
+    }
+    public override void CreateProjection(PlayerControl player)
+    {
+        //projectionObject.GetComponent<Collider>().enabled = false;
+        projectionObjectSave = Instantiate(projectionObject);
+        /*Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            Material mat = renderer.sharedMaterial;
+            Color color = mat.color;
+            color.a = 0.5f;
+            mat.color = color;
+
+            mat.SetFloat("_Mode", 2);
+            mat.SetInt("_ScrBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            mat.SetInt("ZWrite", 0);
+            mat.DisableKeyword("_ALPHATEST_ON");
+            mat.EnableKeyword("_ALPHABLEND_ON");
+            mat.DisableKeyword("ALPHAPREMULTIPLY_ON");
+            mat.renderQueue = 3000;
+        }*/
+    }
+    public override void UpdateProjectionPosition(PlayerControl player)
+    {
+        if (projectionObjectSave == null) return;
+        Vector3 point = player.transform.position + player.Model.right * projectionOffset.x + player.Model.up * projectionOffset.y + player.Model.forward * projectionOffset.z;
+
+
+        projectionObjectSave.transform.position = point;
+        projectionObjectSave.transform.rotation = player.Model.rotation;
+        
+        //SetProjectionColor(projectioColor);
+        if (!player.PlayerStatsManager.CanConsume(resourceType, cost))
+        {
+            DestroyProjectionObject();
+        }
+    }
+    void SetProjectionColor(Color color)
+    {
+        Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            Material mat = renderer.sharedMaterial;
+            mat.color = color;
+        }
+    }
+    void DestroyProjectionObject()
+    {
+        Destroy(projectionObjectSave);
     }
 }

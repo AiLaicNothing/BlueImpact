@@ -11,6 +11,15 @@ public class BashShield_Skill : Skill
     public HitData hitData;
     public Vector3 hitBoxSize;
     public Vector3 hitBoxOffset;
+    [Header("Trail Variables")]
+    [SerializeField] private float refreshRate;
+    [SerializeField] private int trailAmount;
+    [SerializeField] private string shaderVarRef;
+    [SerializeField] private float shaderVarRate;
+    [SerializeField] private float shaderVarRefreshRate;
+    [SerializeField] private List<SkinnedMeshRenderer> skinnedMeshRenderers;
+    [SerializeField] private List<GameObject> gameObjects;
+    [SerializeField] public Material shaderMaterial;
 
     // ==================== NUEVOS: DAÑO Y ESCALADO ====================
     public override string GetPhysicalScaling() => hitData != null ? $"{hitData.physicalScale * 100:F0}%" : "";
@@ -33,8 +42,9 @@ public class BashShield_Skill : Skill
         //{
         //    AudioManager.Instance.PlaySFX(actionSound);
         //}
-
+        FindModel(player);
         player.StartCoroutine(BashRoutine(player));
+        player.StartCoroutine(ActiveTrail(trailAmount, refreshRate, player));
     }
 
     private IEnumerator BashRoutine(PlayerControl player)
@@ -59,7 +69,61 @@ public class BashShield_Skill : Skill
 
         player.blockVelocity = false;
     }
+    void FindModel(PlayerControl player)
+    {
+        gameObjects.Clear();
+        skinnedMeshRenderers.Clear();
+        gameObjects.Add(player.gameObject.transform.Find("ModelHolder").Find("Solis-FBX_Final").Find("Solis").Find("Hands").Find("Hand_L").gameObject);
+        gameObjects.Add(player.gameObject.transform.Find("ModelHolder").Find("Solis-FBX_Final").Find("Solis").Find("Hands").Find("Hand_R").gameObject);
+        gameObjects.Add(player.gameObject.transform.Find("ModelHolder").Find("Solis-FBX_Final").Find("Solis").Find("Knight").gameObject);
+        gameObjects.Add(player.gameObject.transform.Find("ModelHolder").Find("Solis-FBX_Final").Find("Solis").Find("Wing").gameObject);
+        skinnedMeshRenderers.Add(gameObjects[0].GetComponent<SkinnedMeshRenderer>());
+        skinnedMeshRenderers.Add(gameObjects[1].GetComponent<SkinnedMeshRenderer>());
+        skinnedMeshRenderers.Add(gameObjects[2].GetComponent<SkinnedMeshRenderer>());
+        skinnedMeshRenderers.Add(gameObjects[3].GetComponent<SkinnedMeshRenderer>());
+    }
+    IEnumerator ActiveTrail(int effectAmount, float timeBetweenTrail, PlayerControl player)
+    {
+        for (int i1 = 0; i1 < effectAmount; i1++)
+        {
+            for (int i = 0; i < skinnedMeshRenderers.Count; i++)
+            {
+                //GameObject parentObj = new GameObject();
+                GameObject gObj = new GameObject();
+                gObj.transform.SetPositionAndRotation(gameObjects[i].transform.position, gameObjects[i].transform.rotation);
+                /*parentObj.transform.position = player.Model.position + player.Model.forward * hitBoxOffset.z + Vector3.up * hitBoxOffset.y;
+                parentObj.transform.rotation = player.Model.rotation;
+               // parentObj.name = "Trail";
+                parentObj.transform.SetParent(gObj.transform);*/
+                MeshRenderer mr = gObj.AddComponent<MeshRenderer>();
+                MeshFilter mf = gObj.AddComponent<MeshFilter>();
 
+                Mesh mesh = new Mesh();
+                skinnedMeshRenderers[i].BakeMesh(mesh);
+
+                mf.mesh = mesh;
+                mr.material = shaderMaterial;
+
+                player.StartCoroutine(AnimateMaterialFloat(mr.material, 0, shaderVarRate, shaderVarRefreshRate));
+                Destroy(gObj, duration + 0.2f);
+            }
+            yield return new WaitForSeconds(timeBetweenTrail);
+        }
+        gameObjects.Clear();
+        skinnedMeshRenderers.Clear();
+        yield return new WaitForSeconds(timeBetweenTrail);        
+    }
+    IEnumerator AnimateMaterialFloat(Material mat, float goal, float rate, float refreshRate)
+    {
+        float valueToAnimate = mat.GetFloat(shaderVarRef);
+
+        while (valueToAnimate > goal)
+        {
+            valueToAnimate -= rate;
+            mat.SetFloat(shaderVarRef, valueToAnimate);
+            yield return new WaitForSeconds(refreshRate);
+        }
+    }
     private bool CheckHits(PlayerControl player)
     {
         Vector3 center = player.Model.position + player.Model.forward * hitBoxOffset.z + Vector3.up * hitBoxOffset.y;

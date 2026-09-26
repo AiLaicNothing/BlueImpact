@@ -44,7 +44,7 @@ public class Goblin_Melee : EnemyBase
     private int patrolIndex;
     private int patrolDir = 1;
 
-    private Animator anim;
+   // private Animator anim;
 
     protected override void Awake()
     {
@@ -87,7 +87,7 @@ public class Goblin_Melee : EnemyBase
     {
         if (!HasValidPlayer())
         {
-            player = FindFirstObjectByType<PlayerControl>();
+            //player = FindFirstObjectByType<PlayerControl>();
         }
     }
     private bool HasLineOfSight()
