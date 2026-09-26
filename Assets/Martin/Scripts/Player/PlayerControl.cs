@@ -32,6 +32,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
     [SerializeField] private float dashDistance = 5f;
     [SerializeField] private float dashDuration = 0.3f;
     [SerializeField] private float dashCost = 20f;
+    public bool canDash;
 
     [Header("Rotation")]
     [SerializeField] private float rotSpeed = 10f;

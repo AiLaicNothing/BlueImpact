@@ -26,10 +26,18 @@ public class P_Iddle_AState : PlayerState
     {
         //if (player.Input.hasDashed && player.HasStamina(player.DashCost))
 
-        if (player.Input.hasDashed)
+        if (player.IsGrounded)
         {
-            player.ChangeActionState(player.dash_AState);
-            return;
+            player.canDash = true;
+        }
+
+        if (player.canDash)
+        {
+            if (player.Input.hasDashed)
+            {
+                player.ChangeActionState(player.dash_AState);
+                return;
+            }
         }
 
         if (player.Input.AttackBuffered)

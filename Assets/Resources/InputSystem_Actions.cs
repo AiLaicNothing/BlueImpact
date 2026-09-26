@@ -474,7 +474,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""112c8b00-09a8-4773-80aa-49dd99997b9f"",
-                    ""path"": ""<Keyboard>/q"",
+                    ""path"": ""<Mouse>/rightButton"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Keyboard&Mouse"",
