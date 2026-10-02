@@ -39,7 +39,7 @@ public class TauntIllusion_Skill : Skill
             mat.renderQueue = 3000;
         }
     }
-    public override void UpdateProjectionPosition(PlayerControl player)
+    public override void UpdateProjectionPosition(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         if (projectionObjectSave == null) return;
         Vector3 point = player.transform.position + player.Model.right * projectionOffset.x + player.Model.up * projectionOffset.y + player.Model.forward * projectionOffset.z;

@@ -14,6 +14,7 @@ public class P_Projectile : MonoBehaviour
     [SerializeField] float maxTargetRange = 20f;
     [SerializeField] private float homingRange = 15f;
     [SerializeField] private float retargetInterval = 0.2f;
+    [SerializeField] private float destroyTime = 2.5f;
 
     [Header("Sfx")]
     [SerializeField] private GameObject sfx;
@@ -62,7 +63,7 @@ public class P_Projectile : MonoBehaviour
 
         this.lockTargetPos = lockTargetPos;
 
-        if (isHoming)
+        /*if (isHoming)
         {
             if (target == null)
             {
@@ -79,7 +80,7 @@ public class P_Projectile : MonoBehaviour
                     target = GetClosestTarget(transform.position);
                 }
             }
-        }
+        }*/
 
         if (rb != null)
         {
@@ -87,11 +88,12 @@ public class P_Projectile : MonoBehaviour
         }
 
         // Auto destroy after some time
-        Destroy(gameObject, 2.5f);
+        Destroy(gameObject, destroyTime);
     }
 
     private void FixedUpdate()
     {
+        return;
         if (rb == null || !isHoming) return;
 
         retargetTimer -= Time.fixedDeltaTime;
@@ -181,11 +183,11 @@ public class P_Projectile : MonoBehaviour
                 target.TakeDamage(info);
             }
 
-            Destroy(gameObject);
+            //Destroy(gameObject);
         }
         if (other.CompareTag("Wall") || other.CompareTag("Ground"))
         {
-            Destroy(gameObject);
+            //Destroy(gameObject);
         }
     }
 }

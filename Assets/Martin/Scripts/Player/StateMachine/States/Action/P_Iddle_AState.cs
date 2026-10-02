@@ -110,7 +110,12 @@ public class P_Iddle_AState : PlayerState
             }
             else
             {
-                skill.UpdateProjectionPosition(player);
+                Vector3 lockTargetPos = Vector3.zero;
+                if (player.lockOnTarget != null && player.lockOnTarget.isTargeting && player.lockOnTarget.CurrentTarget != null)
+                {
+                    lockTargetPos = player.lockOnTarget.CurrentTarget.position;
+                }
+                skill.UpdateProjectionPosition(player, player.GetViewPoint(), lockTargetPos);
             }
             return;
         }
@@ -125,8 +130,13 @@ public class P_Iddle_AState : PlayerState
             {
                 if (skill.haveProjection)
                 {
-                    skill.CreateProjection(player);
-                    skill.UpdateProjectionPosition(player);
+                    skill.CreateProjection(player); 
+                    Vector3 lockTargetPos = Vector3.zero;
+                    if (player.lockOnTarget != null && player.lockOnTarget.isTargeting && player.lockOnTarget.CurrentTarget != null)
+                    {
+                        lockTargetPos = player.lockOnTarget.CurrentTarget.position;
+                    }
+                    skill.UpdateProjectionPosition(player, player.GetViewPoint(), lockTargetPos);
                     isProjecting = true;
                     return;
                 }
