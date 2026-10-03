@@ -1,81 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
+using Unity.Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-
 
 public class SceneLoader : MonoBehaviour
 {
-    public static SceneLoader Instance;
+    [SerializeField] private string sceneNameLoad;
+    [SerializeField] private string sceneNameUnload;
 
-    private void Awake()
+    private void OnTriggerEnter(Collider other)
     {
-        if (Instance == null)
+        if (other.gameObject.CompareTag("Player"))
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            SceneLoaderManager.Instance.LoadScene(sceneNameLoad);
+            SceneLoaderManager.Instance.UnLoadScene(sceneNameUnload);
         }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void Start()
-    {
-        StartCoroutine(LoadTestScenes());
-    }
-
-    public void LoadScene(string sceneName)
-    {
-        StartCoroutine(LoadSceneAsync(sceneName));
-    }
-
-    private IEnumerator LoadTestScenes()
-    {
-        yield return StartCoroutine(LoadSceneAsync("Zone_01_Tutorial"));
-        yield return StartCoroutine(LoadSceneAsync("Zone_02"));
-        yield return StartCoroutine(LoadSceneAsync("Testing4"));
-    }
-
-    private IEnumerator LoadSceneAsync(string sceneName)
-    {
-        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
-
-        while (!operation.isDone)
-        {
-            float progress = Mathf.Clamp01(operation.progress / 0.9f);
-
-            Debug.Log("Loading: " + progress * 100f + "%");
-
-            yield return null;
-        }
-
-        Debug.Log("Scene loaded: " + sceneName);
-    }
-
-    public void UnLoadScene(string sceneName)
-    {
-        StartCoroutine (UnloadSceneAsync(sceneName));
-    }
-
-    private IEnumerator UnloadSceneAsync(string sceneName)
-    {
-        Scene scene = SceneManager.GetSceneByName(sceneName);
-
-        if (!scene.isLoaded)
-        {
-            yield break;
-        }
-
-        AsyncOperation operation = SceneManager.UnloadSceneAsync(sceneName);
-
-        while (!operation.isDone)
-        {
-            yield return null;
-        }
-
-        Debug.Log("scene Unloaded" + sceneName);
     }
 }
-

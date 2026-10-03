@@ -1,18 +1,32 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class CheatManager : MonoBehaviour
 {
-    [SerializeField] private Transform level1Pos;
-    [SerializeField] private Transform level1_5Pos;
-    [SerializeField] private Transform level2Pos;
-    [SerializeField] private Transform level2_5;
-    [SerializeField] private Transform level3Pos;
-    [SerializeField] private Transform level3_5;
+    [SerializeField] private Transform LevelTuto;
+    [SerializeField] private Transform Level1;
+    [SerializeField] private Transform Level2;
+    [SerializeField] private Transform Level3;
+    [SerializeField] private Transform Level4;
 
-    [SerializeField] private Transform level_Tuto;
-    [SerializeField] private Transform level_1_2;
-    [SerializeField] private Transform level_Tuto1;
+    private GameObject player;
+    private bool isTeleporting;
+
+    public static CheatManager Instance;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     private void Update()
     {
@@ -20,98 +34,92 @@ public class CheatManager : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                TeleportToLevel1();
+                TeleportTo(LevelTuto);
             }
             else if (Input.GetKeyDown(KeyCode.Alpha2))
             {
-                TeleportToLevel1_5();
+                TeleportTo(Level1);
             }
             else if (Input.GetKeyDown(KeyCode.Alpha3))
             {
-                TeleportToLevel2();
+                TeleportTo(Level2);
             }
             else if (Input.GetKeyDown(KeyCode.Alpha4))
             {
-                TeleportToLevel2_5();
+                StartCoroutine(TeleportToLevel("Zone_03", "Zone_01_Tutorial", Level3));
             }
             else if (Input.GetKeyDown(KeyCode.Alpha5))
             {
-                TeleportToLevel3();
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha6))
-            {
-                TeleportToLevel3_5();
+                StartCoroutine(TeleportToLevel("Testing4", "Zone_03", Level4));
+
+                TeleportTo(Level4);
             }
         }
+    }
 
-        if (Input.GetKeyDown(KeyCode.Alpha7))
+    private IEnumerator TeleportToLevel(string SceneToLoad,string SceneToUnload, Transform teleportPOint)
+    {
+        if (player == null)
         {
-            SceneManager.LoadScene("Testing_Scene");
+            Debug.LogWarning("CheatManager: Player not assigned.");
+            yield break;
         }
 
-        if (Input.GetKeyDown(KeyCode.Alpha8))
+        isTeleporting = true;
+
+        Debug.Log("Teleporting to: " + SceneToLoad);
+
+        // --------------------------------------------------
+        // 1. Load destination scene and WAIT
+        // --------------------------------------------------
+
+        yield return StartCoroutine( SceneLoaderManager.Instance.LoadSceneAndWait(SceneToLoad));
+
+        // --------------------------------------------------
+        // 3. Force teleport
+        // --------------------------------------------------
+
+        TeleportTo(teleportPOint);
+
+        // --------------------------------------------------
+        // 4. Unload previous scenes
+        // --------------------------------------------------
+
+        yield return StartCoroutine(UnloadOtherLevelScenes(SceneToUnload));
+
+        isTeleporting = false;
+
+        Debug.Log("Teleport complete.");
+    }
+
+    private IEnumerator UnloadOtherLevelScenes(string destinationScene)
+    {
+        yield return StartCoroutine(SceneLoaderManager.Instance.UnloadSceneAndWait(destinationScene));
+    }
+
+    private void TeleportTo(Transform desiredPos)
+    {
+        if (player == null || desiredPos == null) return;
+
+        PlayerControl controller = player.GetComponent<PlayerControl>();
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+
+        if (controller != null) controller.enabled = false;
+
+        if (rb != null)
         {
-            Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-            player.transform.position = level_Tuto.position;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.position = desiredPos.position;
         }
-        if (Input.GetKeyDown(KeyCode.Alpha8))
+        else
         {
-            Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-            player.transform.position = level_1_2.position;
+            player.transform.position = desiredPos.position;
         }
 
-
-        if (Input.GetKeyDown(KeyCode.Alpha0))
-        {
-            Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-            player.transform.position = level_Tuto1.position;
-        }
+        if (controller != null)controller.enabled = true;
     }
 
-    private void TeleportToLevel1()
-    {
-        Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-        player.transform.position = level1Pos.position;
-    }
-
-    private void TeleportToLevel1_5()
-    {
-        Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-        player.transform.position = level1_5Pos.position;
-    }
-
-    private void TeleportToLevel2()
-    {
-        Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-        player.transform.position = level2Pos.position;
-    }
-
-    private void TeleportToLevel2_5()
-    {
-        Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-        player.transform.position = level2_5.position;
-    }
-
-    private void TeleportToLevel3()
-    {
-        Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-        player.transform.position = level3Pos.position;
-    }
-
-    private void TeleportToLevel3_5()
-    {
-        Transform player = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-
-        player.transform.position = level3_5.position;
-    }
 
     private void UnlockSkills()
     {
@@ -121,6 +129,11 @@ public class CheatManager : MonoBehaviour
     private void GetPoints()
     {
 
+    }
+
+    public void SetPlayerTarget(GameObject player)
+    {
+        this.player = player;
     }
 
 }
