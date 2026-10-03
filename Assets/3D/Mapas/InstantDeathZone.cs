@@ -13,13 +13,28 @@ public class InstantDeathZone : MonoBehaviour
     private void Reset()
     {
         // Asegura que el collider NO sea trigger apenas se agrega el componente
-        var col = GetComponent<Collider>();
-        if (col != null) col.isTrigger = false;
+        //var col = GetComponent<Collider>();
+        //if (col != null) col.isTrigger = false;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        IDamageable damageable = other.GetComponentInParent<IDamageable>();
+
+        if (damageable == null) return;
+
+        DamageInfo info = new DamageInfo
+        {
+            damage = damageAmount
+        };
+
+        damageable.TakeDamage(info);
     }
 
     private void OnCollisionEnter(Collision collision)
     {
         IDamageable damageable = collision.collider.GetComponentInParent<IDamageable>();
+
         if (damageable == null) return;
 
         DamageInfo info = new DamageInfo
