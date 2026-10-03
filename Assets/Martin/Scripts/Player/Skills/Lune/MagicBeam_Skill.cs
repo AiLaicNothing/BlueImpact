@@ -54,11 +54,10 @@ public class MagicBeam_Skill : Skill
 
         float timer = 0f;
         bool soundPlayed = false;
-        Vector3 vfxPos = player.transform.position + player.Model.right * vfxOffset.x + player.Model.up * vfxOffset.y + player.Model.forward * vfxOffset.z;
         if (vfx != null)
         {
             player.blockVelocity = true;
-            var vfxPrefab = Instantiate(vfx, vfxPos, player.Model.rotation);
+            var vfxPrefab = InstanceVfxBeam(player, targetPoint, lockTargetPos);
             yield return new WaitForSeconds(0.6f);
             Destroy(vfxPrefab, duration);
         }
@@ -99,21 +98,11 @@ public class MagicBeam_Skill : Skill
         // Direction toward target
         Vector3 dir = (finalTarget - vfxPos).normalized;
 
-        float finalDistance = maxRange;
-
-        // Obstacle check
-        if (Physics.Raycast(vfxPos, dir, out RaycastHit hit, maxRange, obstacleLayer))
-        {
-            finalDistance = hit.distance;
-        }
-
-        Vector3 center = vfxPos + dir * (finalDistance / 2f);
-
 
         Quaternion rot = Quaternion.LookRotation(dir);
 
 
-        return Instantiate(vfx, center, rot);
+        return Instantiate(vfx, vfxPos, rot);
     }
     private void FireBeam(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
@@ -140,24 +129,24 @@ public class MagicBeam_Skill : Skill
 
         // Direction toward target
         Vector3 dir = (finalTarget - trueStartPos).normalized;
-
+        if (dir.sqrMagnitude < 0.0001f) dir = player.Model.forward;
         float finalDistance = maxRange;
 
         // Obstacle check
-        if (Physics.Raycast(trueStartPos, trueDir, out RaycastHit hit, maxRange, obstacleLayer))
+        if (Physics.Raycast(trueStartPos, dir, out RaycastHit hit, maxRange, obstacleLayer))
         {
             finalDistance = hit.distance;
         }
 
-        Vector3 center = trueStartPos + trueDir * (finalDistance / 2f);
+        Vector3 center = trueStartPos + dir * (finalDistance / 2f);
 
         Vector3 halfExtents = new Vector3(width / 2f, height / 2f, finalDistance / 2f);
 
         Quaternion rot = Quaternion.LookRotation(dir);
 
-        if (debug) debugBox = player.ShowHitboxPersistent(center, halfExtents * 2, trueRot, debugBox);
+        if (debug) debugBox = player.ShowHitboxPersistent(center, halfExtents * 2, rot, debugBox);
 
-        Collider[] hits = Physics.OverlapBox(center, halfExtents, trueRot, enemyLayer);
+        Collider[] hits = Physics.OverlapBox(center, halfExtents, rot, enemyLayer);
 
         DamageInfo info = new DamageInfo
         {
@@ -206,14 +195,27 @@ public class MagicBeam_Skill : Skill
             mat.renderQueue = 3000;
         }
     }
-    public override void UpdateProjectionPosition(PlayerControl player)
+    public override void UpdateProjectionPosition(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         if (projectionObjectSave == null) return;
         Vector3 point = player.transform.position + player.Model.right * projectionOffset.x + player.Model.up * projectionOffset.y + player.Model.forward * projectionOffset.z;
 
+        Vector3 finalTarget;
+        if (lockTargetPos != Vector3.zero)
+        {
+            finalTarget = lockTargetPos;
+        }
+        else
+        {
+            finalTarget = targetPoint;
+        }
+        Vector3 dir = (finalTarget - point).normalized;
+        if (dir.sqrMagnitude < 0.0001f) dir = player.Model.forward;
 
         projectionObjectSave.transform.position = point;
-        projectionObjectSave.transform.rotation = player.Model.rotation;
+        Quaternion rot = Quaternion.LookRotation(dir);
+
+        projectionObjectSave.transform.rotation = rot;
 
         SetProjectionColor(new Color(1f, 1f, 1f, 0.2f));
         if (!player.PlayerStatsManager.CanConsume(resourceType, cost))

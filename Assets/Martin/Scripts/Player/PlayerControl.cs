@@ -171,7 +171,7 @@ public class PlayerControl : Controller, IDamageable
     private Animator anim;
     private Camera mainCam;
     private PlayerInputHandler input;
-    private LockOnTarget lockOnTarget;
+    public LockOnTarget lockOnTarget;
     private P_Skill_UI asd;
 
     #region StateMachine References

@@ -75,5 +75,5 @@ public abstract class Skill : ScriptableObject
         return description;
     }
     public virtual void CreateProjection(PlayerControl player) { return; }
-    public virtual void UpdateProjectionPosition(PlayerControl player) { return; }
+    public virtual void UpdateProjectionPosition(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos) { return; }
 }
