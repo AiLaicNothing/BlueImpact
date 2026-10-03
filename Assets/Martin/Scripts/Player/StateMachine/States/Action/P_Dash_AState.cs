@@ -42,11 +42,11 @@ public class P_Dash_AState : PlayerState
 
         if (input.magnitude > 0.1f)
         {
-            Vector3 camForward = Camera.main.transform.forward;
+            Vector3 camForward = player.MainCam.transform.forward;
             camForward.y = 0f;
             camForward.Normalize();
 
-            Vector3 camRight = Camera.main.transform.right;
+            Vector3 camRight = player.MainCam.transform.right;
             camRight.y = 0f;
             camRight.Normalize();
 

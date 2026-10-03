@@ -31,7 +31,7 @@ public class P_Iddle_State : PlayerState
     public override void OnUpdate()
     {
 
-        if (!player.IsGrounded)
+        if (!player.IsGrounded())
         {
             player.ChangeState(player.fall_State);
             return;
@@ -43,7 +43,7 @@ public class P_Iddle_State : PlayerState
             return;
         }
 
-        if (player.Input.ConsumeJump())
+        if (player.Input.hasJumped)
         {
             player.ChangeState(player.jump_State);
             return;

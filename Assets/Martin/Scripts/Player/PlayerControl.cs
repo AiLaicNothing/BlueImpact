@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using CMF;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
@@ -7,26 +8,60 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using static UnityEngine.Analytics.IAnalytic;
 
-public class PlayerControl : MonoBehaviour, IDamageable
+public class PlayerControl : Controller, IDamageable
 {
-    // 💀 Evento global: cualquier sistema puede suscribirse para reaccionar a la muerte
+    // Evento global: cualquier sistema puede suscribirse para reaccionar a la muerte
     // (ej. DeathScreenUI, ElevatorEvent) sin acoplarse directamente.
     public static event System.Action OnPlayerDied;
 
+    public float moveSpeed = 7;
+    public float jumpSpeed = 10;
+    //Jump duration variables;
+    public float jumpDuration = 0.2f;
+    float currentJumpStartTime = 0f;
+    public float gravity = 10;
+    public float slideGravity = 5f;
 
-    [Header("Movement")]
-    [SerializeField] private float movementSpeed = 10f;
-    [SerializeField] private float jumpForce = 8f;
-    [SerializeField] private float moveMultiplier = 1f;
-    [SerializeField] private LayerMask whatIsGround;
-    [SerializeField] private Transform GroundCheck;
-    [SerializeField] private float groundCheckRange;
-    private bool isGrounded;
+    //Jump key variables;
+    bool jumpInputIsLocked = false;
+    bool jumpKeyWasPressed = false;
+    bool jumpKeyWasLetGo = false;
+    bool jumpKeyIsPressed = false;
 
-    [Header("Gravity")]
-    [SerializeField] private float baseGravity = -9.81f;
-    [SerializeField] private float fallGravityMultiplier = 2.5f;
-    private float currentGravityMultiplier = 1f;
+    //How fast the controller can change direction while in the air;
+    //Higher values result in more air control;
+    public float airControlRate = 2f;
+
+    //'AirFriction' determines how fast the controller loses its momentum while in the air;
+    //'GroundFriction' is used instead, if the controller is grounded;
+    public float airFriction = 0.5f;
+    public float groundFriction = 100f;
+
+    public Transform camTransform;
+
+    public float slopeLimit = 80f;
+    public bool useLocalMomentum;
+
+    //Current momentum;
+    protected Vector3 momentum = Vector3.zero;
+
+    //-->Saved from last frame
+    Vector3 savedVel = Vector3.zero;
+    Vector3 savedMoveVel = Vector3.zero;
+
+    private Mover mover;
+    private PlayerInputHandler inputs;
+    private Transform tr;
+
+    ControllerState currentState = ControllerState.Falling;
+    public enum ControllerState
+    {
+        Grounded,
+        Sliding,
+        Falling,
+        Rising,
+        Jumping,
+    }
 
     [Header("Dash")]
     [SerializeField] private float dashDistance = 5f;
@@ -53,8 +88,6 @@ public class PlayerControl : MonoBehaviour, IDamageable
     [Header("Skills")]
     [SerializeField] private int maxSkillSlot = 4;
     [SerializeField] private Skill[] skills = new Skill[4];
-    private EventSystem eventSystem;
-    [SerializeField] private PlayerInput playerInput;
 
     private List<Skill> unlockedSkills = new List<Skill>();
 
@@ -125,7 +158,6 @@ public class PlayerControl : MonoBehaviour, IDamageable
     [SerializeField] private GameObject hitboxPrefab;
 
     public bool hasUsedAirAttack = false;
-    public bool hasUsedDash = false;
     public bool IsInputLocked { get; private set; }
     public bool isPerformingAct = false;
     public bool blockVelocity = false;
@@ -166,11 +198,13 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
     public Rigidbody Rb => rb;
     public Animator Anim => anim;
+
+    public Camera MainCam => mainCam;
+    public Transform Cam => camTransform;
     public Transform Model => playerModel;
     public PlayerInputHandler Input => input;
     public LockOnTarget LockOnTarget => lockOnTarget;
     public StatsManager Stats => statsManager;
-    public bool IsGrounded => isGrounded;
     public float DashCost => dashCost;
     public float DashDuration => dashDuration;
     public float DashDistance => dashDistance;
@@ -180,7 +214,6 @@ public class PlayerControl : MonoBehaviour, IDamageable
     public ShootData ShootData => shootData;
     public Transform FirePoint => firePoint;
     public int MaxSkillSlot => maxSkillSlot;
-    public float FallGravityMult => fallGravityMultiplier;
     public PlayerStatsManager PlayerStatsManager => playerStatsManager;
 
     #endregion
@@ -230,6 +263,7 @@ public class PlayerControl : MonoBehaviour, IDamageable
 
         moveSM.Initialize(iddle_State);
         actionSM.Initialize(iddle_AState);
+
         if (GameModeManager.Instance != null)
         {
             GameModeManager.Instance.OnGameModeChanged += HandleGameModeChanged;
@@ -266,17 +300,34 @@ public class PlayerControl : MonoBehaviour, IDamageable
                 break;
         }
     }
+
     private void Update()
     {
         if (isDead) return;
 
-        CheckGround();
+        //CheckGround();
 
-        if (IsInputLocked)
-            return;
+        if (IsInputLocked) return;
 
         moveSM.Update();
+        HandleJumpKeyInput();
         actionSM.Update();
+    }
+
+    void HandleJumpKeyInput()
+    {
+        bool _newJumpKeyPressedState = IsJumpKeyPressed();
+
+        if (jumpKeyIsPressed == false && _newJumpKeyPressedState == true)
+            jumpKeyWasPressed = true;
+
+        if (jumpKeyIsPressed == true && _newJumpKeyPressedState == false)
+        {
+            jumpKeyWasLetGo = true;
+            jumpInputIsLocked = false;
+        }
+
+        jumpKeyIsPressed = _newJumpKeyPressedState;
     }
 
     private void FixedUpdate()
@@ -293,22 +344,125 @@ public class PlayerControl : MonoBehaviour, IDamageable
             }
         }
 
-        ApplyGravity();
-
         if (IsInputLocked)
         {
-            rb.linearVelocity =
-                new Vector3(0f, rb.linearVelocity.y, 0f);
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
 
             return;
         }
 
-        if (!isPerformingAct)
-            Movement();
+        if (!isPerformingAct) HandleMovement();
 
-        if (blockVelocity)
-            rb.linearVelocity = Vector3.zero;
+        if (blockVelocity) rb.linearVelocity = Vector3.zero;
     }
+
+
+    ControllerState DecideControllerState()
+    {
+        bool _isRising = IsRisingOrFalling() && (VectorMath.GetDotProduct(GetMomentum(), tr.up) > 0f);
+
+        bool _isSliding = mover.IsGrounded() && IsGroundTooSteep();
+
+        if (currentState == ControllerState.Grounded)
+        {
+            if (_isRising)
+            {
+                OnGroundContactLost();
+                return ControllerState.Rising;
+            }
+            if (!mover.IsGrounded())
+            {
+                OnGroundContactLost();
+                return ControllerState.Falling;
+            }
+            if (_isSliding)
+            {
+                OnGroundContactLost();
+                return ControllerState.Sliding;
+            }
+            return ControllerState.Grounded;
+        }
+
+        if (currentState == ControllerState.Falling)
+        {
+            if (_isRising)
+            {
+                return ControllerState.Rising;
+            }
+            if (mover.IsGrounded() && !_isSliding)
+            {
+                OnGroundContactRegained();
+                hasUsedAirAttack = false;
+                PlayAudio(land, sfxVolume);
+                return ControllerState.Grounded;
+            }
+            if (_isSliding)
+            {
+                return ControllerState.Sliding;
+            }
+            return ControllerState.Falling;
+        }
+
+        if (currentState == ControllerState.Sliding)
+        {
+            if (_isRising)
+            {
+                OnGroundContactLost();
+                return ControllerState.Rising;
+            }
+            if (!mover.IsGrounded())
+            {
+                OnGroundContactLost();
+                return ControllerState.Falling;
+            }
+            if (mover.IsGrounded() && !_isSliding)
+            {
+                OnGroundContactRegained();
+                hasUsedAirAttack = false;
+                PlayAudio(land, sfxVolume);
+                return ControllerState.Grounded;
+            }
+            return ControllerState.Sliding;
+        }
+
+        if (currentState == ControllerState.Rising)
+        {
+            if (!_isRising)
+            {
+                if (mover.IsGrounded() && !_isSliding)
+                {
+                    OnGroundContactRegained();
+                    hasUsedAirAttack = false;
+                    PlayAudio(land, sfxVolume);
+                    return ControllerState.Grounded;
+                }
+                if (_isSliding)
+                {
+                    return ControllerState.Sliding;
+                }
+                if (!mover.IsGrounded())
+                {
+                    return ControllerState.Falling;
+                }
+            }
+        }
+
+        if (currentState == ControllerState.Jumping)
+        {
+            PlayAudio(jump, sfxVolume);
+
+            //Check for jump timeout;
+            if ((Time.time - currentJumpStartTime) > jumpDuration) return ControllerState.Rising;
+
+            //Check if jump key was let go;
+            if (jumpKeyWasLetGo) return ControllerState.Rising;
+
+            return ControllerState.Jumping;
+        }
+
+        return ControllerState.Falling;
+    }
+
     public void LockPlayerControl()
     {
         // 🔒 IMPORTANTE: Si ya está bloqueado, NO sobrescribir previousConstraints
@@ -408,61 +562,196 @@ public class PlayerControl : MonoBehaviour, IDamageable
         input = GetComponent<PlayerInputHandler>();
         lockOnTarget = GetComponent<LockOnTarget>();
         statsManager = GetComponent<StatsManager>();
+
+        mover = GetComponent<Mover>();
+        tr = transform;
+        inputs = GetComponent<PlayerInputHandler>();
+
     }
 
     //===================================================================================
     //=====================            MOVEMENT              ============================
     //===================================================================================
 
-    private void Movement()
+    private void HandleMovement()
     {
-        Vector2 inputDir = input.moveInput.normalized;
-        Vector3 moveDir = GetCameraRelativeDir(inputDir);
-        Vector3 velocity = moveDir * movementSpeed * moveMultiplier;
-        velocity.y = rb.linearVelocity.y;
-        rb.linearVelocity = velocity;
-        HandleRotation(moveDir);
-    }
+        //--> Check if is grounded
+        mover.CheckForGround();
 
-    public void Jump()
-    {
-        if (!isGrounded) return;
+        currentState = DecideControllerState();
 
-        Vector3 velocity = rb.linearVelocity;
-        velocity.y = jumpForce;
-        rb.linearVelocity = velocity;
+        //Add gravity if its not grounded
+        HandleMomentum();
 
-        // 🔊 Sonido de salto
-        PlayAudio(jump, sfxVolume);
-    }
+        HandleJump();
 
-    private void ApplyGravity()
-    {
-        if (rb == null) return;
+        Vector3 _velocity = Vector3.zero;
 
-        rb.AddForce(Vector3.up * (baseGravity * currentGravityMultiplier), ForceMode.Acceleration);
-    }
+        if (currentState == ControllerState.Grounded) _velocity = CalculateMoveVel();
 
-    public void SetGravityMultiplier(float value)
-    {
-        currentGravityMultiplier = value;
-    }
+        Vector3 _worldMomentum = momentum;
 
-    private void CheckGround()
-    {
-        bool previousGrounded = isGrounded;
-
-        isGrounded = Physics.Raycast(GroundCheck.position, Vector3.down, groundCheckRange, whatIsGround);
-
-        if (!previousGrounded && isGrounded)
+        if (useLocalMomentum)
         {
-            hasUsedAirAttack = false;
-            hasUsedDash = false;
+            _worldMomentum = tr.localToWorldMatrix * momentum;
+        }
 
-            // 🔊 Sonido de aterrizaje
-            PlayAudio(land, sfxVolume);
+        _velocity += _worldMomentum;
+
+        //If player is grounded or sliding on a slope, extend mover's sensor range;
+        //This enables the player to walk up/down stairs and slopes without losing ground contact;
+        mover.SetExtendSensorRange(IsGrounded());
+
+        //Set mover velocity
+        mover.SetVelocity(_velocity);
+
+        savedVel = _velocity;
+        savedMoveVel = CalculateMoveVel();
+
+        jumpKeyWasPressed = false;
+    }
+
+    private Vector3 CalculateMoveDir()
+    {
+        Vector3 _velocity = Vector3.zero;
+
+        if (camTransform != null)
+        {
+            _velocity += Vector3.ProjectOnPlane(camTransform.right, tr.up).normalized * inputs.GetHorizontalMovementInput();
+            _velocity += Vector3.ProjectOnPlane(camTransform.forward, tr.up).normalized * inputs.GetVerticalMovementInput();
+        }
+        else
+        {
+            Debug.LogError("Player: missing camera transform in PlayerController");
+        }
+
+        if (_velocity.magnitude > 1f) _velocity.Normalize();
+
+        return _velocity;
+    }
+
+    private Vector3 CalculateMoveVel()
+    {
+        Vector3 _velocity = CalculateMoveDir();
+
+        _velocity *= moveSpeed;
+
+        return _velocity;
+    }
+
+    private void HandleJump()
+    {
+        if (currentState == ControllerState.Grounded)
+        {
+            if ((jumpKeyIsPressed == true || jumpKeyWasPressed) && !jumpInputIsLocked)
+            {
+                //Call events;
+                OnGroundContactLost();
+                OnJumpStart();
+
+                currentState = ControllerState.Jumping;
+            }
         }
     }
+
+    private void HandleMomentum()
+    {
+        if (useLocalMomentum) momentum = tr.localToWorldMatrix * momentum;
+
+        Vector3 _vecticalMomentum = Vector3.zero;
+        Vector3 _horizontalMomentum = Vector3.zero;
+
+        //Split momentum into vertical and horizontal components;
+        if (momentum != Vector3.zero)
+        {
+            _vecticalMomentum = VectorMath.ExtractDotVector(momentum, tr.up);
+            _horizontalMomentum = momentum - _vecticalMomentum;
+        }
+
+        //Add gravity to vertical momentum;
+        _vecticalMomentum -= tr.up * gravity * Time.deltaTime;
+
+        //Remove any downward force if the controller is grounded;
+        if (currentState == ControllerState.Grounded && VectorMath.GetDotProduct(_vecticalMomentum, tr.up) < 0f)
+        {
+            _vecticalMomentum = Vector3.zero;
+        }
+
+        //Manipulate momentum to steer controller in the air (if controller is not grounded or sliding);
+        if (!IsGrounded())
+        {
+            Vector3 _movementVel = CalculateMoveVel();
+
+            if (_horizontalMomentum.magnitude > moveSpeed)
+            {
+                if (VectorMath.GetDotProduct(_movementVel, _horizontalMomentum.normalized) > 0f)
+                {
+                    _movementVel = VectorMath.RemoveDotVector(_movementVel, _horizontalMomentum.normalized);
+                }
+
+                float _airControlMult = 0.25f;
+                _horizontalMomentum += _movementVel * Time.deltaTime * airControlRate * _airControlMult;
+            }
+            else
+            {
+                _horizontalMomentum += _movementVel * Time.deltaTime * airControlRate;
+                _horizontalMomentum = Vector3.ClampMagnitude(_horizontalMomentum, moveSpeed);
+            }
+        }
+
+        if (currentState == ControllerState.Sliding)
+        {
+            //Calculate vector pointing away from slope;
+            Vector3 _pointDownVector = Vector3.ProjectOnPlane(mover.GetGroundNormal(), tr.up).normalized;
+
+            //Calculate movement velocity;
+            Vector3 _slopeMovementVelocity = CalculateMoveVel();
+            //Remove all velocity that is pointing up the slope;
+            _slopeMovementVelocity = VectorMath.RemoveDotVector(_slopeMovementVelocity, _pointDownVector);
+
+            //Add movement velocity to momentum;
+            _horizontalMomentum += _slopeMovementVelocity * Time.fixedDeltaTime;
+        }
+
+        //Apply friction to horizontal momentum based on whether the controller is grounded;
+        if (currentState == ControllerState.Grounded)
+        {
+            _horizontalMomentum = VectorMath.IncrementVectorTowardTargetVector(_horizontalMomentum, groundFriction, Time.deltaTime, Vector3.zero);
+        }
+        else
+        {
+            _horizontalMomentum = VectorMath.IncrementVectorTowardTargetVector(_horizontalMomentum, airFriction, Time.deltaTime, Vector3.zero);
+        }
+
+        momentum = _horizontalMomentum + _vecticalMomentum;
+
+        if (currentState == ControllerState.Sliding)
+        {
+            //Project the current momentum onto the current ground normal if the controller is sliding down a slope;
+            momentum = Vector3.ProjectOnPlane(momentum, mover.GetGroundNormal());
+
+            //Remove any upwards momentum when sliding;
+            if (VectorMath.GetDotProduct(momentum, tr.up) > 0f)
+                momentum = VectorMath.RemoveDotVector(momentum, tr.up);
+
+            //Apply additional slide gravity;
+            Vector3 _slideDirection = Vector3.ProjectOnPlane(-tr.up, mover.GetGroundNormal()).normalized;
+            momentum += _slideDirection * slideGravity * Time.deltaTime;
+        }
+
+        if (currentState == ControllerState.Jumping)
+        {
+            momentum = VectorMath.RemoveDotVector(momentum, tr.up);
+            momentum += tr.up * jumpSpeed;
+        }
+
+        if (useLocalMomentum)
+        {
+            momentum = tr.worldToLocalMatrix * momentum;
+        }
+
+    }
+
 
     //===================================================================================
     //=====================        MELEE COMBAT RELATED      ============================
@@ -817,33 +1106,6 @@ public class PlayerControl : MonoBehaviour, IDamageable
     //===================================================================================
     //=====================       PLAYER MODEL VISUAL        ============================
     //===================================================================================
-
-    private void HandleRotation(Vector3 moveDir)
-    {
-        Vector3 lookDir;
-
-        if (input.isAiming || (lockOnTarget != null && lockOnTarget.isTargeting))
-        {
-            var cam = mainCam;
-
-            if (cam == null) return;
-
-            lookDir = cam.transform.forward;
-            lookDir.y = 0f;
-            lookDir.Normalize();
-        }
-        else
-        {
-            if (moveDir.magnitude < 0.1f) return;
-
-            lookDir = moveDir;
-        }
-
-        Quaternion targetRotation = Quaternion.LookRotation(lookDir);
-
-        playerModel.rotation = Quaternion.Slerp(playerModel.rotation, targetRotation, rotSpeed * Time.deltaTime);
-    }
-
     public void RotatePlayerModelToward(Vector3 dir, float rotateSpeed)
     {
         if (dir.sqrMagnitude < 0.0001f) return;
@@ -958,4 +1220,120 @@ public class PlayerControl : MonoBehaviour, IDamageable
         return debugBox;
     }
 
+
+    #region Events
+
+    private void OnJumpStart()
+    {
+        if (useLocalMomentum) momentum = tr.localToWorldMatrix * momentum;
+
+        momentum += tr.up * jumpSpeed;
+
+        if (OnJump != null) OnJump(momentum);
+
+        if (useLocalMomentum) momentum = tr.worldToLocalMatrix * momentum;
+    }
+
+    private void OnGroundContactLost()
+    {
+        //If local momentum is used, transform momentum into world coordinates first;
+        if (useLocalMomentum) momentum = tr.localToWorldMatrix * momentum;
+
+        Vector3 _velocity = GetMovementVelocity();
+
+        //Check if the controller has both momentum and a current movement velocity;
+        if (_velocity.sqrMagnitude >= 0f && momentum.sqrMagnitude > 0f)
+        {
+            //Project momentum onto movement direction;
+            Vector3 _projectedMomentum = Vector3.Project(momentum, _velocity.normalized);
+
+            //Calculate dot product to determine whether momentum and movement are aligned;
+            float _dot = VectorMath.GetDotProduct(_projectedMomentum.normalized, _velocity.normalized);
+
+            //If current momentum is already pointing in the same direction as movement velocity,
+            //Don't add further momentum (or limit movement velocity) to prevent unwanted speed accumulation;
+            if (_projectedMomentum.sqrMagnitude >= _velocity.sqrMagnitude && _dot > 0f)
+            {
+                _velocity = Vector3.zero;
+            }
+            else if (_dot > 0f)
+            {
+                _velocity -= _projectedMomentum;
+            }
+        }
+
+        //Add movement velocity to momentum;
+        momentum += _velocity;
+
+        if (useLocalMomentum) momentum = tr.worldToLocalMatrix * momentum;
+    }
+
+    private void OnGroundContactRegained()
+    {
+        //Call 'OnLand' event;
+        if (OnLand != null)
+        {
+            Vector3 _collisionVelocity = momentum;
+
+            //If local momentum is used, transform momentum into world coordinates first;
+            if (useLocalMomentum) _collisionVelocity = tr.localToWorldMatrix * _collisionVelocity;
+
+            OnLand(_collisionVelocity);
+        }
+    }
+
+    #endregion
+
+    #region Helper functions
+
+    private bool IsRisingOrFalling()
+    {
+        Vector3 _verticalMomentum = VectorMath.ExtractDotVector(GetMomentum(), tr.up);
+
+        float _limit = 0.001f;
+
+        return (_verticalMomentum.magnitude > _limit);
+    }
+
+    private bool IsGroundTooSteep()
+    {
+        if (!mover.IsGrounded()) return true;
+
+        return (Vector3.Angle(mover.GetGroundNormal(), tr.up) > slopeLimit);
+    }
+    #endregion
+
+    #region Getters
+    public override Vector3 GetVelocity()
+    {
+        return savedVel;
+    }
+
+    public override Vector3 GetMovementVelocity()
+    {
+        return savedMoveVel;
+    }
+
+    public override bool IsGrounded()
+    {
+        return (currentState == ControllerState.Grounded || currentState == ControllerState.Sliding);
+    }
+
+    public Vector3 GetMomentum()
+    {
+        Vector3 _worldMomentum = momentum;
+
+        if (useLocalMomentum) _worldMomentum = tr.localToWorldMatrix * momentum;
+
+        return _worldMomentum;
+    }
+
+    public bool IsJumpKeyPressed()
+    {
+        if (inputs == null) return false;
+
+        return inputs.IsJumpKeyPressed();
+    }
+
+    #endregion
 }

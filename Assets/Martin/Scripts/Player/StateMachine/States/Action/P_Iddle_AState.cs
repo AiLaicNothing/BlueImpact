@@ -11,7 +11,7 @@ public class P_Iddle_AState : PlayerState
         {
             int idle = Animator.StringToHash("Idle");
 
-            if (player.Anim.HasState(0, idle) && player.IsGrounded)
+            if (player.Anim.HasState(0, idle) && player.IsGrounded())
             {
                 player.Anim.SetBool("Idle", true);
             }
@@ -26,12 +26,12 @@ public class P_Iddle_AState : PlayerState
     public override void OnUpdate()
     {
 
-        if (player.IsGrounded)
+        if (player.IsGrounded())
         {
             player.canDash = true;
         }
 
-        if (player.Input.moveInput.magnitude > 0.1f && player.IsGrounded)
+        if (player.Input.moveInput.magnitude > 0.1f && player.IsGrounded())
         {
             player.Anim.SetBool("Walking", true);
         }
@@ -60,12 +60,12 @@ public class P_Iddle_AState : PlayerState
             if (type == AttackInputType.Melee)
             {
                 //--> If is not touching the ground and has not attacked in the air
-                if (!player.IsGrounded && !player.hasUsedAirAttack)
+                if (!player.IsGrounded() && !player.hasUsedAirAttack)
                 {
                     //-->Do airAttack
                     player.ChangeActionState(player.airAttackAState);
                 }
-                else if (player.IsGrounded)
+                else if (player.IsGrounded())
                 {
                     //-->Do grounded attack
                     player.ChangeActionState(player.attack_AState);
@@ -82,11 +82,11 @@ public class P_Iddle_AState : PlayerState
                 }
                 else
                 {
-                    if (!player.IsGrounded && !player.hasUsedAirAttack)
+                    if (!player.IsGrounded() && !player.hasUsedAirAttack)
                     {
                         player.ChangeActionState(player.airAttackAState);
                     }
-                    else if (player.IsGrounded)
+                    else if (player.IsGrounded())
                     {
                         player.ChangeActionState(player.attack_AState);
                     }

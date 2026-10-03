@@ -12,7 +12,7 @@ public class P_Jump_State : PlayerState
             return;
         }
 
-        player.Jump();
+        //player.HandleJump();
 
 
         if (player.Anim != null)

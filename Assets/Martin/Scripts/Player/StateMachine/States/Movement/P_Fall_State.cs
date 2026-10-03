@@ -12,7 +12,7 @@ public class P_Fall_State : PlayerState
             return;
         }
 
-        player.SetGravityMultiplier(player.FallGravityMult);
+        //player.SetGravityMultiplier(player.FallGravityMult);
 
 
         if (player.Anim != null)
@@ -32,7 +32,7 @@ public class P_Fall_State : PlayerState
 
     public override void OnUpdate()
     {
-        if (player.IsGrounded)
+        if (player.IsGrounded())
         {
             if (player.Input.moveInput.magnitude > 0.1f)
             {
@@ -50,6 +50,5 @@ public class P_Fall_State : PlayerState
     {
         Debug.Log("Exit Fall State");
         player.Anim.SetBool("Falling", false);
-        player.SetGravityMultiplier(1f);
     }
 }

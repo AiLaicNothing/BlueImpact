@@ -55,7 +55,7 @@ public class P_Shoot_AState : PlayerState
             player.ChangeActionState(player.shoot_AState);
         }
 
-        if (timer >= player.ShootData.shootTime + 0.1f && player.IsGrounded)
+        if (timer >= player.ShootData.shootTime + 0.1f && player.IsGrounded())
         {
             player.ChangeActionState(player.iddle_AState);
         }

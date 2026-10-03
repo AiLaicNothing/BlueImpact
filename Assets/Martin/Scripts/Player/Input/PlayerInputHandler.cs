@@ -1,13 +1,14 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using CMF;
 
-public class PlayerInputHandler : MonoBehaviour
+public class PlayerInputHandler : CharacterInput
 {
     public float attackBufferTime = 0.2f;
     private float attackBufferCounter;
 
     public Vector2 moveInput { get; private set; }
-    private bool hasJumped;
+    public bool hasJumped {  get; private set; }
     public bool hasDashed { get; private set; }
     public bool isAiming { get; private set; }
     public Vector2 lookInput { get; private set; }
@@ -57,24 +58,32 @@ public class PlayerInputHandler : MonoBehaviour
             pauseAction.Disable();
         }
     }
+
+    public override float GetHorizontalMovementInput()
+    {
+        return moveInput.x;
+    }
+
+    public override float GetVerticalMovementInput()
+    {
+        return moveInput.y;
+    }
+
+    public override bool IsJumpKeyPressed()
+    {
+        return hasJumped;
+    }
+
     public void OnMove(InputAction.CallbackContext context)
     {
         moveInput = context.ReadValue<Vector2>();
     }
-    public bool ConsumeJump()
-    {
-        if (!hasJumped) return false;
 
-        hasJumped = false;
-        return true;
-    }
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (context.started)
-        {
-            hasJumped = true;
-        }
+        hasJumped = true;
     }
+
     public void OnDash(InputAction.CallbackContext context)
     {
         if (context.started)
@@ -249,6 +258,5 @@ public class PlayerInputHandler : MonoBehaviour
 
         onMelee = false;
     }
-
 
 }

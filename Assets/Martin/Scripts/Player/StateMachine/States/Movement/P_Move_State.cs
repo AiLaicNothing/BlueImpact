@@ -32,7 +32,7 @@ public class P_Move_State : PlayerState
         base.OnUpdate();
         player.PlayConstantAudio(player.walk, 1, false);
 
-        if (!player.IsGrounded)
+        if (!player.IsGrounded())
         {
             player.ChangeState(player.fall_State);
             return;
@@ -44,7 +44,7 @@ public class P_Move_State : PlayerState
             return;
         }
 
-        if (player.Input.ConsumeJump())
+        if (player.Input.hasJumped)
         {
             player.ChangeState(player.jump_State);
             return;
