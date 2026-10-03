@@ -7,6 +7,8 @@ public class RespawnManager : MonoBehaviour
     private Transform respawnPoint;
     private Transform initialSpawnPoint;  // ✅ GUARDAR SPAWN INICIAL
 
+    private GameObject player;
+
     private void Awake()
     {
         Instance = this;
@@ -35,18 +37,17 @@ public class RespawnManager : MonoBehaviour
             return;
         }
 
-        var player = GameObject.FindGameObjectWithTag("Player")?.GetComponent<PlayerControl>();
-        if (player != null)
+        var Controlplayer = player.GetComponent<PlayerControl>();
+        if (Controlplayer != null)
         {
             // ✅ TELETRANSPORTAR
-            player.transform.position = targetSpawn.position;
-            player.transform.rotation = targetSpawn.rotation;
+            TeleportTo(targetSpawn);
 
             // ✅ RESETEAR isDead
-            player.isDead = false;
+            Controlplayer.isDead = false;
 
             // ✅ RESTAURAR TODOS LOS STATS AL MÁXIMO
-            var statsManager = player.PlayerStatsManager;
+            var statsManager = Controlplayer.PlayerStatsManager;
             if (statsManager != null)
             {
                 statsManager.RestoreFull(StatType.Vida);
@@ -60,5 +61,32 @@ public class RespawnManager : MonoBehaviour
 
             Debug.Log($"♻️ Player respawned en: {targetSpawn.name}");
         }
+    }
+
+    private void TeleportTo(Transform desiredPos)
+    {
+        if (player == null || desiredPos == null) return;
+
+        PlayerControl controller = player.GetComponent<PlayerControl>();
+        Rigidbody rb = player.GetComponent<Rigidbody>();
+
+        if (controller != null) controller.enabled = false;
+
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.position = desiredPos.position;
+        }
+        else
+        {
+            player.transform.position = desiredPos.position;
+        }
+
+        if (controller != null) controller.enabled = true;
+    }
+    public void SetPlayerTarget(GameObject player)
+    {
+        this.player = player;
     }
 }
