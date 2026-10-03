@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 [CreateAssetMenu(menuName = "Player/Skills/Solis/Solar Descent")]
-public class SolarDescent : Skill
+public class SolarDescent_Skill : Skill
 {
     [Header("Damage")]
     public HitData hitData;
@@ -12,9 +12,8 @@ public class SolarDescent : Skill
     [SerializeField] private bool debug;
     [Header("Impact")]
     [SerializeField] private float impactRadius = 6f;
-    [SerializeField] private int impactDamage = 25;
     [Header("Vfx")]
-    [SerializeField] GameObject vfxFire;
+    [SerializeField] ParticleSystem vfxFire;
     [SerializeField] GameObject groundShockwavePrefab;
     public string castSecondAnimation;
     private bool isExecuting;
@@ -33,24 +32,26 @@ public class SolarDescent : Skill
 
     IEnumerator Descent(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
-        player.Rb.angularVelocity = new Vector3(player.Rb.angularVelocity.x, Mathf.Sqrt(2f * jumpHeight * Mathf.Abs(Physics.gravity.y)), player.Rb.angularVelocity.z);
+        player.Rb.linearVelocity = new Vector3(player.Rb.linearVelocity.x, Mathf.Sqrt(2f * jumpHeight * Mathf.Abs(Physics.gravity.y)), player.Rb.linearVelocity.z);
         player.PlayAudio(actionSound, 0.8f);
         yield return new WaitForSeconds(0.3f);
         player.Rb.isKinematic = true;
-        yield return new WaitForSeconds(chargeTime);
+        /*vfxFire = GameObject.Find("FireInSwordVfx").GetComponent<ParticleSystem>();
+        vfxFire.Play();*/
         if (player.Anim != null)
         {
             int skill = Animator.StringToHash($"{castSecondAnimation}");
 
             if (player.Anim.HasState(0, skill))
             {
-                player.Anim.CrossFade(skill, 0.2f, 0);
+                player.Anim.CrossFade(skill, 0.8f, 0);
             }
             else
             {
                 Debug.Log("[PlayerAnimator] is missing castAnimation State");
             }
         }
+        yield return new WaitForSeconds(chargeTime);
         player.Rb.isKinematic = false;
 
         Vector3 finalTarget = lockTargetPos != Vector3.zero ? lockTargetPos : targetPoint;
@@ -66,9 +67,9 @@ public class SolarDescent : Skill
         Vector3 center = spawnPos + dir * (player.Model.localScale.z / 2f);
 
         Vector3 halfExtents = new Vector3(player.Model.localScale.x / 2f, player.Model.localScale.y / 2f, player.Model.localScale.z / 2f);
-        GameObject vfx = Instantiate(vfxFire, spawnPos, player.Model.rotation);        
+         
 
-        player.Rb.angularVelocity = downForce;
+        player.Rb.linearVelocity = downForce;
 
         if (debug) debugBox2 = player.ShowHitboxPersistent(center, halfExtents * 2, player.Model.rotation, debugBox2);
 
@@ -76,7 +77,7 @@ public class SolarDescent : Skill
 
         DamageInfo info = new DamageInfo
         {
-            damage = ((player.PlayerStatsManager.GetActualValue(StatType.DañoFísico) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.DañoMágico) * hitData.magicalScale)),
+            damage = ((player.PlayerStatsManager.GetActualValue(StatType.DañoFísico) * hitData.physicalScale) + (player.PlayerStatsManager.GetActualValue(StatType.DañoMágico) * hitData.magicalScale))/2,
             hitDirection = dir,
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,
@@ -107,7 +108,7 @@ public class SolarDescent : Skill
             }
             yield return null;
         }
-        Destroy(vfx);
+        //vfxFire.Stop();
         OnGroundImpact(player, targetPoint, lockTargetPos);
         if (debugBox != null)
         {
@@ -123,7 +124,7 @@ public class SolarDescent : Skill
 
     void OnGroundImpact(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
-        Instantiate(groundShockwavePrefab, player.Model.position, Quaternion.identity);
+        GameObject vfx2 = Instantiate(groundShockwavePrefab, new Vector3(player.Model.position.x, player.Model.position.y -0.5f, player.Model.position.z), Quaternion.identity);
 
         Vector3 finalTarget;
 
@@ -167,5 +168,6 @@ public class SolarDescent : Skill
                 damageable.TakeDamage(info);
             }
         }
+        Destroy(vfx2, 5f);
     }
 }
