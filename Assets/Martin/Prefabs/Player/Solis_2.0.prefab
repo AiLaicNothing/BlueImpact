@@ -25154,6 +25154,7 @@ MonoBehaviour:
   hasUsedAirAttack: 0
   isPerformingAct: 0
   blockVelocity: 0
+  lockOnTarget: {fileID: 0}
 --- !u!114 &2926181798383609381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -31411,6 +31412,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Solis-FBX_Final
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 0dc5f28e823df0e43a16f38397b45d4b, type: 3}
+      propertyPath: m_Layer
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 0dc5f28e823df0e43a16f38397b45d4b, type: 3}
+      propertyPath: m_TagString
+      value: Player
+      objectReference: {fileID: 0}
     - target: {fileID: 1115488515309201227, guid: 0dc5f28e823df0e43a16f38397b45d4b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
@@ -31981,6 +31990,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0dc5f28e823df0e43a16f38397b45d4b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8890938584005387870}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0dc5f28e823df0e43a16f38397b45d4b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6387275998443955021}
   m_SourcePrefab: {fileID: 100100000, guid: 0dc5f28e823df0e43a16f38397b45d4b, type: 3}
 --- !u!4 &3569852321561516678 stripped
 Transform:
@@ -32018,6 +32030,29 @@ MonoBehaviour:
   smoothSpeed: 20
   extrapolateRotation: 0
   updateType: 1
+--- !u!136 &6387275998443955021
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8531835710033295718}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.8
+  m_Height: 4
+  m_Direction: 1
+  m_Center: {x: 0, y: 2, z: 0}
 --- !u!4 &9019861176694514652 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 0dc5f28e823df0e43a16f38397b45d4b, type: 3}

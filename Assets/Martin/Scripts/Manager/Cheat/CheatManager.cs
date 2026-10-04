@@ -46,7 +46,7 @@ public class CheatManager : MonoBehaviour
             }
             else if (Input.GetKeyDown(KeyCode.Alpha4))
             {
-                StartCoroutine(TeleportToLevel("Zone_03", "Zone_01_Tutorial", Level3));
+                StartCoroutine(TeleportToLevel("Zone_03", "", Level3));
             }
             else if (Input.GetKeyDown(KeyCode.Alpha5))
             {
