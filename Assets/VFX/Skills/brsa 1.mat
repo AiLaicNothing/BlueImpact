@@ -7,28 +7,26 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: brsa
+  m_Name: brsa 1
   m_Shader: {fileID: -6465566751694194690, guid: e0997b87b22685548bf2169bb902af48, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _SURFACE_TYPE_TRANSPARENT
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3000
+  m_CustomRenderQueue: 2000
   stringTagMap:
-    RenderType: Transparent
+    RenderType: Opaque
   disabledShaderPasses:
   - MOTIONVECTORS
-  - DepthOnly
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: e2f09a85e0252824885d6bea3ceb7099, type: 3}
+        m_Texture: {fileID: 2800000, guid: 96e398f825d100e46a8ca8cfe6334db5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Mask:
@@ -55,22 +53,22 @@ Material:
     - _Blend: 0
     - _CastShadows: 1
     - _Cull: 0
-    - _DistorsionAmount: 0.063
-    - _DistorsionScale: 30
-    - _DstBlend: 10
-    - _DstBlendAlpha: 10
+    - _DistorsionAmount: 0.316
+    - _DistorsionScale: 41.73
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _SrcBlend: 5
+    - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _Surface: 1
+    - _Surface: 0
     - _ZTest: 4
-    - _ZWrite: 0
+    - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 7.3962264, g: 0.6491248, b: 0, a: 1}
-    - _DistorsionSpeed: {r: -0.47, g: 1.6, b: 0, a: 0}
-    - _MainTexSpeed: {r: 0, g: -0.93, b: 0, a: 0}
+    - _Color: {r: 7.3962264, g: 0.28959686, b: 0, a: 1}
+    - _DistorsionSpeed: {r: 2.6, g: 0.43, b: 0, a: 0}
+    - _MainTexSpeed: {r: 1.18, g: 0.84, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &6945326069440020569

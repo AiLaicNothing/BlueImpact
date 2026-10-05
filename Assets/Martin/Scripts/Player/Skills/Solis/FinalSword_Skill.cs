@@ -17,15 +17,17 @@ public class FinalSword_Skill : Skill
         Vector3 finalTarget = lockTargetPos != Vector3.zero ? lockTargetPos : targetPoint;
         Vector3 spawnPos = player.Model.position + player.Model.forward * spawnOffSet.z + Vector3.up * spawnOffSet.y;
         Vector3 dir = (finalTarget - spawnPos).normalized;
-
         if (dir.sqrMagnitude < 0.0001f) dir = player.Model.forward;
         dir.x = player.transform.position.x;
         Quaternion rot = Quaternion.LookRotation(dir);
-        GameObject finalSwordPrefab = Instantiate(swordPrefab, spawnPos, rot);
-        FinalSwordPrefab fSword = finalSwordPrefab.GetComponent<FinalSwordPrefab>();
+        GameObject finalSwordPrefab = Instantiate(swordPrefab, spawnPos, player.Model.rotation);
+        FinalSwordPrefab fSword = finalSwordPrefab.transform.Find("FinalSwordPrefab").GetComponent<FinalSwordPrefab>();
         if(fSword != null)
         {
+            Debug.Log("EXISTO");
             fSword.Initialize(player, dir, Vector3.zero, hitData);
         }
+        longCasting = true;
+        player.blockVelocity = true;
     }
 }

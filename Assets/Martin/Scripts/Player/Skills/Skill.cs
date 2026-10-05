@@ -19,7 +19,7 @@ public abstract class Skill : ScriptableObject
     public float cooldown;
     public float actionTime;
     public bool haveProjection;
-
+    public bool longCasting;
     [Header("Animation")]
     public string castAnimation;
     public string actionAnimation;

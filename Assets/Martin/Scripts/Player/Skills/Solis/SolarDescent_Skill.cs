@@ -19,6 +19,7 @@ public class SolarDescent_Skill : Skill
     private bool isExecuting;
     [Header("Layer")]
     [SerializeField] private LayerMask enemyLayer;
+    [SerializeField] private LayerMask groundLayer;
     private GameObject debugBox;
     private GameObject debugBox2;
     [Header("Spawn")]
@@ -102,7 +103,7 @@ public class SolarDescent_Skill : Skill
         bool hitGround = false;
         while (!hitGround)
         {
-            if (Physics.Raycast(player.Model.position, Vector3.down, 1.1f))
+            if (Physics.Raycast(player.Model.position, Vector3.down, 1.1f, groundLayer))
             {
                 hitGround = true;
             }

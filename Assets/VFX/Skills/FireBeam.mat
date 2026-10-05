@@ -7,32 +7,29 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: brsa
-  m_Shader: {fileID: -6465566751694194690, guid: e0997b87b22685548bf2169bb902af48, type: 3}
+  m_Name: FireBeam
+  m_Shader: {fileID: -6465566751694194690, guid: 1932faa1c5a098c4889ea054c04ea24c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _SURFACE_TYPE_TRANSPARENT
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3000
-  stringTagMap:
-    RenderType: Transparent
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
   disabledShaderPasses:
   - MOTIONVECTORS
-  - DepthOnly
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: e2f09a85e0252824885d6bea3ceb7099, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2300a303d342f284a83a0bf3c7e7c53b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Mask:
-        m_Texture: {fileID: 2800000, guid: a0bcddd8b082ea84b97a3f9ce03ec8de, type: 3}
+    - _MaskTex:
+        m_Texture: {fileID: 2800000, guid: 531348bb63f79524bbc8671ef704c09d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -49,31 +46,15 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AlphaC: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 0
-    - _CastShadows: 1
-    - _Cull: 0
-    - _DistorsionAmount: 0.063
-    - _DistorsionScale: 30
-    - _DstBlend: 10
-    - _DstBlendAlpha: 10
+    - _FresnelPower: 2
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _SrcBlend: 5
-    - _SrcBlendAlpha: 1
-    - _Surface: 1
-    - _ZTest: 4
-    - _ZWrite: 0
-    - _ZWriteControl: 0
+    - _Velocity: 2.47
     m_Colors:
-    - _Color: {r: 7.3962264, g: 0.6491248, b: 0, a: 1}
-    - _DistorsionSpeed: {r: -0.47, g: 1.6, b: 0, a: 0}
-    - _MainTexSpeed: {r: 0, g: -0.93, b: 0, a: 0}
+    - _ColorHDR: {r: 10.680627, g: 1.3250581, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &6945326069440020569
+--- !u!114 &7572036861881121454
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}

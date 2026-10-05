@@ -8,7 +8,7 @@ public class P_Skill_AState : PlayerState
 
     float timer;
     bool isCasting = true;
-
+    bool firstCast = true;
     Vector3 saveTargetPoint;
     public override void OnEnter()
     {
@@ -18,7 +18,18 @@ public class P_Skill_AState : PlayerState
             player.ChangeActionState(player.iddle_AState);
             return;
         }
-
+        if (!player.IsSkillReady(skillIndex))
+        {
+            firstCast = false;
+        }
+        else firstCast = true;
+        if (currentSkill.longCasting)
+        {
+            if (!firstCast)
+            {   
+                return;
+            }
+        }
         //--> Check that the is not in cooldown
         if (!player.IsSkillReady(skillIndex))
         {
