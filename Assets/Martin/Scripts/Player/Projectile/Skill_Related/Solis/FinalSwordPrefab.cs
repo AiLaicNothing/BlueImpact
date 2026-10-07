@@ -27,7 +27,6 @@ public class FinalSwordPrefab : MonoBehaviour
     private bool doingDmg = false;
     public void Initialize(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos, HitData hitData)
     {
-        Debug.Log("Bro?");
         StartCoroutine(ExecuteSkill(player, targetPoint, hitData));
     }
     private void Update()
@@ -35,7 +34,6 @@ public class FinalSwordPrefab : MonoBehaviour
         timer += Time.deltaTime;
         if(timer < 2.2f && player != null)
         {
-            Debug.Log("Dont MOVE");
             player.blockVelocity = true;
             player.ChangeActionState(player.skill_AState);
         }
@@ -46,7 +44,6 @@ public class FinalSwordPrefab : MonoBehaviour
         swordVfx.SetActive(true);
         anim.enabled = true;
         anim.Play("FinalSwordAnimation");
-        Debug.Log("Aura");
         auraVfx.Play();
         ChangeDmgInfo(player, targetPoint, hitData);
         DoDmg(radius);
@@ -63,7 +60,6 @@ public class FinalSwordPrefab : MonoBehaviour
         GameObject explotionVfx = Instantiate(explotionPrefab, swordVfx.transform.position,
             new Quaternion(explotionPrefab.transform.rotation.x, transform.rotation.y, explotionPrefab.transform.rotation.z, transform.rotation.w));
         Destroy(explotionVfx, 3);
-        Debug.Log("Explotion FIYA");
 
         ChangeDmgInfo(player, targetPoint, hitData);
         DoDmg(radius - 2.2f);

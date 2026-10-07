@@ -7,6 +7,8 @@ public class FirstJudgmentSword : MonoBehaviour
     [Header("Fall")]
     public float initialSpeed = 20f;
     public float gravity = -80f;
+    [SerializeField] float maxTimer;
+    [SerializeField] float gravityExtra;
 
     [Header("Ground Check")]
     [SerializeField] private float groundOffset = 2f;
@@ -22,7 +24,8 @@ public class FirstJudgmentSword : MonoBehaviour
     [Header("VFX")]
     public GameObject impactSFX;
     public GameObject damageSFX;
-
+    Material swordMat;
+    [SerializeField] GameObject parent;
     private Rigidbody rb;
     private bool hasLanded;
 
@@ -31,6 +34,11 @@ public class FirstJudgmentSword : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        swordMat = GetComponent<MeshRenderer>().material;
+        gravity = 0f;
+        initialSpeed = 5;
+        Vector3 circlePosition = parent.transform.position + new Vector3(0, -7.553535f,0);
+        swordMat.SetVector("_Sword_Pivot", circlePosition);
     }
 
     public void Initialize(HitData hitData, PlayerControl player)
@@ -62,9 +70,13 @@ public class FirstJudgmentSword : MonoBehaviour
 
         ApplyMovement();
     }
-
+    float timer = 0;
     void ApplyMovement()
     {
+        timer += Time.fixedDeltaTime;
+        
+        if (timer >= maxTimer) gravity -= 0.65f;
+        else gravity -= gravityExtra;
         velocity.y += gravity * Time.fixedDeltaTime;
 
         rb.linearVelocity = velocity;
@@ -77,7 +89,7 @@ public class FirstJudgmentSword : MonoBehaviour
             // snap to ground
             rb.linearVelocity = Vector3.zero;
             transform.position = hit.point + Vector3.up * groundOffset;
-
+            gravity = 0;
             Land();
         }
     }
@@ -96,10 +108,10 @@ public class FirstJudgmentSword : MonoBehaviour
     private IEnumerator ImpactRoutine()
     {
         yield return new WaitForSeconds(0.05f);
-
         DealDamage();
 
-        Destroy(gameObject, 0.1f);
+        Destroy(parent, 2f);
+        Destroy(gameObject, 2f);
     }
 
     private void DealDamage()

@@ -18,13 +18,15 @@ MonoBehaviour:
   resourceType: 4
   cost: 35
   castTime: 0.2
-  cooldown: 0
+  cooldown: 2
   actionTime: 1
+  haveProjection: 1
+  longCasting: 0
   castAnimation: Primer_Juicio
   actionAnimation: 
   castSound: {fileID: 0}
   actionSound: {fileID: 8300000, guid: 9229547e40f051245b959eacfc8968f2, type: 3}
-  swordPrefab: {fileID: 1543097338681371201, guid: 2ab15a39e304f214b832df4944d11b20, type: 3}
+  swordPrefab: {fileID: 7814022553721441517, guid: 0329e77e601f252409aee0c80ca9da8b, type: 3}
   hitData:
     physicalScale: 1.5
     magicalScale: 2
@@ -40,4 +42,6 @@ MonoBehaviour:
     knockDownForwardScale: 0
   maxRange: 20
   spawnHeight: 15
+  projectionObject: {fileID: 7911465154196756979, guid: f27d9dc9062fb2644bb39fe824b67103, type: 3}
+  projectionOffset: {x: 0, y: -6.553535, z: 0}
   spawnSFX: {fileID: 0}

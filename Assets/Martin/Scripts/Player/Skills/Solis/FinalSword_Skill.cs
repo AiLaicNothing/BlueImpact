@@ -24,7 +24,6 @@ public class FinalSword_Skill : Skill
         FinalSwordPrefab fSword = finalSwordPrefab.transform.Find("FinalSwordPrefab").GetComponent<FinalSwordPrefab>();
         if(fSword != null)
         {
-            Debug.Log("EXISTO");
             fSword.Initialize(player, dir, Vector3.zero, hitData);
         }
         longCasting = true;
