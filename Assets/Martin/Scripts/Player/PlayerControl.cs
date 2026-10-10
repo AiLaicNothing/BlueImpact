@@ -794,7 +794,7 @@ public class PlayerControl : Controller, IDamageable
 
                     DamageInfo info = new DamageInfo
                     {
-                        damage = ((playerStatsManager.GetActualValue(StatType.DañoFísico) * attack.hitData.physicalScale) + (playerStatsManager.GetActualValue(StatType.DañoMágico) * attack.hitData.magicalScale)),
+                        damage = (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Physical_Damage) * attack.hitData.physicalScale) + (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Magical_Damage) * attack.hitData.magicalScale),
                         hitDirection = hitDir,
                         throwType = attack.hitData.throwType,
                         stunDuration = attack.hitData.stunDuration,
@@ -1145,6 +1145,7 @@ public class PlayerControl : Controller, IDamageable
         if (isDead) return;
 
         playerStatsManager.Restore(StatType.Vida, amount);
+        stats.RestoreCurrentStat(StatsType.Health, amount);
     }
 
     private void OnDead()

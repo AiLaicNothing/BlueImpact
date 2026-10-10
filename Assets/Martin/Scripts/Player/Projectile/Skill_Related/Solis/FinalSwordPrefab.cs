@@ -70,7 +70,7 @@ public class FinalSwordPrefab : MonoBehaviour
         direction = dir.normalized;
         info = new DamageInfo
         {
-            damage = ((player.PlayerStatsManager.GetActualValue(StatType.DañoFísico) * (hitData.physicalScale + extraDmg)) + (player.PlayerStatsManager.GetActualValue(StatType.DañoMágico) * hitData.magicalScale)),
+            damage = (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Physical_Damage) * hitData.physicalScale) + (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Magical_Damage) * hitData.magicalScale),
             hitDirection = transform.forward,
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,
