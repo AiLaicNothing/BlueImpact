@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 981cee4d66fcb1e4794406a5818ee1cf, type: 3}
+  m_Name: Air Fury
+  m_EditorClassIdentifier: Assembly-CSharp::AirFury_Skill
+  skillId: 
+  skillSprite: {fileID: -2006052886, guid: 1b30f2ace44ecc647b27b69ce50a5c82, type: 3}
+  skillName: Air Fury
+  resourceType: 3
+  cost: 25
+  castTime: 0.1
+  cooldown: 6
+  actionTime: 0.3
+  haveProjection: 0
+  longCasting: 0
+  castAnimation: Carga_Solar
+  actionAnimation: 
+  castSound: {fileID: 0}
+  actionSound: {fileID: 0}
+  maxRange: 15
+  width: 2
+  height: 2
+  debug: 0
+  duration: 2
+  tickRate: 0.4
+  startOffset: {x: 0, y: 0, z: 0}
+  hitData:
+    physicalScale: 1
+    magicalScale: 1
+    damageMultiplier: 1
+    staggerCharge: 10
+    throwType: 0
+    stunDuration: 0.15
+    keepInAir: 0
+    airHangDuration: 0
+    airLiftForce: 8
+    pushForce: 8
+    knockDownForce: 10
+    knockDownForwardScale: 0.15
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 56321
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  vfx: {fileID: 869223368649189721, guid: 4ef4945a39af2fe43acef85a3114b2da, type: 3}
+  vfxOffset: {x: 0, y: 0, z: 0}
+  sfx: {fileID: 0}
