@@ -5,6 +5,8 @@ public class CheckpointData : ScriptableObject
 {
     public string checkpointID;
 
+    public string locationSceneName;
+
     public string checkpointName;
 
     public Sprite previewImage;

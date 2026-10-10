@@ -3,12 +3,14 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "Characters/Character Data")]
 public class CharacterInfo : ScriptableObject
 {
-    public string characterName;
+
+    public CharacterData data;
 
     [TextArea]
     public string description;
     public Sprite portrait;
     public GameObject prefab;
+
 
     [Header("Stats value")]
     public int hp;

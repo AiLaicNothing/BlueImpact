@@ -32,6 +32,10 @@ public class PlayerSpawn_Manager : MonoBehaviour
         CheatManager.Instance.SetPlayerTarget(playerInstance);
         RespawnManager.Instance.SetPlayerTarget(playerInstance);
 
+
+        Player_Manager.Instance.SetPlayer(playerInstance);
+
+
         var playerControl = playerInstance.GetComponent<PlayerControl>();
         if (playerControl != null)
         {

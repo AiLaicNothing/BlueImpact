@@ -268,7 +268,7 @@ public class SkillManagementPanel : MonoBehaviour, IGamepadPanel
         if (PanelFocusManager.Instance != null)
             PanelFocusManager.Instance.PopPanel();
 
-        CheckpointMenuUI.Instance?.ShowMainPanel();
+        Checkpoint_Menu.Instance?.ReOpenMenu();
     }
 
     private void Refresh()

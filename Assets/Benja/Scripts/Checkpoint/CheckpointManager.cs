@@ -90,7 +90,7 @@ public class CheckpointManager : MonoBehaviour
 
         if (RespawnManager.Instance != null)
         {
-            RespawnManager.Instance.SetRespawn(checkpoint.SpawnPoint);
+            //RespawnManager.Instance.SetRespawn(checkpoint.SpawnPoint);
         }
         else
         {

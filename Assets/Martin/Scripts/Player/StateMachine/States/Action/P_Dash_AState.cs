@@ -16,9 +16,18 @@ public class P_Dash_AState : PlayerState
         dashStarted = false;
 
         // Check stamina before starting the dash
-        if (!player.PlayerStatsManager.CanConsume(StatType.Estamina, (int)player.DashCost))
+        //if (!player.PlayerStatsManager.CanConsume(StatType.Estamina, (int)player.DashCost))
+        //{
+        //    Debug.Log("No hay stamina para dash");
+
+        //    // Do NOT start the dash
+        //    player.ChangeActionState(player.iddle_AState);
+        //    return;
+        //}
+
+        if (!player._Stats.CanConsume(StatsType.Stamina, (int)player.DashCost))
         {
-            Debug.Log("No hay stamina para dash");
+            Debug.Log($"No hay stamina para dash {player._Stats.CurrentStamina} / {(int)player.DashCost}");
 
             // Do NOT start the dash
             player.ChangeActionState(player.iddle_AState);
@@ -26,7 +35,8 @@ public class P_Dash_AState : PlayerState
         }
 
         // Consume stamina only when the dash actually starts
-        player.PlayerStatsManager.Consume(StatType.Estamina, (int)player.DashCost);
+        //player.PlayerStatsManager.Consume(StatType.Estamina, (int)player.DashCost);
+        player._Stats.ConsumeStat(StatsType.Stamina, (int)player.DashCost);
 
         dashStarted = true;
 

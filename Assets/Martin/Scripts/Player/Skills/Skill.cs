@@ -12,6 +12,7 @@ public abstract class Skill : ScriptableObject
 
     [Header("Cost")]
     public StatType resourceType;
+    public StatsType statsType;
     public int cost;
 
     [Header("Casting")]

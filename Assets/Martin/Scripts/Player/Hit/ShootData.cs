@@ -9,6 +9,7 @@ public class ShootData : ScriptableObject
 
     [Header("Cost")]
     public StatType resourceType;
+    public StatsType statsType;
     public int cost;
 
     [Header("Shoot")]

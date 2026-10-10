@@ -173,6 +173,7 @@ public class PlayerControl : Controller, IDamageable
     private PlayerInputHandler input;
     public LockOnTarget lockOnTarget;
     private P_Skill_UI asd;
+    private CharacterStats stats;
 
     #region StateMachine References
 
@@ -199,6 +200,7 @@ public class PlayerControl : Controller, IDamageable
     public Rigidbody Rb => rb;
     public Animator Anim => anim;
 
+    public CharacterStats _Stats => stats;
     public Camera MainCam => mainCam;
     public Transform Cam => camTransform;
     public Transform Model => playerModel;
@@ -559,6 +561,7 @@ public class PlayerControl : Controller, IDamageable
     {
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();
+        stats = GetComponent<CharacterStats>();
         input = GetComponent<PlayerInputHandler>();
         lockOnTarget = GetComponent<LockOnTarget>();
         statsManager = GetComponent<StatsManager>();
@@ -1122,12 +1125,14 @@ public class PlayerControl : Controller, IDamageable
     {
         if (isDead) return;
 
+        stats.ConsumeStat(StatsType.Health, (int)info.damage);
+
         playerStatsManager.Consume(StatType.Vida, (int)info.damage);
         Anim.SetTrigger("Attacked");
         // 🔊 Sonido de recibir daño
         PlayAudio(onHit, sfxVolume);
 
-        if (playerStatsManager.IsDead())
+        if (playerStatsManager.IsDead() || stats.IsDead())
         {
             OnDead();
         }

@@ -6,131 +6,121 @@ using UnityEngine.SceneManagement;
 
 public class SceneLoaderManager : MonoBehaviour
 {
-    [SerializeField] private string tutorial;
-    [SerializeField] private string level_1;
-    [SerializeField] private string level_2;
-    [SerializeField] private string level_3;
-    [SerializeField] private string level_4;
+    public static SceneLoaderManager Instance { get; private set; }
 
-    [SerializeField] private bool loadlLv_Tutorial;
-    [SerializeField] private bool loadlLv_1;
-    [SerializeField] private bool loadlLv_2;
-    [SerializeField] private bool loadlLv_3;
-    [SerializeField] private bool loadlLv_4;
+    private readonly Dictionary<string, AsyncOperation> activeLoads = new();
 
-    public static SceneLoaderManager Instance;
+    private readonly HashSet<string> activeUnloads = new();
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
-    private void Start()
+    private void OnDestroy()
     {
-        StartCoroutine(LoadTestScenes());
+        if (Instance == this)
+            Instance = null;
     }
 
     public void LoadScene(string sceneName)
     {
-        StartCoroutine(LoadSceneAsync(sceneName));
+        StartCoroutine(LoadSceneAndWait(sceneName));
     }
 
     public IEnumerator LoadSceneAndWait(string sceneName)
     {
-        yield return StartCoroutine(LoadSceneAsync(sceneName));
-    }
-
-    private IEnumerator LoadTestScenes()
-    {
-        if (loadlLv_Tutorial)
-            yield return StartCoroutine(LoadSceneAsync(tutorial));
-
-        if (loadlLv_1)
-            yield return StartCoroutine(LoadSceneAsync(level_1));
-
-        if (loadlLv_2)
-            yield return StartCoroutine(LoadSceneAsync(level_2));
-
-        if (loadlLv_3)
-            yield return StartCoroutine(LoadSceneAsync(level_3));
-
-        if (loadlLv_4)
-            yield return StartCoroutine(LoadSceneAsync(level_4));
-    }
-
-    private IEnumerator LoadSceneAsync(string sceneName)
-    {
-        // Already loaded?
-        Scene scene = SceneManager.GetSceneByName(sceneName);
-
-        if (scene.isLoaded)
+        if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Debug.Log("Scene already loaded: " + sceneName);
+            Debug.LogError("[SceneLoader] Scene name is empty.");
             yield break;
         }
+
+        Scene scene = SceneManager.GetSceneByName(sceneName);
+
+        if (scene.isLoaded) yield break;
+
+        // Wait for an existing request instead of starting a duplicate.
+        if (activeLoads.TryGetValue(sceneName, out AsyncOperation existing))
+        {
+            while (!existing.isDone) yield return null;
+
+            yield break;
+        }
+
+        // Avoid loading while the same scene is being unloaded.
+        while (activeUnloads.Contains(sceneName)) yield return null;
+
+        scene = SceneManager.GetSceneByName(sceneName);
+
+        if (scene.isLoaded) yield break;
 
         AsyncOperation operation =
             SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
 
         if (operation == null)
         {
-            Debug.LogError("Could not load scene: " + sceneName);
+            Debug.LogError( $"[SceneLoader] Could not load scene '{sceneName}'. " + "Check the scene name and Build Profile scene list.");
             yield break;
         }
 
-        while (!operation.isDone)
-        {
-            float progress = Mathf.Clamp01(operation.progress / 0.9f);
+        activeLoads[sceneName] = operation;
 
-            Debug.Log("Loading " + sceneName + ": " +  progress * 100f + "%");
+        while (!operation.isDone) yield return null;
 
-            yield return null;
-        }
+        activeLoads.Remove(sceneName);
 
-        Debug.Log("Scene loaded: " + sceneName);
+        Debug.Log($"[SceneLoader] Loaded scene: {sceneName}");
     }
 
     public void UnLoadScene(string sceneName)
     {
-        StartCoroutine(UnloadSceneAsync(sceneName));
+        StartCoroutine(UnloadSceneAndWait(sceneName));
     }
 
     public IEnumerator UnloadSceneAndWait(string sceneName)
     {
-        yield return StartCoroutine(UnloadSceneAsync(sceneName));
-    }
+        if (string.IsNullOrWhiteSpace(sceneName)) yield break;
 
-    private IEnumerator UnloadSceneAsync(string sceneName)
-    {
+        while (activeLoads.TryGetValue(sceneName, out AsyncOperation loading))
+        {
+            while (!loading.isDone) yield return null;
+        }
+
         Scene scene = SceneManager.GetSceneByName(sceneName);
 
-        if (!scene.isLoaded)
+        if (!scene.isLoaded) yield break;
+
+        // Unity cannot unload the only loaded scene.
+        if (SceneManager.sceneCount <= 1)
         {
+            Debug.LogError("[SceneLoader] Cannot unload the only loaded scene.");
             yield break;
         }
+
+        activeUnloads.Add(sceneName);
 
         AsyncOperation operation =
             SceneManager.UnloadSceneAsync(sceneName);
 
         if (operation == null)
         {
-            Debug.LogError("Could not unload scene: " + sceneName);
+            activeUnloads.Remove(sceneName);
+            Debug.LogError($"[SceneLoader] Could not unload scene '{sceneName}'.");
             yield break;
         }
 
-        while (!operation.isDone)
-        {
-            yield return null;
-        }
+        while (!operation.isDone) yield return null;
 
-        Debug.Log("Scene unloaded: " + sceneName);
+        activeUnloads.Remove(sceneName);
+
+        Debug.Log($"[SceneLoader] Unloaded scene: {sceneName}");
     }
 }

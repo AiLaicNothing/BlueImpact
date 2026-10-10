@@ -1,4 +1,4 @@
-using UnityEngine;
+    using UnityEngine;
 
 /// <summary>
 /// Collider (NO debe ser Trigger) que aplica daño masivo al player

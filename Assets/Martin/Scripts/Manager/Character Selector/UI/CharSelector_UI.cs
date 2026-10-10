@@ -45,6 +45,10 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
         audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.loop = true;  // ✅ LOOP ACTIVO
         audioSource.playOnAwake = false;
+
+        //if (hasSelectedAlready) return;
+
+        //StartSelector();
     }
 
     private void Start()
@@ -227,17 +231,57 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
     private void SelectCharacter(int index)
     {
-        var data = CharSelector_Manager.Instance.GetCharacterInfo(index);
+        if (CharSelector_Manager.Instance == null)
+        {
+            Debug.LogError("[CharSelector_UI] CharSelector_Manager.Instance is NULL.");
+            return;
+        }
 
-        if (data == null) return;
+        CharacterInfo data = CharSelector_Manager.Instance.GetCharacterInfo(index);
+
+
+        if (data == null)
+        {
+            Debug.LogError($"[CharSelector_UI] No CharacterInfo found at index {index}.");
+            return;
+        }
+
+        if (data.data == null)
+        {
+            Debug.LogError($"[CharSelector_UI] CharacterInfo.data is NULL at index {index}.");
+            return;
+        }
+
+        if (charName == null || description == null || charImage == null)
+        {
+            Debug.LogError(
+                "[CharSelector_UI] UI references are missing. " +
+                $"charName: {charName != null}, " +
+                $"description: {description != null}, " +
+                $"charImage: {charImage != null}"
+            );
+            return;
+        }
+
+        if (PlayerSpawn_Manager.Instance == null)
+        {
+            Debug.LogError("[CharSelector_UI] PlayerSpawn_Manager.Instance is NULL.");
+            return;
+        }
 
         currentIndex = index;
 
-        charName.text = data.name;
+        charName.text = data.data.name;
         description.text = data.description;
         charImage.sprite = data.portrait;
 
+        Player_Manager.Instance.SetCharacterData(data);
         PlayerSpawn_Manager.Instance.SetCharacter(data);
+
+        if (CharacterStatsManager.Instance != null)
+        {
+            CharacterStatsManager.Instance.Initialize();
+        }
     }
 
     private void StartGame()

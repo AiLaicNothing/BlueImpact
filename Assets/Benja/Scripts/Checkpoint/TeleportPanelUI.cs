@@ -189,8 +189,6 @@ public class TeleportPanelUI : MonoBehaviour, IGamepadPanel
         }
     }
 
-
-
     private void OnTravelButtonClicked()
     {
         if (travelButton.interactable)

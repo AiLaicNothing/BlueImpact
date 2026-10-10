@@ -58,12 +58,12 @@ public class SkillPickup : MonoBehaviour, IInteractable
 
         foreach (var entry in skillsByCharacter)
         {
-            if (entry.characterName == player.CurrentCharacterInfo.characterName)
+            if (entry.characterName == player.CurrentCharacterInfo.data.characterName)
             {
                 currentSkill = entry.skill;
                 gameObject.SetActive(true);
                 pickedUp = false;
-                Debug.Log($"✅ SkillPickup para: {player.CurrentCharacterInfo.characterName}");
+                Debug.Log($"✅ SkillPickup para: {player.CurrentCharacterInfo.data.characterName}");
                 return;
             }
         }
