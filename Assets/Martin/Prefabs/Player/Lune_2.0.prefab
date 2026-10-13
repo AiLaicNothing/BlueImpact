@@ -862,6 +862,7 @@ GameObject:
   - component: {fileID: 4341394941209659541}
   - component: {fileID: 5855645726015471829}
   - component: {fileID: 2633486453251788701}
+  - component: {fileID: 3734369842417090147}
   m_Layer: 0
   m_Name: CameraControls
   m_TagString: Untagged
@@ -942,6 +943,24 @@ MonoBehaviour:
   invertHorizontalInput: 0
   invertVerticalInput: 0
   mouseInputMultiplier: 0.01
+--- !u!114 &3734369842417090147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5436413825332330793}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8729e4e61a368741a29d2f873fbf5ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CMF.CameraJoystickInput
+  playerInputHandler: {fileID: 0}
+  horizontalSensitivity: 1
+  verticalSensitivity: 1
+  deadZoneThreshold: 0.15
+  invertHorizontalInput: 0
+  invertVerticalInput: 1
 --- !u!1 &6011779910659220569
 GameObject:
   m_ObjectHideFlags: 0
