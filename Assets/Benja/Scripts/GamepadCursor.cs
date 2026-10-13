@@ -31,7 +31,8 @@ public class GamepadCursor : MonoBehaviour
     private readonly List<RaycastResult> results = new List<RaycastResult>();
     private float nextAdjustTime;
 
-    // Se crea solo al arrancar el juego, sin depender de la escena
+    // ---------- Bootstrap ----------
+
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
     {
@@ -59,26 +60,71 @@ public class GamepadCursor : MonoBehaviour
             Instance = null;
     }
 
-    // ---------- API pública ----------
+    // ---------- API pública de la pila ----------
 
-    // onClose se ejecuta al pulsar B mientras este owner sea el activo
+    public bool HasOpenPanels => stack.Count > 0;
+
+    public bool IsTop(object owner) =>
+        stack.Count > 0 && stack[stack.Count - 1].owner == owner;
+
+    // True si el panel activo se puede cerrar (tiene callback de cierre)
+    public bool TopCanClose =>
+        stack.Count > 0 && stack[stack.Count - 1].onClose != null;
+
+    // Cierra el panel activo (Escape o B)
+    public void CloseTop()
+    {
+        if (!TopCanClose) return;
+        stack[stack.Count - 1].onClose.Invoke();
+    }
+
+    // Cierra todos los paneles con callback, de arriba hacia abajo, excepto 'keep'
+    public void CloseAllExcept(object keep)
+    {
+        var snapshot = new List<Entry>(stack);
+
+        for (int i = snapshot.Count - 1; i >= 0; i--)
+        {
+            Entry e = snapshot[i];
+
+            if (e.owner == keep || e.onClose == null)
+                continue;
+
+            // Solo cierra si sigue en la pila (un cierre previo pudo haberlo quitado)
+            if (stack.Exists(x => x.owner == e.owner))
+                e.onClose.Invoke();
+        }
+    }
+
+    // Un panel llama a Acquire al abrirse. onClose se ejecuta al pulsar B o Escape.
     public void Acquire(object owner, Action onClose = null)
     {
         stack.RemoveAll(e => e.owner == owner);
         stack.Add(new Entry { owner = owner, onClose = onClose });
+
         ClearEventSystemSelection();
+        SyncGameMode();
     }
 
+    // Un panel llama a Release al cerrarse
     public void Release(object owner)
     {
-        stack.RemoveAll(e => e.owner == owner);
+        if (stack.RemoveAll(e => e.owner == owner) > 0)
+            SyncGameMode();
+    }
+
+    // El modo de juego depende solo de si hay paneles abiertos
+    private void SyncGameMode()
+    {
+        if (GameModeManager.Instance == null) return;
+
+        GameModeManager.Instance.SetMode(stack.Count > 0 ? GameMode.UI : GameMode.Gameplay);
     }
 
     // ---------- Update ----------
 
     private void Update()
     {
-        // La escena puede cambiar y el EventSystem nuevo reemplazar al anterior
         if (eventSystem == null)
             eventSystem = FindFirstObjectByType<EventSystem>();
 
@@ -94,16 +140,14 @@ public class GamepadCursor : MonoBehaviour
             ClickAtCursor();
 
         if (Gamepad.current.bButton.wasPressedThisFrame)
-        {
-            Action close = stack[stack.Count - 1].onClose;
-            close?.Invoke();
-        }
+            CloseTop();
     }
 
     // Quita paneles ya destruidos (por ejemplo al cambiar de escena)
     private void PruneDeadOwners()
     {
-        stack.RemoveAll(e => e.owner is UnityEngine.Object o && o == null);
+        if (stack.RemoveAll(e => e.owner is UnityEngine.Object o && o == null) > 0)
+            SyncGameMode();
     }
 
     // ---------- Cursor ----------
@@ -149,11 +193,11 @@ public class GamepadCursor : MonoBehaviour
                 var item = go.GetComponentInParent<Toggle>();
                 if (item != null && item.interactable)
                 {
-                    item.isOn = true; // elige la opción sin desmarcarla
+                    item.isOn = true;
                     return true;
                 }
 
-                dropdown.Hide(); // click fuera de la lista
+                dropdown.Hide();
                 return true;
             }
 

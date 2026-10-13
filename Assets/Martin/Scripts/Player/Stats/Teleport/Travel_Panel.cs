@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class Travel_Panel : MonoBehaviour, IGamepadPanel
 {
-    [Header("lIST")]
+    [Header("Lista")]
     [SerializeField] private Transform content;
     [SerializeField] private GameObject entryPrefab;
 
@@ -21,270 +18,117 @@ public class Travel_Panel : MonoBehaviour, IGamepadPanel
     [SerializeField] private Button travelButton;
     [SerializeField] private Button returnButton;
 
-    [Header("Gamepad Settings")]
-    [SerializeField] private float gamepadNavigationCooldown = 0.2f;
-    [SerializeField] private float joystickSensitivity = 500f; // Velocidad del cursor con joystick
-
-    private bool isTraveling;
-
-    private EventSystem _eventSystem;
-
     public event Action OnTravelPressed;
     public event Action OnBackPressed;
     public event Action OnCheckpointSelected;
 
-    private readonly List<CheckpointRow> entries = new();
+    private readonly List<CheckpointRow> entries = new List<CheckpointRow>();
     private DiscoveredCheckpoint selectedCheckpoint;
-    private Button currentlySelectedButton; // RACKEAR BOTÓN SELECCIONADO
-
-    private bool inputEnabled = true;
+    private bool isTraveling;
+    private bool isOpen;
 
     private void Awake()
     {
-        if (_eventSystem == null) _eventSystem = EventSystem.current;
-
-        travelButton.onClick.AddListener(() => OnTravel());
-        returnButton.onClick.AddListener(() => OnReturn());
+        travelButton.onClick.AddListener(OnTravel);
+        returnButton.onClick.AddListener(OnBack);
     }
 
-    private void Update()
+    private void OnDisable()
     {
-        if (!gameObject.activeInHierarchy || entries.Count == 0 || !inputEnabled) return;
-
-        HandleGamepadInput();
-    }
-
-    #region Gamepad
-
-    private void HandleGamepadInput()
-    {
-        // MOVER CURSOR CON JOYSTICK (Solo en este panel)
-        HandleJoystickCursorMovement();
-
-        // BOTONES DE SISTEMA (A, B)
-        HandleGamepadButtonInputs();
-    }
-
-    /// <summary>
-    /// Mover el cursor con el Left Stick del gamepad
-    /// </summary>
-    private void HandleJoystickCursorMovement()
-    {
-        if (Gamepad.current == null)
+        if (isOpen)
         {
-            Debug.LogWarning("[Joystick] Gamepad.current es NULL");
-            return;
-        }
-
-        Vector2 stickInput = Gamepad.current.leftStick.ReadValue();
-
-        // Solo mover si hay input significativo (deadzone reducido a 0.05f)
-        if (stickInput.magnitude > 0.05f)
-        {
-            // Usar Input.mousePosition (API antigua pero funciona)
-            Vector3 currentCursorPos = Input.mousePosition;
-
-            // Calcular movimiento CON MULTIPLICADOR MAYOR
-            // USAR unscaledDeltaTime para que funcione cuando Time.timeScale = 0
-            Vector2 cursorDelta = stickInput * joystickSensitivity * Time.unscaledDeltaTime * 2f;
-
-            // Nueva posición
-            Vector3 newCursorPos = currentCursorPos + new Vector3(cursorDelta.x, cursorDelta.y, 0);
-
-            // Limitar a los límites de la pantalla
-            newCursorPos.x = Mathf.Clamp(newCursorPos.x, 0, Screen.width);
-            newCursorPos.y = Mathf.Clamp(newCursorPos.y, 0, Screen.height);
-
-            // SAR WARP CURSOR POSITION DEL INPUT SYSTEM
-#if UNITY_STANDALONE || UNITY_EDITOR
-            try
-            {
-                Mouse.current.WarpCursorPosition(newCursorPos);
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[Joystick] ❌ Error moviendo cursor: {e.Message}");
-            }
-#endif
-
-            // Detectar qué botón está bajo el cursor y seleccionarlo automáticamente
-            SimulateClickAtCursor();
+            isOpen = false;
+            GamepadCursor.Instance?.Release(this);
         }
     }
 
-    /// <summary>
-    /// Detectar qué botón está bajo el cursor y seleccionarlo VISUALMENTE (sin invocar click)
-    /// </summary>
-    private void SimulateClickAtCursor()
-    {
-        if (_eventSystem == null)
-        {
-            Debug.LogError("[SimulateClick] EventSystem es NULL");
-            return;
-        }
-
-        // Raycast desde posición del cursor
-        PointerEventData pointerData = new PointerEventData(_eventSystem)
-        {
-            position = Input.mousePosition
-        };
-
-        List<RaycastResult> results = new List<RaycastResult>();
-        _eventSystem.RaycastAll(pointerData, results);
-
-        // Buscar el PRIMER BUTTON en los resultados y SOLO SELECCIONARLO
-        foreach (RaycastResult hit in results)
-        {
-            Button button = hit.gameObject.GetComponent<Button>();
-            if (button != null && button.interactable)
-            {
-                // GUARDAR BOTÓN SELECCIONADO Y SELECCIONAR VISUALMENTE
-                currentlySelectedButton = button;
-                _eventSystem.SetSelectedGameObject(button.gameObject);
-                return;
-            }
-
-            // Si no tiene Button, buscar en padre
-            Button parentButton = hit.gameObject.GetComponentInParent<Button>();
-            if (parentButton != null && parentButton.interactable)
-            {
-                // GUARDAR BOTÓN SELECCIONADO Y SELECCIONAR VISUALMENTE
-                currentlySelectedButton = parentButton;
-                _eventSystem.SetSelectedGameObject(parentButton.gameObject);
-                return;
-            }
-        }
-
-        // SI NO HAY BOTÓN BAJO EL CURSOR, LIMPIAR SELECCIÓN
-        currentlySelectedButton = null;
-    }
-
-    /// <summary>
-    /// Manejar botones de sistema (A para viajar, B para retroceder)
-    /// </summary>
-    private void HandleGamepadButtonInputs()
-    {
-        if (Gamepad.current == null)
-            return;
-
-        // A BUTTON = Invocar el botón seleccionado actualmente
-        if (Gamepad.current.aButton.wasPressedThisFrame)
-        {
-            if (currentlySelectedButton != null && currentlySelectedButton.interactable)
-            {
-                currentlySelectedButton.onClick.Invoke();
-                Debug.Log($"A Button presionado: {currentlySelectedButton.gameObject.name}");
-            }
-        }
-
-        // B BUTTON = Retroceder
-        if (Gamepad.current.bButton.wasPressedThisFrame)
-        {
-            OnReturn();
-        }
-    }
-
-    #endregion
-
-    private void OnTravel()
-    {
-        Debug.Log("[Travel Panel] Travel button clicked.");
-
-        if (!travelButton.interactable)
-        {
-            Debug.LogWarning("[Travel Panel] Travel button is not interactable.");
-            return;
-        }
-
-        Travel();
-    }
-
-    private void OnReturn()
-    {
-        if(PanelFocusManager.Instance != null) PanelFocusManager.Instance.PopPanel();
-
-        Checkpoint_Menu.Instance.ReOpenMenu();
-
-        OnBackPressed?.Invoke();
-    }
+    // ---------- OPEN / CLOSE ----------
 
     public void Open()
     {
+        if (isOpen) return;
+
+        gameObject.SetActive(true);
+        isOpen = true;
         isTraveling = false;
 
         RefreshList();
 
-        currentlySelectedButton = null;
         selectedCheckpoint = null;
-
         previewImage.sprite = null;
         checkpointName.text = "Selecciona un destino";
         travelButton.interactable = false;
 
-        DiscoveredCheckpoint activeCheckpoint = Checkpoints_Manager.Instance != null? Checkpoints_Manager.Instance.GetActiveCheckpoint() : null;
+        var active = Checkpoints_Manager.Instance != null
+            ? Checkpoints_Manager.Instance.GetActiveCheckpoint()
+            : null;
 
-        if (activeCheckpoint != null)
-        {
-            SelectCheckpoint(activeCheckpoint);
-        }
+        if (active != null)
+            SelectCheckpoint(active);
 
-        inputEnabled = true;
-
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-
-        if (_eventSystem != null)
-        {
-            _eventSystem.SetSelectedGameObject(null);
-        }
-
-        if (PanelFocusManager.Instance != null)
-        {
-            PanelFocusManager.Instance.PushPanel(this);
-        }
+        GamepadCursor.Instance?.Acquire(this, OnBack);
     }
+
+    // Botón volver, B o Escape
+    private void OnBack()
+    {
+        OnBackPressed?.Invoke();
+        Close();
+    }
+
+    public void Close()
+    {
+        if (!isOpen) return;
+
+        isOpen = false;
+
+        GamepadCursor.Instance?.Release(this);
+        gameObject.SetActive(false);
+
+        Checkpoint_Menu.Instance?.ReOpenMenu();
+    }
+
+    // ---------- SELECTION / TRAVEL ----------
 
     public void SelectCheckpoint(DiscoveredCheckpoint checkpoint)
     {
         if (checkpoint == null || checkpoint._data == null) return;
 
         selectedCheckpoint = checkpoint;
-
         previewImage.sprite = checkpoint._data.previewImage;
         checkpointName.text = checkpoint._data.checkpointName;
-
         travelButton.interactable = true;
 
         OnCheckpointSelected?.Invoke();
     }
 
+    private void OnTravel()
+    {
+        if (!travelButton.interactable) return;
+        Travel();
+    }
 
     private void Travel()
     {
         if (isTraveling)
         {
-            Debug.LogWarning("[Travel Panel] A travel operation is already running.");
+            Debug.LogWarning("[Travel Panel] Ya hay un viaje en curso.");
             return;
         }
 
         if (selectedCheckpoint == null)
         {
-            Debug.LogError("[Travel Panel] No checkpoint is selected.");
+            Debug.LogError("[Travel Panel] No hay checkpoint seleccionado.");
             return;
         }
 
         if (Teleport_Manager.Instance == null)
         {
-            Debug.LogError("[Travel Panel] Teleport_Manager.Instance is missing.");
+            Debug.LogError("[Travel Panel] Teleport_Manager.Instance no existe.");
             return;
         }
 
-        Debug.Log(
-            $"[Travel Panel] Traveling to '{selectedCheckpoint._checkpointID}' " +
-            $"in scene '{selectedCheckpoint._sceneName}'.");
-
         isTraveling = true;
-        inputEnabled = false;
         travelButton.interactable = false;
 
         Teleport_Manager.Instance.Teleport(selectedCheckpoint);
@@ -294,26 +138,24 @@ public class Travel_Panel : MonoBehaviour, IGamepadPanel
         OnTravelPressed?.Invoke();
     }
 
+    // ---------- LIST ----------
+
     private void RefreshList()
     {
         Clear();
 
         var manager = Checkpoints_Manager.Instance;
-
         if (manager == null) return;
 
         DiscoveredCheckpoint current = manager.GetActiveCheckpoint();
 
-        foreach (DiscoveredCheckpoint checkpoint in Checkpoints_Manager.Instance.GetDiscoveredCheckpoints())
+        foreach (DiscoveredCheckpoint checkpoint in manager.GetDiscoveredCheckpoints())
         {
             var entry = Instantiate(entryPrefab, content);
-
             bool isCurrent = current != null && current.Matches(checkpoint._sceneName, checkpoint._checkpointID);
 
             var entryUI = entry.GetComponent<CheckpointRow>();
-
             entryUI.Initialize(checkpoint, this, isCurrent);
-
             entries.Add(entryUI);
         }
     }
@@ -330,11 +172,9 @@ public class Travel_Panel : MonoBehaviour, IGamepadPanel
 
     public List<CheckpointRow> GetEntries() => entries;
 
-    #region Gamepanel
-    public void SetInputEnabled(bool enabled)
-    {
-        inputEnabled = enabled;
-    }
+    // ---------- IGamepadPanel ----------
+
+    public void SetInputEnabled(bool enabled) { }
 
     public void SetInteractable(bool interactable)
     {
@@ -348,6 +188,4 @@ public class Travel_Panel : MonoBehaviour, IGamepadPanel
     }
 
     public string GetPanelName() => "Checkpoint -> Travel panel";
-
-    #endregion
 }

@@ -146,17 +146,11 @@ public class MenuSettingsUI : MonoBehaviour
     }
 
     // ---------- OPEN / CLOSE ----------
-
-    private GameMode modeBeforeOpen = GameMode.Gameplay;
+    // Quita de la clase: pauseManager, wasGameplayMode y modeBeforeOpen
 
     public void Open()
     {
         if (isOpen) return;
-
-        // Guardar el modo real en el que estábamos (menú principal, pausa o gameplay)
-        modeBeforeOpen = GameModeManager.Instance != null
-            ? GameModeManager.Instance.CurrentMode
-            : GameMode.UI;
 
         gameObject.SetActive(true);
         isOpen = true;
@@ -171,11 +165,7 @@ public class MenuSettingsUI : MonoBehaviour
         InitializeAudioSettings();
         InitializeControlsSettings();
 
-        // Este panel necesita cursor, siempre
-        GameModeManager.Instance?.SetMode(GameMode.UI);
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
-
+        // La pila decide el modo de juego; no lo cambiamos aquí
         GamepadCursor.Instance?.Acquire(this, Close);
     }
 
@@ -190,18 +180,11 @@ public class MenuSettingsUI : MonoBehaviour
         if (settingsManager != null)
             settingsManager.SaveSettings();
 
+        // Release sincroniza el modo con lo que quede debajo (pausa, menú o gameplay)
         GamepadCursor.Instance?.Release(this);
-
-        if (GameModeManager.Instance != null)
-        {
-            // Si la pausa sigue activa, debe quedar en UI aunque hayamos venido de gameplay
-            bool pausedNow = pauseManager != null && pauseManager.IsPaused;
-            GameModeManager.Instance.SetMode(pausedNow ? GameMode.UI : modeBeforeOpen);
-        }
 
         gameObject.SetActive(false);
     }
-
     public void NextTab() { if (tabsManager != null) tabsManager.NextTab(); }
     public void PreviousTab() { if (tabsManager != null) tabsManager.PreviousTab(); }
 

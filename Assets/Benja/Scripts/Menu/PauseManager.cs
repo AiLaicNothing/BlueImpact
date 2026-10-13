@@ -54,7 +54,6 @@ public class PauseManager : MonoBehaviour
 
     private void Update()
     {
-        // Reintenta la suscripción si PlayerInputHandler aparece después
         if (playerInputHandler == null)
             TrySubscribe();
     }
@@ -75,26 +74,22 @@ public class PauseManager : MonoBehaviour
         if (playerInputHandler == null || playerInputHandler.pauseAction == null)
             return;
 
-        // Evita suscribirse dos veces
         playerInputHandler.pauseAction.performed -= OnPauseInput;
         playerInputHandler.pauseAction.performed += OnPauseInput;
     }
 
     private void OnPauseInput(InputAction.CallbackContext context)
     {
-        // Jerarquía de cierre: de lo más interno a lo más externo
-        if (gameplaySettingsUI != null && gameplaySettingsUI.IsOpen)
+        var gc = GamepadCursor.Instance;
+
+        // Escape cierra primero el panel activo (ajustes, popup, etc.)
+        if (gc != null && gc.HasOpenPanels && !gc.IsTop(this) && gc.TopCanClose)
         {
-            gameplaySettingsUI.Close();
+            gc.CloseTop();
             return;
         }
 
-        if (CheckpointMenuUI.Instance != null && CheckpointMenuUI.Instance.IsOpen())
-        {
-            CheckpointMenuUI.Instance.CloseMenu();
-            return;
-        }
-
+        // Sin paneles encima: alterna la pausa
         if (isPaused)
             Resume();
         else
@@ -107,18 +102,16 @@ public class PauseManager : MonoBehaviour
     {
         if (isPaused) return;
 
+        // Al abrir la pausa, se cierran los demás paneles (popups, etc.)
+        GamepadCursor.Instance?.CloseAllExcept(this);
+
         isPaused = true;
         Time.timeScale = 0f;
 
         SetPanelVisible(true);
 
-        // Este panel queda en la base de la pila: B reanuda si no hay ajustes encima
+        // Base de la pausa: B o Escape la reanudan si no hay nada encima
         GamepadCursor.Instance?.Acquire(this, Resume);
-
-        // UI activa el cursor visible; el modo se encarga del resto
-        GameModeManager.Instance?.SetMode(GameMode.UI);
-        Cursor.visible = true;
-        Cursor.lockState = CursorLockMode.None;
     }
 
     public void Resume()
@@ -130,10 +123,8 @@ public class PauseManager : MonoBehaviour
 
         SetPanelVisible(false);
 
+        // Release sincroniza el modo: si no quedan paneles, vuelve a Gameplay
         GamepadCursor.Instance?.Release(this);
-
-        // Gameplay oculta y bloquea el cursor de nuevo
-        GameModeManager.Instance?.SetMode(GameMode.Gameplay);
     }
 
     // ---------- BUTTONS ----------
@@ -146,7 +137,7 @@ public class PauseManager : MonoBehaviour
 
     public void ExitToMenu()
     {
-        GamepadCursor.Instance?.Release(this);
+        GamepadCursor.Instance?.CloseAllExcept(null);
         Time.timeScale = 1f;
         SceneManager.LoadScene("menu");
     }
