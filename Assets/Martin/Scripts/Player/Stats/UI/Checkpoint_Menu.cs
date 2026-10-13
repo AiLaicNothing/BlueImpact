@@ -25,8 +25,9 @@ public class Checkpoint_Menu : MonoBehaviour, IGamepadPanel
     [SerializeField] private Button close;
 
     [Header("Gamepad Settings")]
+    [SerializeField] private EventSystem _eventSystem;   // Arrastrar desde el Inspector  
     [SerializeField] private float gamepadNavigationCooldown = 0.2f;
-    [SerializeField] private float joystickSensitivity = 500f; // Velocidad del cursor con joystick
+    [SerializeField] private float joystickSensitivity = 500f;
 
     public event Action OnTravelPressed;
     public event Action OnStatsPressed;
@@ -35,14 +36,13 @@ public class Checkpoint_Menu : MonoBehaviour, IGamepadPanel
     public event Action OnMenuOpened;
     public event Action OnMenuClosed;
 
-    private EventSystem _eventSystem;
     private Checkpoint currentCheckpoint;
 
     private bool isOpen = false;
     public bool IsOpen() => isOpen;
 
     private bool inputEnabled = true;
-
+        
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -53,21 +53,26 @@ public class Checkpoint_Menu : MonoBehaviour, IGamepadPanel
 
         Instance = this;
 
+        // Si no se asignó en el Inspector, buscarlo en la escena
+        if (_eventSystem == null)
+            _eventSystem = FindObjectOfType<EventSystem>();
+
+        if (_eventSystem == null)
+            Debug.LogError("[Checkpoint_Menu] No hay EventSystem en la escena.", this);
+
         ClosePanels();
 
         teleport.onClick.AddListener(() => OnOpenTeleport());
         stats.onClick.AddListener(() => OnOpenStats());
         skill.onClick.AddListener(() => OnOpenSkills());
         close.onClick.AddListener(() => OnClose());
-
     }
-
     private void Update()
     {
         if (!isOpen || canvasGroup.interactable == false || !inputEnabled) return;
 
         HandleGamepadInput();
-    }
+    } 
 
     #region GamepadInput
 

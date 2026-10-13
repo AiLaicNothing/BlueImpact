@@ -1,56 +1,71 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿
 using UnityEngine;
 
 namespace CMF
 {
-    //This camera input class is an example of how to get input from joysticks/gamepads using Unity's default input system;
-    //It also comes with a dead zone threshold setting to bypass any unwanted joystick "jitter";
     public class CameraJoystickInput : CameraInput
     {
-        //Mouse input axes;
-        public string joystickHorizontalAxis = "Joystick X";
-        public string joystickVerticalAxis = "Joystick Y";
+        [Header("Referencia al jugador")]
+        public PlayerInputHandler playerInputHandler;
 
-        //Invert input options;
-		public bool invertHorizontalInput = false;
-		public bool invertVerticalInput = false;
+        [Header("Sensibilidad")]
+        public float horizontalSensitivity = 1f;
+        public float verticalSensitivity = 1f;
 
-        //If any input falls below this value, it is set to '0';
-        //Use this to prevent any unwanted small movements of the joysticks ("jitter"); 
-		public float deadZoneThreshold = 0.2f;
+        [Header("Configuración")]
+        [Range(0f, 0.9f)]
+        public float deadZoneThreshold = 0.15f;
 
-	    public override float GetHorizontalCameraInput()
+        public bool invertHorizontalInput = false;
+        public bool invertVerticalInput = false;
+
+        private void Awake()
         {
-            //Get input;
-			float _horizontalInput = Input.GetAxisRaw(joystickHorizontalAxis);
+            if (playerInputHandler == null)
+            {
+                playerInputHandler =
+                    FindObjectOfType<PlayerInputHandler>();
+            }
 
-			//Set any input values below threshold to '0';
-			if(Mathf.Abs(_horizontalInput) < deadZoneThreshold)
-				_horizontalInput = 0f;
+            if (playerInputHandler == null)
+            {
+                Debug.LogError(
+                    "CameraJoystickInput: No se encontró PlayerInputHandler.",
+                    this
+                );
+            }
+        }
 
-            //Handle inverted inputs;
-            if(invertHorizontalInput)
-                return _horizontalInput *= (-1f);
-            else
-                return _horizontalInput;
+        public override float GetHorizontalCameraInput()
+        {
+            if (playerInputHandler == null)
+                return 0f;
+
+            float input = playerInputHandler.gamepadLookInput.x;
+
+            if (Mathf.Abs(input) < deadZoneThreshold)
+                input = 0f;
+
+            if (invertHorizontalInput)
+                input = -input;
+
+            return input * horizontalSensitivity;
         }
 
         public override float GetVerticalCameraInput()
         {
-            //Get input;
-			float _verticalInput = Input.GetAxisRaw(joystickVerticalAxis);
+            if (playerInputHandler == null)
+                return 0f;
 
-			//Set any input values below threshold to '0';
-			if(Mathf.Abs(_verticalInput) < deadZoneThreshold)
-				_verticalInput = 0f;
+            float input = playerInputHandler.gamepadLookInput.y;
 
-            //Handle inverted inputs;
-            if(invertVerticalInput)
-                return _verticalInput;
-            else
-                return _verticalInput *= (-1f);
+            if (Mathf.Abs(input) < deadZoneThreshold)
+                input = 0f;
+
+            if (invertVerticalInput)
+                input = -input;
+
+            return input * verticalSensitivity;
         }
     }
 }
-

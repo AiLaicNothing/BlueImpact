@@ -42,19 +42,18 @@ namespace CMF
 		//References to transform and camera components;
 		protected Transform tr;
 		protected Camera cam;
-		protected CameraInput cameraInput;
-
-		//Setup references.
-		void Awake () {
+        protected CameraInput[] cameraInputs;   // antes: protected CameraInput cameraInput;
+                                                //Setup references.
+        void Awake () {
 			tr = transform;
 			cam = GetComponent<Camera>();
-			cameraInput = GetComponent<CameraInput>();
+            cameraInputs = GetComponents<CameraInput>();
 
-			if(cameraInput == null)
-				Debug.LogWarning("No camera input script has been attached to this gameobject", this.gameObject);
+            if (cameraInputs.Length == 0)
+                Debug.LogWarning("No camera input script has been attached to this gameobject", this.gameObject);
 
-			//If no camera component has been attached to this gameobject, search the transform's children;
-			if(cam == null)
+            //If no camera component has been attached to this gameobject, search the transform's children;
+            if (cam == null)
 				cam = GetComponentInChildren<Camera>();
 
 			//Set angle variables to current rotation angles of this transform;
@@ -78,22 +77,34 @@ namespace CMF
 			HandleCameraRotation();
 		}
 
-		//Get user input and handle camera rotation;
-		//This method can be overridden in classes derived from this base class to modify camera behaviour;
-		protected virtual void HandleCameraRotation()
-		{
-			if(cameraInput == null)
-				return;
+        //Get user input and handle camera rotation;
+        //This method can be overridden in classes derived from this base class to modify camera behaviour;
 
-			//Get input values;
-			float _inputHorizontal = cameraInput.GetHorizontalCameraInput();
-			float _inputVertical = cameraInput.GetVerticalCameraInput();
-		
-			RotateCamera(_inputHorizontal, _inputVertical);
-		}
+        protected virtual void HandleCameraRotation()
+        {
+            float horizontal = 0f;
+            float vertical = 0f;
 
-		//Rotate camera; 
-		protected void RotateCamera(float _newHorizontalInput, float _newVerticalInput)
+            foreach (CameraInput input in cameraInputs)
+            {
+                if (input == null || !input.isActiveAndEnabled)
+                    continue;
+
+                horizontal += input.GetHorizontalCameraInput();
+                vertical += input.GetVerticalCameraInput();
+            }
+
+            if (horizontal != 0f || vertical != 0f)
+            {
+                Debug.Log($"Camera input: X={horizontal:F2}, Y={vertical:F2}");
+            }
+
+            RotateCamera(horizontal, vertical);
+        }
+
+
+        //Rotate camera; 
+        protected void RotateCamera(float _newHorizontalInput, float _newVerticalInput)
 		{
 			if(smoothCameraRotation)
 			{

@@ -12,6 +12,7 @@ public class PlayerInputHandler : CharacterInput
     public bool hasDashed { get; private set; }
     public bool isAiming { get; private set; }
     public Vector2 lookInput { get; private set; }
+    public Vector2 gamepadLookInput { get; private set; }   // nuevo
     public bool onLockTarget { get; private set; }
     public float scrollInput { get; private set; }
     public AttackInputType bufferedAttackType { get; private set; }
@@ -101,6 +102,9 @@ public class PlayerInputHandler : CharacterInput
     public void OnLook(InputAction.CallbackContext context)
     {
         lookInput = context.ReadValue<Vector2>();
+
+        // Solo guardar el valor si viene de un gamepad
+        gamepadLookInput = context.control.device is Gamepad ? lookInput : Vector2.zero;
     }
 
     public void OnLockTarget(InputAction.CallbackContext context)
@@ -245,7 +249,7 @@ public class PlayerInputHandler : CharacterInput
 
         isAiming = false;
         lookInput = Vector2.zero;
-
+        gamepadLookInput = Vector2.zero;
         onLockTarget = false;
 
         scrollInput = 0f;
