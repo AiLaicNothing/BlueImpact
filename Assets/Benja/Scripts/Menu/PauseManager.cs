@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -19,15 +18,13 @@ public class PauseManager : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private MenuSettingsUI gameplaySettingsUI;
 
-    [Header("UI")]
-    [SerializeField] private EventSystem eventSystem;
-
     private bool isPaused = false;
     private PlayerInputHandler playerInputHandler;
 
+    public bool IsPaused => isPaused;
+
     private void Awake()
     {
-        // ✅ SINGLETON
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -38,16 +35,9 @@ public class PauseManager : MonoBehaviour
 
     private void Start()
     {
-        // ✅ OBTENER REFERENCIAS
-        playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
-
-        if (eventSystem == null)
-            eventSystem = EventSystem.current;
-
         if (pausePanelCanvasGroup == null)
             pausePanelCanvasGroup = GetComponent<CanvasGroup>();
 
-        // ✅ CONECTAR BOTONES
         if (resumeButton != null)
             resumeButton.onClick.AddListener(Resume);
 
@@ -57,77 +47,61 @@ public class PauseManager : MonoBehaviour
         if (exitMenuButton != null)
             exitMenuButton.onClick.AddListener(ExitToMenu);
 
-        // ✅ OCULTAR PAUSE PANEL AL INICIO
-        if (pausePanelCanvasGroup != null)
-        {
-            pausePanelCanvasGroup.alpha = 0;
-            pausePanelCanvasGroup.interactable = false;
-            pausePanelCanvasGroup.blocksRaycasts = false;
-        }
+        SetPanelVisible(false);
 
-        // ✅ SUSCRIBIRSE SI YA EXISTE
-        SubscribeToPauseAction();
+        TrySubscribe();
     }
 
     private void Update()
     {
-        // ✅ SI PLAYERINPUTHANDLER AÚN NO EXISTE, INTENTAR CADA FRAME
+        // Reintenta la suscripción si PlayerInputHandler aparece después
         if (playerInputHandler == null)
-        {
-            playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
-
-            if (playerInputHandler != null)
-            {
-                Debug.Log("✅ PlayerInputHandler encontrado en Update");
-                SubscribeToPauseAction();
-            }
-        }
-    }
-
-    private void SubscribeToPauseAction()
-    {
-        if (playerInputHandler == null || playerInputHandler.pauseAction == null)
-        {
-            Debug.LogWarning("⚠️ No se puede suscribir a pauseAction aún");
-            return;
-        }
-
-        playerInputHandler.pauseAction.performed += OnPauseInput;
-        Debug.Log("✅ PauseManager suscrito a pauseAction");
+            TrySubscribe();
     }
 
     private void OnDisable()
     {
         if (playerInputHandler != null && playerInputHandler.pauseAction != null)
-        {
             playerInputHandler.pauseAction.performed -= OnPauseInput;
-        }
+    }
+
+    // ---------- INPUT ----------
+
+    private void TrySubscribe()
+    {
+        if (playerInputHandler == null)
+            playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
+
+        if (playerInputHandler == null || playerInputHandler.pauseAction == null)
+            return;
+
+        // Evita suscribirse dos veces
+        playerInputHandler.pauseAction.performed -= OnPauseInput;
+        playerInputHandler.pauseAction.performed += OnPauseInput;
     }
 
     private void OnPauseInput(InputAction.CallbackContext context)
     {
-        // ✅ JERARQUÍA DE CIERRE (de innermost a outermost)
-
-        // 1️⃣ SI SETTINGS ESTÁ ABIERTO, CIERRA SETTINGS (no pausa)
+        // Jerarquía de cierre: de lo más interno a lo más externo
         if (gameplaySettingsUI != null && gameplaySettingsUI.IsOpen)
         {
             gameplaySettingsUI.Close();
             return;
         }
 
-        // 2️⃣ SI CHECKPOINT MENU ESTÁ ABIERTO, CIERRA CHECKPOINT (no pausa)
         if (CheckpointMenuUI.Instance != null && CheckpointMenuUI.Instance.IsOpen())
         {
             CheckpointMenuUI.Instance.CloseMenu();
             return;
         }
 
-        // 3️⃣ SI NADA ESTÁ ABIERTO, PROCEDE CON PAUSA/REANUDACIÓN NORMAL
         if (isPaused)
             Resume();
         else
             Pause();
     }
+
+    // ---------- PAUSE / RESUME ----------
 
     public void Pause()
     {
@@ -136,22 +110,15 @@ public class PauseManager : MonoBehaviour
         isPaused = true;
         Time.timeScale = 0f;
 
-        Debug.Log("⏸️ Juego pausado");
+        SetPanelVisible(true);
 
-        if (pausePanelCanvasGroup != null)
-        {
-            pausePanelCanvasGroup.alpha = 1;
-            pausePanelCanvasGroup.interactable = true;
-            pausePanelCanvasGroup.blocksRaycasts = true;
-        }
+        // Este panel queda en la base de la pila: B reanuda si no hay ajustes encima
+        GamepadCursor.Instance?.Acquire(this, Resume);
 
-        if (eventSystem != null && resumeButton != null)
-        {
-            eventSystem.SetSelectedGameObject(resumeButton.gameObject);
-        }
-
-        if (GameModeManager.Instance != null)
-            GameModeManager.Instance.SetMode(GameMode.UI);
+        // UI activa el cursor visible; el modo se encarga del resto
+        GameModeManager.Instance?.SetMode(GameMode.UI);
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
     }
 
     public void Resume()
@@ -161,45 +128,37 @@ public class PauseManager : MonoBehaviour
         isPaused = false;
         Time.timeScale = 1f;
 
-        Debug.Log("▶️ Juego reanudado");
+        SetPanelVisible(false);
 
-        if (pausePanelCanvasGroup != null)
-        {
-            pausePanelCanvasGroup.alpha = 0;
-            pausePanelCanvasGroup.interactable = false;
-            pausePanelCanvasGroup.blocksRaycasts = false;
-        }
+        GamepadCursor.Instance?.Release(this);
 
-        if (eventSystem != null)
-        {
-            eventSystem.SetSelectedGameObject(null);
-        }
-
-        if (GameModeManager.Instance != null)
-            GameModeManager.Instance.SetMode(GameMode.Gameplay);
+        // Gameplay oculta y bloquea el cursor de nuevo
+        GameModeManager.Instance?.SetMode(GameMode.Gameplay);
     }
+
+    // ---------- BUTTONS ----------
 
     public void OpenSettings()
     {
         if (gameplaySettingsUI != null)
-        {
             gameplaySettingsUI.Open();
-        }
     }
 
     public void ExitToMenu()
     {
+        GamepadCursor.Instance?.Release(this);
         Time.timeScale = 1f;
         SceneManager.LoadScene("menu");
     }
 
-    public void OnSettingsClosed()
-    {
-        if (eventSystem != null && settingsButton != null)
-        {
-            eventSystem.SetSelectedGameObject(settingsButton.gameObject);
-        }
-    }
+    // ---------- HELPERS ----------
 
-    public bool IsPaused => isPaused;
+    private void SetPanelVisible(bool visible)
+    {
+        if (pausePanelCanvasGroup == null) return;
+
+        pausePanelCanvasGroup.alpha = visible ? 1f : 0f;
+        pausePanelCanvasGroup.interactable = visible;
+        pausePanelCanvasGroup.blocksRaycasts = visible;
+    }
 }

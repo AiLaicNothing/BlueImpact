@@ -21,7 +21,7 @@ public class KeybindButton : MonoBehaviour
     private int bindingIndex;
     private bool isListening = false;
 
-    private Color normalColor = Color.white;
+    private Color normalColor = Color.black;
     private Color conflictColor = new Color(1f, 0.3f, 0.3f);
 
     private void Awake()
