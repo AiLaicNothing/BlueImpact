@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1c5177bd3d8efe44699c285d6eaa7a2b, type: 3}
+  m_Name: Stellar Rain
+  m_EditorClassIdentifier: Assembly-CSharp::StellarRain_Skill
+  skillId: 
+  skillSprite: {fileID: -355056873, guid: afa8e7ba76a1b70479dd50516128810f, type: 3}
+  skillName: StellarRain
+  resourceType: 4
+  cost: 15
+  castTime: 0.1
+  cooldown: 4
+  actionTime: 1
+  haveProjection: 1
+  longCasting: 0
+  castAnimation: Luna de Sangre
+  actionAnimation: 
+  castSound: {fileID: 0}
+  actionSound: {fileID: 0}
+  stellarRainPrefab: {fileID: 1685544941179820638, guid: 83b1bb4187871e8409ae8e9ece261dc3, type: 3}
+  hitData:
+    physicalScale: 0.4
+    magicalScale: 2
+    damageMultiplier: 1
+    staggerCharge: 15
+    throwType: 0
+    stunDuration: 0.15
+    keepInAir: 0
+    airHangDuration: 0
+    airLiftForce: 8
+    pushForce: 8
+    knockDownForce: 10
+    knockDownForwardScale: 0.15
+  maxRange: 20
+  spawnHeight: 10
+  projectionObject: {fileID: 1685544941179820638, guid: 45e80445c52a3664eb59e2f779deed0e, type: 3}
+  projectionOffset: {x: 0, y: 0, z: 0}
+  spawnSFX: {fileID: 0}

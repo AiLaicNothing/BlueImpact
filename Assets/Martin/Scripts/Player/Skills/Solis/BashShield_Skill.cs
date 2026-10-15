@@ -7,7 +7,7 @@ public class BashShield_Skill : Skill
 {
     public float dashSpeed;
     public float duration;
-
+    [SerializeField] private bool debug;
     public HitData hitData;
     public Vector3 hitBoxSize;
     public Vector3 hitBoxOffset;
@@ -130,7 +130,7 @@ public class BashShield_Skill : Skill
 
         Collider[] hits = Physics.OverlapBox(center, hitBoxSize * 0.5f, player.Model.rotation);
 
-        player.ShowHitbox(center, hitBoxSize, player.Model.rotation);
+        if(debug) player.ShowHitbox(center, hitBoxSize, player.Model.rotation);
 
         foreach (Collider hit in hits)
         {

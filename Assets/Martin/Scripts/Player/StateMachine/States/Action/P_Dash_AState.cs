@@ -84,8 +84,8 @@ public class P_Dash_AState : PlayerState
             return;
 
         timer -= Time.deltaTime;
-        trail.enabled = true;
-        trailParticles.Play();
+        if(trail != null)trail.enabled = true;
+        if (trail != null) trailParticles.Play();
         
         // Preserve vertical velocity so gravity continues working
         float currentYVelocity = player.Rb.linearVelocity.y;
@@ -112,9 +112,9 @@ public class P_Dash_AState : PlayerState
         Vector3 velocity = player.Rb.linearVelocity;
         velocity.x = 0f;
         velocity.z = 0f;
-        
-        trail.enabled = false;
-        trailParticles.Stop(); 
+
+        if (trail != null) trail.enabled = false;
+        if (trail != null) trailParticles.Stop(); 
         
         player.Rb.linearVelocity = velocity;
 
