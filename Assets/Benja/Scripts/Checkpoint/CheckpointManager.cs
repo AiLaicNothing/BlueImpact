@@ -30,7 +30,7 @@ public class CheckpointManager : MonoBehaviour
     private void OnPlayerSpawned(PlayerControl player)
     {
         // ✅ GUARDAR REFERENCIA CUANDO SE CREA EL PLAYER
-        playerStats = player.GetComponent<PlayerStatsManager>();
+        playerStats = player.GetComponentInParent<PlayerStatsManager>();
 
         if (playerStats == null)
             Debug.LogError("❌ PlayerStatsManager no encontrado en el player spawneado");
@@ -90,7 +90,7 @@ public class CheckpointManager : MonoBehaviour
 
         if (RespawnManager.Instance != null)
         {
-            RespawnManager.Instance.SetRespawn(checkpoint.SpawnPoint);
+            //RespawnManager.Instance.SetRespawn(checkpoint.SpawnPoint);
         }
         else
         {

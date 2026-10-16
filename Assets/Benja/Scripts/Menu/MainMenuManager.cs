@@ -1,8 +1,9 @@
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
-using TMPro;
 using System.Collections;
+using TMPro;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MainMenuManager : MonoBehaviour
 {
@@ -12,15 +13,15 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private Button creditsButton;
     [SerializeField] private Button exitButton;
 
-    // Paneles
+    [Header("Paneles")]
     [SerializeField] private MenuSettingsUI settingsPanel;
     [SerializeField] private CreditsPanel creditsPanel;
 
-    // Animaciones
+    [Header("Animaciones")]
     [SerializeField] private float fadeDuration = 0.5f;
     [SerializeField] private string gameSceneName = "GameScene";
 
-    // Audio/Efectos
+    [Header("Audio")]
     [SerializeField] private AudioClip buttonClickSound;
     [SerializeField] private AudioSource audioSource;
 
@@ -28,7 +29,6 @@ public class MainMenuManager : MonoBehaviour
 
     private void Awake()
     {
-        // Asignar listeners
         if (playButton != null)
             playButton.onClick.AddListener(OnPlayButtonClicked);
 
@@ -41,21 +41,53 @@ public class MainMenuManager : MonoBehaviour
         if (exitButton != null)
             exitButton.onClick.AddListener(OnExitButtonClicked);
 
-        // Asegurar que el menú está visible
         if (menuCanvasGroup != null)
         {
-            menuCanvasGroup.alpha = 1;
+            menuCanvasGroup.alpha = 1f;
             menuCanvasGroup.interactable = true;
         }
+    }
 
-        // Dejar que sea persistente si lo necesitas
-        // DontDestroyOnLoad(gameObject);
+    private void Start()
+    {
+        GameModeManager.Instance?.SetMode(GameMode.UI);
+        ClearSelection();
+        TakeCursor();
     }
 
     private void OnEnable()
     {
-        // Asegurar que el juego no está pausado
         Time.timeScale = 1f;
+
+        if (GamepadCursor.Instance != null)
+        {
+            GameModeManager.Instance?.SetMode(GameMode.UI);
+            ClearSelection();
+            TakeCursor();
+        }
+    }
+
+    private void OnDisable()
+    {
+        GamepadCursor.Instance?.Release(this);
+    }
+
+    // ==================== CURSOR / SELECCIÓN ====================
+
+    // El menú principal es la base de la pila: B no cierra nada aquí
+    private void TakeCursor()
+    {
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        GamepadCursor.Instance?.Acquire(this);
+    }
+
+    // Ningún botón debe quedar seleccionado: si lo está, A dispara Submit sobre él
+    private void ClearSelection()
+    {
+        var es = EventSystem.current;
+        if (es != null)
+            es.SetSelectedGameObject(null);
     }
 
     // ==================== BUTTON CALLBACKS ====================
@@ -73,13 +105,9 @@ public class MainMenuManager : MonoBehaviour
         PlayButtonSound();
 
         if (settingsPanel != null)
-        {
             settingsPanel.Open();
-        }
         else
-        {
             Debug.LogWarning("MenuSettingsUI no está asignado");
-        }
     }
 
     private void OnCreditsButtonClicked()
@@ -87,13 +115,9 @@ public class MainMenuManager : MonoBehaviour
         PlayButtonSound();
 
         if (creditsPanel != null)
-        {
             creditsPanel.Open();
-        }
         else
-        {
             Debug.LogWarning("CreditsPanel no está asignado");
-        }
     }
 
     private void OnExitButtonClicked()
@@ -108,10 +132,11 @@ public class MainMenuManager : MonoBehaviour
     {
         isTransitioning = true;
 
-        // Fade out
+        GamepadCursor.Instance?.Release(this);
+
         yield return FadeOut();
 
-        // Cargar escena
+        GameModeManager.Instance?.SetMode(GameMode.Gameplay);
         SceneManager.LoadScene(sceneName);
     }
 
@@ -121,9 +146,8 @@ public class MainMenuManager : MonoBehaviour
 
         while (elapsed < fadeDuration)
         {
-            elapsed += Time.deltaTime;
-            float alpha = Mathf.Lerp(1f, 0f, elapsed / fadeDuration);
-            menuCanvasGroup.alpha = alpha;
+            elapsed += Time.unscaledDeltaTime;
+            menuCanvasGroup.alpha = Mathf.Lerp(1f, 0f, elapsed / fadeDuration);
             yield return null;
         }
 
@@ -132,6 +156,8 @@ public class MainMenuManager : MonoBehaviour
 
     private void ExitGame()
     {
+        GamepadCursor.Instance?.Release(this);
+
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
@@ -144,9 +170,7 @@ public class MainMenuManager : MonoBehaviour
     private void PlayButtonSound()
     {
         if (buttonClickSound != null && audioSource != null)
-        {
             audioSource.PlayOneShot(buttonClickSound);
-        }
     }
 
     // ==================== HELPERS ====================
@@ -154,16 +178,12 @@ public class MainMenuManager : MonoBehaviour
     public void ResumeMenu()
     {
         if (menuCanvasGroup != null)
-        {
             menuCanvasGroup.interactable = true;
-        }
     }
 
     public void ShowVersion(TextMeshProUGUI versionText)
     {
         if (versionText != null)
-        {
             versionText.text = $"v{Application.version}";
-        }
     }
 }

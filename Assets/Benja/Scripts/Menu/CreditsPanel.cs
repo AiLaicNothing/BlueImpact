@@ -1,6 +1,7 @@
+using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class CreditsPanel : MonoBehaviour
 {
@@ -11,13 +12,14 @@ public class CreditsPanel : MonoBehaviour
 
     [Header("Auto Scroll")]
     [SerializeField] private RectTransform content;
-    [SerializeField] private RectTransform endMarker;
     [SerializeField] private float scrollSpeed = 30f;
 
     [Header("Animación")]
     [SerializeField] private float fadeDuration = 0.3f;
 
+    private bool isOpen = false;
     private bool isScrolling = false;
+    private Coroutine fadeRoutine;
 
     private void Awake()
     {
@@ -27,34 +29,70 @@ public class CreditsPanel : MonoBehaviour
         if (closeButton != null)
             closeButton.onClick.AddListener(Close);
 
-        canvasGroup.alpha = 0;
+        canvasGroup.alpha = 0f;
         canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
 
         LoadCredits();
+
+        gameObject.SetActive(false);
     }
 
     public void Open()
     {
+        if (isOpen) return;
+        isOpen = true;
+
         gameObject.SetActive(true);
 
-        StartCoroutine(FadeIn());
+        // Mientras el auto scroll está activo, el ScrollRect no debe mover el contenido
+        if (scrollRect != null)
+            scrollRect.enabled = false;
 
-        // reset scroll al inicio
-        content.anchoredPosition = new Vector2(content.anchoredPosition.x, -Screen.height);
+        // Empieza con el texto debajo de la vista
+        float viewportHeight = scrollRect != null && scrollRect.viewport != null
+            ? scrollRect.viewport.rect.height
+            : Screen.height;
 
+        content.anchoredPosition = new Vector2(content.anchoredPosition.x, -viewportHeight);
         isScrolling = true;
+
+        // Cursor: B cierra los créditos
+        GamepadCursor.Instance?.Acquire(this, Close);
+
+        StartFade(FadeIn());
+    }
+
+    public void Close()
+    {
+        if (!isOpen) return;
+        isOpen = false;
+        isScrolling = false;
+
+        // Libera primero para que el menú principal recupere el cursor de inmediato
+        GamepadCursor.Instance?.Release(this);
+
+        if (scrollRect != null)
+            scrollRect.enabled = true;
+
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
+
+        StartFade(FadeOut());
     }
 
     private void Update()
     {
-        if (!isScrolling) return;
+        if (!isScrolling || content == null || scrollRect == null || scrollRect.viewport == null)
+            return;
 
-        content.anchoredPosition += Vector2.up * scrollSpeed * Time.deltaTime;
- 
+        // Scroll independiente del tiempo de juego, por si hay pausa activa
+        float dt = Time.unscaledDeltaTime;
+        content.anchoredPosition += Vector2.up * scrollSpeed * dt;
+
         float contentHeight = content.rect.height;
         float viewportHeight = scrollRect.viewport.rect.height;
-
-        float maxScroll = contentHeight - viewportHeight;
+        float maxScroll = Mathf.Max(0f, contentHeight - viewportHeight);
 
         if (content.anchoredPosition.y >= maxScroll)
         {
@@ -63,58 +101,58 @@ public class CreditsPanel : MonoBehaviour
         }
     }
 
-    private bool IsAtEnd()
+    // Evita que dos coroutines de fade pelean (abrir mientras se cierra, etc.)
+    private void StartFade(IEnumerator routine)
     {
-        float contentY = Mathf.Abs(content.anchoredPosition.y);
-        float targetY = Mathf.Abs(endMarker.anchoredPosition.y);
+        if (fadeRoutine != null)
+            StopCoroutine(fadeRoutine);
 
-        return contentY >= targetY;
+        fadeRoutine = StartCoroutine(routine);
     }
 
-    public void Close()
+    private IEnumerator FadeIn()
     {
-        isScrolling = false;
-        StartCoroutine(FadeOut());
-    }
-
-    private System.Collections.IEnumerator FadeIn()
-    {
+        float start = canvasGroup.alpha;
         float elapsed = 0f;
 
         while (elapsed < fadeDuration)
         {
-            elapsed += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / fadeDuration);
+            elapsed += Time.unscaledDeltaTime;
+            canvasGroup.alpha = Mathf.Lerp(start, 1f, elapsed / fadeDuration);
             yield return null;
         }
 
-        canvasGroup.alpha = 1;
+        canvasGroup.alpha = 1f;
         canvasGroup.interactable = true;
         canvasGroup.blocksRaycasts = true;
+        fadeRoutine = null;
     }
 
-    private System.Collections.IEnumerator FadeOut()
+    private IEnumerator FadeOut()
     {
-        canvasGroup.interactable = false;
-        canvasGroup.blocksRaycasts = false;
-
+        float start = canvasGroup.alpha;
         float elapsed = 0f;
 
         while (elapsed < fadeDuration)
         {
-            elapsed += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Lerp(1f, 0f, elapsed / fadeDuration);
+            elapsed += Time.unscaledDeltaTime;
+            canvasGroup.alpha = Mathf.Lerp(start, 0f, elapsed / fadeDuration);
             yield return null;
         }
 
-        canvasGroup.alpha = 0;
-        gameObject.SetActive(false);
+        canvasGroup.alpha = 0f;
+        fadeRoutine = null;
+
+        // Solo desactiva si no se volvió a abrir durante el fade
+        if (!isOpen)
+            gameObject.SetActive(false);
     }
 
     private void LoadCredits()
     {
-        creditsText.text = @" 
+        if (creditsText == null) return;
 
+        creditsText.text = @"
 
 
 ~ ° ~

@@ -12,7 +12,7 @@ public abstract class PlayerState
     public virtual void OnEnter() { }
     public virtual void OnFixedUpdate() { }
     public virtual void OnUpdate() {
-        if (player.Rb.linearVelocity.y <= 0 && !player.IsGrounded)
+        if (player.Rb.linearVelocity.y <= 0 && !player.IsGrounded())
         {
             falling = true;
             player.ChangeState(player.fall_State);
@@ -26,7 +26,7 @@ public abstract class PlayerState
     }
     public virtual void OnExit()
     {
-        if (player.IsGrounded) { player.Anim.SetBool("Idle", true); falling = false; }
+        if (player.IsGrounded()) { player.Anim.SetBool("Idle", true); falling = false; }
         if (falling) player.Anim.SetBool("Idle", false);
     }
 }

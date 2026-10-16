@@ -38,6 +38,13 @@ public class Miniboss_LavaGolem : EnemyBase
     [Header("Patrol")]
     [SerializeField] private float patrolStopDistance = 0.5f;
 
+    [Header("Animation")]
+    [SerializeField] private Animator golemAnim;
+    [SerializeField] private float moveAnimThreshold = 0.1f;
+    [SerializeField] private float animDampTime = 0.1f;
+    private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
+    private bool animIsMoving;
+
     [Header("Debug")]
     [SerializeField] private GameObject hitBoxPrefab;
 
@@ -64,6 +71,9 @@ public class Miniboss_LavaGolem : EnemyBase
             agent.stoppingDistance = 0.25f;
         }
 
+        if (golemAnim == null)
+            golemAnim = GetComponentInChildren<Animator>();
+
         nextSpecialThreshold = Random.Range(2, 4);
     }
 
@@ -78,20 +88,25 @@ public class Miniboss_LavaGolem : EnemyBase
         UpdateTarget();
         HandleDetection();
 
+        UpdateAnimation();
+
         if (isPerformingAction) return;
 
         HandleActions();
         HandleMovement();
+    }
 
-        // Animation
-        if (agent.velocity.sqrMagnitude >= 0.01f)
-        {
-            //anim.Play("Walk");
-        }
-        else
-        {
-            //anim.Play("Idle");
-        }
+    private void UpdateAnimation()
+    {
+        if (golemAnim == null) return;
+
+        bool moving = agent.enabled && !agent.isStopped &&
+                      agent.velocity.sqrMagnitude > moveAnimThreshold * moveAnimThreshold;
+
+        if (moving == animIsMoving) return;
+
+        animIsMoving = moving;
+        golemAnim.SetBool(IsMovingHash, moving);
     }
 
     private void UpdateTarget()

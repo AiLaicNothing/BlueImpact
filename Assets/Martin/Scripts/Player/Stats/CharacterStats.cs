@@ -1,187 +1,247 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
+
+//This would go in the Player
+//This script is in charge of handling live stats like hp, mp and stamina
+//The other stats can be adquire via the manager, since does stats are "static"
 public class CharacterStats : MonoBehaviour
 {
-    [Header("Character")]
-    [SerializeField] private CharacterData characterData;
-    [SerializeField] private bool debug;
+    [Header("Current stats Value")]
+    [SerializeField] private int currentHp;
+    [SerializeField] private int hpRegen = 3;
+    [SerializeField] private int currentMp;
+    [SerializeField] private int mpRegen = 5;
+    [SerializeField] private int currentStamina;
+    [SerializeField] private int staminaRegen= 4;
 
-    private Dictionary<StatsType, int> allocatedPoints = new();
-    private Dictionary<StatsType, int> pendingPoints = new();
+    private int maxHp;
+    private int maxMp;
+    private int maxStamina;
 
-    private int totalEarnedPoints;
+    private CharacterStatsManager stats;
 
-    private int availablePoints;
+    // Fractional regeneration accumulated between frames.
+    private float hpRegenAccumulator;
+    private float mpRegenAccumulator;
+    private float staminaRegenAccumulator;
 
-    public CharacterData CharData => characterData;
-    public int TotalEarnedPoints => totalEarnedPoints;
-    public int AvailablePoints => availablePoints;
+    // Base regeneration values, before temporary boosts.
+    private int baseHpRegen;
+    private int baseMpRegen;
+    private int baseStaminaRegen;
 
-    public event Action OnStatsChanged;
+    public int MaxHp => maxHp;
+    public int CurrentHp => currentHp;
+    public int MaxMp => maxMp;
+    public int CurrentMp => currentMp;
+    public int MaxStamina => maxStamina;
+    public int CurrentStamina => currentStamina;
 
     private void Awake()
     {
-        Initialize();
+        stats = CharacterStatsManager.Instance;
     }
 
-    private void Initialize()
+    private void Start()
     {
-        allocatedPoints.Clear();
-        pendingPoints.Clear();
+        SetStatsValue();
+        SetInitialValue();
 
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
+        // Preserve the original regeneration values.
+        baseHpRegen = hpRegen;
+        baseMpRegen = mpRegen;
+        baseStaminaRegen = staminaRegen;
+
+        if (stats != null)
+            stats.OnStatsChanged += RefreshStats;
+    }
+
+    private void OnDestroy()
+    {
+        if (stats != null)
+            stats.OnStatsChanged -= RefreshStats;
+    }
+
+    private void Update()
+    {
+        if (IsDead())
+            return;
+
+        RegenHp();
+        RegenMp();
+        RegenStamina();
+    }
+
+    private void SetStatsValue()
+    {
+        maxHp = stats.GetCurrentStat(StatsType.Health) * 10;
+        maxMp = stats.GetCurrentStat(StatsType.Mana) * 5;
+        maxStamina = stats.GetCurrentStat(StatsType.Stamina) * 5;
+    }
+
+    private void SetInitialValue()
+    {
+        currentHp = maxHp;
+        currentMp = maxMp;
+        currentStamina = maxStamina;
+    }
+
+    private void RefreshStats()
+    {
+        int previousMaxHp = maxHp;
+        int previousMaxMp = maxMp;
+        int previousMaxStamina = maxStamina;
+
+        SetStatsValue();
+
+        // Keep current values within the updated maximums.
+        currentHp = Mathf.Clamp(currentHp, 0, maxHp);
+        currentMp = Mathf.Clamp(currentMp, 0, maxMp);
+        currentStamina = Mathf.Clamp(currentStamina, 0, maxStamina);
+    }
+
+    private void RegenHp()
+    {
+        if (currentHp >= maxHp || hpRegen <= 0)
+            return;
+
+        hpRegenAccumulator += hpRegen * Time.deltaTime;
+
+        int amount = Mathf.FloorToInt(hpRegenAccumulator);
+
+        if (amount > 0)
         {
-            allocatedPoints[stat] = 0;
-            pendingPoints[stat] = 0;
-        }
-
-        totalEarnedPoints = characterData.startingStatPoints;
-
-        RecalculateAvailablePoints();
-
-        OnStatsChanged?.Invoke();
-    }
-
-    public int GetBaseStat(StatsType statType)
-    {
-        return characterData.baseStats.GetStat(statType);
-    }
-
-    public int GetAllocatedPoints(StatsType statType)
-    {
-        return allocatedPoints[statType];
-    }
-
-    public int GetPendingPoints(StatsType statType)
-    {
-        return pendingPoints[statType];
-    }
-
-    //This show how the change will affect that stat
-    public int GetDisplayedStat(StatsType statType)
-    {
-        return GetBaseStat(statType) + GetPendingPoints(statType);
-    }
-
-    //This show the stat with the points already assigned
-    public int GetCurrentStat(StatsType statType)
-    {
-        return GetBaseStat(statType) + GetAllocatedPoints(statType);
-    }
-
-    public bool AddPoint(StatsType statsType)
-    {
-        if (availablePoints <= 0) return false;
-
-        pendingPoints[statsType]++;
-
-        RecalculateAvailablePoints();
-
-        OnStatsChanged?.Invoke();
-
-        return true;
-    }
-
-    public bool RemovePoint(StatsType statsType)
-    {
-        // The player can only remove points that were assigned by them and not the base stats
-
-        if (pendingPoints[statsType] <= allocatedPoints[statsType]) return false;
-
-        pendingPoints[statsType]--;
-
-        RecalculateAvailablePoints();
-
-        OnStatsChanged?.Invoke();
-
-        return true;
-    }
-
-    public void ApplyStats()
-    {
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
-        {
-            allocatedPoints[stat] = pendingPoints[stat];
-        }
-
-        RecalculateAvailablePoints();
-
-        if (debug) Debug.Log($"{characterData.name} stats applied");
-
-        OnStatsChanged?.Invoke();
-    }
-
-    public void CancelChanges()
-    {
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
-        {
-            pendingPoints[stat] = allocatedPoints[stat];
-        }
-
-        RecalculateAvailablePoints();
-
-        if (debug) Debug.Log($"{characterData.name} stat changes cancelled");
-
-        OnStatsChanged?.Invoke();
-    }
-
-    private void RecalculateAvailablePoints()
-    {
-        int usedPoint = 0;
-
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
-        {
-            usedPoint += pendingPoints[stat];
-        }
-
-        availablePoints = totalEarnedPoints - usedPoint;
-
-        if (availablePoints < 0)
-        {
-            availablePoints = 0;
+            int restored = Mathf.Min(amount, maxHp - currentHp);
+            currentHp += restored;
+            hpRegenAccumulator -= amount;
         }
     }
 
-    // This should be called when the player interact with the structure that give points
-    public void AddStatPoints(int amount)
+    private void RegenMp()
+    {
+        if (currentMp >= maxMp || mpRegen <= 0)
+            return;
+
+        mpRegenAccumulator += mpRegen * Time.deltaTime;
+
+        int amount = Mathf.FloorToInt(mpRegenAccumulator);
+
+        if (amount > 0)
+        {
+            int restored = Mathf.Min(amount, maxMp - currentMp);
+            currentMp += restored;
+            mpRegenAccumulator -= amount;
+        }
+    }
+
+    private void RegenStamina()
+    {
+        if (currentStamina >= maxStamina || staminaRegen <= 0)
+            return;
+
+        staminaRegenAccumulator += staminaRegen * Time.deltaTime;
+
+        int amount = Mathf.FloorToInt(staminaRegenAccumulator);
+
+        if (amount > 0)
+        {
+            int restored = Mathf.Min(amount, maxStamina - currentStamina);
+            currentStamina += restored;
+            staminaRegenAccumulator -= amount;
+        }
+    }
+
+    // Temporarily multiplies the regeneration rate for the selected stat.
+    public void IncreaseRegen(StatsType type, int multiplier, float duration)
+    {
+        StartCoroutine(IncreaseRegenRoutine(type, multiplier, duration));
+    }
+
+    private IEnumerator IncreaseRegenRoutine(StatsType type, int multiplier, float duration)
+    {
+        int originalRegen = 0;
+
+        // Get the original regeneration value.
+        if (type == StatsType.Health) originalRegen = hpRegen;
+
+        else if (type == StatsType.Mana) originalRegen = mpRegen;
+
+        else if (type == StatsType.Stamina) originalRegen = staminaRegen;
+
+        // Increase regeneration.
+        int boostedRegen = originalRegen * multiplier;
+
+        if (type == StatsType.Health) hpRegen = boostedRegen;
+
+        else if (type == StatsType.Mana) mpRegen = boostedRegen;
+
+        else if (type == StatsType.Stamina) staminaRegen = boostedRegen;
+
+        // Wait for the buff duration.
+        yield return new WaitForSeconds(duration);
+
+        // Restore the original regeneration.
+        if (type == StatsType.Health) hpRegen = originalRegen;
+
+        else if (type == StatsType.Mana) mpRegen = originalRegen;
+
+        else if (type == StatsType.Stamina) staminaRegen = originalRegen;
+    }
+
+    public bool IsDead()
+    {
+        return currentHp <= 0;
+    }
+
+    public void ConsumeStat(StatsType type, int amount)
     {
         if (amount <= 0)
-        {
-            if (debug)
-            {
-                Debug.Log($"Tried to add an invalid ammount of points {amount}");
-            }
-
             return;
-        }
 
-        totalEarnedPoints += amount;
-
-        RecalculateAvailablePoints();
-
-        if (debug)
-        {
-            Debug.Log(
-         $"{characterData.characterName} gained {amount} stat points. " +
-         $"Total: {totalEarnedPoints}, " +
-         $"Available: {availablePoints}");
-        }
-
-        OnStatsChanged?.Invoke();
+        if (type == StatsType.Health)
+            currentHp = Mathf.Max(currentHp - amount, 0);
+        else if (type == StatsType.Mana)
+            currentMp = Mathf.Max(currentMp - amount, 0);
+        else if (type == StatsType.Stamina)
+            currentStamina = Mathf.Max(currentStamina - amount, 0);
     }
 
-    public void BeginEdit()
+    public bool CanConsume(StatsType type, int amount)
     {
-        foreach (StatsType stat in Enum.GetValues(typeof(StatType)))
-        {
-            pendingPoints[stat] = allocatedPoints[stat];
-        }
+        if (amount < 0)
+            return false;
 
-        RecalculateAvailablePoints();
+        if (type == StatsType.Health)
+            return currentHp >= amount;
 
-        OnStatsChanged?.Invoke();
+        if (type == StatsType.Mana)
+            return currentMp >= amount;
+
+        if (type == StatsType.Stamina)
+            return currentStamina >= amount;
+
+        return false;
+    }
+
+    public void RestoreCurrentStat(StatsType type, int amount)
+    {
+        if (amount <= 0)
+            return;
+
+        if (type == StatsType.Health)
+            currentHp = Mathf.Clamp(currentHp + amount, 0, maxHp);
+        else if (type == StatsType.Mana)
+            currentMp = Mathf.Clamp(currentMp + amount, 0, maxMp);
+        else if (type == StatsType.Stamina)
+            currentStamina = Mathf.Clamp(currentStamina + amount, 0, maxStamina);
+    }
+
+    public void RestoreToMax()
+    {
+        currentHp = maxHp;
+        currentMp = maxMp;
+        currentStamina = maxStamina;
     }
 }

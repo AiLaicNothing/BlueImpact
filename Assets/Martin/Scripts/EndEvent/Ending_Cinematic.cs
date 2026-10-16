@@ -43,9 +43,9 @@ public class Ending_Cinematic : MonoBehaviour
         {
             videoPlayer.Stop();
 
-            if (info.characterName == "Lune") videoPlayer.clip = lune;
+            if (info.data.characterName == "Lune") videoPlayer.clip = lune;
 
-            else if (info.characterName == "Solis") videoPlayer.clip = solis;
+            else if (info.data.characterName == "Solis") videoPlayer.clip = solis;
         }
 
         if (videoScreen != null)

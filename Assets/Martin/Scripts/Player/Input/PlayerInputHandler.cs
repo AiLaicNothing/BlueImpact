@@ -1,16 +1,18 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using CMF;
 
-public class PlayerInputHandler : MonoBehaviour
+public class PlayerInputHandler : CharacterInput
 {
     public float attackBufferTime = 0.2f;
     private float attackBufferCounter;
 
     public Vector2 moveInput { get; private set; }
-    private bool hasJumped;
+    public bool hasJumped {  get; private set; }
     public bool hasDashed { get; private set; }
     public bool isAiming { get; private set; }
     public Vector2 lookInput { get; private set; }
+    public Vector2 gamepadLookInput { get; private set; }   // nuevo
     public bool onLockTarget { get; private set; }
     public float scrollInput { get; private set; }
     public AttackInputType bufferedAttackType { get; private set; }
@@ -57,24 +59,32 @@ public class PlayerInputHandler : MonoBehaviour
             pauseAction.Disable();
         }
     }
+
+    public override float GetHorizontalMovementInput()
+    {
+        return moveInput.x;
+    }
+
+    public override float GetVerticalMovementInput()
+    {
+        return moveInput.y;
+    }
+
+    public override bool IsJumpKeyPressed()
+    {
+        return hasJumped;
+    }
+
     public void OnMove(InputAction.CallbackContext context)
     {
         moveInput = context.ReadValue<Vector2>();
     }
-    public bool ConsumeJump()
-    {
-        if (!hasJumped) return false;
 
-        hasJumped = false;
-        return true;
-    }
     public void OnJump(InputAction.CallbackContext context)
     {
-        if (context.started)
-        {
-            hasJumped = true;
-        }
+        hasJumped = true;
     }
+
     public void OnDash(InputAction.CallbackContext context)
     {
         if (context.started)
@@ -92,6 +102,9 @@ public class PlayerInputHandler : MonoBehaviour
     public void OnLook(InputAction.CallbackContext context)
     {
         lookInput = context.ReadValue<Vector2>();
+
+        // Solo guardar el valor si viene de un gamepad
+        gamepadLookInput = context.control.device is Gamepad ? lookInput : Vector2.zero;
     }
 
     public void OnLockTarget(InputAction.CallbackContext context)
@@ -236,7 +249,7 @@ public class PlayerInputHandler : MonoBehaviour
 
         isAiming = false;
         lookInput = Vector2.zero;
-
+        gamepadLookInput = Vector2.zero;
         onLockTarget = false;
 
         scrollInput = 0f;
@@ -249,6 +262,5 @@ public class PlayerInputHandler : MonoBehaviour
 
         onMelee = false;
     }
-
 
 }

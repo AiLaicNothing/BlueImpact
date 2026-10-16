@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -19,15 +18,13 @@ public class PauseManager : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private MenuSettingsUI gameplaySettingsUI;
 
-    [Header("UI")]
-    [SerializeField] private EventSystem eventSystem;
-
     private bool isPaused = false;
     private PlayerInputHandler playerInputHandler;
 
+    public bool IsPaused => isPaused;
+
     private void Awake()
     {
-        // ✅ SINGLETON
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -38,16 +35,9 @@ public class PauseManager : MonoBehaviour
 
     private void Start()
     {
-        // ✅ OBTENER REFERENCIAS
-        playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
-
-        if (eventSystem == null)
-            eventSystem = EventSystem.current;
-
         if (pausePanelCanvasGroup == null)
             pausePanelCanvasGroup = GetComponent<CanvasGroup>();
 
-        // ✅ CONECTAR BOTONES
         if (resumeButton != null)
             resumeButton.onClick.AddListener(Resume);
 
@@ -57,101 +47,71 @@ public class PauseManager : MonoBehaviour
         if (exitMenuButton != null)
             exitMenuButton.onClick.AddListener(ExitToMenu);
 
-        // ✅ OCULTAR PAUSE PANEL AL INICIO
-        if (pausePanelCanvasGroup != null)
-        {
-            pausePanelCanvasGroup.alpha = 0;
-            pausePanelCanvasGroup.interactable = false;
-            pausePanelCanvasGroup.blocksRaycasts = false;
-        }
+        SetPanelVisible(false);
 
-        // ✅ SUSCRIBIRSE SI YA EXISTE
-        SubscribeToPauseAction();
+        TrySubscribe();
     }
 
     private void Update()
     {
-        // ✅ SI PLAYERINPUTHANDLER AÚN NO EXISTE, INTENTAR CADA FRAME
         if (playerInputHandler == null)
-        {
-            playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
-
-            if (playerInputHandler != null)
-            {
-                Debug.Log("✅ PlayerInputHandler encontrado en Update");
-                SubscribeToPauseAction();
-            }
-        }
-    }
-
-    private void SubscribeToPauseAction()
-    {
-        if (playerInputHandler == null || playerInputHandler.pauseAction == null)
-        {
-            Debug.LogWarning("⚠️ No se puede suscribir a pauseAction aún");
-            return;
-        }
-
-        playerInputHandler.pauseAction.performed += OnPauseInput;
-        Debug.Log("✅ PauseManager suscrito a pauseAction");
+            TrySubscribe();
     }
 
     private void OnDisable()
     {
         if (playerInputHandler != null && playerInputHandler.pauseAction != null)
-        {
             playerInputHandler.pauseAction.performed -= OnPauseInput;
-        }
+    }
+
+    // ---------- INPUT ----------
+
+    private void TrySubscribe()
+    {
+        if (playerInputHandler == null)
+            playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
+
+        if (playerInputHandler == null || playerInputHandler.pauseAction == null)
+            return;
+
+        playerInputHandler.pauseAction.performed -= OnPauseInput;
+        playerInputHandler.pauseAction.performed += OnPauseInput;
     }
 
     private void OnPauseInput(InputAction.CallbackContext context)
     {
-        // ✅ JERARQUÍA DE CIERRE (de innermost a outermost)
+        var gc = GamepadCursor.Instance;
 
-        // 1️⃣ SI SETTINGS ESTÁ ABIERTO, CIERRA SETTINGS (no pausa)
-        if (gameplaySettingsUI != null && gameplaySettingsUI.IsOpen)
+        // Escape cierra primero el panel activo (ajustes, popup, etc.)
+        if (gc != null && gc.HasOpenPanels && !gc.IsTop(this) && gc.TopCanClose)
         {
-            gameplaySettingsUI.Close();
+            gc.CloseTop();
             return;
         }
 
-        // 2️⃣ SI CHECKPOINT MENU ESTÁ ABIERTO, CIERRA CHECKPOINT (no pausa)
-        if (CheckpointMenuUI.Instance != null && CheckpointMenuUI.Instance.IsOpen())
-        {
-            CheckpointMenuUI.Instance.CloseMenu();
-            return;
-        }
-
-        // 3️⃣ SI NADA ESTÁ ABIERTO, PROCEDE CON PAUSA/REANUDACIÓN NORMAL
+        // Sin paneles encima: alterna la pausa
         if (isPaused)
             Resume();
         else
             Pause();
     }
 
+    // ---------- PAUSE / RESUME ----------
+
     public void Pause()
     {
         if (isPaused) return;
 
+        // Al abrir la pausa, se cierran los demás paneles (popups, etc.)
+        GamepadCursor.Instance?.CloseAllExcept(this);
+
         isPaused = true;
         Time.timeScale = 0f;
 
-        Debug.Log("⏸️ Juego pausado");
+        SetPanelVisible(true);
 
-        if (pausePanelCanvasGroup != null)
-        {
-            pausePanelCanvasGroup.alpha = 1;
-            pausePanelCanvasGroup.interactable = true;
-            pausePanelCanvasGroup.blocksRaycasts = true;
-        }
-
-        if (eventSystem != null && resumeButton != null)
-        {
-            eventSystem.SetSelectedGameObject(resumeButton.gameObject);
-        }
-
-        if (GameModeManager.Instance != null)
-            GameModeManager.Instance.SetMode(GameMode.UI);
+        // Base de la pausa: B o Escape la reanudan si no hay nada encima
+        GamepadCursor.Instance?.Acquire(this, Resume);
     }
 
     public void Resume()
@@ -161,45 +121,35 @@ public class PauseManager : MonoBehaviour
         isPaused = false;
         Time.timeScale = 1f;
 
-        Debug.Log("▶️ Juego reanudado");
+        SetPanelVisible(false);
 
-        if (pausePanelCanvasGroup != null)
-        {
-            pausePanelCanvasGroup.alpha = 0;
-            pausePanelCanvasGroup.interactable = false;
-            pausePanelCanvasGroup.blocksRaycasts = false;
-        }
-
-        if (eventSystem != null)
-        {
-            eventSystem.SetSelectedGameObject(null);
-        }
-
-        if (GameModeManager.Instance != null)
-            GameModeManager.Instance.SetMode(GameMode.Gameplay);
+        // Release sincroniza el modo: si no quedan paneles, vuelve a Gameplay
+        GamepadCursor.Instance?.Release(this);
     }
+
+    // ---------- BUTTONS ----------
 
     public void OpenSettings()
     {
         if (gameplaySettingsUI != null)
-        {
             gameplaySettingsUI.Open();
-        }
     }
 
     public void ExitToMenu()
     {
+        GamepadCursor.Instance?.CloseAllExcept(null);
         Time.timeScale = 1f;
         SceneManager.LoadScene("menu");
     }
 
-    public void OnSettingsClosed()
-    {
-        if (eventSystem != null && settingsButton != null)
-        {
-            eventSystem.SetSelectedGameObject(settingsButton.gameObject);
-        }
-    }
+    // ---------- HELPERS ----------
 
-    public bool IsPaused => isPaused;
+    private void SetPanelVisible(bool visible)
+    {
+        if (pausePanelCanvasGroup == null) return;
+
+        pausePanelCanvasGroup.alpha = visible ? 1f : 0f;
+        pausePanelCanvasGroup.interactable = visible;
+        pausePanelCanvasGroup.blocksRaycasts = visible;
+    }
 }

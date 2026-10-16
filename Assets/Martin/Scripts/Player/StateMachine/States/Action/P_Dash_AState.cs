@@ -18,9 +18,18 @@ public class P_Dash_AState : PlayerState
         trail = player.transform.Find("Trail").GetComponent<TrailRenderer>();
         trailParticles = trail.transform.Find("TrailParticles").GetComponent<ParticleSystem>();
         // Check stamina before starting the dash
-        if (!player.PlayerStatsManager.CanConsume(StatType.Estamina, (int)player.DashCost))
+        //if (!player.PlayerStatsManager.CanConsume(StatType.Estamina, (int)player.DashCost))
+        //{
+        //    Debug.Log("No hay stamina para dash");
+
+        //    // Do NOT start the dash
+        //    player.ChangeActionState(player.iddle_AState);
+        //    return;
+        //}
+
+        if (!player._Stats.CanConsume(StatsType.Stamina, (int)player.DashCost))
         {
-            Debug.Log("No hay stamina para dash");
+            Debug.Log($"No hay stamina para dash {player._Stats.CurrentStamina} / {(int)player.DashCost}");
 
             // Do NOT start the dash
             player.ChangeActionState(player.iddle_AState);
@@ -28,7 +37,8 @@ public class P_Dash_AState : PlayerState
         }
 
         // Consume stamina only when the dash actually starts
-        player.PlayerStatsManager.Consume(StatType.Estamina, (int)player.DashCost);
+        //player.PlayerStatsManager.Consume(StatType.Estamina, (int)player.DashCost);
+        player._Stats.ConsumeStat(StatsType.Stamina, (int)player.DashCost);
 
         dashStarted = true;
 
@@ -44,11 +54,11 @@ public class P_Dash_AState : PlayerState
 
         if (input.magnitude > 0.1f)
         {
-            Vector3 camForward = Camera.main.transform.forward;
+            Vector3 camForward = player.MainCam.transform.forward;
             camForward.y = 0f;
             camForward.Normalize();
 
-            Vector3 camRight = Camera.main.transform.right;
+            Vector3 camRight = player.MainCam.transform.right;
             camRight.y = 0f;
             camRight.Normalize();
 

@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
@@ -12,6 +11,8 @@ public class MenuSettingsUI : MonoBehaviour
     [SerializeField] private TabsManager tabsManager;
     [SerializeField] private CanvasGroup menuPanelCanvasGroup;
     [SerializeField] private CanvasGroup pausePanelCanvasGroup;
+
+    // Opcional: solo se asigna si los ajustes se abren desde la pausa
     [SerializeField] private PauseManager pauseManager;
 
     [Header("VIDEO")]
@@ -31,9 +32,9 @@ public class MenuSettingsUI : MonoBehaviour
     [SerializeField] private Button resetKeybindsButton;
 
     private SettingsManager settingsManager;
-    private EventSystem eventSystem;
     private bool isOpen = false;
     private bool isGamepadActive = false;
+    private bool wasGameplayMode = false;
 
     public bool IsOpen => isOpen;
 
@@ -41,8 +42,6 @@ public class MenuSettingsUI : MonoBehaviour
     {
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
-
-        eventSystem = EventSystem.current;
 
         if (backButton != null)
             backButton.onClick.AddListener(Close);
@@ -55,100 +54,36 @@ public class MenuSettingsUI : MonoBehaviour
         settingsManager = SettingsManager.Instance;
         if (settingsManager == null)
             settingsManager = FindFirstObjectByType<SettingsManager>();
+    }
 
-        Debug.Log($"✅ Awake: settingsManager = {(settingsManager != null ? "ENCONTRADO" : "NULL")}");
+    private void OnDisable()
+    {
+        // Si el objeto se desactiva con los ajustes abiertos, libera el cursor
+        if (isOpen)
+        {
+            isOpen = false;
+            GamepadCursor.Instance?.Release(this);
+        }
     }
 
     private void Update()
     {
         if (!isOpen) return;
+
         bool wasGamepad = isGamepadActive;
         if (Gamepad.current != null && Gamepad.current.wasUpdatedThisFrame)
             isGamepadActive = true;
         else if (Keyboard.current != null && Keyboard.current.wasUpdatedThisFrame)
             isGamepadActive = false;
+
         if (wasGamepad != isGamepadActive)
             RebuildKeybindList();
     }
 
-    private void InitializeVideoSettings()
-    {
-        Debug.Log("📹 InitializeVideoSettings comenzó");
-        if (settingsManager == null) return;
-        var s = settingsManager.GetSettings();
-
-        if (resolutionDropdown != null)
-        {
-            var resolutions = settingsManager.GetAvailableResolutions();
-            resolutionDropdown.options.Clear();
-            for (int i = 0; i < resolutions.Length; i++)
-                resolutionDropdown.options.Add(new TMP_Dropdown.OptionData(settingsManager.GetResolutionString(i)));
-            resolutionDropdown.SetValueWithoutNotify(s.video.resolutionIndex);
-            resolutionDropdown.onValueChanged.RemoveAllListeners();
-            resolutionDropdown.onValueChanged.AddListener(i => settingsManager.SetResolution(i));
-        }
-
-        if (fullscreenToggle != null)
-        {
-            fullscreenToggle.SetIsOnWithoutNotify(s.video.fullscreen);
-            fullscreenToggle.onValueChanged.RemoveAllListeners();
-            fullscreenToggle.onValueChanged.AddListener(v => settingsManager.SetFullscreen(v));
-        }
-
-        Debug.Log("📹 InitializeVideoSettings completado");
-    }
-
-    private void InitializeAudioSettings()
-    {
-        Debug.Log("🔊 InitializeAudioSettings comenzó");
-        if (settingsManager == null) return;
-        var a = settingsManager.GetSettings().audio;
-
-        if (masterVolumeSlider != null)
-            masterVolumeSlider.Initialize("Volumen Global", 0f, 1f, a.masterVolume,
-                v => settingsManager.SetMasterVolume(v), SettingSlider.DisplayFormat.Percentage);
-
-        if (musicVolumeSlider != null)
-            musicVolumeSlider.Initialize("Música", 0f, 1f, a.musicVolume,
-                v => settingsManager.SetMusicVolume(v), SettingSlider.DisplayFormat.Percentage);
-
-        if (sfxVolumeSlider != null)
-            sfxVolumeSlider.Initialize("Efectos de sonido", 0f, 1f, a.sfxVolume,
-                v => settingsManager.SetSFXVolume(v), SettingSlider.DisplayFormat.Percentage);
-
-        if (ambientVolumeSlider != null)
-            ambientVolumeSlider.Initialize("Ambiente", 0f, 1f, a.ambientVolume,
-                v => settingsManager.SetAmbientVolume(v), SettingSlider.DisplayFormat.Percentage);
-
-        Debug.Log("🔊 InitializeAudioSettings completado");
-    }
-
-    private void InitializeControlsSettings()
-    {
-        Debug.Log("🎮 InitializeControlsSettings comenzó");
-        Debug.Log($"  → settingsManager: {(settingsManager != null ? "OK" : "NULL")}");
-        Debug.Log($"  → mouseSensitivitySlider: {(mouseSensitivitySlider != null ? "OK" : "NULL")}");
-
-        if (settingsManager != null && mouseSensitivitySlider != null)
-        {
-            var c = settingsManager.GetSettings().controls;
-            mouseSensitivitySlider.Initialize("Sensibilidad del mouse", 0.1f, 1.0f,
-                Mathf.Clamp(c.mouseSensitivity, 0.1f, 1.0f),
-                v => settingsManager.SetMouseSensitivity(v),
-                SettingSlider.DisplayFormat.Decimal);
-            Debug.Log("  → Slider de sensibilidad inicializado ✅");
-        }
-
-        Debug.Log("🎮 Llamando RebuildKeybindList...");
-        RebuildKeybindList();
-        Debug.Log("🎮 InitializeControlsSettings completado");
-    }
+    // ---------- KEYBINDS ----------
 
     private void RebuildKeybindList()
     {
-        Debug.Log($"  → keybindsContainer: {(keybindsContainer != null ? "OK" : "NULL")}");
-        Debug.Log($"  → keybindButtonPrefab: {(keybindButtonPrefab != null ? "OK" : "NULL")}");
-
         if (keybindsContainer == null || keybindButtonPrefab == null)
         {
             Debug.LogError("❌ No se puede crear keybinds — referencias nulas");
@@ -159,16 +94,12 @@ public class MenuSettingsUI : MonoBehaviour
             Destroy(child.gameObject);
 
         var keybinds = isGamepadActive ? GetGamepadKeybinds() : GetKeyboardKeybinds();
-        Debug.Log($"  → Creando {keybinds.Length} keybinds...");
 
-        int count = 0;
         foreach (var (label, action, binding) in keybinds)
         {
             var btn = Instantiate(keybindButtonPrefab, keybindsContainer);
             btn.Initialize(label, action, binding);
-            count++;
         }
-        Debug.Log($"  → ✅ {count} keybinds creados");
     }
 
     private (string label, string action, int binding)[] GetKeyboardKeybinds() => new[]
@@ -207,18 +138,23 @@ public class MenuSettingsUI : MonoBehaviour
     private void OnResetKeybindsClicked()
     {
         if (InputRebindingManager.Instance == null) return;
+
         InputRebindingManager.Instance.ResetAllBindingsToDefault();
-        var btns = keybindsContainer.GetComponentsInChildren<KeybindButton>();
-        foreach (var btn in btns)
+
+        foreach (var btn in keybindsContainer.GetComponentsInChildren<KeybindButton>())
             btn.RefreshDisplay();
-        Debug.Log("✅ Controles restaurados");
     }
+
+    // ---------- OPEN / CLOSE ----------
+    // Quita de la clase: pauseManager, wasGameplayMode y modeBeforeOpen
 
     public void Open()
     {
-        Debug.Log("═══ MenuSettingsUI.Open() COMIENZA ═══");
+        if (isOpen) return;
+
         gameObject.SetActive(true);
         isOpen = true;
+
         ShowPanel();
         BlockSiblingPanel(true);
 
@@ -229,17 +165,14 @@ public class MenuSettingsUI : MonoBehaviour
         InitializeAudioSettings();
         InitializeControlsSettings();
 
-        if (eventSystem != null && resolutionDropdown != null)
-            eventSystem.SetSelectedGameObject(resolutionDropdown.gameObject);
-
-        if (GameModeManager.Instance != null && GameModeManager.Instance.CurrentMode == GameMode.Gameplay)
-            GameModeManager.Instance.SetMode(GameMode.UI);
-
-        Debug.Log("═══ MenuSettingsUI.Open() TERMINA ═══");
+        // La pila decide el modo de juego; no lo cambiamos aquí
+        GamepadCursor.Instance?.Acquire(this, Close);
     }
 
     public void Close()
     {
+        if (!isOpen) return;
+
         isOpen = false;
         HidePanel();
         BlockSiblingPanel(false);
@@ -247,17 +180,75 @@ public class MenuSettingsUI : MonoBehaviour
         if (settingsManager != null)
             settingsManager.SaveSettings();
 
-        if (pauseManager != null)
-            pauseManager.OnSettingsClosed();
-
-        if (GameModeManager.Instance != null && pauseManager != null && !pauseManager.IsPaused)
-            GameModeManager.Instance.SetMode(GameMode.Gameplay);
+        // Release sincroniza el modo con lo que quede debajo (pausa, menú o gameplay)
+        GamepadCursor.Instance?.Release(this);
 
         gameObject.SetActive(false);
     }
-
     public void NextTab() { if (tabsManager != null) tabsManager.NextTab(); }
     public void PreviousTab() { if (tabsManager != null) tabsManager.PreviousTab(); }
+
+    // ---------- INITIALIZATION ----------
+
+    private void InitializeVideoSettings()
+    {
+        if (settingsManager == null) return;
+        var s = settingsManager.GetSettings();
+
+        if (resolutionDropdown != null)
+        {
+            var resolutions = settingsManager.GetAvailableResolutions();
+            resolutionDropdown.options.Clear();
+            for (int i = 0; i < resolutions.Length; i++)
+                resolutionDropdown.options.Add(new TMP_Dropdown.OptionData(settingsManager.GetResolutionString(i)));
+            resolutionDropdown.SetValueWithoutNotify(s.video.resolutionIndex);
+            resolutionDropdown.onValueChanged.RemoveAllListeners();
+            resolutionDropdown.onValueChanged.AddListener(i => settingsManager.SetResolution(i));
+        }
+
+        if (fullscreenToggle != null)
+        {
+            fullscreenToggle.SetIsOnWithoutNotify(s.video.fullscreen);
+            fullscreenToggle.onValueChanged.RemoveAllListeners();
+            fullscreenToggle.onValueChanged.AddListener(v => settingsManager.SetFullscreen(v));
+        }
+    }
+
+    private void InitializeAudioSettings()
+    {
+        if (settingsManager == null) return;
+        var a = settingsManager.GetSettings().audio;
+
+        if (masterVolumeSlider != null)
+            masterVolumeSlider.Initialize("Volumen Global", 0f, 1f, a.masterVolume,
+                v => settingsManager.SetMasterVolume(v), SettingSlider.DisplayFormat.Percentage);
+
+        if (musicVolumeSlider != null)
+            musicVolumeSlider.Initialize("Música", 0f, 1f, a.musicVolume,
+                v => settingsManager.SetMusicVolume(v), SettingSlider.DisplayFormat.Percentage);
+
+        if (sfxVolumeSlider != null)
+            sfxVolumeSlider.Initialize("Efectos de sonido", 0f, 1f, a.sfxVolume,
+                v => settingsManager.SetSFXVolume(v), SettingSlider.DisplayFormat.Percentage);
+
+        if (ambientVolumeSlider != null)
+            ambientVolumeSlider.Initialize("Ambiente", 0f, 1f, a.ambientVolume,
+                v => settingsManager.SetAmbientVolume(v), SettingSlider.DisplayFormat.Percentage);
+    }
+
+    private void InitializeControlsSettings()
+    {
+        if (settingsManager != null && mouseSensitivitySlider != null)
+        {
+            var c = settingsManager.GetSettings().controls;
+            mouseSensitivitySlider.Initialize("Sensibilidad del mouse", 0.1f, 1.0f,
+                Mathf.Clamp(c.mouseSensitivity, 0.1f, 1.0f),
+                v => settingsManager.SetMouseSensitivity(v),
+                SettingSlider.DisplayFormat.Decimal);
+        }
+
+        RebuildKeybindList();
+    }
 
     private void ShowPanel()
     {
@@ -287,4 +278,4 @@ public class MenuSettingsUI : MonoBehaviour
         cg.interactable = !block;
         cg.blocksRaycasts = !block;
     }
-}       
+}

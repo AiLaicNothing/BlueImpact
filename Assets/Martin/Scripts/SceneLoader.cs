@@ -1,81 +1,42 @@
-using System.Collections;
-using System.Collections.Generic;
+using Unity.Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-
 
 public class SceneLoader : MonoBehaviour
 {
-    public static SceneLoader Instance;
+    [SerializeField] private string sceneNameLoad;
+    [SerializeField] private string sceneNameUnload;
 
-    private void Awake()
+    private bool isProcessing;
+
+    private void OnTriggerEnter(Collider other)
     {
-        if (Instance == null)
+        if (!other.CompareTag("Player") || isProcessing)
+            return;
+
+        if (SceneLoaderManager.Instance == null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
-
-    private void Start()
-    {
-        StartCoroutine(LoadTestScenes());
-    }
-
-    public void LoadScene(string sceneName)
-    {
-        StartCoroutine(LoadSceneAsync(sceneName));
-    }
-
-    private IEnumerator LoadTestScenes()
-    {
-        yield return StartCoroutine(LoadSceneAsync("Zone_01_Tutorial"));
-        yield return StartCoroutine(LoadSceneAsync("Zone_02"));
-        yield return StartCoroutine(LoadSceneAsync("Testing4"));
-    }
-
-    private IEnumerator LoadSceneAsync(string sceneName)
-    {
-        AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
-
-        while (!operation.isDone)
-        {
-            float progress = Mathf.Clamp01(operation.progress / 0.9f);
-
-            Debug.Log("Loading: " + progress * 100f + "%");
-
-            yield return null;
+            Debug.LogError("[SceneLoader] SceneLoaderManager.Instance is missing.");
+            return;
         }
 
-        Debug.Log("Scene loaded: " + sceneName);
-    }
+        isProcessing = true;
 
-    public void UnLoadScene(string sceneName)
-    {
-        StartCoroutine (UnloadSceneAsync(sceneName));
-    }
-
-    private IEnumerator UnloadSceneAsync(string sceneName)
-    {
-        Scene scene = SceneManager.GetSceneByName(sceneName);
-
-        if (!scene.isLoaded)
+        if (!string.IsNullOrWhiteSpace(sceneNameLoad))
         {
-            yield break;
+            Debug.Log($"[SceneLoader] Requesting load: {sceneNameLoad}");
+            SceneLoaderManager.Instance.LoadScene(sceneNameLoad);
         }
 
-        AsyncOperation operation = SceneManager.UnloadSceneAsync(sceneName);
-
-        while (!operation.isDone)
+        if (!string.IsNullOrWhiteSpace(sceneNameUnload))
         {
-            yield return null;
+            Debug.Log($"[SceneLoader] Requesting unload: {sceneNameUnload}");
+            SceneLoaderManager.Instance.UnLoadScene(sceneNameUnload);
         }
+    }
 
-        Debug.Log("scene Unloaded" + sceneName);
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player")) isProcessing = false;
     }
 }
-
