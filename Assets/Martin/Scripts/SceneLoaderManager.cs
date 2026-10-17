@@ -34,6 +34,11 @@ public class SceneLoaderManager : MonoBehaviour
         StartCoroutine(LoadSceneAndWait(sceneName));
     }
 
+    public void LoadSceneNormal(string sceneName)
+    {
+        SceneManager.LoadScene(sceneName);
+    }
+
     public IEnumerator LoadSceneAndWait(string sceneName)
     {
         if (string.IsNullOrWhiteSpace(sceneName))
