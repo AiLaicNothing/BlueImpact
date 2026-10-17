@@ -14,7 +14,7 @@ public class PlayerInputHandler : CharacterInput
     public Vector2 lookInput { get; private set; }
     public Vector2 gamepadLookInput { get; private set; }   // nuevo
     public bool onLockTarget { get; private set; }
-    public float scrollInput { get; private set; }
+    public Vector2 scrollInput { get; private set; }
     public AttackInputType bufferedAttackType { get; private set; }
     public bool AttackBuffered => attackBufferCounter > 0;
     public bool onMelee { get; private set; }
@@ -133,7 +133,7 @@ public class PlayerInputHandler : CharacterInput
 
     public void OnScrollWheel(InputAction.CallbackContext context)
     {
-        scrollInput = context.ReadValue<float>();
+        scrollInput = context.ReadValue<Vector2>();
     }
 
     public void OnAttack(InputAction.CallbackContext context)
@@ -241,7 +241,7 @@ public class PlayerInputHandler : CharacterInput
         skill1Pressed = false;
         onLockTarget = false;
 
-        scrollInput = 0f;
+        scrollInput = Vector2.zero;
     }
 
     private void BufferAttack(AttackInputType type)
@@ -268,7 +268,7 @@ public class PlayerInputHandler : CharacterInput
         gamepadLookInput = Vector2.zero;
         onLockTarget = false;
 
-        scrollInput = 0f;
+        scrollInput = Vector2.zero;
 
         skill1Pressed = false;
         skillPressedIndex = -1;
