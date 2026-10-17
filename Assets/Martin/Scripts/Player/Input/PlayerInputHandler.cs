@@ -31,49 +31,39 @@ public class PlayerInputHandler : CharacterInput
     {
         inputActions = Resources.Load<InputActionAsset>("InputSystem_Actions");
 
-        if (inputActions != null)
+        if (inputActions == null)
         {
-            var playerActionMap = inputActions.FindActionMap("Player");
-
-            if (playerActionMap != null)
-            {
-                pauseAction = playerActionMap.FindAction("Pause");
-
-                if (pauseAction != null)
-                {
-                    pauseAction.Enable();  // ✅ HABILITAR AQUÍ
-                    Debug.Log("✅ Pause action habilitada");
-                }
-                else
-                {
-                    Debug.LogError("❌ Acción 'Pause' no encontrada");
-                }
-            }
-
-            if (playerActionMap != null)
-            {
-                journalAction = playerActionMap.FindAction("Journal");
-
-                if (journalAction != null)
-                {
-                    pauseAction.Enable();  // ✅ HABILITAR AQUÍ
-                    Debug.Log("✅ Journal action habilitada");
-                }
-                else
-                {
-                    Debug.LogError("❌ Acción 'Journal' no encontrada");
-                }
-            }
+            Debug.LogError("❌ No se encontró InputSystem_Actions en Resources");
+            return;
         }
+
+        var playerActionMap = inputActions.FindActionMap("Player");
+
+        if (playerActionMap == null)
+        {
+            Debug.LogError("❌ Action map 'Player' no encontrado");
+            return;
+        }
+
+        pauseAction = playerActionMap.FindAction("Pause");
+
+        if (pauseAction != null)
+            pauseAction.Enable();
+        else
+            Debug.LogError("❌ Acción 'Pause' no encontrada");
+
+        journalAction = playerActionMap.FindAction("Journal"); 
+
+        if (journalAction != null)
+            journalAction.Enable();
+        else
+            Debug.LogError("❌ Acción 'Journal' no encontrada");
     }
 
     private void OnDestroy()
     {
-        // ✅ LIMPIAR AL DESTRUIR
-        if (pauseAction != null)
-        {
-            pauseAction.Disable();
-        }
+        pauseAction?.Disable();
+        journalAction?.Disable();
     }
 
     public override float GetHorizontalMovementInput()

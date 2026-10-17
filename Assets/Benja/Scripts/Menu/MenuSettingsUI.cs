@@ -114,10 +114,11 @@ public class MenuSettingsUI : MonoBehaviour
         ("Dash",        "Player/Dash",     0),
         ("Interactuar", "Player/Interact", 0),
         ("Fijar Objetivo", "Player/LockOnTarget", 0),
+        ("Cambiar Objetivo", "Player/ScrollTarget", 0),
+        ("Pausa",       "Pause", 0),
+        ("Abrir Inventario", "Player/Journal", 0),
         ("Skill 1",     "Player/Skill1",   0),
         ("Skill 2",     "Player/Skill2",   0),
-        ("Skill 3",     "Player/Skill3",   0),
-        ("Skill 4",     "Player/Skill4",   0),
     };
 
     private (string label, string action, int binding)[] GetGamepadKeybinds() => new[]
@@ -129,10 +130,11 @@ public class MenuSettingsUI : MonoBehaviour
         ("Dash",        "Player/Dash",     1),
         ("Interactuar", "Player/Interact", 1),
         ("Fijar Objetivo", "Player/LockOnTarget", 1),
+        ("Cambiar Objetivo", "Player/ScrollTarget", 1),
+        ("Pausa",       "Pause", 1),
+        ("Abrir Inventario", "Player/Journal", 1),
         ("Skill 1",     "Player/Skill1",   1),
         ("Skill 2",     "Player/Skill2",   1),
-        ("Skill 3",     "Player/Skill3",   1),
-        ("Skill 4",     "Player/Skill4",   1),
     };
 
     private void OnResetKeybindsClicked()

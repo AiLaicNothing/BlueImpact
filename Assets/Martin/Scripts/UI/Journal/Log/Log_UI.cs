@@ -53,7 +53,7 @@ public class Log_UI : MonoBehaviour
             if (logData == null) continue;
 
             GameObject instance = Instantiate(logEntry_Prefab, logsContainer);
-
+            UINavigation.DisableNavigation(instance.transform);
             LogEntry entry = instance.GetComponent<LogEntry>();
 
             if (entry == null)

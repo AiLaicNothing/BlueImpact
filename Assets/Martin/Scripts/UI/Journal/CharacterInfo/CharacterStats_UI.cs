@@ -11,17 +11,15 @@ public class CharacterStats_UI : MonoBehaviour
 
     [SerializeField] private Transform stats_Container;
     [SerializeField] private GameObject statValueRow_Prefab;
-    private List<StatValueRow_UI> statValueRows = new();
 
+    private readonly List<StatValueRow_UI> statValueRows = new();
     private CharacterStatsManager statsManager;
-
-    private void Start()
-    {
-        statsManager = CharacterStatsManager.Instance;
-    }
 
     private void OnEnable()
     {
+        // Se obtiene aquí porque OnEnable corre antes que Start en la primera activación.
+        statsManager = CharacterStatsManager.Instance;
+
         if (statsManager == null) return;
 
         CreateEntries();
@@ -43,7 +41,7 @@ public class CharacterStats_UI : MonoBehaviour
 
             int value = statsManager.GetCurrentStat(stat);
 
-            content.Initialize(null ,stat, value);
+            content.Initialize(null, stat, value);
             statValueRows.Add(content);
         }
     }

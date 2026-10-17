@@ -201,24 +201,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Skill3"",
-                    ""type"": ""Button"",
-                    ""id"": ""191ef5cd-b173-40eb-b111-29cb22ddc2d5"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""Skill4"",
-                    ""type"": ""Button"",
-                    ""id"": ""530285e3-5a88-4fef-a691-58d63c67ed7a"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
                     ""name"": ""Pause"",
                     ""type"": ""Button"",
                     ""id"": ""e077e93b-eae1-4c67-926a-9c5ce2bf0927"",
@@ -237,7 +219,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""Scroll"",
+                    ""name"": ""ScrollTarget"",
                     ""type"": ""Value"",
                     ""id"": ""a2d8f27a-4904-4c0c-8c0b-251c1a07f4fb"",
                     ""expectedControlType"": """",
@@ -470,7 +452,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""8cbb2f4b-a784-49cc-8d5e-c010b8c7f4e6"",
-                    ""path"": ""<Gamepad>/buttonEast"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
@@ -503,7 +485,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""cdd5b797-521b-4a3a-8bf6-0b7f2769d0b8"",
-                    ""path"": ""<Gamepad>/leftStickPress"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
@@ -613,7 +595,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""d37cd84d-f421-463c-8274-f396b64715a6"",
-                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""path"": ""<Gamepad>/buttonEast"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -657,55 +639,11 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""8f94d11d-3f5a-4743-962f-b3c8e4359ae5"",
-                    ""path"": ""<Gamepad>/leftShoulder"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Skill2"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""463d3bf7-1244-4d06-8633-4e7f11c859f3"",
-                    ""path"": ""<Keyboard>/3"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Skill3"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""870ab91e-5d55-4a7a-8939-97df106ab482"",
-                    ""path"": ""<Gamepad>/leftTrigger"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Skill3"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b708d00d-3f64-4700-a7cd-883dda58f26e"",
-                    ""path"": ""<Keyboard>/4"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Skill4"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""eb0cceff-e6c8-4486-9975-b9f367acf9d3"",
                     ""path"": ""<Gamepad>/rightTrigger"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""Skill4"",
+                    ""action"": ""Skill2"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -723,7 +661,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""dadae0e9-ae51-4403-9ea6-efd78ee3868f"",
-                    ""path"": ""<Gamepad>/start"",
+                    ""path"": ""<Gamepad>/select"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -745,7 +683,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""6bd4a7bd-2c19-48a3-8724-4c1a9d40fc9f"",
-                    ""path"": """",
+                    ""path"": ""<Gamepad>/start"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Gamepad"",
@@ -760,7 +698,18 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""Scroll"",
+                    ""action"": ""ScrollTarget"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7640bde0-9e15-4682-b771-120ce909fe01"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ScrollTarget"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1360,11 +1309,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_Dash = m_Player.FindAction("Dash", throwIfNotFound: true);
         m_Player_Skill1 = m_Player.FindAction("Skill1", throwIfNotFound: true);
         m_Player_Skill2 = m_Player.FindAction("Skill2", throwIfNotFound: true);
-        m_Player_Skill3 = m_Player.FindAction("Skill3", throwIfNotFound: true);
-        m_Player_Skill4 = m_Player.FindAction("Skill4", throwIfNotFound: true);
         m_Player_Pause = m_Player.FindAction("Pause", throwIfNotFound: true);
         m_Player_Journal = m_Player.FindAction("Journal", throwIfNotFound: true);
-        m_Player_Scroll = m_Player.FindAction("Scroll", throwIfNotFound: true);
+        m_Player_ScrollTarget = m_Player.FindAction("ScrollTarget", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1470,11 +1417,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Dash;
     private readonly InputAction m_Player_Skill1;
     private readonly InputAction m_Player_Skill2;
-    private readonly InputAction m_Player_Skill3;
-    private readonly InputAction m_Player_Skill4;
     private readonly InputAction m_Player_Pause;
     private readonly InputAction m_Player_Journal;
-    private readonly InputAction m_Player_Scroll;
+    private readonly InputAction m_Player_ScrollTarget;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1535,14 +1480,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Skill2 => m_Wrapper.m_Player_Skill2;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Skill3".
-        /// </summary>
-        public InputAction @Skill3 => m_Wrapper.m_Player_Skill3;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/Skill4".
-        /// </summary>
-        public InputAction @Skill4 => m_Wrapper.m_Player_Skill4;
-        /// <summary>
         /// Provides access to the underlying input action "Player/Pause".
         /// </summary>
         public InputAction @Pause => m_Wrapper.m_Player_Pause;
@@ -1551,9 +1488,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Journal => m_Wrapper.m_Player_Journal;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Scroll".
+        /// Provides access to the underlying input action "Player/ScrollTarget".
         /// </summary>
-        public InputAction @Scroll => m_Wrapper.m_Player_Scroll;
+        public InputAction @ScrollTarget => m_Wrapper.m_Player_ScrollTarget;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1616,21 +1553,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Skill2.started += instance.OnSkill2;
             @Skill2.performed += instance.OnSkill2;
             @Skill2.canceled += instance.OnSkill2;
-            @Skill3.started += instance.OnSkill3;
-            @Skill3.performed += instance.OnSkill3;
-            @Skill3.canceled += instance.OnSkill3;
-            @Skill4.started += instance.OnSkill4;
-            @Skill4.performed += instance.OnSkill4;
-            @Skill4.canceled += instance.OnSkill4;
             @Pause.started += instance.OnPause;
             @Pause.performed += instance.OnPause;
             @Pause.canceled += instance.OnPause;
             @Journal.started += instance.OnJournal;
             @Journal.performed += instance.OnJournal;
             @Journal.canceled += instance.OnJournal;
-            @Scroll.started += instance.OnScroll;
-            @Scroll.performed += instance.OnScroll;
-            @Scroll.canceled += instance.OnScroll;
+            @ScrollTarget.started += instance.OnScrollTarget;
+            @ScrollTarget.performed += instance.OnScrollTarget;
+            @ScrollTarget.canceled += instance.OnScrollTarget;
         }
 
         /// <summary>
@@ -1678,21 +1609,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Skill2.started -= instance.OnSkill2;
             @Skill2.performed -= instance.OnSkill2;
             @Skill2.canceled -= instance.OnSkill2;
-            @Skill3.started -= instance.OnSkill3;
-            @Skill3.performed -= instance.OnSkill3;
-            @Skill3.canceled -= instance.OnSkill3;
-            @Skill4.started -= instance.OnSkill4;
-            @Skill4.performed -= instance.OnSkill4;
-            @Skill4.canceled -= instance.OnSkill4;
             @Pause.started -= instance.OnPause;
             @Pause.performed -= instance.OnPause;
             @Pause.canceled -= instance.OnPause;
             @Journal.started -= instance.OnJournal;
             @Journal.performed -= instance.OnJournal;
             @Journal.canceled -= instance.OnJournal;
-            @Scroll.started -= instance.OnScroll;
-            @Scroll.performed -= instance.OnScroll;
-            @Scroll.canceled -= instance.OnScroll;
+            @ScrollTarget.started -= instance.OnScrollTarget;
+            @ScrollTarget.performed -= instance.OnScrollTarget;
+            @ScrollTarget.canceled -= instance.OnScrollTarget;
         }
 
         /// <summary>
@@ -2078,20 +2003,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSkill2(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Skill3" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSkill3(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Skill4" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSkill4(InputAction.CallbackContext context);
-        /// <summary>
         /// Method invoked when associated input action "Pause" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -2106,12 +2017,12 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnJournal(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Scroll" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "ScrollTarget" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnScroll(InputAction.CallbackContext context);
+        void OnScrollTarget(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.
