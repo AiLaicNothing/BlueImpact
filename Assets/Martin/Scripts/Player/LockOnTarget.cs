@@ -1,287 +1,597 @@
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.UI;
+using CMF;
 
 public class LockOnTarget : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private Camera mainCamera;
-    [SerializeField] private CinemachineCamera cameraRig;
-    [SerializeField] private CinemachineOrbitalFollow orbitalFollow;
+    [SerializeField] private CameraController cameraController;
     [SerializeField] private PlayerInputHandler input;
-    [SerializeField] private CinemachineInputAxisController inputProvider;
+
+    [Header("Player Model")]
+    [SerializeField] private Transform modelRoot;
+    [SerializeField] private TurnTowardControllerVelocity modelRotation;
 
     [Header("UI")]
-    [SerializeField] private Image aimIcon;
+    [SerializeField] private Sprite aimIcon;
 
-    [Header("Settings")]
+    [Header("Target Settings")]
     [SerializeField] private LayerMask obstacleLayer;
     [SerializeField] private string enemyTag = "Enemy";
     [SerializeField] private Vector2 targetLockOffset;
+    [SerializeField] private float targetAimHeight = 1.2f;
     [SerializeField] private float minDistance = 1.5f;
     [SerializeField] private float maxDistance = 15f;
-    [SerializeField] private float lockSpeed = 3f;
 
-    private List<Transform> validTarget = new List<Transform>();
-    private int currentIndex = 0;
+    [Header("Lock Maintenance")]
+    [SerializeField] private float lostTargetGraceTime = 0.5f;
+    [SerializeField] private float releaseDistanceBuffer = 2f;
+
+    [Header("Rotation")]
+    [SerializeField] private float cameraLockSpeed = 360f;
+    [SerializeField] private float modelLockSpeed = 500f;
+
+    [Header("Debug")]
+    [SerializeField] private bool debugLockOn = false;
+
+    private List<Transform> validTargets = new();
+
+    private Transform currentTarget;
+
+    private CameraInput[] cameraInputs;
+    private bool[] previousCameraInputStates;
+
+    private bool previousModelRotationState;
+    private bool previousLockInput;
+
+    private float invalidTargetTimer;
+    private string invalidReason;
 
     public bool isTargeting { get; private set; }
     public Transform CurrentTarget => currentTarget;
 
-    private Transform currentTarget;
-
     private void Awake()
     {
         if (mainCamera == null)
+            mainCamera = Camera.main;
+
+        if (cameraController == null && mainCamera != null)
         {
-            mainCamera = GameObject.FindGameObjectWithTag("MainCamera")?.GetComponent<Camera>();
+            cameraController =
+                mainCamera.GetComponentInParent<CameraController>();
         }
 
-        if (cameraRig == null)
+        if (cameraController != null)
         {
-            cameraRig = FindFirstObjectByType<CinemachineCamera>();
+            cameraInputs =
+                cameraController.GetComponents<CameraInput>();
         }
 
-        if (orbitalFollow == null && cameraRig != null)
+        if (modelRotation == null && modelRoot != null)
         {
-            orbitalFollow = cameraRig.GetComponent<CinemachineOrbitalFollow>();
+            modelRotation =
+                modelRoot.GetComponent<TurnTowardControllerVelocity>();
         }
 
-        if (inputProvider == null && cameraRig != null)
-        {
-            inputProvider = cameraRig.GetComponent<CinemachineInputAxisController>();
-        }
+        if (modelRoot == null && modelRotation != null)
+            modelRoot = modelRotation.transform;
     }
 
     private void Start()
     {
-        if (aimIcon == null)
-        {
-            P_TargetSelector_UI hud = FindFirstObjectByType<P_TargetSelector_UI>();
+        P_TargetSelector_UI.Instance.SetIcon(aimIcon);
 
-            if (hud != null)
-            {
-                aimIcon = hud.aimIcon;
-            }
-        }
+        if (aimIcon != null) P_TargetSelector_UI.Instance.HideIcon();
     }
 
     private void Update()
     {
         HandleLockInput();
 
-        if (isTargeting)
-        {
-            validTarget = GetValidTargets();
+        if (!isTargeting)
+            return;
 
-            if (validTarget.Count == 0)
+        if (currentTarget == null)
+        {
+            ClearTarget();
+            return;
+        }
+
+        // Check whether the current target can still be maintained.
+        if (!CanMaintainTarget(currentTarget, out string reason))
+        {
+            invalidTargetTimer += Time.deltaTime;
+            invalidReason = reason;
+
+            if (invalidTargetTimer >= lostTargetGraceTime)
             {
+                if (debugLockOn)
+                {
+                    Debug.Log(
+                        $"Lock-on lost: {invalidReason}",
+                        this
+                    );
+                }
+
                 ClearTarget();
                 return;
             }
-
-            if (CurrentTarget == null || !validTarget.Contains(currentTarget))
-            {
-                currentIndex = Mathf.Clamp(currentIndex, 0, validTarget.Count - 1);
-                currentTarget = validTarget[currentIndex];
-            }
-
-            if (validTarget.Count > 1)
-            {
-                HandleTargetSwitch();
-            }
-        }
-
-        if (isTargeting && !IsTargetValid(currentTarget))
-        {
-            ClearTarget();
-            return;
-        }
-
-        if (isTargeting && currentTarget != null)
-        {
-            UpdateLockCamera();
         }
         else
         {
-            if (inputProvider != null)
-            {
-                inputProvider.enabled = true;
-            }
+            invalidTargetTimer = 0f;
+            invalidReason = null;
         }
 
-        if (aimIcon != null)
-        {
-            aimIcon.gameObject.SetActive(isTargeting);
-        }
-
-        if (aimIcon != null && currentTarget != null)
-        {
-            Vector3 screenPos = mainCamera.WorldToScreenPoint(currentTarget.position + (Vector3)targetLockOffset);
-            aimIcon.transform.position = screenPos;
-        }
+        // Switch targets with the scroll wheel.
+        HandleTargetSwitch();
     }
+
+    private void LateUpdate()
+    {
+        if (!isTargeting || currentTarget == null)
+            return;
+
+        UpdateLockCamera();
+        RotateModelTowardTarget();
+        UpdateAimIcon();
+    }
+
+    // =========================
+    // LOCK INPUT
+    // =========================
 
     private void HandleLockInput()
     {
-        if (!input.onLockTarget) return;
-
-        if (isTargeting)
-        {
-            ClearTarget();
-        }
-        else
-        {
-            AssignTarget();
-        }
-    }
-
-    private void UpdateLockCamera()
-    {
-        if (currentTarget == null || orbitalFollow == null)
-        {
-            ClearTarget();
+        if (input == null)
             return;
-        }
 
-        // Use the camera's Follow target as the origin, but do not modify LookAt.
-        Transform followTarget = cameraRig != null && cameraRig.Follow != null? cameraRig.Follow: transform;
+        bool lockPressed = input.onLockTarget;
 
-        Vector3 dirToTarget = currentTarget.position - followTarget.position;
-
-        float targetX = Mathf.Atan2(dirToTarget.x, dirToTarget.z) * Mathf.Rad2Deg;
-        orbitalFollow.HorizontalAxis.Value = Mathf.LerpAngle( orbitalFollow.HorizontalAxis.Value, targetX, Time.deltaTime * lockSpeed);
-
-        float distanceXZ = new Vector2(dirToTarget.x, dirToTarget.z).magnitude;
-        float angleY = Mathf.Atan2(dirToTarget.y, distanceXZ) * Mathf.Rad2Deg;
-
-        float minAngle = -40f;
-        float maxAngle = 40f;
-
-        float targetYNormalized = Mathf.InverseLerp(maxAngle, minAngle, angleY);
-
-        orbitalFollow.VerticalAxis.Value = Mathf.Lerp(orbitalFollow.VerticalAxis.Value, targetYNormalized, Time.deltaTime * lockSpeed);
-    }
-
-    private void HandleTargetSwitch()
-    {
-        if (Mathf.Abs(input.scrollInput) < 0.1f) return;
-
-        if (input.scrollInput > 0)
+        if (lockPressed && !previousLockInput)
         {
-            currentIndex++;
-        }
-        else
-        {
-            currentIndex--;
-        }
-
-        if (currentIndex >= validTarget.Count)
-        {
-            currentIndex = 0;
+            if (isTargeting)
+                ClearTarget();
+            else
+                AssignTarget();
         }
 
-        if (currentIndex < 0)
-        {
-            currentIndex = validTarget.Count - 1;
-        }
-
-        currentTarget = validTarget[currentIndex];
+        previousLockInput = lockPressed;
     }
 
     private void AssignTarget()
     {
-        validTarget = GetValidTargets();
+        if (mainCamera == null ||
+            cameraController == null ||
+            modelRoot == null)
+        {
+            Debug.LogWarning(
+                "LockOnTarget: Missing camera or model references.",
+                this
+            );
+            return;
+        }
 
-        if (validTarget.Count == 0) return;
+        validTargets = GetValidTargets();
 
-        currentIndex = 0;
-        currentTarget = validTarget[currentIndex];
+        if (validTargets.Count == 0)
+        {
+            if (debugLockOn)
+                Debug.Log("No valid targets found.", this);
+
+            return;
+        }
+
+        currentTarget = validTargets[0];
         isTargeting = true;
 
-        if (inputProvider != null)
+        invalidTargetTimer = 0f;
+        invalidReason = null;
+
+        DisableNormalRotation();
+
+        if (aimIcon != null) P_TargetSelector_UI.Instance.ShowIcon();
+
+        if (debugLockOn)
         {
-            inputProvider.enabled = false;
+            Debug.Log(
+                $"Locked onto: {currentTarget.name}",
+                this
+            );
         }
     }
 
     private void ClearTarget()
     {
+        if (!isTargeting)
+            return;
+
         isTargeting = false;
         currentTarget = null;
 
-        if (inputProvider != null)
+        invalidTargetTimer = 0f;
+        invalidReason = null;
+
+        RestoreNormalRotation();
+
+        if (aimIcon != null) P_TargetSelector_UI.Instance.HideIcon();
+    }
+
+    // =========================
+    // CAMERA AND MODEL CONTROL
+    // =========================
+
+    private void DisableNormalRotation()
+    {
+        // Disable camera mouse and joystick inputs.
+        if (cameraInputs != null)
         {
-            inputProvider.enabled = true;
+            previousCameraInputStates =
+                new bool[cameraInputs.Length];
+
+            for (int i = 0; i < cameraInputs.Length; i++)
+            {
+                if (cameraInputs[i] == null)
+                    continue;
+
+                previousCameraInputStates[i] =
+                    cameraInputs[i].enabled;
+
+                cameraInputs[i].enabled = false;
+            }
         }
+
+        // Disable movement-based model rotation.
+        if (modelRotation != null)
+        {
+            previousModelRotationState = modelRotation.enabled;
+            modelRotation.enabled = false;
+        }
+    }
+
+    private void RestoreNormalRotation()
+    {
+        if (cameraInputs != null &&
+            previousCameraInputStates != null)
+        {
+            for (int i = 0; i < cameraInputs.Length; i++)
+            {
+                if (cameraInputs[i] == null)
+                    continue;
+
+                cameraInputs[i].enabled =
+                    previousCameraInputStates[i];
+            }
+        }
+
+        if (modelRotation != null)
+        {
+            modelRotation.enabled =
+                previousModelRotationState;
+        }
+    }
+
+    private Vector3 GetTargetPoint(Transform target)
+    {
+        return target.position +
+               Vector3.up * targetAimHeight +
+               new Vector3(
+                   targetLockOffset.x,
+                   targetLockOffset.y,
+                   0f
+               );
+    }
+
+    private void UpdateLockCamera()
+    {
+        if (cameraController == null || currentTarget == null)
+            return;
+
+        cameraController.RotateTowardPosition(
+            GetTargetPoint(currentTarget),
+            cameraLockSpeed
+        );
+    }
+
+    private void RotateModelTowardTarget()
+    {
+        if (modelRoot == null || currentTarget == null)
+            return;
+
+        Vector3 direction =
+            currentTarget.position - modelRoot.position;
+
+        Vector3 up = modelRoot.parent != null
+            ? modelRoot.parent.up
+            : Vector3.up;
+
+        direction = Vector3.ProjectOnPlane(direction, up);
+
+        if (direction.sqrMagnitude < 0.0001f)
+            return;
+
+        Quaternion targetRotation =
+            Quaternion.LookRotation(direction, up);
+
+        modelRoot.rotation = Quaternion.RotateTowards(
+            modelRoot.rotation,
+            targetRotation,
+            modelLockSpeed * Time.deltaTime
+        );
+    }
+
+    private void UpdateAimIcon()
+    {
+        if (aimIcon == null ||
+            mainCamera == null ||
+            currentTarget == null)
+            return;
+
+        Vector3 screenPosition =
+            mainCamera.WorldToScreenPoint(
+                GetTargetPoint(currentTarget)
+            );
+
+        P_TargetSelector_UI.Instance.GetIcon().transform.position = screenPosition;
+    }
+
+    // =========================
+    // TARGET SWITCHING
+    // =========================
+
+    private void HandleTargetSwitch()
+    {
+        if (!isTargeting || input == null || currentTarget == null)
+            return;
+
+        Vector2 scroll = input.scrollInput;
+
+        // Use vertical scroll input.
+        if (Mathf.Abs(scroll.y) < 0.01f)
+            return;
+
+        List<Transform> targets = GetValidTargets();
+
+        // Keep the current target even if it is temporarily
+        // outside the screen.
+        if (!targets.Contains(currentTarget))
+            targets.Add(currentTarget);
+
+        if (targets.Count <= 1)
+            return;
+
+        // Sort targets from left to right on screen.
+        targets = targets.OrderBy(target =>
+        {
+            Vector3 screenPos = mainCamera.WorldToViewportPoint(
+                GetTargetPoint(target)
+            );
+
+            return screenPos.x;
+        }).ToList();
+
+        int currentIndex = targets.IndexOf(currentTarget);
+
+        // Scroll up = right.
+        // Scroll down = left.
+        int direction = scroll.y > 0f ? 1 : -1;
+
+        int nextIndex = currentIndex + direction;
+
+        // Loop around the list.
+        if (nextIndex >= targets.Count)
+            nextIndex = 0;
+
+        if (nextIndex < 0)
+            nextIndex = targets.Count - 1;
+
+        currentTarget = targets[nextIndex];
+
+        invalidTargetTimer = 0f;
+        invalidReason = null;
+
+        if (debugLockOn)
+            Debug.Log("Switched target to: " + currentTarget.name);
+    }
+
+    // =========================
+    // TARGET DETECTION
+    // =========================
+
+    private Transform FindEnemyRoot(Transform hitTransform)
+    {
+        Transform current = hitTransform;
+
+        while (current != null)
+        {
+            if (current.CompareTag(enemyTag))
+                return current;
+
+            current = current.parent;
+        }
+
+        return null;
     }
 
     private List<Transform> GetValidTargets()
     {
-        Collider[] hits = Physics.OverlapSphere(transform.position, maxDistance);
+        List<Transform> targets = new();
 
-        List<Transform> targets = new List<Transform>();
+        if (mainCamera == null)
+            return targets;
+
+        Collider[] hits =
+            Physics.OverlapSphere(
+                transform.position,
+                maxDistance
+            );
 
         foreach (Collider col in hits)
         {
-            if (!col.CompareTag(enemyTag)) continue;
+            Transform enemy = FindEnemyRoot(col.transform);
 
-            Transform enemy = col.transform;
-
-            float dist = Vector3.Distance(transform.position, enemy.position);
-
-            if (dist < minDistance || dist > maxDistance) continue;
-
-            Vector3 camForward = mainCamera.transform.forward;
-            Vector3 toEnemy = (enemy.position - mainCamera.transform.position).normalized;
-
-            float dot = Vector3.Dot(camForward, toEnemy);
-
-            if (dot < 0.5f) continue;
-
-            Vector3 viewportPos = mainCamera.WorldToViewportPoint(enemy.position);
-
-            if (viewportPos.z <= 0) continue;
-
-            if (viewportPos.x < 0.1f || viewportPos.x > 0.9f) continue;
-
-            if (viewportPos.y < 0.1f || viewportPos.y > 0.9f) continue;
-
-            Vector3 origin = mainCamera.transform.position;
-            Vector3 targetPos = enemy.position + Vector3.up;
-
-            Vector3 dir = (targetPos - origin).normalized;
-            float rayDistance = Vector3.Distance(origin, targetPos);
-
-            if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
-            {
+            if (enemy == null)
                 continue;
-            }
+
+            // Ignore colliders belonging to the player.
+            if (enemy.IsChildOf(transform.root))
+                continue;
+
+            // Avoid duplicate targets.
+            if (targets.Contains(enemy))
+                continue;
+
+            if (!enemy.gameObject.activeInHierarchy)
+                continue;
+
+            float distance =
+                Vector3.Distance(
+                    transform.position,
+                    enemy.position
+                );
+
+            if (distance < minDistance ||
+                distance > maxDistance)
+                continue;
+
+            Vector3 point = GetTargetPoint(enemy);
+
+            Vector3 viewport =
+                mainCamera.WorldToViewportPoint(point);
+
+            // Target must be in front of the camera.
+            if (viewport.z <= 0f)
+                continue;
+
+            // Aim point must be visible on screen.
+            if (viewport.x < 0f || viewport.x > 1f ||
+                viewport.y < 0f || viewport.y > 1f)
+                continue;
+
+            if (!HasClearSight(enemy))
+                continue;
 
             targets.Add(enemy);
         }
 
-        targets = targets.OrderBy(t =>
+        // Sort by distance from screen center.
+        return targets.OrderBy(enemy =>
         {
-            Vector3 viewPos = mainCamera.WorldToViewportPoint(t.position);
-            return Vector2.Distance(new Vector2(viewPos.x, viewPos.y), new Vector2(0.5f, 0.5f));
+            Vector3 viewport =
+                mainCamera.WorldToViewportPoint(
+                    GetTargetPoint(enemy)
+                );
+
+            return Vector2.Distance(
+                new Vector2(viewport.x, viewport.y),
+                new Vector2(0.5f, 0.5f)
+            );
         }).ToList();
-
-        return targets;
     }
 
-    private bool IsTargetValid(Transform target)
+    // =========================
+    // TARGET VALIDATION
+    // =========================
+
+    private bool CanMaintainTarget(
+        Transform target,
+        out string reason
+    )
     {
-        if (target == null) return false;
+        reason = null;
 
-        return GetValidTargets().Contains(target);
+        if (target == null || !target.gameObject.activeInHierarchy)
+        {
+            reason = "Target destroyed or disabled";
+            return false;
+        }
+
+        float distance =
+            Vector3.Distance(
+                transform.position,
+                target.position
+            );
+
+        if (distance > maxDistance + releaseDistanceBuffer)
+        {
+            reason = "Target out of range";
+            return false;
+        }
+
+        // We don't check minimum distance or screen position
+        // when maintaining an existing lock.
+        if (!HasClearSight(target))
+        {
+            reason = "Line of sight blocked";
+            return false;
+        }
+
+        return true;
     }
 
-    private void OnDrawGizmos()
+    private bool HasClearSight(Transform target)
+    {
+        if (target == null || mainCamera == null)
+            return false;
+
+        Vector3 origin =
+            mainCamera.transform.position;
+
+        Vector3 targetPosition =
+            GetTargetPoint(target);
+
+        Vector3 direction =
+            targetPosition - origin;
+
+        float distance = direction.magnitude;
+
+        if (distance <= 0.001f)
+            return true;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin,
+            direction.normalized,
+            distance,
+            obstacleLayer,
+            QueryTriggerInteraction.Ignore
+        );
+
+        foreach (RaycastHit hit in hits)
+        {
+            // Ignore the player's own colliders.
+            if (hit.transform.IsChildOf(transform.root))
+                continue;
+
+            // Ignore the target's own colliders.
+            if (hit.transform.IsChildOf(target))
+                continue;
+
+            // An obstacle blocks the view.
+            return false;
+        }
+
+        return true;
+    }
+
+    // =========================
+    // CLEANUP
+    // =========================
+
+    private void OnDisable()
+    {
+        ClearTarget();
+    }
+
+    private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, maxDistance);
+
+        Gizmos.DrawWireSphere(
+            transform.position,
+            maxDistance
+        );
     }
 }

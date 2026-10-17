@@ -486,6 +486,26 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: e077e93b-eae1-4c67-926a-9c5ce2bf0927
     m_ActionName: 'Player/Pause[/Keyboard/escape,/DualShock4GamepadHID/start]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: d02b62ec-a5f2-4337-a5cf-050fc4a27253
+    m_ActionName: 'Player/Journal[/Keyboard/tab]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1449438260917658117}
+        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
+        m_MethodName: OnScrollWheel
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: a2d8f27a-4904-4c0c-8c0b-251c1a07f4fb
+    m_ActionName: 'Player/Scroll[/Mouse/scroll]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Player
@@ -594,25 +614,30 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4350080309363066840}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 939a046e07e63df45a30bbcc17c970f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LockOnTarget
   mainCamera: {fileID: 939240793363560850}
-  cameraRig: {fileID: 0}
-  orbitalFollow: {fileID: 0}
-  input: {fileID: 0}
-  inputProvider: {fileID: 0}
-  aimIcon: {fileID: 0}
+  cameraController: {fileID: 5855645726015471829}
+  input: {fileID: 1449438260917658117}
+  modelRoot: {fileID: 7197510328609456854}
+  modelRotation: {fileID: 3478141988752022809}
+  aimIcon: {fileID: 1612138433, guid: 1c276e812c35c9641b04e77ba9fb873b, type: 3}
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
   enemyTag: Enemy
   targetLockOffset: {x: 0, y: 0}
+  targetAimHeight: 1.2
   minDistance: 0.2
   maxDistance: 15
-  lockSpeed: 3
+  lostTargetGraceTime: 0.5
+  releaseDistanceBuffer: 2
+  cameraLockSpeed: 360
+  modelLockSpeed: 500
+  debugLockOn: 0
 --- !u!114 &5395962127941570482
 MonoBehaviour:
   m_ObjectHideFlags: 0
