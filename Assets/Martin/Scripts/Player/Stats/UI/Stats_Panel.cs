@@ -89,8 +89,7 @@ public class Stats_Panel : MonoBehaviour, IGamepadPanel
         CreateEntries();
         Refresh();
 
-        if (Time.timeScale == 0f) Time.timeScale = 1f;
-
+        Time.timeScale = 0f;
         GamepadCursor.Instance?.Acquire(this, Close);
     }
 

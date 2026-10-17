@@ -52,6 +52,8 @@ public class Travel_Panel : MonoBehaviour, IGamepadPanel
         isOpen = true;
         isTraveling = false;
 
+        Time.timeScale = 0f;
+
         RefreshList();
 
         selectedCheckpoint = null;
