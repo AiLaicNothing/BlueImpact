@@ -61,6 +61,9 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
 
         playerStats.AddUpgradePoints(upgradePointsReward);
         Debug.Log($"✅ +{upgradePointsReward} Puntos de Mejora otorgados");
+
+        CharacterStatsManager.Instance.AddStatPoints(upgradePointsReward);
+
     }
 
     private void PlayPickupSound()

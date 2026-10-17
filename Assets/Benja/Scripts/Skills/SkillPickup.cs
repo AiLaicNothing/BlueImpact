@@ -71,6 +71,71 @@ public class SkillPickup : MonoBehaviour, IInteractable
         gameObject.SetActive(false);
     }
 
+
+    private void Update()
+    {
+        // Si ya tenemos al jugador, no necesitamos buscarlo otra vez.
+        if (currentPlayer != null)
+            return;
+
+        // Comprobar si existe el administrador de jugadores.
+        if (Player_Manager.Instance == null)
+            return;
+
+        // Obtener el objeto del jugador.
+        GameObject playerObject = Player_Manager.Instance.GetPlayer();
+
+        // Comprobar si el jugador existe.
+        if (playerObject == null)
+            return;
+
+        // Obtener el componente PlayerControl.
+        currentPlayer = playerObject.GetComponent<PlayerControl>();
+
+        // Comprobar si el componente existe.
+        if (currentPlayer == null)
+        {
+            Debug.LogWarning(
+                "SkillPickup: el jugador no tiene el componente PlayerControl."
+            );
+            return;
+        }
+
+        // Esperar a que se cargue la información del personaje.
+        if (currentPlayer.CurrentCharacterInfo == null)
+            return;
+
+        // Buscar la habilidad correspondiente al personaje.
+        if (skillsByCharacter == null)
+            return;
+
+        foreach (SkillEntry entry in skillsByCharacter)
+        {
+            if (entry == null || entry.skill == null)
+                continue;
+
+            if (entry.characterName ==
+                currentPlayer.CurrentCharacterInfo.data.characterName)
+            {
+                currentSkill = entry.skill;
+                pickedUp = false;
+                gameObject.SetActive(true);
+
+                Debug.Log(
+                    $"SkillPickup configurado para: " +
+                    $"{currentPlayer.CurrentCharacterInfo.data.characterName}"
+                );
+
+                return;
+            }
+        }
+
+        // Si no existe una habilidad para este personaje,
+        // ocultar el objeto.
+        gameObject.SetActive(false);
+    }
+
+
     public void Interact()
     {
         // ✅ SOLO PERMITE INTERACTUAR UNA VEZ

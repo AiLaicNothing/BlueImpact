@@ -13363,6 +13363,55 @@ Transform:
   - {fileID: 781769904}
   m_Father: {fileID: 1897710683}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &222499497
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 222499499}
+  - component: {fileID: 222499498}
+  m_Layer: 0
+  m_Name: Global Volume
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &222499498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 222499497}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: d01803b477d879a4fa2fdede12c35636, type: 2}
+--- !u!4 &222499499
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 222499497}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -28.205, y: 3.2710009, z: 47.96}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &230986981
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22846,8 +22895,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
   pages:
   - title: Movimiento #1
-    description: "Puedes desplazarte con las teclas \"WASD\" dependiendo de la direcci\xF3n
-      de la c\xE1mara."
+    description: "Puedes desplazarte con las teclas \"WASD\" o el joystick izquierdo
+      L3, dependiendo de la direcci\xF3n de la c\xE1mara."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
     video: {fileID: 32900000, guid: b76a820c430c2164eb5c67e87991e289, type: 3}
 --- !u!65 &316656367
@@ -75166,9 +75215,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
   pages:
   - title: Palancas
-    description: "Las palancas pueden ser activadas con la tecla \"E\", dependiendo
-      del rompecabezas, necesitaras activar una cantidad o una patr\xF3n de palancas
-      para activar el mecanismo."
+    description: "Las palancas pueden ser activadas con la tecla \"E\" o el bot\xF3n
+      \"Triangulo \u25B3\" dependiendo del rompecabezas, necesitaras activar una
+      cantidad o una patr\xF3n de palancas para activar el mecanismo."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
     video: {fileID: 32900000, guid: 0aa93cca2714eb64691ba0edd92a55cd, type: 3}
 --- !u!65 &880742805
@@ -80731,8 +80780,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
   pages:
   - title: Movimiento #3
-    description: Con la tecla "LeftShift" puedes dashear para desplazarte una mayor
-      distancia.
+    description: Con la tecla "LeftShift" o el gatillo "L1", puedes dashear para
+      desplazarte una mayor distancia.
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
     video: {fileID: 32900000, guid: 87d01b15fe1737a489fa066ec545966a, type: 3}
 --- !u!65 &974097406
@@ -142819,7 +142868,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
   pages:
   - title: Movimiento #2
-    description: Con la tecla "Espacio" puedes realizar un salto.
+    description: "Con la tecla \"Espacio\" o el bot\xF3n \"X\" puedes realizar un
+      salto."
     texture: {fileID: 8400000, guid: 3466179e080d56f49ab25866bd970d5b, type: 2}
     video: {fileID: 32900000, guid: 3f89dd56c0ad3ec489e639e3526f08e7, type: 3}
 --- !u!65 &1890741739
@@ -169415,3 +169465,4 @@ SceneRoots:
   - {fileID: 707599670}
   - {fileID: 60215517}
   - {fileID: 837938284}
+  - {fileID: 222499499}
