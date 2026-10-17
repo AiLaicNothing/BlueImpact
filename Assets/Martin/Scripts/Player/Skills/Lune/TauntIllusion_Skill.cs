@@ -21,7 +21,7 @@ public class TauntIllusion_Skill : Skill
     {
         //projectionObject.GetComponent<Collider>().enabled = false;
         projectionObjectSave = Instantiate(projectionObject);
-        Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
+        /*Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
             Material mat = renderer.sharedMaterial;
@@ -37,7 +37,7 @@ public class TauntIllusion_Skill : Skill
             mat.EnableKeyword("_ALPHABLEND_ON");
             mat.DisableKeyword("ALPHAPREMULTIPLY_ON");
             mat.renderQueue = 3000;
-        }
+        }*/
     }
     public override void UpdateProjectionPosition(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
@@ -49,12 +49,12 @@ public class TauntIllusion_Skill : Skill
         projectionObjectSave.transform.rotation = player.Model.rotation;
         if (occupiedPositions.Contains(point))
         {
-            SetProjectionColor(Color.red);
+            //SetProjectionColor(Color.red);
         }
 
         else
         {
-            SetProjectionColor(new Color(1f, 1f, 1f, 0.3f));                
+            //SetProjectionColor(new Color(1f, 1f, 1f, 0.3f));                
         }
         if (!player.PlayerStatsManager.CanConsume(resourceType, cost))
         {

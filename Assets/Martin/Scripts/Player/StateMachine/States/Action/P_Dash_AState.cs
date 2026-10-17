@@ -8,13 +8,15 @@ public class P_Dash_AState : PlayerState
     private Vector3 dashDir;
     private float dashSpeed;
     private bool dashStarted;
-
+    private TrailRenderer trail;
+    private ParticleSystem trailParticles;
     public override void OnEnter()
     {
         player.canDash = false;
 
         dashStarted = false;
-
+        trail = player.transform.Find("Trail").GetComponent<TrailRenderer>();
+        trailParticles = trail.transform.Find("TrailParticles").GetComponent<ParticleSystem>();
         // Check stamina before starting the dash
         //if (!player.PlayerStatsManager.CanConsume(StatType.Estamina, (int)player.DashCost))
         //{
@@ -92,7 +94,9 @@ public class P_Dash_AState : PlayerState
             return;
 
         timer -= Time.deltaTime;
-
+        if(trail != null)trail.enabled = true;
+        if (trail != null) trailParticles.Play();
+        
         // Preserve vertical velocity so gravity continues working
         float currentYVelocity = player.Rb.linearVelocity.y;
 
@@ -119,6 +123,9 @@ public class P_Dash_AState : PlayerState
         velocity.x = 0f;
         velocity.z = 0f;
 
+        if (trail != null) trail.enabled = false;
+        if (trail != null) trailParticles.Stop(); 
+        
         player.Rb.linearVelocity = velocity;
 
         player.isPerformingAct = false;
