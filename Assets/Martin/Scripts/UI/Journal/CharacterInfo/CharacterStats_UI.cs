@@ -29,9 +29,12 @@ public class CharacterStats_UI : MonoBehaviour
     {
         ClearEntries();
     }
-
     private void CreateEntries()
     {
+        var player = Player_Manager.Instance.GetCharacterData();
+
+        characterName.text = player.data.characterName;
+
         ClearEntries();
 
         foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))

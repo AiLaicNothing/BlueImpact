@@ -15,8 +15,19 @@ public class P_Dash_AState : PlayerState
         player.canDash = false;
 
         dashStarted = false;
-        trail = player.transform.Find("Trail").GetComponent<TrailRenderer>();
-        trailParticles = trail.transform.Find("TrailParticles").GetComponent<ParticleSystem>();
+
+        if (trail != null)
+        {
+
+        }
+
+        if (trailParticles != null)
+        {
+
+        }
+        //trail = player.transform.Find("Trail").GetComponent<TrailRenderer>();
+        //trailParticles = trail.transform.Find("TrailParticles").GetComponent<ParticleSystem>();
+
         // Check stamina before starting the dash
         //if (!player.PlayerStatsManager.CanConsume(StatType.Estamina, (int)player.DashCost))
         //{
