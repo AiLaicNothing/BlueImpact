@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class SettingDropdown : MonoBehaviour
@@ -14,6 +15,19 @@ public class SettingDropdown : MonoBehaviour
         if (dropdown != null)
         {
             dropdown.onValueChanged.AddListener(OnDropdownChanged);
+            DisableNavigationOnTemplate();
+        }
+    }
+
+    private void DisableNavigationOnTemplate()
+    {
+        if (dropdown.template == null) return;
+
+        foreach (Selectable selectable in dropdown.template.GetComponentsInChildren<Selectable>(true))
+        {
+            Navigation nav = selectable.navigation;
+            nav.mode = Navigation.Mode.None;
+            selectable.navigation = nav;
         }
     }
 
