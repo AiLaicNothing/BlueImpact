@@ -115,24 +115,6 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Skill3",
-                    "type": "Button",
-                    "id": "191ef5cd-b173-40eb-b111-29cb22ddc2d5",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "Skill4",
-                    "type": "Button",
-                    "id": "530285e3-5a88-4fef-a691-58d63c67ed7a",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "Pause",
                     "type": "Button",
                     "id": "e077e93b-eae1-4c67-926a-9c5ce2bf0927",
@@ -151,7 +133,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Scroll",
+                    "name": "ScrollTarget",
                     "type": "Value",
                     "id": "a2d8f27a-4904-4c0c-8c0b-251c1a07f4fb",
                     "expectedControlType": "",
@@ -384,7 +366,7 @@
                 {
                     "name": "",
                     "id": "8cbb2f4b-a784-49cc-8d5e-c010b8c7f4e6",
-                    "path": "<Gamepad>/buttonEast",
+                    "path": "<Gamepad>/leftShoulder",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
@@ -417,7 +399,7 @@
                 {
                     "name": "",
                     "id": "cdd5b797-521b-4a3a-8bf6-0b7f2769d0b8",
-                    "path": "<Gamepad>/leftStickPress",
+                    "path": "<Gamepad>/leftTrigger",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
@@ -527,7 +509,7 @@
                 {
                     "name": "",
                     "id": "d37cd84d-f421-463c-8274-f396b64715a6",
-                    "path": "<Gamepad>/buttonWest",
+                    "path": "<Gamepad>/buttonEast",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -571,55 +553,11 @@
                 {
                     "name": "",
                     "id": "8f94d11d-3f5a-4743-962f-b3c8e4359ae5",
-                    "path": "<Gamepad>/leftShoulder",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Skill2",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "463d3bf7-1244-4d06-8633-4e7f11c859f3",
-                    "path": "<Keyboard>/3",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Skill3",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "870ab91e-5d55-4a7a-8939-97df106ab482",
-                    "path": "<Gamepad>/leftTrigger",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Skill3",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "b708d00d-3f64-4700-a7cd-883dda58f26e",
-                    "path": "<Keyboard>/4",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Skill4",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "eb0cceff-e6c8-4486-9975-b9f367acf9d3",
                     "path": "<Gamepad>/rightTrigger",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Skill4",
+                    "action": "Skill2",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -637,7 +575,7 @@
                 {
                     "name": "",
                     "id": "dadae0e9-ae51-4403-9ea6-efd78ee3868f",
-                    "path": "<Gamepad>/start",
+                    "path": "<Gamepad>/select",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -659,7 +597,7 @@
                 {
                     "name": "",
                     "id": "6bd4a7bd-2c19-48a3-8724-4c1a9d40fc9f",
-                    "path": "",
+                    "path": "<Gamepad>/start",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Gamepad",
@@ -674,7 +612,18 @@
                     "interactions": "",
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
-                    "action": "Scroll",
+                    "action": "ScrollTarget",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7640bde0-9e15-4682-b771-120ce909fe01",
+                    "path": "<Gamepad>/rightStick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ScrollTarget",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
