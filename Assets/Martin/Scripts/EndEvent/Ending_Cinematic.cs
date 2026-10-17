@@ -26,7 +26,9 @@ public class Ending_Cinematic : MonoBehaviour
             return;
         }
 
-        Instance = this;
+        Instance = this;  
+
+        panel.SetActive(false);
     }
 
     public void activePanel(bool state)
