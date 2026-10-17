@@ -24,6 +24,7 @@ public class PlayerInputHandler : CharacterInput
 
     // ✅ AGREGAR ESTO: Acción Pause
     public InputAction pauseAction { get; private set; }
+    public InputAction journalAction {  get; private set; }
     private InputActionAsset inputActions;
 
     private void Awake()
@@ -46,6 +47,21 @@ public class PlayerInputHandler : CharacterInput
                 else
                 {
                     Debug.LogError("❌ Acción 'Pause' no encontrada");
+                }
+            }
+
+            if (playerActionMap != null)
+            {
+                journalAction = playerActionMap.FindAction("Journal");
+
+                if (journalAction != null)
+                {
+                    pauseAction.Enable();  // ✅ HABILITAR AQUÍ
+                    Debug.Log("✅ Journal action habilitada");
+                }
+                else
+                {
+                    Debug.LogError("❌ Acción 'Journal' no encontrada");
                 }
             }
         }
