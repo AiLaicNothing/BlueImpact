@@ -262,8 +262,6 @@ public class BossEvent : MonoBehaviour
 
         yield return new WaitForSeconds(6f);
 
-        continueUI.SetActive(true);
-
         Debug.Log("change to menu");
         SceneLoaderManager.Instance.LoadSceneNormal("menu");
     }
