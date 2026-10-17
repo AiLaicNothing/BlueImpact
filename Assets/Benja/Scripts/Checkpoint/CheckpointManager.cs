@@ -13,8 +13,16 @@ public class CheckpointManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        LoadData();
     }
-
+    void LoadData()
+    {
+        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+        if (loadedData != null)
+        {
+            activeCheckpoint = loadedData.checkpoint;
+        }
+    }
     private void OnEnable()
     {
         // ✅ SUSCRIBIRSE AL EVENTO DE SPAWN
@@ -88,6 +96,7 @@ public class CheckpointManager : MonoBehaviour
     {
         activeCheckpoint = checkpoint;
 
+        SaveLoadManager.Instance.SaveGame("checkpoint", activeCheckpoint);
         if (RespawnManager.Instance != null)
         {
             //RespawnManager.Instance.SetRespawn(checkpoint.SpawnPoint);

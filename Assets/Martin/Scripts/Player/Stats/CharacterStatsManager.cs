@@ -150,12 +150,22 @@ public class CharacterStatsManager : MonoBehaviour
 
         return true;
     }
-
+    void LoadStats()
+    {
+        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+        if (loadedData != null)
+        {
+            availablePoints = loadedData.availablePoints;
+            //allocatedPoints[loadedData.allocatedPoints] =
+        }
+    }
     public void ApplyStats()
     {
         foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
         {
             allocatedPoints[stat] = pendingPoints[stat];
+
+            SaveLoadManager.Instance.SaveGame("allocatedPoints", stat);
         }
 
         RecalculateAvailablePoints();

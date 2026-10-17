@@ -96,7 +96,7 @@ namespace CMF
 
             if (horizontal != 0f || vertical != 0f)
             {
-                Debug.Log($"Camera input: X={horizontal:F2}, Y={vertical:F2}");
+                //Debug.Log($"Camera input: X={horizontal:F2}, Y={vertical:F2}");
             }
 
             RotateCamera(horizontal, vertical);
