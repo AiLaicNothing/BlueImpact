@@ -71,6 +71,34 @@ public class SkillPickup : MonoBehaviour, IInteractable
         gameObject.SetActive(false);
     }
 
+    private void Update()
+    {
+        if (currentPlayer == null)
+        {
+            currentPlayer = Player_Manager.Instance.GetPlayer().GetComponent<PlayerControl>();
+
+            if (currentPlayer.CurrentCharacterInfo == null)
+            {
+                Debug.LogWarning("⚠️ CurrentCharacterInfo es null");
+                return;
+            }
+
+            foreach (var entry in skillsByCharacter)
+            {
+                if (entry.characterName == currentPlayer.CurrentCharacterInfo.data.characterName)
+                {
+                    currentSkill = entry.skill;
+                    gameObject.SetActive(true);
+                    pickedUp = false;
+                    Debug.Log($"✅ SkillPickup para: {currentPlayer.CurrentCharacterInfo.data.characterName}");
+                    return;
+                }
+            }
+
+            gameObject.SetActive(false);
+        }
+    }
+
     public void Interact()
     {
         // ✅ SOLO PERMITE INTERACTUAR UNA VEZ

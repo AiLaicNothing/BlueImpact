@@ -26,12 +26,6 @@ public class NarrativeUI : MonoBehaviour
         panelDocumento.SetActive(false);
     }
 
-    public void MostrarInteraccion(string texto)
-    {
-        textoInteraccion.text = "E  " + texto;
-        panelInteraccion.SetActive(true);
-    }
-
     public void OcultarInteraccion()
     {
         panelInteraccion.SetActive(false);
