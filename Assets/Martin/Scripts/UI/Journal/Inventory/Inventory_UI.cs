@@ -1,4 +1,3 @@
-using NUnit.Framework.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -106,7 +105,7 @@ public class Inventory_UI : MonoBehaviour
 
         if (inventory_Manager == null)
         {
-            ClearItemInfo();
+            ClearItemInfo();    
             return;
         }
 
@@ -116,7 +115,7 @@ public class Inventory_UI : MonoBehaviour
         foreach (Item_Data itemData in filteredItems)
         {
             GameObject instance = Instantiate(itemEntry_Prefab, itemContainer);
-
+            UINavigation.DisableNavigation(instance.transform);
             ItemEntry_UI entry = instance.GetComponent<ItemEntry_UI>();
 
             if (entry == null)
