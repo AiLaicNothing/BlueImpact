@@ -21,7 +21,6 @@ public class SceneLoaderManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
     }
 
     private void OnDestroy()

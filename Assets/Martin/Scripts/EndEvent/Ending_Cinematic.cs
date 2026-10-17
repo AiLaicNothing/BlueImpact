@@ -4,6 +4,8 @@ using UnityEngine.Video;
 
 public class Ending_Cinematic : MonoBehaviour
 {
+    public static Ending_Cinematic Instance;
+
     [SerializeField] private GameObject panel;
     [SerializeField] private GameObject video;
     [SerializeField] private GameObject continueScreen;
@@ -15,6 +17,17 @@ public class Ending_Cinematic : MonoBehaviour
     public Texture texture;
     public VideoClip lune;
     public VideoClip solis;
+
+    private void Awake()
+    {
+        if(Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
 
     public void activePanel(bool state)
     {
@@ -33,9 +46,9 @@ public class Ending_Cinematic : MonoBehaviour
 
     public void ShowCutscene()
     {
-        activePanel(true);
-
         info = PlayerSpawn_Manager.Instance.GetCharacter();
+
+        activePanel(true);
 
         if (panel == null) return;
 
@@ -52,5 +65,9 @@ public class Ending_Cinematic : MonoBehaviour
         {
             videoScreen.texture = texture;
         }
+
+        activeVideo(true);
+
+        videoPlayer.Play();
     }
 }

@@ -28241,6 +28241,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d298f6f842fcfdd4db1acefb52fe44b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  enemyHolders: {fileID: 1745858962}
   spawnEntries:
   - enemyPrefab: {fileID: 836079941225019311, guid: b8a6e9fa0a7b8ec4db861384809124cb, type: 3}
     spawnPoint: {fileID: 2084991781}
@@ -77281,6 +77282,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d298f6f842fcfdd4db1acefb52fe44b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  enemyHolders: {fileID: 1745858962}
   spawnEntries:
   - enemyPrefab: {fileID: 836079941225019311, guid: b8a6e9fa0a7b8ec4db861384809124cb, type: 3}
     spawnPoint: {fileID: 1865297310}
@@ -93216,6 +93218,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d298f6f842fcfdd4db1acefb52fe44b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  enemyHolders: {fileID: 1745858962}
   spawnEntries:
   - enemyPrefab: {fileID: 2611962225852712224, guid: 68bcb9fc88370554ba5f16a7fb894fc3, type: 3}
     spawnPoint: {fileID: 580986443}
@@ -97785,6 +97788,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d298f6f842fcfdd4db1acefb52fe44b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  enemyHolders: {fileID: 1745858962}
   spawnEntries:
   - enemyPrefab: {fileID: 2611962225852712224, guid: 68bcb9fc88370554ba5f16a7fb894fc3, type: 3}
     spawnPoint: {fileID: 777094244}
@@ -114011,7 +114015,6 @@ MonoBehaviour:
   - {fileID: 1206467213}
   - {fileID: 1981482244}
   - {fileID: 1563112710}
-  - {fileID: 0}
 --- !u!1 &1727707873 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 890150810218188926, guid: 14de596c87d2dff48835bd392fd1d360, type: 3}
@@ -115101,6 +115104,37 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6dc23715a86ad734ba0b1bcb1f1e90f2, type: 3}
+--- !u!1 &1745858962
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1745858963}
+  m_Layer: 0
+  m_Name: EnemyHolder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1745858963
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1745858962}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6916455368443294890}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1746619020
 GameObject:
   m_ObjectHideFlags: 0
@@ -129225,6 +129259,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d298f6f842fcfdd4db1acefb52fe44b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  enemyHolders: {fileID: 1745858962}
   spawnEntries:
   - enemyPrefab: {fileID: 2611962225852712224, guid: 68bcb9fc88370554ba5f16a7fb894fc3, type: 3}
     spawnPoint: {fileID: 1225042407}
@@ -134484,6 +134519,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d298f6f842fcfdd4db1acefb52fe44b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  enemyHolders: {fileID: 1745858962}
   spawnEntries:
   - enemyPrefab: {fileID: 836079941225019311, guid: b8a6e9fa0a7b8ec4db861384809124cb, type: 3}
     spawnPoint: {fileID: 1277525425}
@@ -182394,6 +182430,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1248507071}
+  - {fileID: 1745858963}
   - {fileID: 1727519854}
   - {fileID: 5822575474853475409}
   - {fileID: 54839271}
