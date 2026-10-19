@@ -168,16 +168,20 @@ public class GamepadCursor : MonoBehaviour
         }
 
         Vector2 stick = Gamepad.current.leftStick.ReadValue();
+
         if (stick.magnitude >= stickDeadzone)
         {
+            // El stick manda: mueve y fuerza la posición del cursor
             virtualCursorPos += stick * joystickSensitivity * Time.unscaledDeltaTime;
+            virtualCursorPos.x = Mathf.Clamp(virtualCursorPos.x, 0f, Screen.width - 1);
+            virtualCursorPos.y = Mathf.Clamp(virtualCursorPos.y, 0f, Screen.height - 1);
+            Mouse.current.WarpCursorPosition(virtualCursorPos);
         }
-
-        virtualCursorPos.x = Mathf.Clamp(virtualCursorPos.x, 0f, Screen.width - 1);
-        virtualCursorPos.y = Mathf.Clamp(virtualCursorPos.y, 0f, Screen.height - 1);
-
-        Mouse.current.WarpCursorPosition(virtualCursorPos);
-        Debug.Log($"Mouse: {Mouse.current.position.ReadValue()} | Screen: {Screen.width}x{Screen.height} | Stick: {Gamepad.current.leftStick.ReadValue()}");
+        else if (Mouse.current.delta.ReadValue().sqrMagnitude > 0.01f)
+        {
+            // El mouse se movió: sincronizamos y no hacemos warp
+            virtualCursorPos = Mouse.current.position.ReadValue();
+        }
     }
 
     // ---------- Click ----------
