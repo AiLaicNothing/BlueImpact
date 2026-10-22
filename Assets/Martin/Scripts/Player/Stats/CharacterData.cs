@@ -7,7 +7,7 @@ public class CharacterData : ScriptableObject
     [Header("Character")]
     public string characterID;
     public string characterName;
-    public Image characterImage;
+    public Sprite characterImage;
 
     [Header("Base Stats")]
     public BaseStats baseStats;
