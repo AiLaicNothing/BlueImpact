@@ -69,7 +69,7 @@ public class MainMenuManager : MonoBehaviour
         {
             PlayerPrefs.SetInt("FirstSave", 0);
             Debug.Log(firstSave);
-
+            reset = false;
         }
         firstSave = PlayerPrefs.GetInt("FirstSave", 0);
         Debug.Log(firstSave);
