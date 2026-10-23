@@ -42,14 +42,6 @@ public class Log_UI : MonoBehaviour
         logManager = null;
     }
 
-    private void FixedUpdate()
-    {
-        if (logManager == null)
-        {
-            logManager = Log_Manager.Instance;
-        }
-    }
-
     private void RefreshLogEntries()
     {
         ClearLogEntries();

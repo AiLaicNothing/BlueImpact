@@ -241,7 +241,7 @@ public class BossEvent : MonoBehaviour
 
     private IEnumerator OnDeathEvent()
     {
-        var ending = Ending_Cinematic.Instance;
+        var ending = secretUI.GetComponent<Ending_Cinematic>();
 
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
 
@@ -252,7 +252,6 @@ public class BossEvent : MonoBehaviour
             Debug.Log("[BossEvent] 🔒 Jugador pausado para evento de muerte");
         }
 
-        Debug.Log("SHOW CUTSCENE");
         ending.ShowCutscene();
 
         yield return new WaitForSeconds(8.5f);
@@ -262,8 +261,8 @@ public class BossEvent : MonoBehaviour
 
         yield return new WaitForSeconds(6f);
 
-        Debug.Log("change to menu");
-        SceneLoaderManager.Instance.LoadSceneNormal("menu");
+        continueUI.SetActive(true);
+        SceneManager.LoadScene("menu");
     }
 
     private void OnTriggerEnter(Collider other)

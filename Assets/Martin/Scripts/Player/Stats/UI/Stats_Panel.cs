@@ -10,7 +10,6 @@ public class Stats_Panel : MonoBehaviour, IGamepadPanel
     [Header("Portrait Zone")]
     [SerializeField] private Image characterIcon;
     [SerializeField] private TextMeshProUGUI availablePointsText;
-    private CharacterInfo data;
 
     [Header("Buttons")]
     [SerializeField] private Button confirmButton;
@@ -83,9 +82,9 @@ public class Stats_Panel : MonoBehaviour, IGamepadPanel
         gameObject.SetActive(true);
         isOpen = true;
 
-        data = Player_Manager.Instance.GetCharacterData();
+        var data = Player_Manager.Instance.GetCharacterData();
         CharacterStatsManager.Instance.BeginEdit();
-        characterIcon.sprite = data.data.characterImage;
+        characterIcon.sprite = data.portrait;
 
         CreateEntries();
         Refresh();

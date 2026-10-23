@@ -21,6 +21,7 @@ public class SceneLoaderManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void OnDestroy()
@@ -32,11 +33,6 @@ public class SceneLoaderManager : MonoBehaviour
     public void LoadScene(string sceneName)
     {
         StartCoroutine(LoadSceneAndWait(sceneName));
-    }
-
-    public void LoadSceneNormal(string sceneName)
-    {
-        SceneManager.LoadScene(sceneName);
     }
 
     public IEnumerator LoadSceneAndWait(string sceneName)

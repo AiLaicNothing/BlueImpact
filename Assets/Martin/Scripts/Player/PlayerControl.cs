@@ -134,36 +134,12 @@ public class PlayerControl : Controller, IDamageable
     }
     public void UnlockSkill(Skill skill)
     {
-        if (skill == null || unlockedSkills.Contains(skill))
-            return;
-
-        unlockedSkills.Add(skill);
-        Debug.Log($"✅ Desbloqueada: {skill.skillName}");
-
-        TryAutoEquipSkill(skill);
-    }
-
-    private bool TryAutoEquipSkill(Skill skill)
-    {
-        int slotCount = Mathf.Min(maxSkillSlot, skills.Length);
-
-        for (int i = 0; i < slotCount; i++)
+        if (skill != null && !unlockedSkills.Contains(skill))
         {
             unlockedSkills.Add(skill);
             SaveLoadManager.Instance.SaveGame("unlockedSkills", unlockedSkills);
             Debug.Log($"✅ Desbloqueada: {skill.skillName}");
-            if (skills[i] == null)
-            {
-                EquipSkill(i, skill);
-
-                if (asd != null)
-                    asd.RefreshIcons();
-
-                return true;
-            }
         }
-
-        return false;
     }
 
     public List<Skill> GetUnlockedSkills()

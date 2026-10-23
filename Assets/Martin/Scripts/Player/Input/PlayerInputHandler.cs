@@ -108,7 +108,9 @@ public class PlayerInputHandler : CharacterInput
     public void OnLook(InputAction.CallbackContext context)
     {
         lookInput = context.ReadValue<Vector2>();
-        // gamepadLookInput ya no se asigna aquí
+
+        // Solo guardar el valor si viene de un gamepad
+        gamepadLookInput = context.control.device is Gamepad ? lookInput : Vector2.zero;
     }
 
     public void OnLockTarget(InputAction.CallbackContext context)
@@ -219,9 +221,6 @@ public class PlayerInputHandler : CharacterInput
         {
             attackBufferCounter -= Time.deltaTime;
         }
-
-        var pad = Gamepad.current;
-        gamepadLookInput = pad != null ? pad.rightStick.ReadValue() : Vector2.zero;
     }
 
     public void LateUpdate()

@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class EnemySpawner : MonoBehaviour
 {
-    [SerializeField] private GameObject enemyHolders;
     [SerializeField] private List<SpawnEntry> spawnEntries = new();
     public bool hasSpawnedAlready = false;
 
@@ -33,7 +32,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (entry.enemyPrefab == null || entry.spawnPoint == null) return;
 
-        GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation, enemyHolders.transform);
+        GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation);
 
         EnemyBase enemy = enemyObj.GetComponentInChildren<EnemyBase>();
         if (enemy == null)

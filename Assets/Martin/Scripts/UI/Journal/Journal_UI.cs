@@ -34,8 +34,7 @@ public class Journal_UI : MonoBehaviour
         // Incluye botones de pestañas y cerrar, aunque sus paneles estén ocultos.
         UINavigation.DisableNavigation(transform);
 
-        //ShowContentPanel(characterPanel);
-        characterPanel.SetActive(false);
+        ShowContentPanel(characterPanel);
         SetJournalVisible(false);
     }
 
@@ -110,10 +109,6 @@ public class Journal_UI : MonoBehaviour
     {
         if (inJournal) return;
 
-        ShowContentPanel(characterPanel);
-
-        Time.timeScale = 0f;
-
         GamepadCursor.Instance?.CloseAllExcept(this);
 
         inJournal = true;
@@ -125,8 +120,6 @@ public class Journal_UI : MonoBehaviour
     public void CloseJournal()
     {
         if (!inJournal) return;
-
-        Time.timeScale = 1f;
 
         inJournal = false;
         SetJournalVisible(false);
