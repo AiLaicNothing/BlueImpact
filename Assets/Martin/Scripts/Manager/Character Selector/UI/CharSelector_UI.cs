@@ -198,7 +198,7 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
     // ---------- IGamepadPanel ----------
 
     void LoadRespawn()
-    {
+    {   
         RespawnManager.Instance.Respawn();
     }
     public void SetInputEnabled(bool enabled)
