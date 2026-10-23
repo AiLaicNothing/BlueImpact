@@ -7,11 +7,10 @@ public class ElevetorEvent : MonoBehaviour
     [Header("Platform")]
     [SerializeField] private Transform plattform;
     [SerializeField] private float moveSpeed = 2f;
+    [SerializeField] private Transform topDestination;
+    [SerializeField] private Transform stopDisAmbush;
+    [SerializeField] private Transform bottonDestination;
     [SerializeField] private float reachThreshold = 0.05f;
-
-    [Header("Downward Distance From Starting Position")]
-    [SerializeField] private float ambushPosY = 30f;
-    [SerializeField] private float bottomPosY = 60f;
 
     [Header("Ambush")]
     [SerializeField] private GameObject[] wave1_enemies;
@@ -19,32 +18,35 @@ public class ElevetorEvent : MonoBehaviour
     [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private Transform safePoint;
 
+    [Header("Behavior")]
+    [SerializeField] private bool triggerAmbushOnlyOnce = true;
+    [SerializeField] private bool moveToTopOnReStart = false;
+
     [Header("Free Movement Texts")]
     [SerializeField] private string goUpText = "Subir";
     [SerializeField] private string goDownText = "Bajar";
     [SerializeField] private string activateText = "Activar elevador";
 
-    private Vector3 initialLocalPosition;
-
     private bool ambushCompleted;
+    private bool eventComplete;
     private bool eventRunning;
     private bool platformMoving;
-    private bool isAtTop = true;
+    private bool isAtTop = true; // El elevador arranca arriba (ver Start())
+    private Coroutine eventRoutine;
 
     private readonly List<GameObject> spawnedEnemies = new();
 
     public bool IsRunning => eventRunning;
-    public bool IsMoving => platformMoving;
     public bool AmbushCompleted => ambushCompleted;
 
-    private void Awake()
+    private void Start()
     {
-        // The platform is already positioned at the top
-        // in the scene. Save that original position.
-        if (plattform != null)
+        if (plattform != null && topDestination != null)
         {
-            initialLocalPosition = plattform.localPosition;
+            plattform.position = topDestination.position;
         }
+
+        isAtTop = true;
     }
 
     private void OnEnable()
@@ -59,189 +61,146 @@ public class ElevetorEvent : MonoBehaviour
 
     private void HandlePlayerDied()
     {
-        Debug.Log("Player died. Resetting elevator event.");
-        ReStart();
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player"))
+        // Si el evento del elevador está corriendo (ambush o movimiento libre) cuando el player muere, se reinicia
+        if (eventRunning)
         {
-            ToggleElevator();
+            Debug.Log("Player murió durante el evento del elevador, reiniciando");
+            ReStart();
         }
     }
 
+    public void Update()
+    {
+
+    }
+
+    // Mantengo el método viejo como alias por compatibilidad con lo que ya lo llame (input de prueba, etc.)
     public void ActivateElevator()
     {
         ToggleElevator();
     }
 
+    /// <summary>
+    /// Punto de entrada único para el lever. Primera vez: dispara el evento completo de ambush.
+    /// Después de completado: mueve el elevador libremente entre arriba y abajo sin enemigos.
+    /// </summary>
     public void ToggleElevator()
     {
-        if (eventRunning || plattform == null)
-            return;
+        if (eventRunning) return;
 
         if (!ambushCompleted)
         {
-            StartCoroutine(RunElevatorEvent());
+            eventRoutine = StartCoroutine(RunElevatorEvent());
         }
         else
         {
-            StartCoroutine(FreeMove());
+            eventRoutine = StartCoroutine(FreeMove());
         }
     }
 
+    /// <summary>
+    /// Texto a mostrar en el prompt de interacción, según el estado actual.
+    /// </summary>
     public string GetNextActionText()
     {
-        if (eventRunning)
-            return null;
+        if (eventRunning) return null;
 
-        if (!ambushCompleted)
-            return activateText;
+        if (!ambushCompleted) return activateText;
 
         return isAtTop ? goDownText : goUpText;
     }
-
-    // =========================
-    // MAIN EVENT
-    // =========================
 
     private IEnumerator RunElevatorEvent()
     {
         eventRunning = true;
 
-        Debug.Log("Elevator event started.");
+        Debug.Log("Elevator event started");
 
-        // Move downward from the original top position.
-        yield return MovePlatformTo(ambushPosY);
+        if (!ambushCompleted && stopDisAmbush != null)
+        {
+            Debug.Log("Moving to ambush stop");
+            yield return MovePlatformTo(stopDisAmbush.position);
+            isAtTop = false;
 
-        Debug.Log("Starting elevator ambush.");
+            Debug.Log("Starting ambush");
+            yield return StartCoroutine(Ambush());
 
-        yield return Ambush();
+            Debug.Log("Ambush done, moving down");
+            yield return MovePlatformTo(bottonDestination.position);
+            isAtTop = false;
 
-        Debug.Log("Ambush completed. Moving down.");
+            ambushCompleted = true;
+        }
+        else
+        {
+            if (topDestination != null)
+            {
+                yield return MovePlatformTo(topDestination.position);
+                isAtTop = true;
+            }
+        }
 
-        // Move to the final downward offset.
-        yield return MovePlatformTo(bottomPosY);
-
-        ambushCompleted = true;
-        isAtTop = false;
         eventRunning = false;
-
-        Debug.Log("Elevator event finished.");
     }
 
-    // =========================
-    // FREE MOVEMENT
-    // =========================
-
+    /// <summary>
+    /// Movimiento libre (sin ambush) entre arriba y abajo, usado una vez ambushCompleted == true.
+    /// </summary>
     private IEnumerator FreeMove()
     {
         eventRunning = true;
 
-        if (isAtTop)
-        {
-            Debug.Log("Elevator going down.");
+        Transform target = isAtTop ? bottonDestination : topDestination;
 
-            yield return MovePlatformTo(bottomPosY);
-        }
-        else
+        if (target != null)
         {
-            Debug.Log("Elevator going up.");
-
-            yield return MovePlatformTo(0f);
+            Debug.Log(isAtTop ? "Bajando elevador (libre)" : "Subiendo elevador (libre)");
+            yield return MovePlatformTo(target.position);
+            isAtTop = !isAtTop;
         }
 
-        isAtTop = !isAtTop;
         eventRunning = false;
     }
 
-    // =========================
-    // MOVEMENT
-    // =========================
-
-    private IEnumerator MovePlatformTo(float distanceDown)
+    private IEnumerator MovePlatformTo(Vector3 targetPosition)
     {
-        if (plattform == null)
-            yield break;
+        if (plattform == null) yield break;
 
         platformMoving = true;
 
-        // Calculate the destination from the original
-        // local Y, not from the current platform position.
-        float targetY = initialLocalPosition.y - distanceDown;
-
-        while (Mathf.Abs(plattform.localPosition.y - targetY)
-               > reachThreshold)
+        while (Vector3.Distance(plattform.position, targetPosition) > reachThreshold)
         {
-            Vector3 currentPosition = plattform.localPosition;
-
-            float newY = Mathf.MoveTowards(
-                currentPosition.y,
-                targetY,
-                Mathf.Max(0.01f, moveSpeed) * Time.deltaTime
-            );
-
-            plattform.localPosition = new Vector3(
-                currentPosition.x,
-                newY,
-                currentPosition.z
-            );
-
+            plattform.position = Vector3.MoveTowards(plattform.position, targetPosition, moveSpeed * Time.deltaTime);
             yield return null;
         }
 
-        SetPlatformY(targetY);
+        plattform.position = targetPosition;
         platformMoving = false;
     }
 
-    private void SetPlatformY(float targetY)
-    {
-        if (plattform == null)
-            return;
-
-        Vector3 position = plattform.localPosition;
-        position.y = targetY;
-
-        plattform.localPosition = position;
-    }
-
-    // =========================
-    // AMBUSH
-    // =========================
-
     private IEnumerator Ambush()
     {
-        yield return SpawnWaveAndWait(
-            wave1_enemies,
-            "Wave 1"
-        );
+        if (triggerAmbushOnlyOnce && ambushCompleted) yield break;
+
+        yield return SpawnWaveAndWait(wave1_enemies, "Wave 1");
 
         yield return new WaitForSeconds(1.5f);
 
-        yield return SpawnWaveAndWait(
-            wave2_enemies,
-            "Wave 2"
-        );
+        yield return SpawnWaveAndWait(wave2_enemies, "Wave 2");
+
+        eventComplete = true;
     }
 
-    private IEnumerator SpawnWaveAndWait(
-        GameObject[] wave,
-        string waveName)
+    private IEnumerator SpawnWaveAndWait(GameObject[] wave, string waveName)
     {
         spawnedEnemies.Clear();
-
         SpawnWave(wave);
 
-        Debug.Log(
-            $"{waveName} spawned. Count = {spawnedEnemies.Count}"
-        );
+        Debug.Log($"{waveName} spawned. Count = {spawnedEnemies.Count}");
 
         yield return null;
 
-        yield return new WaitUntil(
-            () => AreAllSpawnedEnemiesCleared()
-        );
+        yield return new WaitUntil(() => AreAllSpawnedEnemiesCleared());
 
         Debug.Log($"{waveName} cleared.");
     }
@@ -258,32 +217,18 @@ public class ElevetorEvent : MonoBehaviour
         {
             GameObject enemyPrefab = wave[i];
 
-            if (enemyPrefab == null)
-                continue;
+            if (enemyPrefab == null) continue;
 
             Transform spawnPoint = GetSpawnPoint(i);
+            Vector3 spawnPos = spawnPoint != null ? spawnPoint.position : transform.position;
 
-            Vector3 spawnPos = spawnPoint != null
-                ? spawnPoint.position
-                : transform.position;
+            GameObject enemyObj = Instantiate(enemyPrefab, spawnPos, Quaternion.identity);
 
-            GameObject enemyObj = Instantiate(
-                enemyPrefab,
-                spawnPos,
-                Quaternion.identity
-            );
-
-            EnemyBase enemy =
-                enemyObj.GetComponent<EnemyBase>();
+            var enemy = enemyObj.GetComponent<EnemyBase>();
 
             if (enemy != null)
             {
-                enemy.OnSpawn(
-                    spawnPoints,
-                    safePoint,
-                    false,
-                    spawnPoint
-                );
+                enemy.OnSpawn(spawnPoints, safePoint, false, spawnPoint);
             }
 
             spawnedEnemies.Add(enemyObj);
@@ -292,8 +237,7 @@ public class ElevetorEvent : MonoBehaviour
 
     private Transform GetSpawnPoint(int index)
     {
-        if (spawnPoints == null || spawnPoints.Length == 0)
-            return null;
+        if (spawnPoints == null || spawnPoints.Length == 0) return null;
 
         return spawnPoints[index % spawnPoints.Length];
     }
@@ -313,34 +257,35 @@ public class ElevetorEvent : MonoBehaviour
         return spawnedEnemies.Count == 0;
     }
 
-    // =========================
-    // RESET
-    // =========================
-
     public void ReStart()
     {
+        // Stop every coroutine running on this component
         StopAllCoroutines();
 
+        eventRoutine = null;
         eventRunning = false;
         platformMoving = false;
 
-        foreach (GameObject enemy in spawnedEnemies)
+        // Destroy every spawned enemy
+        for (int i = spawnedEnemies.Count - 1; i >= 0; i--)
         {
-            if (enemy != null)
-                Destroy(enemy);
+            if (spawnedEnemies[i] != null)
+            {
+                Destroy(spawnedEnemies[i]);
+            }
         }
 
         spawnedEnemies.Clear();
 
+        // Reset event state
         ambushCompleted = false;
-        isAtTop = true;
 
-        // Restore the original position from the scene.
-        if (plattform != null)
+        // Return elevator to its initial position (top)
+        if (plattform != null && topDestination != null)
         {
-            plattform.localPosition = initialLocalPosition;
+            plattform.position = topDestination.position;
         }
 
-        Debug.Log("Elevator event reset.");
+        isAtTop = true;
     }
 }

@@ -1,30 +1,45 @@
 using UnityEngine;
 
-public class NarrativeObject : MonoBehaviour, IInteractable
+public class NarrativeObject : MonoBehaviour
 {
-    [Header("Data")]
-    [SerializeField] private Log_Data _data;
-    private bool hasBeenInspected;
+    [Header("Contenido")]
+    [TextArea(5, 20)]
+    public string texto;
 
-    public void Interact()
+    [Header("imagen del texto")]
+    public Sprite imagenDocumento;
+
+    [Header("Texto de interacción")]
+    public string textoInteraccion = "Leer";
+
+    private bool playerCerca = false;
+
+    private void Update()
     {
-        if (hasBeenInspected || Inspection_Manager.Instance.IsInspectedObject(_data))
+        if (playerCerca && Input.GetKeyDown(KeyCode.E))
         {
-            return;
-        }
-        else
-        {
-            Inspection_Manager.Instance.AddInspectedObject(_data);
-            Inspection_UI.Instance.OpenInspection(_data);
-            Log_Manager.Instance.AddLogToDiscovered(_data);
-            hasBeenInspected = true;
+            NarrativeUI.instance.AbrirDocumento(texto, imagenDocumento);
         }
     }
 
-    public string GetInteractionText()
+    private void OnTriggerEnter(Collider other)
     {
-        if (_data == null) return "";
+        if (other.CompareTag("Player"))
+        {
+            playerCerca = true;
 
-        return $"{_data.logName}";
+            NarrativeUI.instance.MostrarInteraccion( textoInteraccion);
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            playerCerca = false;
+
+            NarrativeUI.instance.OcultarInteraccion();
+            NarrativeUI.instance.CerrarDocumento();
+        }
     }
 }

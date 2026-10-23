@@ -5,8 +5,8 @@ using UnityEngine.AI;
 public class Miniboss_LavaGolem : EnemyBase
 {
     [Header("Targeting")]
-    [SerializeField] private float detectionRange = 30f;
-    [SerializeField] private float maxChaseDistance = 45f;
+    [SerializeField] private float detectionRange = 12f;
+    [SerializeField] private float maxChaseDistance = 20f;
     [SerializeField] private float detectionDelay = 0.25f;
     [SerializeField] private LayerMask obstacleLayer;
     [SerializeField] private float targetRayHeight = 1.2f;
@@ -18,31 +18,13 @@ public class Miniboss_LavaGolem : EnemyBase
 
     [Header("Flujo Cinético - Melee")]
     [SerializeField] private float flujoCineticoRange = 4f;
-    [SerializeField] private Vector3 flujoHitBoxSize = new Vector3(3f, 3f, 3f);
-    [SerializeField] private Vector3 flujoHitBoxPos = new Vector3(0f, 1f, 2.5f);
+    [SerializeField] private Vector3 flujoHitBoxSize = new Vector3(2f, 2f, 2f);
+    [SerializeField] private Vector3 flujoHitBoxPos = new Vector3(0f, 0f, 1.5f);
+    [SerializeField] private float flujoWindUpTime = 1.5f;
+    [SerializeField] private float flujoArmsAirTime = 3f;
+    [SerializeField] private float flujoHitTime = 0.8f;
     [SerializeField] private int flujoMeleeDamage = 18;
     [SerializeField] private GameObject flujoVfx;
-
-    [Header("Flujo - Tackle (dash)")]
-    [SerializeField] private float tackleSpeed = 12f;
-    [SerializeField] private float tackleStopDistance = 1.0f;
-
-    [Header("Duraciones de animación (frames @ fps)")]
-    [SerializeField] private int animFps = 24;
-    [SerializeField] private int tackleFrames = 30;
-    [SerializeField] private int punchFrames = 22;
-    [SerializeField] private int fireBallFrames = 30;
-
-    private float TackleDuration => tackleFrames / (float)animFps;
-    private float PunchDuration => punchFrames / (float)animFps;
-    private float FireBallDuration => fireBallFrames / (float)animFps;
-
-    [Header("Ritmo de combate")]
-    [SerializeField] private float flujoCooldown = 0.8f;
-    [SerializeField] private float llamaradaCooldown = 1.5f;
-    [SerializeField] private float cooldownVariance = 0.3f;
-    [SerializeField] private float closeTurnSpeed = 18f;
-    [SerializeField] private float meleeChanceWhenClose = 0.85f;
 
     [Header("Llamarada Densa - Projectile")]
     [SerializeField] private float llamaradaRange = 10f;
@@ -61,9 +43,6 @@ public class Miniboss_LavaGolem : EnemyBase
     [SerializeField] private float moveAnimThreshold = 0.1f;
     [SerializeField] private float animDampTime = 0.1f;
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
-    private static readonly int TackleHash = Animator.StringToHash("Tackle");
-    private static readonly int PunchHash = Animator.StringToHash("Punch");
-    private static readonly int FireBallHash = Animator.StringToHash("FireBall");
     private bool animIsMoving;
 
     [Header("Debug")]
@@ -161,8 +140,7 @@ public class Miniboss_LavaGolem : EnemyBase
 
     private void HandleDetection()
     {
-        Transform home = safeZone != null ? safeZone : spawnPos;
-        if (home == null) return;
+        if (safeZone == null) return;
 
         if (!HasValidPlayer())
         {
@@ -172,7 +150,7 @@ public class Miniboss_LavaGolem : EnemyBase
             return;
         }
 
-        float playerDistHome = Vector3.Distance(player.transform.position, home.position);
+        float playerDistHome = Vector3.Distance(player.transform.position, safeZone.position);
         float distPlayer = DistanceToPlayer();
 
         if (!hasDetectedPlayer)
@@ -214,11 +192,7 @@ public class Miniboss_LavaGolem : EnemyBase
 
             agent.isStopped = false;
             agent.SetDestination(player.transform.position);
-
-            if (distance <= flujoCineticoRange)
-                FacePlayerSmooth();
-            else
-                RotateToVelocity();
+            RotateToVelocity();
         }
         else if (returningHome)
         {
@@ -281,6 +255,7 @@ public class Miniboss_LavaGolem : EnemyBase
         {
             Debug.Log($"[LavaGolem] Decidiendo ataque - Contador: {attackCount}/{nextSpecialThreshold}");
 
+            // Decidir ataque
             if (attackCount >= nextSpecialThreshold)
             {
                 attackCount = 0;
@@ -290,10 +265,7 @@ public class Miniboss_LavaGolem : EnemyBase
             }
             else
             {
-                bool close = DistanceToPlayer() <= flujoCineticoRange;
-                bool useFlujo = close ? Random.value < meleeChanceWhenClose : Random.value > 0.4f;
-
-                if (useFlujo)
+                if (Random.value > 0.4f)
                 {
                     Debug.Log("[LavaGolem] ATAQUE NORMAL: Flujo Cinético");
                     StartCoroutine(PerformFlujo());
@@ -357,83 +329,46 @@ public class Miniboss_LavaGolem : EnemyBase
             Debug.Log($"[Flujo] En rango - Distancia final: {distance:F2}m");
         }
 
-        // Tackle: el boss se lanza hacia el jugador mientras dura el clip
-        Debug.Log($"[Flujo] Tackle ({TackleDuration:F3}s)");
+        // Wind-up
+        Debug.Log("[Flujo] Wind-up: levantando brazos...");
+        //anim.Play("Flujo_WindUp");
         FaceTargetInstant();
-        golemAnim.SetTrigger(TackleHash);
-        yield return TackleDash();
 
-        // Punch: el daño sale del Animation Event OnFlujoImpact en el frame de impacto
-        Debug.Log($"[Flujo] Punch ({PunchDuration:F3}s)");
-        golemAnim.SetTrigger(PunchHash);
-        yield return new WaitForSeconds(PunchDuration);
+        yield return new WaitForSeconds(flujoWindUpTime);
 
-        isPerformingAction = false;
-        actionCooldown = flujoCooldown + Random.Range(0f, cooldownVariance);
-        Debug.Log("[Flujo] Flujo Cinético completado");
-    }
+        // Brazos en el aire
+        Debug.Log("[Flujo] Brazos en el aire, esperando...");
+        //  anim.Play("Flujo_Raise");
 
-    private IEnumerator TackleDash()
-    {
-        float prevSpeed = agent.speed;
-        float prevAccel = agent.acceleration;
-        float prevStop = agent.stoppingDistance;
-
-        agent.isStopped = false;
-        agent.speed = tackleSpeed;
-        agent.acceleration = 100f;          // arranque casi instantáneo
-        agent.stoppingDistance = tackleStopDistance;
-
-        float t = 0f;
-        while (t < TackleDuration)
-        {
-            if (HasValidPlayer())
-                agent.SetDestination(player.transform.position);
-
-            RotateToVelocity();
-
-            t += Time.deltaTime;
-            yield return null;
-
-            // Si ya llegó al jugador, detiene el dash
-            if (!agent.pathPending && agent.hasPath && agent.remainingDistance <= tackleStopDistance)
-                break;
-        }
-
-        agent.ResetPath();
-        agent.isStopped = true;
-        agent.speed = prevSpeed;
-        agent.acceleration = prevAccel;
-        agent.stoppingDistance = prevStop;
-
-        // Si el dash terminó antes, completa el tiempo del clip mirando al jugador
-        float remaining = TackleDuration - t;
-        if (remaining > 0f)
-            yield return WaitFacing(remaining);
-    }
-
-    private IEnumerator WaitFacing(float seconds)
-    {
-        float t = 0f;
-        while (t < seconds)
+        float raiseTimer = 0f;
+        while (raiseTimer < flujoArmsAirTime)
         {
             FaceTargetInstant();
-            t += Time.deltaTime;
+            raiseTimer += Time.deltaTime;
             yield return null;
         }
-    }
 
-    // Llamado por el Animation Event del clip Punch
-    public void OnFlujoImpact()
-    {
-        Vector3 center = GetFlujoHitCenter();
+        // Golpe
+        Debug.Log("[Flujo] ¡GOLPE!");
+        //  anim.Play("Flujo_Slam");
 
+        yield return new WaitForSeconds(flujoHitTime);
+
+        // Instanciar VFX de impacto
         if (flujoVfx != null)
-            Instantiate(flujoVfx, center, Quaternion.identity);
+        {
+            Debug.Log("[Flujo] Instanciando VFX de impacto");
+            Instantiate(flujoVfx, transform.position + transform.forward * flujoHitBoxPos.z, Quaternion.identity);
+        }
         else
+        {
             Debug.LogWarning("[Flujo] flujoVfx NO asignado");
+        }
 
+        // Raycast de daño
+        Vector3 center = transform.position + transform.forward * flujoHitBoxPos.z;
         Collider[] hits = Physics.OverlapBox(center, flujoHitBoxSize * 0.5f, transform.rotation);
+
         Debug.Log($"[Flujo] Hitbox check: {hits.Length} colisiones detectadas");
 
         ShowHitbox(center, flujoHitBoxSize, transform.rotation);
@@ -442,17 +377,28 @@ public class Miniboss_LavaGolem : EnemyBase
         {
             if (!hit.CompareTag("Player")) continue;
 
-            IDamageable damageable = hit.GetComponentInParent<IDamageable>();
-            if (damageable == null) continue;
+            Debug.Log($"[Flujo] ¡IMPACTO! En: {hit.name}");
 
-            DamageInfo info = new DamageInfo
+            IDamageable damageable = hit.GetComponentInParent<IDamageable>();
+
+            if (damageable != null)
             {
-                damage = flujoMeleeDamage,
-                hitDirection = transform.forward,
-            };
-            damageable.TakeDamage(in info);
-            Debug.Log($"[Flujo] ¡IMPACTO! Aplicado {flujoMeleeDamage} daño");
+                Debug.Log($"[Flujo] Aplicando {flujoMeleeDamage} daño");
+                DamageInfo info = new DamageInfo
+                {
+                    damage = flujoMeleeDamage,
+                    hitDirection = transform.forward,
+                };
+
+                damageable.TakeDamage(in info);
+            }
         }
+
+        yield return new WaitForSeconds(1f);
+
+        isPerformingAction = false;
+        actionCooldown = 2f;
+        Debug.Log("[Flujo] Flujo Cinético completado");
     }
 
     private IEnumerator PerformLlamarada()
@@ -467,6 +413,10 @@ public class Miniboss_LavaGolem : EnemyBase
         }
 
         FaceTargetInstant();
+
+        // Animación de carga
+        Debug.Log("[Llamarada] Reproduciendo animación 'Llamarada_Charge'");
+        //anim.Play("Llamarada_Charge");
 
         // VFX de carga
         GameObject chargeEffect = null;
@@ -499,7 +449,7 @@ public class Miniboss_LavaGolem : EnemyBase
 
         // Disparar
         Debug.Log("[Llamarada] Reproduciendo animación 'Llamarada_Cast'");
-        golemAnim.SetTrigger(FireBallHash);
+        //anim.Play("Llamarada_Cast");
 
         if (chargeEffect != null)
         {
@@ -557,10 +507,10 @@ public class Miniboss_LavaGolem : EnemyBase
             Debug.LogError("[Llamarada] El prefab NO tiene componente E_Projectile!");
         }
 
-        yield return new WaitForSeconds(FireBallDuration);
+        yield return new WaitForSeconds(1.5f);
 
         isPerformingAction = false;
-        actionCooldown = llamaradaCooldown + Random.Range(0f, cooldownVariance);
+        actionCooldown = 3f;
         Debug.Log("[Llamarada] Llamarada Densa completada");
     }
 
@@ -587,22 +537,6 @@ public class Miniboss_LavaGolem : EnemyBase
         transform.rotation = Quaternion.LookRotation(dir.normalized);
     }
 
-    private void FacePlayerSmooth()
-    {
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        Quaternion target = Quaternion.LookRotation(dir.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, target, Time.deltaTime * closeTurnSpeed);
-    }
-
-    // Centro de la hitbox del Punch en coordenadas del mundo
-    private Vector3 GetFlujoHitCenter()
-    {
-        return transform.TransformPoint(flujoHitBoxPos);
-    }
-
     private float DistanceToPlayer()
     {
         if (!HasValidPlayer()) return Mathf.Infinity;
@@ -616,22 +550,6 @@ public class Miniboss_LavaGolem : EnemyBase
         GameObject box = Instantiate(hitBoxPrefab, center, rot);
         box.transform.localScale = size;
         Destroy(box, 0.2f);
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Vector3 center = GetFlujoHitCenter();
-
-        Matrix4x4 prev = Gizmos.matrix;
-        Gizmos.matrix = Matrix4x4.TRS(center, transform.rotation, flujoHitBoxSize);
-
-        Gizmos.color = new Color(1f, 0.4f, 0f, 0.25f);
-        Gizmos.DrawCube(Vector3.zero, Vector3.one);
-
-        Gizmos.color = new Color(1f, 0.4f, 0f, 1f);
-        Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
-
-        Gizmos.matrix = prev;
     }
 
     private void OnDrawGizmos()

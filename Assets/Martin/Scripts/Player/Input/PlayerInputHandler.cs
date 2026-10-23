@@ -14,7 +14,7 @@ public class PlayerInputHandler : CharacterInput
     public Vector2 lookInput { get; private set; }
     public Vector2 gamepadLookInput { get; private set; }   // nuevo
     public bool onLockTarget { get; private set; }
-    public Vector2 scrollInput { get; private set; }
+    public float scrollInput { get; private set; }
     public AttackInputType bufferedAttackType { get; private set; }
     public bool AttackBuffered => attackBufferCounter > 0;
     public bool onMelee { get; private set; }
@@ -24,46 +24,40 @@ public class PlayerInputHandler : CharacterInput
 
     // ✅ AGREGAR ESTO: Acción Pause
     public InputAction pauseAction { get; private set; }
-    public InputAction journalAction {  get; private set; }
     private InputActionAsset inputActions;
 
     private void Awake()
     {
         inputActions = Resources.Load<InputActionAsset>("InputSystem_Actions");
 
-        if (inputActions == null)
+        if (inputActions != null)
         {
-            Debug.LogError("❌ No se encontró InputSystem_Actions en Resources");
-            return;
+            var playerActionMap = inputActions.FindActionMap("Player");
+
+            if (playerActionMap != null)
+            {
+                pauseAction = playerActionMap.FindAction("Pause");
+
+                if (pauseAction != null)
+                {
+                    pauseAction.Enable();  // ✅ HABILITAR AQUÍ
+                    Debug.Log("✅ Pause action habilitada");
+                }
+                else
+                {
+                    Debug.LogError("❌ Acción 'Pause' no encontrada");
+                }
+            }
         }
-
-        var playerActionMap = inputActions.FindActionMap("Player");
-
-        if (playerActionMap == null)
-        {
-            Debug.LogError("❌ Action map 'Player' no encontrado");
-            return;
-        }
-
-        pauseAction = playerActionMap.FindAction("Pause");
-
-        if (pauseAction != null)
-            pauseAction.Enable();
-        else
-            Debug.LogError("❌ Acción 'Pause' no encontrada");
-
-        journalAction = playerActionMap.FindAction("Journal"); 
-
-        if (journalAction != null)
-            journalAction.Enable();
-        else
-            Debug.LogError("❌ Acción 'Journal' no encontrada");
     }
 
     private void OnDestroy()
     {
-        pauseAction?.Disable();
-        journalAction?.Disable();
+        // ✅ LIMPIAR AL DESTRUIR
+        if (pauseAction != null)
+        {
+            pauseAction.Disable();
+        }
     }
 
     public override float GetHorizontalMovementInput()
@@ -123,7 +117,7 @@ public class PlayerInputHandler : CharacterInput
 
     public void OnScrollWheel(InputAction.CallbackContext context)
     {
-        scrollInput = context.ReadValue<Vector2>();
+        scrollInput = context.ReadValue<float>();
     }
 
     public void OnAttack(InputAction.CallbackContext context)
@@ -231,7 +225,7 @@ public class PlayerInputHandler : CharacterInput
         skill1Pressed = false;
         onLockTarget = false;
 
-        scrollInput = Vector2.zero;
+        scrollInput = 0f;
     }
 
     private void BufferAttack(AttackInputType type)
@@ -258,7 +252,7 @@ public class PlayerInputHandler : CharacterInput
         gamepadLookInput = Vector2.zero;
         onLockTarget = false;
 
-        scrollInput = Vector2.zero;
+        scrollInput = 0f;
 
         skill1Pressed = false;
         skillPressedIndex = -1;
