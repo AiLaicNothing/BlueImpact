@@ -29,11 +29,18 @@ public class CharacterStats_UI : MonoBehaviour
     {
         ClearEntries();
     }
+
+    private void FixedUpdate()
+    {
+
+    }
     private void CreateEntries()
     {
         var player = Player_Manager.Instance.GetCharacterData();
 
         characterName.text = player.data.characterName;
+
+        characterIcon.sprite = player.portrait;
 
         ClearEntries();
 

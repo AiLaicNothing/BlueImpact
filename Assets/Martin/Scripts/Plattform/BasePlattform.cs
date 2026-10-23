@@ -22,7 +22,7 @@ public class BasePlattform : MonoBehaviour
         {
             if (player == null) player = other.transform;
 
-            player.parent = null;
+            ReturnPlayer_Manager.Instance.ReturnPlayer();
         }
     }
 }
