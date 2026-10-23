@@ -73,10 +73,10 @@ public class BashShield_Skill : Skill
     {
         gameObjects.Clear();
         skinnedMeshRenderers.Clear();
-        gameObjects.Add(player.gameObject.transform.Find("ModelHolder").Find("Solis-FBX_Final").Find("Solis").Find("Hands").Find("Hand_L").gameObject);
-        gameObjects.Add(player.gameObject.transform.Find("ModelHolder").Find("Solis-FBX_Final").Find("Solis").Find("Hands").Find("Hand_R").gameObject);
-        gameObjects.Add(player.gameObject.transform.Find("ModelHolder").Find("Solis-FBX_Final").Find("Solis").Find("Knight").gameObject);
-        gameObjects.Add(player.gameObject.transform.Find("ModelHolder").Find("Solis-FBX_Final").Find("Solis").Find("Wing").gameObject);
+        gameObjects.Add(player.gameObject.transform.Find("ModelRoot").Find("Solis-FBX_Final").Find("Solis").Find("Hands").Find("Hand_L").gameObject);
+        gameObjects.Add(player.gameObject.transform.Find("ModelRoot").Find("Solis-FBX_Final").Find("Solis").Find("Hands").Find("Hand_R").gameObject);
+        gameObjects.Add(player.gameObject.transform.Find("ModelRoot").Find("Solis-FBX_Final").Find("Solis").Find("Knight").gameObject);
+        gameObjects.Add(player.gameObject.transform.Find("ModelRoot").Find("Solis-FBX_Final").Find("Solis").Find("Wing").gameObject);
         skinnedMeshRenderers.Add(gameObjects[0].GetComponent<SkinnedMeshRenderer>());
         skinnedMeshRenderers.Add(gameObjects[1].GetComponent<SkinnedMeshRenderer>());
         skinnedMeshRenderers.Add(gameObjects[2].GetComponent<SkinnedMeshRenderer>());

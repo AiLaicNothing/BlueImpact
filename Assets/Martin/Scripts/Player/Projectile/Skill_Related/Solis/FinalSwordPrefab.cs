@@ -111,4 +111,8 @@ public class FinalSwordPrefab : MonoBehaviour
     {
         canFinish = true;
     }
+    public void CanTrueFinish()
+    {
+        trueFinish = true;
+    }
 }

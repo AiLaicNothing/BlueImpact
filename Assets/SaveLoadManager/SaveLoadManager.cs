@@ -32,10 +32,18 @@ public class SaveLoadManager : MonoBehaviour
                 data.currentIndexCharacter = (int)value;
                 break;
             case "allocatedPoints":
-                data.allocatedPoints = (StatsType)value;
+                var dict = (Dictionary<StatsType, int>)value;
+                data.savedStats.Clear();
+                foreach (var kvp in dict)
+                {
+                    data.savedStats.Add(new StatSavedEntry { statType = kvp.Key, points = kvp.Value });
+                }
                 break;
             case "availablePoints":
                 data.availablePoints = (int)value;
+                break;
+            case "totalEarnedPoints":
+                data.totalEarnedPoints = (int)value;
                 break;
             case "discoveredCheckpoints":
                 data.discoveredCheckpoints = (List<DiscoveredCheckpoint>)value;
