@@ -92,6 +92,8 @@ public class SkillManagementPanel : MonoBehaviour, IGamepadPanel
 
         selectedSkill = null;
         selectedSlotIndex = -1;
+
+        Time.timeScale = 0f; // <-- agregar
         Refresh();
 
         GamepadCursor.Instance?.Acquire(this, CloseByUser);
