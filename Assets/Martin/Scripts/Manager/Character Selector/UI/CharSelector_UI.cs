@@ -21,7 +21,7 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
     private bool hasSelectedAlready;
     private bool isRegistered; // Si este panel está en la pila de GamepadCursor
-
+    private int currentIndex;
     private void Awake()
     {
         if (panel != null) panel.SetActive(false);
@@ -52,7 +52,6 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
             currentIndex = loadedData.currentIndexCharacter;
         }
     }
-    private void Update()
 
     private void OnDestroy()
     {
@@ -171,7 +170,7 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
         Unregister();
 
-        if (audioSource != null && audioSource.isPlaying)
+        if (audioSource != null && audioSource.isPlaying) { 
             audioSource.Stop();
             Debug.Log("⏹️ Música del selector detenida");
         }
@@ -198,6 +197,10 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
     // ---------- IGamepadPanel ----------
 
+    void LoadRespawn()
+    {
+        RespawnManager.Instance.Respawn();
+    }
     public void SetInputEnabled(bool enabled)
     {
         // Solo activa o desactiva la presencia de este panel en la pila de GamepadCursor
