@@ -36,6 +36,8 @@ public class Freeze_Skill : Skill
     public override void ExecuteSkill(PlayerControl player, Vector3 targetPoint, Vector3 lockTargetPos)
     {
         //DealDamage(player);
+
+        DestroyProjectionObject();
         player.StartCoroutine(CastIceSpyke(player));
     }
 
@@ -90,8 +92,6 @@ public class Freeze_Skill : Skill
     private IEnumerator CastIceSpyke(PlayerControl player)
     {
         player.blockVelocity = true;
-
-        DestroyProjectionObject();
 
         Vector3 vfxPos = player.transform.position + player.Model.right * vfxOffset.x + player.Model.up * vfxOffset.y + player.Model.forward * vfxOffset.z;
 

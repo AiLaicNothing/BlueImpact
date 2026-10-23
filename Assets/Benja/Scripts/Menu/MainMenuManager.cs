@@ -8,6 +8,7 @@ using UnityEngine.UI;
 public class MainMenuManager : MonoBehaviour
 {
     [SerializeField] private CanvasGroup menuCanvasGroup;
+    [SerializeField] private Button newGameButton;
     [SerializeField] private Button playButton;
     [SerializeField] private Button settingsButton;
     [SerializeField] private Button creditsButton;
@@ -27,8 +28,14 @@ public class MainMenuManager : MonoBehaviour
 
     private bool isTransitioning = false;
 
+    int firstSave;
+    public bool reset;
+    bool saved;
     private void Awake()
     {
+        if (newGameButton != null)
+            newGameButton.onClick.AddListener(OnNewGameClicked);
+
         if (playButton != null)
             playButton.onClick.AddListener(OnPlayButtonClicked);
 
@@ -50,11 +57,42 @@ public class MainMenuManager : MonoBehaviour
 
     private void Start()
     {
+        LoadSave();
         GameModeManager.Instance?.SetMode(GameMode.UI);
         ClearSelection();
         TakeCursor();
     }
+    void LoadSave()
+    {
 
+        if (reset)
+        {
+            PlayerPrefs.SetInt("FirstSave", 0);
+            Debug.Log(firstSave);
+
+        }
+        firstSave = PlayerPrefs.GetInt("FirstSave", 0);
+        Debug.Log(firstSave);
+        if (firstSave == 0)
+        {
+            saved = false;
+            SaveLoadManager.Instance.SaveGame("gameCreated", saved);
+            PlayerPrefs.SetInt("FirstSave", 1);
+            Debug.Log(firstSave);
+        }
+        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+        if (loadedData != null)
+        {
+            if (!loadedData.gameCreated)
+            {
+                playButton.interactable = false;
+            }
+            else
+            {
+                playButton.interactable = true;
+            }
+        }
+    }
     private void OnEnable()
     {
         Time.timeScale = 1f;
@@ -92,10 +130,20 @@ public class MainMenuManager : MonoBehaviour
 
     // ==================== BUTTON CALLBACKS ====================
 
+    private void OnNewGameClicked()
+    {
+        if (isTransitioning) return;
+        saved = true;
+        SaveLoadManager.Instance.SaveGame("gameCreated", saved);
+        SaveLoadManager.canLoad = false;
+        PlayButtonSound();
+        StartCoroutine(FadeOutAndLoadScene(gameSceneName));
+
+    }
     private void OnPlayButtonClicked()
     {
         if (isTransitioning) return;
-
+        SaveLoadManager.canLoad = true;
         PlayButtonSound();
         StartCoroutine(FadeOutAndLoadScene(gameSceneName));
     }

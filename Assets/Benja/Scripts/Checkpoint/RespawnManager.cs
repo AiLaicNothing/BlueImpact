@@ -63,7 +63,7 @@ public class RespawnManager : MonoBehaviour
     {
         if (isRespawning)
             return;
-
+        Debug.Log("GO?");
         StartCoroutine(RespawnRoutine());
     }
 
