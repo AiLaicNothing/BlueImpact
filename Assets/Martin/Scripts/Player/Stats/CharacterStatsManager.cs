@@ -76,11 +76,7 @@ public class CharacterStatsManager : MonoBehaviour
         }
 
         totalEarnedPoints = characterData.startingStatPoints;
-        if(SaveLoadManager.canLoad)
-        { 
-            LoadStats(); 
-        }
-        
+
         RecalculateAvailablePoints();
 
         OnStatsChanged?.Invoke();
@@ -160,13 +156,7 @@ public class CharacterStatsManager : MonoBehaviour
         if (loadedData != null)
         {
             availablePoints = loadedData.availablePoints;
-            totalEarnedPoints = loadedData.totalEarnedPoints;
-            allocatedPoints.Clear();
-            foreach (StatSavedEntry entry in loadedData.savedStats)
-            {
-                allocatedPoints[entry.statType] = entry.points;
-            }
-             
+            //allocatedPoints[loadedData.allocatedPoints] =
         }
     }
     public void ApplyStats()
@@ -175,11 +165,11 @@ public class CharacterStatsManager : MonoBehaviour
         {
             allocatedPoints[stat] = pendingPoints[stat];
 
+            SaveLoadManager.Instance.SaveGame("allocatedPoints", stat);
         }
 
         RecalculateAvailablePoints();
 
-        SaveLoadManager.Instance.SaveGame("allocatedPoints", allocatedPoints);
         if (debug) Debug.Log($"{characterData.name} stats applied");
 
         OnStatsChanged?.Invoke();
@@ -214,9 +204,6 @@ public class CharacterStatsManager : MonoBehaviour
         {
             availablePoints = 0;
         }
-
-        SaveLoadManager.Instance.SaveGame("availablePoints", availablePoints);
-
     }
 
     // This should be called when the player interact with the structure that give points
@@ -233,7 +220,6 @@ public class CharacterStatsManager : MonoBehaviour
         }
 
         totalEarnedPoints += amount;
-        SaveLoadManager.Instance.SaveGame("totalEarnedPoints", totalEarnedPoints);
 
         RecalculateAvailablePoints();
 
