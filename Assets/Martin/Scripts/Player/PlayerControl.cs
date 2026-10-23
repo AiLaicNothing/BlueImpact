@@ -106,38 +106,18 @@ public class PlayerControl : Controller, IDamageable
     private void InitializeSkills()
     {
         // Si tienes skills en el array, considéralas desbloqueadas
-        if (SaveLoadManager.canLoad)
-        {
-            LoadSkills();
-        }
         foreach (var skill in skills)
         {
             if (skill != null && !unlockedSkills.Contains(skill))
-            {
                 unlockedSkills.Add(skill);
-                SaveLoadManager.Instance.SaveGame("unlockedSkills", unlockedSkills);
-            }
         }
     }
-    void LoadSkills()
-    {
-        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
-        if (loadedData != null)
-        {
-            unlockedSkills = loadedData.unlockedSkills;
-            skills = loadedData.equipedSkills;
-            for(int i = 0; i < skills.Length; i++)
-            {
-                if (skills[i] != null) EquipSkill(i, skills[i]);
-            }
-        }
-    }
+
     public void UnlockSkill(Skill skill)
     {
         if (skill != null && !unlockedSkills.Contains(skill))
         {
             unlockedSkills.Add(skill);
-            SaveLoadManager.Instance.SaveGame("unlockedSkills", unlockedSkills);
             Debug.Log($"✅ Desbloqueada: {skill.skillName}");
         }
     }
@@ -152,7 +132,6 @@ public class PlayerControl : Controller, IDamageable
         if (slot >= 0 && slot < skills.Length)
         {
             skills[slot] = skill;
-            SaveLoadManager.Instance.SaveGame("equipedSkills", skills);
             Debug.Log($"⚡ Equipada en slot {slot}: {skill?.skillName}");
         }
     }
@@ -162,7 +141,6 @@ public class PlayerControl : Controller, IDamageable
         if (slot >= 0 && slot < skills.Length)
         {
             skills[slot] = null;
-            SaveLoadManager.Instance.SaveGame("equipedSkills", skills);
         }
     }
 
@@ -262,10 +240,7 @@ public class PlayerControl : Controller, IDamageable
         asd = FindAnyObjectByType<P_Skill_UI>();
         asd.RefreshIcons();
         InitializeSkills();
-        if (SaveLoadManager.canLoad)
-        {
-            asd.RefreshIcons();
-        }
+
         // ✅ ASIGNAR UI INPUT MODULE
         var playerInput = GetComponent<PlayerInput>();
         if (playerInput != null)

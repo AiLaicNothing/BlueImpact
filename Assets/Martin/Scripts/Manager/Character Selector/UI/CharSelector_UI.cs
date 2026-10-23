@@ -53,25 +53,11 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
     private void Start()
     {
-        if (SaveLoadManager.canLoad)
-        {
-            LoadData();
-            SelectCharacter(currentIndex);
-            StartGame();
-            hasSelectedAlready = true;
-        }
         if (hasSelectedAlready) return;
 
         StartSelector();
     }
-    void LoadData()
-    {
-        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
-        if (loadedData != null)
-        {
-            currentIndex = loadedData.currentIndexCharacter;
-        }
-    }
+
     private void Update()
     {
         // ✅ SOLO PROCESAR INPUT SI ESTE PANEL TIENE EL FOCO
@@ -300,7 +286,6 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
     private void StartGame()
     {
-        SaveLoadManager.Instance.SaveGame("currentIndexCharacter", currentIndex);
         panel.SetActive(false);
         inputEnabled = false; // ✅ DESHABILITAR INPUT DEL SELECTOR
 
@@ -310,22 +295,7 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
             audioSource.Stop();
             Debug.Log("⏹️ Música del selector detenida");
         }
-        if (SaveLoadManager.canLoad)
-        {
-            SaveData loadedData = SaveLoadManager.Instance.LoadGame();
-            if (loadedData != null)
-            {
-                if(loadedData.discoveredCheckpoints.Count > 0)
-                {
-                    var spawnPoints = CharSelector_Manager.Instance.GetInitialSpawnPoint();
 
-                    PlayerSpawn_Manager.Instance.SpawnCharacter(spawnPoints);
-                    Debug.Log("cargando checkpoint guardado");
-                    Invoke(nameof(LoadRespawn), 0.5f);
-                    return;
-                }
-            }
-        }
         var spawnPoint = CharSelector_Manager.Instance.GetInitialSpawnPoint();
 
         // ✅ CONFIGURAR RESPAWN INICIAL
@@ -333,10 +303,7 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
         PlayerSpawn_Manager.Instance.SpawnCharacter(spawnPoint);
     }
-    void LoadRespawn()
-    {
-        RespawnManager.Instance.Respawn();
-    }
+
     private void OnDestroy()
     {
         // ✅ LIMPIAR AudioSource

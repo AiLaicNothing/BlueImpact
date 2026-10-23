@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Checkpoints_Manager : MonoBehaviour
 {
-    public static Checkpoints_Manager Instance { get; private set; }
+    public static Checkpoints_Manager Instance { get; private set; } 
 
     private readonly List<DiscoveredCheckpoint> discoveredCheckpoints = new();
 
@@ -23,42 +23,8 @@ public class Checkpoints_Manager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
 
-        if (SaveLoadManager.canLoad) LoadData();
-    }
-    private void Start()
-    {
-        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
-        if (loadedData != null)
-        {
-            if (RespawnManager.Instance != null)
-            {
-                if (loadedData.activeCheckpoint != null)
-                {
-                    Debug.Log("go");
-                }
-                else
-                {
-                    Debug.Log("tttttttttttttttttttttttttttt");
-                }
-                RespawnManager.Instance.SetRespawn(activeCheckpoint);
-            }
-        }
-    }
-    void LoadData()
-    {
-        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
-        if (loadedData != null)
-        {
-            discoveredCheckpoints.Clear();
-            for(int i = 0; i < loadedData.discoveredCheckpoints.Count; i++)
-            {
-                discoveredCheckpoints.Add(loadedData.discoveredCheckpoints[i]);
-            }
-            activeCheckpoint = loadedData.activeCheckpoint;
-            
-        }
-    }
     public bool DiscoverCheckpoint(Checkpoint checkpoint)
     {
         if (checkpoint == null || checkpoint.Data == null) return false;
@@ -71,7 +37,7 @@ public class Checkpoints_Manager : MonoBehaviour
         }
 
         discoveredCheckpoints.Add(record);
-        SaveLoadManager.Instance.SaveGame("discoveredCheckpoints", discoveredCheckpoints);
+
         if (debug) Debug.Log($"[Checkpoint] Discovered {record._checkpointID} in {record._sceneName}");
 
         return true;
@@ -84,8 +50,7 @@ public class Checkpoints_Manager : MonoBehaviour
         //Set new checkpoint
         activeCheckpoint = new DiscoveredCheckpoint(checkpoint);
 
-        SaveLoadManager.Instance.SaveGame("activeCheckpoint", activeCheckpoint);
-        if (RespawnManager.Instance != null) RespawnManager.Instance.SetRespawn(activeCheckpoint); 
+        if (RespawnManager.Instance != null) RespawnManager.Instance.SetRespawn(activeCheckpoint); ;
     }
 
     public IReadOnlyList<DiscoveredCheckpoint> GetDiscoveredCheckpoints()

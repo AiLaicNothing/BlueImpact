@@ -45,11 +45,6 @@ public class SkillManagementPanel : MonoBehaviour, IGamepadPanel
 
         closeButton.onClick.AddListener(CloseByUser);
         unequipButton.onClick.AddListener(UnequipSelectedSlot);
-        if (SaveLoadManager.canLoad)
-        {
-            if (skillUI != null)
-                skillUI.RefreshIcons();
-        }
     }
 
     private void OnDisable()

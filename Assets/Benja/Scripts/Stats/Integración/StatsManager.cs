@@ -52,7 +52,7 @@ public class StatsManager : MonoBehaviour
         stats.Clear();
         currentValues.Clear();
         regenTimers.Clear();
-        
+
         foreach (var statValue in charDef.baseStats)
         {
             StatType statType = GetStatType(statValue.stat.statName);
@@ -60,8 +60,10 @@ public class StatsManager : MonoBehaviour
             currentValues[statType] = statValue.baseValue;
             regenTimers[statType] = 0f;
         }
+
         Debug.Log("StatsManager inicializado con: " + charDef.characterName);
     }
+
     private void Update()
     {
         if (stats == null || stats.Count == 0) return;
