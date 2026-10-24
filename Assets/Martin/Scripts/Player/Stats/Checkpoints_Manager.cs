@@ -29,6 +29,7 @@ public class Checkpoints_Manager : MonoBehaviour
     private void Start()
     {
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+
         if (loadedData != null)
         {
             if (RespawnManager.Instance != null)

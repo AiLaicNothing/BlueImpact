@@ -22,10 +22,9 @@ public class PuzzleDoor : MonoBehaviour, IActivatable
     private bool _isMoving = false;
 
     private bool _isOpen;
-    private void Start()
-    {
-        Debug.Log($"[PuzzleDoor] Start -> {name}");
 
+    private void Awake()
+    {
         _closedPosition = transform.position;
 
         Vector3 direction = axis switch
@@ -37,14 +36,8 @@ public class PuzzleDoor : MonoBehaviour, IActivatable
         };
 
         _openPosition = _closedPosition + direction * moveDistance;
-
         _targetPosition = _closedPosition;
-
-        Debug.Log($"[PuzzleDoor] ClosedPos: {_closedPosition}");
-        Debug.Log($"[PuzzleDoor] OpenPos: {_openPosition}");
     }
-
-    
 
     private void Update()
     {
@@ -89,10 +82,20 @@ public class PuzzleDoor : MonoBehaviour, IActivatable
         }
     }
 
+    public void RestoreState(bool open)
+    {
+        _isOpen = open;
+        _isMoving = false;
+
+        _targetPosition = open? _openPosition : _closedPosition;
+
+        // Instantly restore the correct position.
+        transform.position = _targetPosition;
+    }
+
     public void Activate()
     {
-        if (_isOpen)
-            return;
+        if (_isOpen) return;
 
         _isOpen = true;
 
@@ -101,8 +104,7 @@ public class PuzzleDoor : MonoBehaviour, IActivatable
 
     public void Deactivate()
     {
-        if (!_isOpen)
-            return;
+        if (!_isOpen) return;
 
         _isOpen = false;
 

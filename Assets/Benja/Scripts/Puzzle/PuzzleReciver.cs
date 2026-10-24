@@ -16,8 +16,7 @@ public class PuzzleReceiver : MonoBehaviour
     }
 
     [Header("Save System")]
-    [SerializeField] private string receiverID;
-    public string ReceiverID => receiverID;
+    [SerializeField] private WorldEvent_Data eventData;
 
     public enum LogicMode { AND, OR }
 
@@ -49,18 +48,55 @@ public class PuzzleReceiver : MonoBehaviour
         Debug.Log($"[PuzzleReceiver] Requirements count = {requirements.Count}");
     }
 
+    private void Start()
+    {
+        RestorePuzzleState();
+    }
+
+    private void RestorePuzzleState()
+    {
+        if (Event_Manager.Instance == null || eventData == null)
+            return;
+
+        if (!Event_Manager.Instance.TryGetState(eventData, out WorldEvent_State saved)) return;
+
+        _currentState = saved.completed;
+
+        if (!_currentState) return;
+
+        // Lock levers because the puzzle has already been solved.
+        foreach (Lever lever in _levers)
+        {
+            if (lever != null) lever.SetCooldown(true);
+        }
+
+        // Restore the doors without playing animation or audio.
+        foreach (PuzzleDoor target in targets)
+        {
+            if (target != null) target.RestoreState(true);
+        }
+
+        Debug.Log("[PuzzleReceiver] Completed puzzle restored.");
+    }
+
     public void RegisterActivator(IActivator activator)
     {
-        if (!_activators.Contains(activator))
-            _activators.Add(activator);
+        if (!_activators.Contains(activator)) _activators.Add(activator);
 
-        // Guardamos referencia a Lever para poder resetear/cooldown
         if (activator is Lever lever && !_levers.Contains(lever))
+        {
             _levers.Add(lever);
+
+            // If the puzzle has already been restored as completed,
+            // prevent this lever from being used again.
+            if (_currentState) lever.SetCooldown(true);
+        }
     }
 
     public void Evaluate()
     {
+
+        if (_currentState && requirements.Count > 0) return;
         // ── ADVANCED REQUIREMENTS ──────────────────────────────────────────
         if (requirements.Count > 0)
         {
@@ -141,17 +177,29 @@ public class PuzzleReceiver : MonoBehaviour
 
     private void ResolvePuzzle()
     {
-        if (_currentState) return; // Ya estaba resuelto
+        if (_currentState) return;
 
         _currentState = true;
-        Debug.Log("[PuzzleReceiver] ¡Puzzle resuelto!");
 
-        // Bloquear palancas permanentemente — el puzzle ya no es interactuable
-        foreach (var lever in _levers)
-            lever.SetCooldown(true);
+        Debug.Log("[PuzzleReceiver] Puzzle solved!");
 
+        // Lock all levers.
+        foreach (Lever lever in _levers)
+        {
+            if (lever != null) lever.SetCooldown(true);
+        }
+
+        // Activate all targets normally.
         ApplyTargets();
+
+        // Play the camera event.
         TriggerCamera();
+
+        // Save completion in Event_Manager.
+        if (Event_Manager.Instance != null && eventData != null)
+        {
+            Event_Manager.Instance.SaveState(eventData, true);
+        }
     }
 
     // ── FALLO ─────────────────────────────────────────────────────────────

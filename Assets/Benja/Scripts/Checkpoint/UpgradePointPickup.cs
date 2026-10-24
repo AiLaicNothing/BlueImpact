@@ -9,38 +9,79 @@ using UnityEngine;
 /// </summary>
 public class UpgradePointPickup : MonoBehaviour, IInteractable
 {
-    [Header("Recompensa")]
+    [Header("Persistence")]
+    [SerializeField] private Pickup_Data pickupData;
+
+    [Header("Reward")]
     [SerializeField] private int upgradePointsReward = 1;
 
-    [Header("Texto de interacción")]
+    [Header("Interaction")]
     [SerializeField] private string interactionText = "Recoger Punto de Mejora";
 
     [Header("Audio")]
     [SerializeField] private AudioClip pickupSound;
     [SerializeField] private float sfxVolume = 1f;
 
-    [Header("Feedback opcional")]
-    [Tooltip("VFX que se instancia en la posición del pickup al recogerlo (opcional).")]
+    [Header("Feedback")]
     [SerializeField] private GameObject pickupVfx;
-    [Tooltip("Popup de texto tipo '+X Puntos' (opcional, requiere PopupUI).")]
     [SerializeField] private bool showPopup = true;
 
-    private bool consumed = false;
+    private bool consumed;
+
+    private void Start()
+    {
+        // If already collected in a previous visit,
+        // remove this pickup from the scene.
+        if (WasPreviouslyCollected())
+        {
+            consumed = true;
+            Destroy(gameObject);
+        }
+    }
 
     public void Interact()
     {
         if (consumed) return;
+
+        // Don't allow collection without persistence.
+        if (Pickup_Manager.Instance == null || pickupData == null ||
+            string.IsNullOrWhiteSpace(pickupData.PickupID))
+        {
+            Debug.LogWarning(
+                "[UpgradePointPickup] Missing Pickup_Manager or valid Pickup_Data.", this);
+            return;
+        }
+
+        // Check again in case another system already
+        // marked the pickup as collected.
+        if (WasPreviouslyCollected())
+        {
+            consumed = true;
+            Destroy(gameObject);
+            return;
+        }
+
+        // Lock this pickup against repeated interactions.
         consumed = true;
 
-        // Ocultar el prompt de interacción inmediatamente
+        // Give reward first.
+        if (!GivePointsToPlayer())
+        {
+            consumed = false;
+            return;
+        }
+
+        // Save the pickup as collected.
+        Pickup_Manager.Instance.MarkCollected(pickupData);
+
+        // Hide interaction prompt.
         InteractionUI.Instance?.SetInteractable(null);
 
-        GivePointsToPlayer();
+        // Feedback.
         PlayPickupSound();
         SpawnVfx();
         ShowPopupFeedback();
 
-        // Desaparece: de un solo uso
         Destroy(gameObject);
     }
 
@@ -49,39 +90,67 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
         return consumed ? null : interactionText;
     }
 
-    private void GivePointsToPlayer()
+    // =========================
+    // REWARD
+    // =========================
+
+    private bool GivePointsToPlayer()
     {
         PlayerStatsManager playerStats = FindFirstObjectByType<PlayerStatsManager>();
 
-        if (playerStats == null)
+        CharacterStatsManager characterStats = CharacterStatsManager.Instance;
+
+        if (playerStats == null || characterStats == null)
         {
-            Debug.LogError("❌ UpgradePointPickup: PlayerStatsManager no encontrado, no se pudieron otorgar puntos");
-            return;
+            Debug.LogError(
+                "[UpgradePointPickup] PlayerStatsManager or CharacterStatsManager not found.",
+                this
+            );
+
+            return false;
         }
 
         playerStats.AddUpgradePoints(upgradePointsReward);
-        Debug.Log($"✅ +{upgradePointsReward} Puntos de Mejora otorgados");
+        characterStats.AddStatPoints(upgradePointsReward);
 
-        CharacterStatsManager.Instance.AddStatPoints(upgradePointsReward);
+        Debug.Log($"+{upgradePointsReward} Upgrade Points obtained.");
 
+        return true;
     }
+
+    // =========================
+    // PERSISTENCE
+    // =========================
+
+    private bool WasPreviouslyCollected()
+    {
+        return Pickup_Manager.Instance != null && Pickup_Manager.Instance.IsCollected(pickupData);
+    }
+
+    // =========================
+    // FEEDBACK
+    // =========================
 
     private void PlayPickupSound()
     {
         if (pickupSound == null || Audio_Manager.Instance == null) return;
+
         Audio_Manager.Instance.PlaySFX(pickupSound, sfxVolume);
     }
 
     private void SpawnVfx()
     {
         if (pickupVfx == null) return;
-        GameObject vfx = Instantiate(pickupVfx, transform.position, Quaternion.identity);
+
+        GameObject vfx = Instantiate(pickupVfx, transform.position,Quaternion.identity);
+
         Destroy(vfx, 3f);
     }
 
     private void ShowPopupFeedback()
     {
         if (!showPopup || PopupUI.Instance == null) return;
+
         PopupUI.Instance.Show($"+{upgradePointsReward} Puntos de Mejora");
     }
 }

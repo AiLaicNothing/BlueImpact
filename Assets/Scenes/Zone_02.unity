@@ -15659,6 +15659,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb40e1f785aea3a49b3d7a5db2b47db6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AmbushEvent
+  eventData: {fileID: 11400000, guid: 117a34fd6a527534dbce7553ef56e2bd, type: 2}
+  hasStarted: 0
+  hasFinished: 0
   spawnEntries:
   - enemyPrefab: {fileID: 836079941225019311, guid: b8a6e9fa0a7b8ec4db861384809124cb, type: 3}
     spawnPoint: {fileID: 671797089}
@@ -15696,20 +15699,13 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
-  hasStarted: 0
-  hasFinished: 0
   spawnVfx: {fileID: 0}
   vfxPos: []
-  doorSpeed: 6
   doors:
   - {fileID: 1842041345}
   - {fileID: 958396747}
-  closePos:
-  - {fileID: 111337052}
-  - {fileID: 218421436}
-  openPos:
-  - {fileID: 1371700432}
-  - {fileID: 330599251}
+  posY: 4
+  doorSpeed: 6
   closeDoorsEvent:
     cameraID: 203
     duration: 1.5
@@ -29471,7 +29467,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b7ad92dbdb968941a5af63d3fad4a9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PuzzleReceiver
-  receiverID: 
+  eventData: {fileID: 0}
   logicMode: 1
   requirements: []
   targets:
@@ -60973,6 +60969,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2655945150457090291, guid: 34907b50e1a9c694abe6f89bf7f54814, type: 3}
+      propertyPath: pickupData
+      value: 
+      objectReference: {fileID: 11400000, guid: 3ba519619655b834f8296c6ebf6b8587, type: 2}
     - target: {fileID: 3521215765730032622, guid: 34907b50e1a9c694abe6f89bf7f54814, type: 3}
       propertyPath: m_Name
       value: current altar 2
@@ -85968,6 +85968,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 071b464c3589bc24cbfdc348cf55d926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillPickup
+  pickupData: {fileID: 11400000, guid: 5f7d26f5312edab4aa73feedbc3f0a1f, type: 2}
   skillsByCharacter:
   - characterName: Lune
     skill: {fileID: 11400000, guid: 408bda86e0167f647b9db44eecf02163, type: 2}
@@ -88029,6 +88030,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2655945150457090291, guid: 34907b50e1a9c694abe6f89bf7f54814, type: 3}
+      propertyPath: pickupData
+      value: 
+      objectReference: {fileID: 11400000, guid: b7f5c31c06a54c64b96ac3b6ac6557dc, type: 2}
     - target: {fileID: 3521215765730032622, guid: 34907b50e1a9c694abe6f89bf7f54814, type: 3}
       propertyPath: m_Name
       value: current altar 2 (1)
@@ -113584,6 +113589,74 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1 &997854717
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 997854720}
+  - component: {fileID: 997854719}
+  - component: {fileID: 997854718}
+  m_Layer: 0
+  m_Name: SceneLoader_Zone_03 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &997854718
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 997854717}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79797f00fb2be924694d544fadd3d420, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneLoader
+  sceneNameLoad: Zone_01_Tutorial
+  sceneNameUnload: 
+--- !u!65 &997854719
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 997854717}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!4 &997854720
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 997854717}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -29.440338, y: 2.7141, z: 139.04242}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &997930799
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -157375,6 +157448,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 071b464c3589bc24cbfdc348cf55d926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillPickup
+  pickupData: {fileID: 11400000, guid: 931a505016ed5064c94ba123d57a73f4, type: 2}
   skillsByCharacter:
   - characterName: Lune
     skill: {fileID: 11400000, guid: 333049efa61726c41a0d3949194cf14d, type: 2}
@@ -209707,6 +209781,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 16
       objectReference: {fileID: 0}
+    - target: {fileID: 2170148302141342408, guid: 9f156efd7cddb694c81598dc0d54caf7, type: 3}
+      propertyPath: pickupData
+      value: 
+      objectReference: {fileID: 11400000, guid: 3c560a7cfad78e74da70d199b6c8358c, type: 2}
     - target: {fileID: 2226362003957612878, guid: 9f156efd7cddb694c81598dc0d54caf7, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 16
@@ -235458,6 +235536,74 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
+--- !u!1 &1930074756
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1930074759}
+  - component: {fileID: 1930074758}
+  - component: {fileID: 1930074757}
+  m_Layer: 0
+  m_Name: SceneLoader_Zone_03 (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1930074757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1930074756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79797f00fb2be924694d544fadd3d420, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneLoader
+  sceneNameLoad: 
+  sceneNameUnload: Zone_01_Tutorial
+--- !u!65 &1930074758
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1930074756}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!4 &1930074759
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1930074756}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -29.440338, y: 2.7141, z: 151.54242}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1934215303
 GameObject:
   m_ObjectHideFlags: 0
@@ -271331,6 +271477,8 @@ SceneRoots:
   - {fileID: 115928279}
   - {fileID: 537354148}
   - {fileID: 1056735625}
+  - {fileID: 997854720}
+  - {fileID: 1930074759}
   - {fileID: 107626136}
   - {fileID: 680848729}
   - {fileID: 278237817}

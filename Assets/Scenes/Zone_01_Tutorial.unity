@@ -19134,7 +19134,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c0665e1b8cd91e94ebfc32fb35245130, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 5.78
+      value: -4.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c0665e1b8cd91e94ebfc32fb35245130, type: 3}
       propertyPath: m_LocalPosition.z
@@ -22893,6 +22893,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f0f5f8175c289441aa84c10178196b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
+  eventData: {fileID: 11400000, guid: e5a680ee8ae8ed34f8f3267c77a471bd, type: 2}
   pages:
   - title: Movimiento #1
     description: "Puedes desplazarte con las teclas \"WASD\" o el joystick izquierdo
@@ -27047,7 +27048,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b7ad92dbdb968941a5af63d3fad4a9f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PuzzleReceiver
-  receiverID: 
+  eventData: {fileID: 11400000, guid: fd451b224125923459076a271ffbd68c, type: 2}
   logicMode: 0
   requirements:
   - activatorObject: {fileID: 195803494}
@@ -67093,7 +67094,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c0665e1b8cd91e94ebfc32fb35245130, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 5.5
+      value: -4.5
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c0665e1b8cd91e94ebfc32fb35245130, type: 3}
       propertyPath: m_LocalPosition.z
@@ -70310,6 +70311,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 071b464c3589bc24cbfdc348cf55d926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillPickup
+  pickupData: {fileID: 11400000, guid: c9c0584e71d0ded4ab3c35d9c3eda34e, type: 2}
   skillsByCharacter:
   - characterName: Lune
     skill: {fileID: 11400000, guid: 9799f9906959a9c42a26a07bc8fc16f3, type: 2}
@@ -75213,6 +75215,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f0f5f8175c289441aa84c10178196b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
+  eventData: {fileID: 11400000, guid: 3e6688639f3a44d499f457c1dd221efe, type: 2}
   pages:
   - title: Palancas
     description: "Las palancas pueden ser activadas con la tecla \"E\" o el bot\xF3n
@@ -80778,6 +80781,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f0f5f8175c289441aa84c10178196b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
+  eventData: {fileID: 11400000, guid: 6c85029da5fbd8d46869e20370de1dab, type: 2}
   pages:
   - title: Movimiento #3
     description: Con la tecla "LeftShift" o el gatillo "L1", puedes dashear para
@@ -104209,6 +104213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72068ea0b70bc5a46aa3d901c98cff4c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasicCombat_Tutorial
+  eventData: {fileID: 11400000, guid: 0dcd82b9699eeb34fa35d6ce362c8783, type: 2}
   spawnEntries:
   - enemyPrefab: {fileID: 7353159426421426004, guid: ed8878aba28c7ae4fb349ef1a55e9cfc, type: 3}
     spawnPoint: {fileID: 510150986}
@@ -104220,6 +104225,8 @@ MonoBehaviour:
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
   spawnVfx: {fileID: 0}
+  hasStarted: 0
+  hasFinished: 0
   doorSpeed: 5
   door: {fileID: 1680975685}
   closePos: {fileID: 1745423127}
@@ -127454,6 +127461,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb40e1f785aea3a49b3d7a5db2b47db6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AmbushEvent
+  eventData: {fileID: 11400000, guid: 95edff73b9105114191285bda3d467bf, type: 2}
+  hasStarted: 0
+  hasFinished: 0
   spawnEntries:
   - enemyPrefab: {fileID: 7353159426421426004, guid: ed8878aba28c7ae4fb349ef1a55e9cfc, type: 3}
     spawnPoint: {fileID: 1899650952}
@@ -127482,20 +127492,13 @@ MonoBehaviour:
     oneTimeSpawn: 0
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
-  hasStarted: 0
-  hasFinished: 0
   spawnVfx: {fileID: 0}
   vfxPos: []
-  doorSpeed: 5
   doors:
   - {fileID: 795557066}
   - {fileID: 272877548}
-  closePos:
-  - {fileID: 474753585}
-  - {fileID: 441411501}
-  openPos:
-  - {fileID: 306105038}
-  - {fileID: 704954971}
+  posY: 9
+  doorSpeed: 5
   closeDoorsEvent:
     cameraID: 102
     duration: 2
@@ -129264,6 +129267,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2655945150457090291, guid: 34907b50e1a9c694abe6f89bf7f54814, type: 3}
+      propertyPath: pickupData
+      value: 
+      objectReference: {fileID: 11400000, guid: b156150a46ac28549b2f6d8658731d88, type: 2}
     - target: {fileID: 3521215765730032622, guid: 34907b50e1a9c694abe6f89bf7f54814, type: 3}
       propertyPath: m_Name
       value: current altar 2
@@ -131559,6 +131566,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f0f5f8175c289441aa84c10178196b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
+  eventData: {fileID: 11400000, guid: 77f4fb9850122c549a52795bdbb02e1e, type: 2}
   pages:
   - title: Puntos de guardado
     description: Puedes interactuar con esta estructura para obtener ciertas funciones.
@@ -142199,6 +142207,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f0f5f8175c289441aa84c10178196b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
+  eventData: {fileID: 11400000, guid: 83e75c600e877f749b4ae71062077513, type: 2}
   pages:
   - title: Habilidades
     description: Por los niveles encontraras cristales que desbloquearan habilidades.
@@ -142866,6 +142875,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f0f5f8175c289441aa84c10178196b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TutorialPopUp
+  eventData: {fileID: 11400000, guid: 4d807a29f0d746e4ea03be25c772ffbf, type: 2}
   pages:
   - title: Movimiento #2
     description: "Con la tecla \"Espacio\" o el bot\xF3n \"X\" puedes realizar un
