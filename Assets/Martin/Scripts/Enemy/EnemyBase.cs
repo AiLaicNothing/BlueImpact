@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data.SqlTypes;
 using UnityEngine;
 using UnityEngine.AI;
@@ -101,6 +102,19 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public bool IsStaggered => isStaggered;
     public bool IsDead => isDead;
     public bool IsGrounded => isGrounded;
+
+    [Header("Dead Effect")]
+    [SerializeField] float durationDissolve = 1.5f;
+    [SerializeField] string _DisolveProgress = "_DisolveProgress";
+    [SerializeField] Material dieMaterial;
+    [ColorUsage(true, true)]
+    [SerializeField] Color EdgeColor = new Color(0.1875f * 2.33059f, 0.45937f * 2.33059f, 0.75f * 2.33059f, 1f);
+    [SerializeField] string _EdgeColor = "_EdgeColor";
+    private const string baseTexture = "_MainTex";
+    private const string shaderTexture = "_MainTex";
+    private List<Material> clonMaterials = new List<Material>();
+    private Renderer[] allRenderers;
+
     protected virtual void OnEnable()
     {
         PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
@@ -127,7 +141,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         barUI = GetComponentInChildren<E_BarHolder_UI>();
         healthUI = GetComponentInChildren<E_HealthBar>();
         staggerUI = GetComponentInChildren<E_StaggerBar>();
-
+        allRenderers = GetComponentsInChildren<Renderer>(true);
         if (stats != null)
         {
             currentHp = stats.maxHp;
@@ -676,10 +690,72 @@ public class EnemyBase : MonoBehaviour, IDamageable
             agent.isStopped = true;
             agent.enabled = false;
         }
-
+        StartDeadEffect();
+    }
+    void StartDeadEffect()
+    {
+        ChangeMaterials();
+        StartCoroutine(DieEffect());
+    }
+    void ChangeMaterials()
+    {
+        foreach(Renderer renderer in allRenderers)
+        {
+            Material[] originalMats = renderer.sharedMaterials;
+            Material[] newMaterials = new Material[originalMats.Length];
+            for(int i = 0; i< originalMats.Length; i++)
+            {
+                Material originalMat = originalMats[i];
+                if (originalMat == null) continue;
+                Material clonMat = new Material(dieMaterial);
+                clonMat.SetFloat(_DisolveProgress, 0f);
+                if (clonMat.HasProperty(_EdgeColor))
+                {
+                    clonMat.SetColor(_EdgeColor, EdgeColor);
+                }
+                if (originalMat.HasProperty(baseTexture))
+                {
+                    Texture originalTex = originalMat.GetTexture(baseTexture);
+                    if(originalTex != null && clonMat.HasProperty(shaderTexture))
+                    {
+                        clonMat.SetTexture(shaderTexture, originalTex);
+                    }
+                }
+                newMaterials[i] = clonMat;
+                clonMaterials.Add(clonMat);
+            }
+            renderer.materials = newMaterials;
+        }
+    }
+    IEnumerator DieEffect()
+    {
+        float timePassed = 0f;
+        while(timePassed < durationDissolve)
+        {
+            timePassed += Time.deltaTime;
+            float progress = Mathf.Clamp01(timePassed / durationDissolve);
+            foreach(Material mat in clonMaterials)
+            {
+                if(mat != null)
+                {
+                    mat.SetFloat(_DisolveProgress, progress);
+                }
+            }
+            yield return null;
+        }
         Destroy(gameObject);
     }
-
+    private void OnDestroy()
+    {
+        if(clonMaterials != null)
+        {
+            foreach(Material mat in clonMaterials)
+            {
+                if (mat != null) Destroy(mat);
+            }
+            clonMaterials.Clear();
+        }
+    }
     public void OnSpawn(Transform[] PatrolPoints, Transform safePoint, bool hasPatrol, Transform spawnPos)
     {
         patrolZones = PatrolPoints;
