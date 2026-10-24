@@ -4923,7 +4923,6 @@ GameObject:
   - component: {fileID: 3352922391594611770}
   - component: {fileID: 6635515724564619875}
   - component: {fileID: 3598061137925226857}
-  - component: {fileID: 5395962127941570482}
   - component: {fileID: 2832571357547982253}
   - component: {fileID: 1095799146836843656}
   m_Layer: 7
@@ -5304,7 +5303,19 @@ MonoBehaviour:
     m_ActionId: e077e93b-eae1-4c67-926a-9c5ce2bf0927
     m_ActionName: 'Player/Pause[/Keyboard/escape,/DualShock4GamepadHID/start]'
   - m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: d02b62ec-a5f2-4337-a5cf-050fc4a27253
     m_ActionName: 'Player/Journal[/Keyboard/tab]'
   - m_PersistentCalls:
@@ -5453,20 +5464,6 @@ MonoBehaviour:
   cameraLockSpeed: 360
   modelLockSpeed: 500
   debugLockOn: 0
---- !u!114 &5395962127941570482
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4350080309363066840}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d37021e02288674fb398f7f863f6650, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraManager
-  inputAxisController: {fileID: 0}
-  orbitalFollow: {fileID: 0}
 --- !u!82 &2832571357547982253
 AudioSource:
   m_ObjectHideFlags: 0
