@@ -21529,12 +21529,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 873c579bfa2743b44bff944f4363e699, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Door_Event
+  eventData: {fileID: 11400000, guid: 00e6f356b8f680b448e4a305faa5f2ef, type: 2}
   animType: 0
   posX: 0
   posY: 5
   posZ: 0
-  _transform: {fileID: 0}
+  _transform: {fileID: 177065175}
   moveSpeed: 2
+  isUp: 0
   anim: 
 --- !u!1 &177144301
 GameObject:
@@ -201431,10 +201433,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91a751b988498eb46bb323201191369d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Elevator_Event
+  eventData: {fileID: 11400000, guid: 8cd9e37f0e550974c8ca3c97746b2c5a, type: 2}
   plattform: {fileID: 1570025482}
-  upperPos: {fileID: 1135644590}
-  lowerPos: {fileID: 712693703}
+  posY: 14.5
   moveSpeed: 5
+  reachThreshold: 0.01
+  isUp: 0
 --- !u!1001 &1604639338
 PrefabInstance:
   m_ObjectHideFlags: 0

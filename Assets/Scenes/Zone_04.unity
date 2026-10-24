@@ -1415,6 +1415,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 071b464c3589bc24cbfdc348cf55d926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillPickup
+  pickupData: {fileID: 0}
   skillsByCharacter:
   - characterName: Lune
     skill: {fileID: 11400000, guid: 70a3fa89c2721ee469b4b97d17d5a781, type: 2}
@@ -27080,6 +27081,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1610628810}
     m_Modifications:
+    - target: {fileID: 2655945150457090291, guid: 34907b50e1a9c694abe6f89bf7f54814, type: 3}
+      propertyPath: pickupData
+      value: 
+      objectReference: {fileID: 11400000, guid: dddab446e107c9a41a3dfc924b0e9739, type: 2}
     - target: {fileID: 3521215765730032622, guid: 34907b50e1a9c694abe6f89bf7f54814, type: 3}
       propertyPath: m_Name
       value: current altar 2
@@ -31386,6 +31391,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 071b464c3589bc24cbfdc348cf55d926, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkillPickup
+  pickupData: {fileID: 11400000, guid: f3ab7447b0c531f419be996ea1f85266, type: 2}
   skillsByCharacter:
   - characterName: Lune
     skill: {fileID: 11400000, guid: f53176aab585a2349ba587f95ab1d0cd, type: 2}
