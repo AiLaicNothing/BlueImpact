@@ -44,4 +44,32 @@ public class InstantDeathZone : MonoBehaviour
 
         damageable.TakeDamage(info);
     }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        IDamageable damageable = collision.collider.GetComponentInParent<IDamageable>();
+
+        if (damageable == null) return;
+
+        DamageInfo info = new DamageInfo
+        {
+            damage = damageAmount
+        };
+
+        damageable.TakeDamage(info);
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        IDamageable damageable = collision.collider.GetComponentInParent<IDamageable>();
+
+        if (damageable == null) return;
+
+        DamageInfo info = new DamageInfo
+        {
+            damage = damageAmount
+        };
+
+        damageable.TakeDamage(info);
+    }
 }
