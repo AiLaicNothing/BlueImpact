@@ -39,6 +39,23 @@ public class SaveLoadManager : MonoBehaviour
                     data.savedStats.Add(new StatSavedEntry { statType = kvp.Key, points = kvp.Value });
                 }
                 break;
+            case "collectedPickups":
+                HashSet<string> pickupSet = (HashSet<string>)value;
+                data.collectedPickups.Clear();
+                data.collectedPickups.AddRange(pickupSet);
+                break;
+            case "eventStates":
+                Dictionary<string, WorldEvent_State> eventDict = (Dictionary<string, WorldEvent_State>)value;
+                data.eventStates.Clear();
+
+                foreach (KeyValuePair<string, WorldEvent_State> kvp in eventDict)
+                {
+                    EventStateSavedEntry entry = new EventStateSavedEntry();
+                    entry.eventID = kvp.Key;
+                    entry.stateData = kvp.Value;
+                    data.eventStates.Add(entry);
+                }
+                break;
             case "availablePoints":
                 data.availablePoints = (int)value;
                 break;

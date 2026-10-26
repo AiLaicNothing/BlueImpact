@@ -16,6 +16,18 @@ public class Event_Manager : MonoBehaviour
         }
 
         Instance = this;
+        if (SaveLoadManager.canLoad)
+        {
+            LoadData();
+        }
+    }
+    void LoadData()
+    {
+        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+        if (loadedData != null)
+        {
+            LoadStates(loadedData.eventStates);
+        }
     }
 
     public void SaveState(WorldEvent_Data eventData,bool completed, int state = 0)
@@ -27,6 +39,7 @@ public class Event_Manager : MonoBehaviour
         }
 
         eventStates[eventData.Event_ID] = new WorldEvent_State(completed, state);
+        SaveLoadManager.Instance.SaveGame("eventStates", eventStates);
     }
 
     public bool TryGetState(WorldEvent_Data eventData, out WorldEvent_State savedState)
@@ -64,7 +77,7 @@ public class Event_Manager : MonoBehaviour
     }
 
     // Called after loading the saved data from disk.
-    public void LoadStates(Dictionary<string, WorldEvent_State> savedStates)
+    public void LoadStates(List<EventStateSavedEntry> savedStates)
     {
         eventStates.Clear();
 
@@ -72,9 +85,9 @@ public class Event_Manager : MonoBehaviour
 
         foreach (var entry in savedStates)
         {
-            if (string.IsNullOrWhiteSpace(entry.Key) || entry.Value == null) continue;
+            if (string.IsNullOrWhiteSpace(entry.eventID) || entry.stateData == null) continue;
 
-            eventStates[entry.Key] = new WorldEvent_State(entry.Value.completed, entry.Value.state);
+            eventStates[entry.eventID] = new WorldEvent_State(entry.stateData.completed, entry.stateData.state);
         }
     }
 }

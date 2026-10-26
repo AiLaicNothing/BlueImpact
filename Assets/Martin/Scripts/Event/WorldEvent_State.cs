@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public class WorldEvent_State : MonoBehaviour
+public class WorldEvent_State 
 {
     public bool completed;
     public int state;
