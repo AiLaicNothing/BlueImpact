@@ -40,6 +40,8 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private float partTituraStopDistance = 1.5f;
     [SerializeField] private float partTituraHitInterval = 1.5f; // Y: segundos entre ataques (minimo ~1.5 por el clip de cola)
     [SerializeField] private float swordHitRadius = 3f;
+    [SerializeField] private float swordHitAngle = 120f;         // cono frontal total en grados (180 = media luna)
+    [SerializeField] private float tailHitAngle = 120f;          // cono frontal total de la cola en grados
     [SerializeField] private float tailHitRadius = 3.5f;
     [SerializeField] private float swordDamage = 12f;            // DMG x hit
     [SerializeField] private float tailDamage = 12f;             // DMG x hit
@@ -79,6 +81,20 @@ public class Boss_MedusaMorgana : EnemyBase
     // BossEvent se suscribe para manejar camara y modo cinematico
     public event System.Action OnPhaseTwoStarted;
 
+    [Header("Telegrafia y trail")]
+    [SerializeField] private BossAttackTelegraph telegraph;
+
+    [Header("Gizmos (solo en Scene view)")]
+    [SerializeField] private bool showGizmos = true;
+    [SerializeField] private bool showHitAreas = true;
+    [SerializeField] private bool showResonanciaArea = true;
+    [SerializeField] private Color gizmoArenaColor = Color.magenta;
+    [SerializeField] private Color gizmoBorderColor = Color.red;
+    [SerializeField] private Color gizmoSwordColor = new Color(1f, 0.8f, 0f);
+    [SerializeField] private Color gizmoTailColor = Color.cyan;
+    [SerializeField] private Color gizmoResonanciaColor = new Color(1f, 0.4f, 0f);
+    [SerializeField] private Color gizmoSummonColor = Color.green;
+
     public bool inCinematic;
 
     // Parametros del Animator
@@ -113,6 +129,7 @@ public class Boss_MedusaMorgana : EnemyBase
         base.Start();
 
         if (arenaCenter == null) arenaCenter = transform;
+        if (telegraph == null) telegraph = GetComponent<BossAttackTelegraph>();
 
         // Arranca con el modelo de la fase 1
         if (phaseTwoModel != null) phaseTwoModel.SetActive(false);
@@ -240,6 +257,8 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (activeMarker != null) Destroy(activeMarker);
 
+        if (telegraph != null) telegraph.CancelAll();
+
         isAttacking = false;
         nextAttackTime = Time.time + pauseBetweenAttacks;
     }
@@ -363,6 +382,14 @@ public class Boss_MedusaMorgana : EnemyBase
         SetMoving(false);
         Trigger(HashIncantation);
 
+        if (telegraph != null)
+        {
+            telegraph.StartTelegraph(
+                () => BossAttackTelegraph.Rect(transform.position, transform.forward,
+                    resonanciaRangeOffset, resonanciaRectWidth, resonanciaRectDepth),
+                resonanciaWindUp);
+        }
+
         float timer = 0f;
         while (timer < resonanciaWindUp)
         {
@@ -372,6 +399,8 @@ public class Boss_MedusaMorgana : EnemyBase
         }
 
         if (!HasValidPlayer()) yield break;
+
+        if (telegraph != null) telegraph.OnHit();
 
         ResonanciaBurst(FlatDirToPlayer());
 
@@ -422,10 +451,13 @@ public class Boss_MedusaMorgana : EnemyBase
         {
             if (!HasValidPlayer()) break;
 
-            // El giro lo hace la animacion, aqui solo avanza hacia el jugador
+            // Se orienta hacia el jugador y avanza hacia adelante, para no deslizarse de lado.
+            // El giro visible lo hace la animacion.
+            FaceTarget(turnSpeed);
+
             if (DistanceToPlayerFlat() > partTituraStopDistance)
             {
-                transform.position += FlatDirToPlayer() * partTituraMoveSpeed * Time.deltaTime;
+                transform.position += transform.forward * partTituraMoveSpeed * Time.deltaTime;
             }
 
             // Cada Y segundos alterna espada y cola
@@ -436,7 +468,21 @@ public class Boss_MedusaMorgana : EnemyBase
 
                 Trigger(pendingIsSword ? HashAttackSword : HashAttackTail);
 
-                pendingHitAt = timer + FramesToSeconds(pendingIsSword ? swordHitFrame : tailHitFrame);
+                float windup = FramesToSeconds(pendingIsSword ? swordHitFrame : tailHitFrame);
+                float warningRadius = pendingIsSword ? swordHitRadius : tailHitRadius;
+                bool isSword = pendingIsSword;
+                float warningAngle = pendingIsSword ? swordHitAngle : tailHitAngle;
+
+                if (telegraph != null)
+                {
+                    telegraph.StartTelegraph(
+                        () => BossAttackTelegraph.Sector(transform.position, transform.forward, warningRadius, warningAngle),
+                        windup);
+
+                    telegraph.SetTrail(pendingIsSword, true);
+                }
+
+                pendingHitAt = timer + windup;
                 nextAttackAt = timer + partTituraHitInterval;
             }
 
@@ -448,7 +494,15 @@ public class Boss_MedusaMorgana : EnemyBase
                 float radius = pendingIsSword ? swordHitRadius : tailHitRadius;
                 float damage = pendingIsSword ? swordDamage : tailDamage;
 
-                DamagePlayerWithin(transform.position, radius, damage, FlatDirToPlayer());
+                if (telegraph != null)
+                {
+                    telegraph.OnHit();
+                    telegraph.SetTrail(pendingIsSword, false);
+                }
+
+                float hitAngle = pendingIsSword ? swordHitAngle : tailHitAngle;
+
+                DamagePlayerInSector(transform.position, transform.forward, radius, hitAngle, damage, transform.forward);
             }
 
             timer += Time.deltaTime;
@@ -587,6 +641,11 @@ public class Boss_MedusaMorgana : EnemyBase
         // El haz cae donde estaba el jugador al terminar la marca, no donde esta ahora
         Vector3 beamPos = lastPos;
 
+        if (telegraph != null)
+        {
+            telegraph.StartTelegraph(() => BossAttackTelegraph.Circle(beamPos, beamRadius), beamDelay);
+        }
+
         if (beamWarningVfx != null)
         {
             GameObject warning = Instantiate(beamWarningVfx, beamPos, Quaternion.identity);
@@ -600,6 +659,8 @@ public class Boss_MedusaMorgana : EnemyBase
             GameObject beam = Instantiate(beamVfx, beamPos, Quaternion.identity);
             Destroy(beam, 0.5f);
         }
+
+        if (telegraph != null) telegraph.OnHit();
 
         DamagePlayerWithin(beamPos, beamRadius, disonanciaDamage, Vector3.up);
     }
@@ -696,6 +757,32 @@ public class Boss_MedusaMorgana : EnemyBase
         }
     }
 
+    // Dano solo si el jugador esta dentro del radio y dentro del cono frontal
+    private void DamagePlayerInSector(Vector3 origin, Vector3 forward, float radius, float angleDeg, float amount, Vector3 hitDir)
+    {
+        if (!HasValidPlayer()) return;
+
+        Vector3 toPlayer = player.transform.position - origin;
+        toPlayer.y = 0f;
+
+        if (toPlayer.magnitude > radius) return;
+
+        if (toPlayer.sqrMagnitude < 0.0001f)
+        {
+            DamagePlayer(amount, hitDir);
+            return;
+        }
+
+        forward.y = 0f;
+
+        float angle = Vector3.Angle(forward, toPlayer);
+
+        if (angle <= angleDeg * 0.5f)
+        {
+            DamagePlayer(amount, hitDir);
+        }
+    }
+
     // ---------- UTILIDADES ----------
 
     private Vector3 ArenaCenterPos()
@@ -765,22 +852,61 @@ public class Boss_MedusaMorgana : EnemyBase
         if (spawner != null) summonSpawner = spawner;
     }
 
+    private void DrawPolyline(Vector3[] pts, Color color)
+    {
+        Gizmos.color = color;
+
+        for (int i = 0; i < pts.Length; i++)
+        {
+            Gizmos.DrawLine(pts[i], pts[(i + 1) % pts.Length]);
+        }
+    }
+
     private void OnDrawGizmosSelected()
     {
-        if (!debug) return;
+        if (!showGizmos) return;
 
         Vector3 center = ArenaCenterPos();
+        Vector3 pos = transform.position;
+        Vector3 fwd = transform.forward;
 
-        Gizmos.color = Color.magenta;
+        // Arena y borde de la fase 2
+        Gizmos.color = gizmoArenaColor;
         Gizmos.DrawWireSphere(center, arenaRadius);
 
-        Gizmos.color = Color.red;
+        Gizmos.color = gizmoBorderColor;
         Gizmos.DrawWireSphere(center, arenaRadius - borderWidth);
 
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, swordHitRadius);
+        // Zonas de golpe de Part-Titura (son alrededor del boss, 360 grados)
+        if (showHitAreas)
+        {
+            Vector3[] swordCone = BossAttackTelegraph.Sector(pos, fwd, swordHitRadius, swordHitAngle);
+            Vector3[] tailCone = BossAttackTelegraph.Sector(pos, fwd, tailHitRadius, tailHitAngle);
 
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, tailHitRadius);
+            DrawPolyline(swordCone, gizmoSwordColor);
+            DrawPolyline(tailCone, gizmoTailColor);
+        }
+
+        // Area rectangular de Resonancia, contando desde el frente del boss
+        if (showResonanciaArea)
+        {
+            Vector3[] rect = BossAttackTelegraph.Rect(pos, fwd, resonanciaRangeOffset, resonanciaRectWidth, resonanciaRectDepth);
+
+            Gizmos.color = gizmoResonanciaColor;
+            for (int i = 0; i < rect.Length; i++)
+            {
+                Gizmos.DrawLine(rect[i], rect[(i + 1) % rect.Length]);
+            }
+        }
+
+        // Puntos donde aparecen los golems
+        if (summonPoints != null)
+        {
+            Gizmos.color = gizmoSummonColor;
+            foreach (Transform p in summonPoints)
+            {
+                if (p != null) Gizmos.DrawWireSphere(p.position, 0.5f);
+            }
+        }
     }
 }
