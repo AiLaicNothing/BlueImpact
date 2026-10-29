@@ -152,7 +152,7 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
             return;
         }
 
-        charName.text = data.data.name;
+        charName.text = data.data.characterName;
         description.text = data.description;
         charImage.sprite = data.portrait;
 

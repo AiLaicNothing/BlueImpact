@@ -23,6 +23,7 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
     [SerializeField] private float sfxVolume = 1f;
 
     [Header("Feedback")]
+    [SerializeField] private GameObject model;
     [SerializeField] private GameObject pickupVfx;
     [SerializeField] private bool showPopup = true;
 
@@ -35,7 +36,7 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
         if (WasPreviouslyCollected())
         {
             consumed = true;
-            Destroy(gameObject);
+            Destroy(model);
         }
     }
 
@@ -82,7 +83,7 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
         SpawnVfx();
         ShowPopupFeedback();
 
-        Destroy(gameObject);
+        Destroy(model);
     }
 
     public string GetInteractionText()

@@ -16,11 +16,10 @@ public class BasicCombat_Tutorial : MonoBehaviour
     [SerializeField] private bool hasStarted;
     [SerializeField] private bool hasFinished;
 
-    [Header("Door")]
+    [Header("Doors")]
+    [SerializeField] private Transform[] doors;
+    [SerializeField] private float posY = 4f;
     [SerializeField] private float doorSpeed = 2f;
-    [SerializeField] private Transform door;
-    [SerializeField] private Transform closePos;
-    [SerializeField] private Transform openPos;
 
     [Header("Camera")]
     [SerializeField] private CameraRequest cameraEvent;
@@ -29,6 +28,8 @@ public class BasicCombat_Tutorial : MonoBehaviour
     [SerializeField] private List<PopUpPage> pages = new();
     private UIPopUp ui;
 
+    private Vector3[] closedLocalPositions;
+
     private readonly List<GameObject> enemies = new();
 
     private PlayerControl playerControl;
@@ -36,16 +37,23 @@ public class BasicCombat_Tutorial : MonoBehaviour
     public bool HasStarted => hasStarted;
     public bool HasFinished => hasFinished;
 
-    // =========================
-    // INITIALIZATION
-    // =========================
-
     private void Awake()
     {
         ui = FindAnyObjectByType<UIPopUp>();
 
-        // The tutorial door starts OPEN.
-        SetDoorOpenInstant();
+        // Doors are already CLOSED in the Unity Editor.
+        // Save each door's original local position.
+        closedLocalPositions = new Vector3[doors.Length];
+
+        for (int i = 0; i < doors.Length; i++)
+        {
+            if (doors[i] == null) continue;
+
+            closedLocalPositions[i] = doors[i].localPosition;
+        }
+
+        // Doors must start OPEN.
+        SetDoorsInstant(true);
     }
 
     private void OnEnable()
@@ -69,8 +77,6 @@ public class BasicCombat_Tutorial : MonoBehaviour
         PlayerControl.OnPlayerDied -= ResetEvent;
         PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
 
-        // Cancel unfinished encounters when the
-        // scene or this component is disabled.
         if (hasStarted && !hasFinished)
         {
             ResetEvent();
@@ -81,10 +87,6 @@ public class BasicCombat_Tutorial : MonoBehaviour
     {
         playerControl = control;
     }
-
-    // =========================
-    // SAVE SYSTEM
-    // =========================
 
     private void RestoreEventState()
     {
@@ -100,11 +102,11 @@ public class BasicCombat_Tutorial : MonoBehaviour
             Debug.LogWarning("[BasicCombat_Tutorial] Missing Event_Manager or eventData.", this);
         }
 
-        // Restore the door immediately.
-        // No animation, audio, or camera event.
-        SetDoorOpenInstant();
+        // Always restore the doors OPEN.
+        // This doesn't play the movement or camera event.
+        SetDoorsInstant(true);
 
-        Debug.Log($"[BasicCombat_Tutorial] State restored. Completed: {hasFinished}", this);
+        Debug.Log( $"[BasicCombat_Tutorial] State restored. Completed: {hasFinished}",this);
     }
 
     private void SaveEventState()
@@ -117,18 +119,15 @@ public class BasicCombat_Tutorial : MonoBehaviour
 
         Event_Manager.Instance.SaveState(eventData, true);
 
-        Debug.Log("[BasicCombat_Tutorial] Completion saved.", this);
+        Debug.Log("[BasicCombat_Tutorial] Completion saved.");
     }
 
-    // =========================
-    // EVENT ACTIVATION
-    // =========================
 
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
 
-        // Never trigger again once completed.
+        // Prevent restarting a completed or running event.
         if (hasStarted || hasFinished) return;
 
         hasStarted = true;
@@ -136,31 +135,27 @@ public class BasicCombat_Tutorial : MonoBehaviour
         StartCoroutine(Ambush());
     }
 
-    // =========================
-    // MAIN EVENT
-    // =========================
-
     private IEnumerator Ambush()
     {
         Debug.Log("[BasicCombat_Tutorial] Tutorial started.");
 
+        // STEP 1: Enter cutscene mode.
         SetCutsceneMode(true);
 
-        if (cameraEvent != null && CameraEventRelay.Instance != null)
+        if (cameraEvent != null &&
+            CameraEventRelay.Instance != null)
         {
             CameraEventRelay.Instance.Play(cameraEvent);
         }
 
-        yield return MoveDoor(closePos);
+        yield return MoveDoors(false);
 
         yield return StartSpawn();
 
-        // STEP 5: Show the tutorial popup.
         if (ui != null)
         {
             ui.ShowPopUp(pages);
 
-            // Wait until the UI is closed.
             while (GameModeManager.Instance != null &&
                    GameModeManager.Instance.CurrentMode == GameMode.UI)
             {
@@ -172,9 +167,7 @@ public class BasicCombat_Tutorial : MonoBehaviour
 
         while (enemies.Count > 0)
         {
-            enemies.RemoveAll(
-                enemy => enemy == null || !enemy.activeInHierarchy
-            );
+            enemies.RemoveAll(enemy => enemy == null || !enemy.activeInHierarchy);
 
             yield return null;
         }
@@ -183,7 +176,7 @@ public class BasicCombat_Tutorial : MonoBehaviour
 
         SetCutsceneMode(true);
 
-        yield return MoveDoor(openPos);
+        yield return MoveDoors(true);
 
         SetCutsceneMode(false);
 
@@ -195,35 +188,72 @@ public class BasicCombat_Tutorial : MonoBehaviour
         Debug.Log("[BasicCombat_Tutorial] Tutorial completed.");
     }
 
-    // =========================
-    // DOOR MOVEMENT
-    // =========================
-
-    private IEnumerator MoveDoor(Transform finalPos)
+    private IEnumerator MoveDoors(bool open)
     {
-        if (door == null || finalPos == null)
+        if (doors == null || closedLocalPositions == null)
             yield break;
 
-        while (Vector3.Distance(door.position,finalPos.position) > 0.01f)
+        bool moving = true;
+
+        while (moving)
         {
-            door.position = Vector3.MoveTowards(door.position, finalPos.position, Mathf.Max(0.01f, doorSpeed) * Time.deltaTime);
+            moving = false;
+
+            for (int i = 0; i < doors.Length; i++)
+            {
+                Transform door = doors[i];
+
+                if (door == null) continue;
+
+                Vector3 targetPosition =closedLocalPositions[i];
+
+                if (open)
+                {
+                    targetPosition.y += posY;
+                }
+
+                Vector3 currentPosition = door.localPosition;
+
+                float newY = Mathf.MoveTowards(currentPosition.y, targetPosition.y, 
+                    Mathf.Max(0.01f, doorSpeed) * Time.deltaTime);
+
+                door.localPosition = new Vector3( currentPosition.x,newY,
+                    currentPosition.z);
+
+                // Check if this door is still moving.
+                if (Mathf.Abs(newY - targetPosition.y) > 0.001f)
+                {
+                    moving = true;
+                }
+            }
 
             yield return null;
         }
 
-        door.position = finalPos.position;
+        SetDoorsInstant(open);
     }
 
-    private void SetDoorOpenInstant()
+    private void SetDoorsInstant(bool open)
     {
-        if (door == null || openPos == null) return;
+        if (doors == null || closedLocalPositions == null) return;
 
-        door.position = openPos.position;
+        for (int i = 0; i < doors.Length; i++)
+        {
+            Transform door = doors[i];
+
+            if (door == null) continue;
+
+            Vector3 targetPosition =
+                closedLocalPositions[i];
+
+            if (open)
+            {
+                targetPosition.y += posY;
+            }
+
+            door.localPosition = targetPosition;
+        }
     }
-
-    // =========================
-    // ENEMY SPAWNING
-    // =========================
 
     private IEnumerator StartSpawn()
     {
@@ -244,7 +274,8 @@ public class BasicCombat_Tutorial : MonoBehaviour
 
         SpawnEntry entry = spawnEntries[index];
 
-        if (entry.enemyPrefab == null || entry.spawnPoint == null) return;
+        if (entry.enemyPrefab == null ||
+            entry.spawnPoint == null) return;
 
         // Spawn VFX.
         if (spawnVfx != null)
@@ -265,14 +296,12 @@ public class BasicCombat_Tutorial : MonoBehaviour
 
         if (enemy == null)
         {
-            Debug.LogWarning("[BasicCombat_Tutorial] Enemy prefab is missing EnemyBase.", enemyObj);
+            Debug.LogWarning("[BasicCombat_Tutorial] Enemy prefab missing EnemyBase.", enemyObj);
 
-            Destroy(enemyObj);
-            return;
+            Destroy(enemyObj); return;
         }
 
-        enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint
-        );
+        enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint);
 
         entry.hasSpawned = true;
         entry.spawnedEnemy = enemy;
@@ -303,15 +332,11 @@ public class BasicCombat_Tutorial : MonoBehaviour
         }
     }
 
-    // =========================
-    // PLAYER CONTROL
-    // =========================
-
     private void SetCutsceneMode(bool cutscene)
     {
         if (GameModeManager.Instance != null)
         {
-            GameModeManager.Instance.SetMode(cutscene ? GameMode.Cutscene : GameMode.Gameplay);
+            GameModeManager.Instance.SetMode(cutscene? GameMode.Cutscene : GameMode.Gameplay);
         }
 
         if (playerControl != null)
@@ -320,26 +345,18 @@ public class BasicCombat_Tutorial : MonoBehaviour
         }
     }
 
-    // =========================
-    // EVENT RESET
-    // =========================
-
     public void ResetEvent()
     {
-        // Do not reset a completed event.
         if (hasFinished) return;
 
-        // Only reset an encounter that was running.
         if (!hasStarted) return;
 
         Debug.Log("[BasicCombat_Tutorial] Resetting encounter.");
 
         StopAllCoroutines();
 
-        // Restore player control and audio.
         SetCutsceneMode(false);
 
-        // Destroy enemies from this encounter.
         foreach (GameObject enemy in enemies)
         {
             if (enemy != null) Destroy(enemy);
@@ -348,13 +365,9 @@ public class BasicCombat_Tutorial : MonoBehaviour
         enemies.Clear();
         ResetSpawnEntries();
 
-        // Return the door to its initial OPEN position.
-        SetDoorOpenInstant();
+        SetDoorsInstant(true);
 
         hasStarted = false;
         hasFinished = false;
-
-        // Don't save completion because the encounter
-        // wasn't successfully finished.
     }
 }
