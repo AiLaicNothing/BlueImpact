@@ -153,12 +153,13 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
         }
 
         charName.text = data.data.characterName;
+        currentIndex = index;
+
         description.text = data.description;
         charImage.sprite = data.portrait;
 
         Player_Manager.Instance.SetCharacterData(data);
         PlayerSpawn_Manager.Instance.SetCharacter(data);
-
         if (CharacterStatsManager.Instance != null)
             CharacterStatsManager.Instance.Initialize();
     }

@@ -51,7 +51,6 @@ public class Checkpoints_Manager : MonoBehaviour
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
         if (loadedData != null)
         {
-            discoveredCheckpoints.Clear();
             for(int i = 0; i < loadedData.discoveredCheckpoints.Count; i++)
             {
                 discoveredCheckpoints.Add(loadedData.discoveredCheckpoints[i]);

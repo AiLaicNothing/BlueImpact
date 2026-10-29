@@ -125,7 +125,11 @@ public class PlayerControl : Controller, IDamageable
         if (loadedData != null)
         {
             unlockedSkills = loadedData.unlockedSkills;
-            skills = loadedData.equipedSkills;
+            for(int i = 0; i < loadedData.equipedSkills.Length; i++)
+            {
+                skills[i] = loadedData.equipedSkills[i];
+            }
+            
             for(int i = 0; i < skills.Length; i++)
             {
                 if (skills[i] != null) EquipSkill(i, skills[i]);

@@ -10,11 +10,19 @@ public class FinalSwordPrefab : MonoBehaviour
     public ParticleSystem auraVfx;
     [Header("Values")]
     public float chargeTime = 1.5f;
+    public float dmgTickRate = 0.70f;
     public float speed = 90f;
     public float radius = 4f;
+    public Vector3 offSet;
+    public Vector3 dmgRadius;
     public bool canFinish;
     public bool trueFinish;
     float timer;
+    [Header("Debug")]
+    [SerializeField] bool debug;
+    [SerializeField] Vector3 lastCenter;
+    [SerializeField] Vector3 lastRadius;
+    [SerializeField] Quaternion lastRot;
     [Header("Layer")]
     public LayerMask enemyLayer;
     
@@ -46,7 +54,7 @@ public class FinalSwordPrefab : MonoBehaviour
         anim.Play("FinalSwordAnimation");
         auraVfx.Play();
         ChangeDmgInfo(player, targetPoint, hitData);
-        DoDmg(radius);
+        DoDmg(new Vector3(radius / 2, radius * 2, radius / 2), transform.position, transform.rotation);
         yield return new WaitForSeconds(chargeTime);
         this.player.blockVelocity = true;
         this.player.ChangeActionState(this.player.skill_AState);
@@ -62,14 +70,40 @@ public class FinalSwordPrefab : MonoBehaviour
         Destroy(explotionVfx, 3);
 
         ChangeDmgInfo(player, targetPoint, hitData);
-        DoDmg(radius - 2.2f);
-        Destroy(gameObject, 3);
+        DoDmg(dmgRadius, explotionVfx.transform.position + new Vector3(0,offSet.y,0),
+            new Quaternion(explotionPrefab.transform.rotation.x, transform.parent.rotation.y, explotionPrefab.transform.rotation.z, transform.parent.rotation.w));
+        FinalDmgInfo(player, targetPoint, hitData);
+        StartCoroutine(FinalDmg(explotionVfx));
+        Destroy(transform.parent.gameObject, 3);
         this.player.blockVelocity = false;
         this.player.ChangeActionState(this.player.iddle_AState);
     }
-    void DoDmg(float radius)
+    IEnumerator FinalDmg(GameObject explotionVfx)
     {
-        Collider[] hits = Physics.OverlapBox(transform.position, new Vector3(radius / 2, radius * 2, radius /2), Quaternion.identity, enemyLayer);
+        yield return null;
+        while (true)
+        {
+            DoDmg(dmgRadius, explotionVfx.transform.position + new Vector3(0, offSet.y, 0),
+                new Quaternion(explotionPrefab.transform.rotation.x, transform.parent.rotation.y, explotionPrefab.transform.rotation.z, transform.parent.rotation.w));
+            yield return new WaitForSeconds(dmgTickRate);
+
+        }
+    }
+    void DebuggingCollider(Vector3 radius, Vector3 offSet, Quaternion rot)
+    {
+        if (debug)
+        {
+            Vector3 center =  offSet;
+            lastCenter = center;
+            lastRadius = radius;
+            lastRot = rot;
+        }
+    }
+    void DoDmg(Vector3 radius, Vector3 offSet, Quaternion rot)
+    {
+        Vector3 center = transform.position + offSet;
+        DebuggingCollider(radius, offSet, rot);
+        Collider[] hits = Physics.OverlapBox(offSet, radius, rot, enemyLayer);
         foreach (var target in hits)
         {
             IDamageable damageable = target.GetComponent<IDamageable>();
@@ -87,7 +121,7 @@ public class FinalSwordPrefab : MonoBehaviour
         direction = dir.normalized;
         info = new DamageInfo
         {
-            damage = (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Physical_Damage) * hitData.physicalScale) + (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Magical_Damage) * hitData.magicalScale),
+            damage = (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Physical_Damage) * hitData.physicalScale + extraDmg) + (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Magical_Damage) * hitData.magicalScale),
             hitDirection = transform.forward,
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,
@@ -101,11 +135,45 @@ public class FinalSwordPrefab : MonoBehaviour
         };
         extraDmg += 1;
     }
-    
+    public void FinalDmgInfo(PlayerControl player, Vector3 dir, HitData hitdata)
+    {
+        hitData = hitdata;
+        this.player = player;
+        direction = dir.normalized;
+        info = new DamageInfo
+        {
+            damage = (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Physical_Damage) * hitData.physicalScale / 2) + (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Magical_Damage) * hitData.magicalScale / 2),
+            hitDirection = transform.forward,
+            throwType = hitData.throwType,
+            stunDuration = hitData.stunDuration,
+            keepInAir = hitData.keepInAir,
+            airHangDuration = hitData.airHangDuration,
+            airLiftForce = hitData.airLiftForce,
+            pushForce = hitData.pushForce,
+            knockDownForce = hitData.knockDownForce,
+            knockDownForwardScale = hitData.knockDownForwardScale,
+            staggerBuild = hitData.staggerCharge
+        };
+    }
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(transform.position,new Vector3(radius / 2, radius * 2, radius / 2));
+        Gizmos.DrawWireCube(transform.position + offSet, dmgRadius);
+        if (debug)
+        {
+            Matrix4x4 originalMatrix = Gizmos.matrix;
+
+            Gizmos.color = Color.green;
+
+            Gizmos.matrix = Matrix4x4.TRS(lastCenter, lastRot, Vector3.one);
+
+            Gizmos.DrawCube(Vector3.zero, lastRadius * 2f);
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireCube(Vector3.zero, lastRadius * 2f);
+
+            Gizmos.matrix = originalMatrix;
+        }
     }
     public void CanFinish()
     {
@@ -114,5 +182,9 @@ public class FinalSwordPrefab : MonoBehaviour
     public void CanTrueFinish()
     {
         trueFinish = true;
+    }
+    private void OnDestroy()
+    {
+        StopAllCoroutines();
     }
 }

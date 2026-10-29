@@ -105,16 +105,28 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     [Header("Dead Effect")]
     [SerializeField] float durationDissolve = 1.5f;
-    [SerializeField] string _DisolveProgress = "_DisolveProgress";
+    string _DisolveProgress = "_DisolveProgress";
     [SerializeField] Material dieMaterial;
     [ColorUsage(true, true)]
     [SerializeField] Color EdgeColor = new Color(0.1875f * 2.33059f, 0.45937f * 2.33059f, 0.75f * 2.33059f, 1f);
-    [SerializeField] string _EdgeColor = "_EdgeColor";
+    string _EdgeColor = "_EdgeColor";
     private const string baseTexture = "_MainTex";
     private const string shaderTexture = "_MainTex";
     private List<Material> clonMaterials = new List<Material>();
     private Renderer[] allRenderers;
 
+    [Header("Broken Effect")]
+    [SerializeField] Material brokenMat;
+    [ColorUsage(true, true)]
+    [SerializeField] Color brokenColor = new Color(0.33f, 0.75f, 0.414f, 1f);
+    [SerializeField] Vector2 mainTexSpeed = new Vector2(1,0);
+    [SerializeField] float distorsionIntensity = 0.01f;
+    [SerializeField] Vector2 distorsionSpeed = new Vector2(0,-1);
+    string _Color = "_Color";
+    string _MainTexSpeed = "_MainTexSpeed";
+    string _DistorsionIntensity = "_DistorsionIntensity";
+    string _Speed = "_Speed";
+    private Dictionary<Renderer, Material> brokenClonMats = new Dictionary<Renderer, Material>();
     protected virtual void OnEnable()
     {
         PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
@@ -284,6 +296,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             StopCoroutine(staggerCoroutine);
         }
+        AddBrokenMaterial();
 
         staggerCoroutine = StartCoroutine(StaggerRoutine());
     }
@@ -299,14 +312,13 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
 
     protected virtual IEnumerator StaggerRoutine()
-    {
+    { 
         isStaggered = true;
         isStunned = true;
-
         yield return new WaitForSeconds(stats.staggerDuration);
 
         isStaggered = false;
-
+        RemoveBrokenMaterial();
         if (stunCoroutine == null)
         {
             isStunned = false;
@@ -320,7 +332,47 @@ public class EnemyBase : MonoBehaviour, IDamageable
         isInStaggerCooldown = false;
         staggerCoroutine = null;
     }
-
+    void AddBrokenMaterial()
+    {
+        foreach (Renderer renderer in allRenderers)
+        {
+            if (renderer == null) continue;
+            Material[] originalMats = renderer.sharedMaterials;
+            Material[] newMaterials = new Material[originalMats.Length + 1];
+            for (int i = 0; i < originalMats.Length; i++)
+            {
+                newMaterials[i] = originalMats[i];
+            }
+            Material brokenClon = new Material(brokenMat);
+            if (brokenClon.HasProperty(_Color)) brokenClon.SetColor(_Color, brokenColor);
+            if (brokenClon.HasProperty(_MainTexSpeed)) brokenClon.SetVector(_MainTexSpeed, mainTexSpeed);
+            if (brokenClon.HasProperty(_DistorsionIntensity)) brokenClon.SetFloat(_DistorsionIntensity, distorsionIntensity);
+            if (brokenClon.HasProperty(_Speed)) brokenClon.SetVector(_Speed, distorsionSpeed);
+            newMaterials[newMaterials.Length - 1] = brokenClon;
+            brokenClonMats.Add(renderer, brokenClon);
+            renderer.materials = newMaterials;
+        }
+    }
+    void RemoveBrokenMaterial()
+    {
+        foreach (Renderer renderer in allRenderers)
+        {
+            if (renderer == null) continue;
+            Material[] originalMats = renderer.sharedMaterials;
+            if (originalMats.Length <= 1) continue;
+            Material[] newMaterials = new Material[originalMats.Length - 1];
+            for (int i = 0; i < newMaterials.Length; i++)
+            {
+                newMaterials[i] = originalMats[i];
+            }
+            renderer.materials = newMaterials;
+        }
+        foreach (KeyValuePair<Renderer, Material> par in brokenClonMats)
+        {
+            if (par.Value != null) Destroy(par.Value);
+        }
+        brokenClonMats.Clear();
+    }
     protected virtual void ApplyStun(float duration)
     {
         if (isStaggered) return;
@@ -694,6 +746,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
     void StartDeadEffect()
     {
+        if(isStaggered) RemoveBrokenMaterial();
         ChangeMaterials();
         StartCoroutine(DieEffect());
     }
@@ -755,6 +808,11 @@ public class EnemyBase : MonoBehaviour, IDamageable
             }
             clonMaterials.Clear();
         }
+        foreach (KeyValuePair<Renderer, Material> par in brokenClonMats)
+        {
+            if (par.Value != null) Destroy(par.Value);
+        }
+        brokenClonMats.Clear();
     }
     public void OnSpawn(Transform[] PatrolPoints, Transform safePoint, bool hasPatrol, Transform spawnPos)
     {

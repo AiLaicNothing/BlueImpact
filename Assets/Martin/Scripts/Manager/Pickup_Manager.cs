@@ -16,6 +16,22 @@ public class Pickup_Manager : MonoBehaviour
         }
 
         Instance = this;
+        if(SaveLoadManager.canLoad)
+        {
+            LoadData();
+        }
+    }
+    void LoadData()
+    {
+        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+        if (loadedData != null)
+        {
+            collectedPickups.Clear();
+            foreach (string pickupID in loadedData.collectedPickups)
+            {
+                collectedPickups.Add(pickupID);
+            }
+        }
     }
 
     public bool IsCollected(Pickup_Data pickup)
@@ -29,6 +45,13 @@ public class Pickup_Manager : MonoBehaviour
     public bool MarkCollected(Pickup_Data pickup)
     {
         if (!IsValid(pickup)) return false;
+
+        bool collected = collectedPickups.Add(pickup.PickupID);
+
+        if (collected)
+        {
+            SaveLoadManager.Instance.SaveGame("collectedPickups", collectedPickups);
+        }
 
         return collectedPickups.Add(pickup.PickupID);
     }
