@@ -9,18 +9,24 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
 {
     public static UIPopUp Instance;
 
+    [Header("Panel")]
     [SerializeField] private GameObject popUpPanel;
     [SerializeField] private CanvasGroup panelCanvasGroup;
+
+    [Header("Media")]
     [SerializeField] private RawImage videoScreen;
     [SerializeField] private VideoPlayer videoPlayer;
-    [SerializeField] private TextMeshProUGUI tittleText;
-    [SerializeField] private TextMeshProUGUI descriptionText;
 
+    [Header("Text")]
+    [SerializeField] private TextMeshProUGUI tittleText;
+    [SerializeField] private DynamicInputText popupDescription;
+
+    [Header("Buttons")]
     [SerializeField] private Button closeButton;
     [SerializeField] private Button nextPage;
     [SerializeField] private Button previousPage;
 
-    private List<PopUpPage> currentPages = new List<PopUpPage>();
+    private List<PopUpPage> currentPages = new();
     private int currentPageIndex;
     private bool isOpen;
 
@@ -28,14 +34,14 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
     {
         Instance = this;
 
-        if (panelCanvasGroup == null && popUpPanel != null)
-            panelCanvasGroup = popUpPanel.GetComponent<CanvasGroup>();
+        if (panelCanvasGroup == null && popUpPanel != null) panelCanvasGroup = popUpPanel.GetComponent<CanvasGroup>();
 
-        if (popUpPanel != null)
-            popUpPanel.SetActive(false);
+        if (popUpPanel != null) popUpPanel.SetActive(false);
 
         if (closeButton != null) closeButton.onClick.AddListener(ClosePopUp);
+
         if (nextPage != null) nextPage.onClick.AddListener(NextPage);
+
         if (previousPage != null) previousPage.onClick.AddListener(PreviousPage);
 
         if (videoPlayer == null) videoPlayer = FindAnyObjectByType<VideoPlayer>();
@@ -50,13 +56,22 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
         }
     }
 
-    // ---------- SHOW / CLOSE ----------
+    private void OnDestroy()
+    {
+        if (closeButton != null) closeButton.onClick.RemoveListener(ClosePopUp);
+
+        if (nextPage != null) nextPage.onClick.RemoveListener(NextPage);
+
+        if (previousPage != null) previousPage.onClick.RemoveListener(PreviousPage);
+
+        if (Instance == this) Instance = null;
+    }
 
     public void ShowPopUp(List<PopUpPage> pages)
     {
         if (pages == null || pages.Count == 0) return;
 
-        currentPages = pages;
+        currentPages = new List<PopUpPage>(pages);
         currentPageIndex = 0;
 
         popUpPanel.SetActive(true);
@@ -70,11 +85,9 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
 
         LoadPage();
 
-        // Time.timeScale = 0 no pausa AudioSources que ya suenan
         MutePlayerLoopAudio();
         Time.timeScale = 0f;
 
-        // A cierra con el botón, B y Escape cierran el popup
         GamepadCursor.Instance?.Acquire(this, ClosePopUp);
     }
 
@@ -93,8 +106,11 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
         }
 
         if (videoScreen != null) videoScreen.texture = null;
-        if (tittleText != null) tittleText.text = string.Empty;
-        if (descriptionText != null) descriptionText.text = string.Empty;
+
+        if (tittleText != null)
+            tittleText.text = string.Empty;
+
+        if (popupDescription != null) popupDescription.SetTemplate("");
 
         popUpPanel.SetActive(false);
 
@@ -107,10 +123,9 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
         currentPages.Clear();
         currentPageIndex = 0;
 
-        // Si la pausa sigue activa debajo, no reanudar el tiempo
         bool pausedNow = PauseManager.Instance != null && PauseManager.Instance.IsPaused;
-        if (!pausedNow)
-            Time.timeScale = 1f;
+
+        if (!pausedNow) Time.timeScale = 1f;
     }
 
     private void MutePlayerLoopAudio()
@@ -122,13 +137,14 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
         player.audioLoopSource.Stop();
     }
 
-    // ---------- PAGES ----------
-
     private void LoadPage()
     {
-        if (currentPageIndex < 0 || currentPageIndex >= currentPages.Count) return;
+        if (currentPageIndex < 0 ||
+            currentPageIndex >= currentPages.Count) return;
 
         PopUpPage page = currentPages[currentPageIndex];
+
+        if (page == null) return;
 
         if (videoPlayer != null)
         {
@@ -137,8 +153,10 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
         }
 
         if (videoScreen != null) videoScreen.texture = page.texture;
+
         if (tittleText != null) tittleText.text = page.title;
-        if (descriptionText != null) descriptionText.text = page.description;
+
+        if (popupDescription != null) popupDescription.SetTemplate(page.description);
 
         UpdateButtons();
     }
@@ -150,7 +168,9 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
         bool isLastPage = currentPageIndex == currentPages.Count - 1;
 
         if (previousPage != null) previousPage.gameObject.SetActive(hasPrevious);
+
         if (nextPage != null) nextPage.gameObject.SetActive(hasNext);
+
         if (closeButton != null) closeButton.gameObject.SetActive(isLastPage);
     }
 
@@ -170,20 +190,19 @@ public class UIPopUp : MonoBehaviour, IGamepadPanel
         LoadPage();
     }
 
-    // ---------- IGamepadPanel ----------
-
-    public void SetInputEnabled(bool enabled) { }
+    public void SetInputEnabled(bool enabled) {}
 
     public void SetInteractable(bool interactable)
     {
-        if (closeButton != null)
-            closeButton.interactable = interactable;
+        if (closeButton != null) closeButton.interactable = interactable;
 
         if (nextPage != null)
-            nextPage.interactable = interactable && (currentPageIndex < currentPages.Count - 1);
+            nextPage.interactable = interactable &&
+                currentPageIndex < currentPages.Count - 1;
 
         if (previousPage != null)
-            previousPage.interactable = interactable && (currentPageIndex > 0);
+            previousPage.interactable = interactable &&
+            currentPageIndex > 0;
     }
 
     public string GetPanelName() => "UIPopUp";

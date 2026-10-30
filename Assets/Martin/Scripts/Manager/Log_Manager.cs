@@ -22,6 +22,8 @@ public class Log_Manager : MonoBehaviour
         }
 
         Instance = this;
+
+        SortDiscoveredLogs();
     }
 
     public bool IsDiscoveredLog(Log_Data logData)
@@ -34,6 +36,7 @@ public class Log_Manager : MonoBehaviour
         if (logData == null || IsDiscoveredLog(logData)) return;
 
         discoveredLogs.Add(logData);
+        SortDiscoveredLogs();
         OnDiscoveredLogsChange?.Invoke();
     }
 
@@ -42,5 +45,17 @@ public class Log_Manager : MonoBehaviour
         if (logData == null || !discoveredLogs.Remove(logData)) return;
 
         OnDiscoveredLogsChange?.Invoke();
+    }
+
+    private void SortDiscoveredLogs()
+    {
+        discoveredLogs.Sort((a, b) =>
+        {
+            if (a == null || b == null) return 0;
+            if (a == null) return 1;
+            if (b == null) return -1;
+
+            return a.log_ID.CompareTo(b.log_ID);
+        });
     }
 }

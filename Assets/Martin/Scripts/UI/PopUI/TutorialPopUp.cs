@@ -1,11 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Video;
 
 public class TutorialPopUp : MonoBehaviour
 {
     [Header("Save System")]
     [SerializeField] private WorldEvent_Data eventData;
+    [SerializeField] private Log_Data logData;
 
     [Header("Tutorial")]
     [SerializeField] private List<PopUpPage> pages = new();
@@ -23,15 +25,12 @@ public class TutorialPopUp : MonoBehaviour
         RestoreEventState();
     }
 
-    // =========================
-    // SAVE SYSTEM
-    // =========================
-
     private void RestoreEventState()
     {
         if (Event_Manager.Instance == null || eventData == null)
         {
             Debug.LogWarning("[TutorialPopUp] Missing Event_Manager or WorldEvent_Data.", this);
+
             return;
         }
 
@@ -45,31 +44,32 @@ public class TutorialPopUp : MonoBehaviour
         Event_Manager.Instance.SaveState(eventData, true);
     }
 
-    // =========================
-    // INTERACTION
-    // =========================
-
     private void OnTriggerEnter(Collider other)
     {
         if (hasActivated) return;
 
         if (!other.CompareTag("Player")) return;
 
-        // The popup UI may have been created after Awake.
+        if (pages == null || pages.Count == 0) return;
+
         if (ui == null) ui = FindAnyObjectByType<UIPopUp>();
 
         if (ui == null)
         {
             Debug.LogWarning("[TutorialPopUp] UIPopUp not found.", this);
+
             return;
         }
 
-        // Activate the tutorial.
         ui.ShowPopUp(pages);
 
         hasActivated = true;
 
-        // Save so it doesn't activate again.
+        if (Log_Manager.Instance != null && logData != null)
+        {
+            Log_Manager.Instance.AddLogToDiscovered(logData);
+        }
+
         SaveEventState();
     }
 }

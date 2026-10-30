@@ -1,12 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
 public class BasicCombat_Tutorial : MonoBehaviour
 {
     [Header("Save System")]
     [SerializeField] private WorldEvent_Data eventData;
+    [SerializeField] private Log_Data logData;
 
     [Header("Enemies")]
     [SerializeField] private List<SpawnEntry> spawnEntries = new();
@@ -161,6 +163,16 @@ public class BasicCombat_Tutorial : MonoBehaviour
             {
                 yield return null;
             }
+        }
+
+        if (Log_Manager.Instance.IsDiscoveredLog(logData))
+        {
+            yield return null;
+        }
+        else
+        {
+
+            Log_Manager.Instance.AddLogToDiscovered(logData);
         }
 
         SetCutsceneMode(false);
