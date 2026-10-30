@@ -48,8 +48,7 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
         if (Pickup_Manager.Instance == null || pickupData == null ||
             string.IsNullOrWhiteSpace(pickupData.PickupID))
         {
-            Debug.LogWarning(
-                "[UpgradePointPickup] Missing Pickup_Manager or valid Pickup_Data.", this);
+            Debug.LogWarning("[UpgradePointPickup] Missing Pickup_Manager or valid Pickup_Data.", this);
             return;
         }
 
@@ -91,10 +90,6 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
         return consumed ? null : interactionText;
     }
 
-    // =========================
-    // REWARD
-    // =========================
-
     private bool GivePointsToPlayer()
     {
         PlayerStatsManager playerStats = FindFirstObjectByType<PlayerStatsManager>();
@@ -103,10 +98,7 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
 
         if (playerStats == null || characterStats == null)
         {
-            Debug.LogError(
-                "[UpgradePointPickup] PlayerStatsManager or CharacterStatsManager not found.",
-                this
-            );
+            Debug.LogError("[UpgradePointPickup] PlayerStatsManager or CharacterStatsManager not found.", this);
 
             return false;
         }
@@ -119,18 +111,10 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
         return true;
     }
 
-    // =========================
-    // PERSISTENCE
-    // =========================
-
     private bool WasPreviouslyCollected()
     {
         return Pickup_Manager.Instance != null && Pickup_Manager.Instance.IsCollected(pickupData);
     }
-
-    // =========================
-    // FEEDBACK
-    // =========================
 
     private void PlayPickupSound()
     {

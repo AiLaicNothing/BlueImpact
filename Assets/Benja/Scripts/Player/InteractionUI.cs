@@ -6,18 +6,66 @@ public class InteractionUI : MonoBehaviour
 {
     public static InteractionUI Instance { get; private set; }
 
+    [Header("UI")]
     [SerializeField] private GameObject root;
-    [SerializeField] private TMP_Text interactionText;
+    [SerializeField] private DynamicInputText interactionText;
 
-    private PlayerInputHandler playerInputHandler;
+    [Header("Player")]
+    [SerializeField] private PlayerInputHandler playerInputHandler;
 
     private void Awake()
     {
-        Instance = this;
-        root.SetActive(false);
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
 
-        // ✅ OBTENER REFERENCE AL INPUT HANDLER
-        playerInputHandler = FindFirstObjectByType<PlayerInputHandler>();
+        Instance = this;
+
+        if (root != null) root.SetActive(false);
+    }
+
+    private void OnEnable()
+    {
+        PlayerSpawn_Manager.OnPlayerSpawned += HandlePlayerSpawned;
+
+        if (PlayerSpawn_Manager.Instance != null)
+        {
+            PlayerControl player = PlayerSpawn_Manager.Instance.CurrentPlayerControl;
+
+            if (player != null) SetPlayer(player);
+        }
+    }
+
+    private void OnDisable()
+    {
+        PlayerSpawn_Manager.OnPlayerSpawned -= HandlePlayerSpawned;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    private void HandlePlayerSpawned(PlayerControl player)
+    {
+        SetPlayer(player);
+    }
+
+    private void SetPlayer(PlayerControl player)
+    {
+        playerInputHandler = null;
+
+        if (player == null) return;
+
+        playerInputHandler =
+            player.GetComponentInChildren<PlayerInputHandler>(true);
+
+        if (playerInputHandler == null)
+        {
+            Debug.LogWarning("[InteractionUI] PlayerInputHandler not found.", player);
+        }
     }
 
     public void SetInteractable(IInteractable interactable)
@@ -36,38 +84,15 @@ public class InteractionUI : MonoBehaviour
             return;
         }
 
-        root.SetActive(true);
+        if (root != null) root.SetActive(true);
 
-        string inputLabel = GetInputLabel();
-
-        interactionText.text = $"[{inputLabel}] {text}";
+        if (interactionText != null)interactionText.SetTemplate("{Interact}: " + text);
     }
 
     public void Clear()
     {
-        root.SetActive(false);
-    }
+        if (interactionText != null) interactionText.SetTemplate("");
 
-    private bool isGamepadActive = false;
-
-    private void Update()
-    {
-        // Detectar qué input se usó más recientemente
-        if (Gamepad.current != null && Gamepad.current.wasUpdatedThisFrame)
-        {
-            isGamepadActive = true;
-        }
-        else if (Keyboard.current != null && Keyboard.current.wasUpdatedThisFrame)
-        {
-            isGamepadActive = false;
-        }
-    }
-
-    private string GetInputLabel()
-    {
-        if (isGamepadActive && Gamepad.current != null)
-            return "Triangle"; // Botón Y/Triangle
-
-        return "F"; // Teclado
+        if (root != null) root.SetActive(false);
     }
 }

@@ -53,7 +53,7 @@ public class Pickup_Manager : MonoBehaviour
             SaveLoadManager.Instance.SaveGame("collectedPickups", collectedPickups);
         }
 
-        return collectedPickups.Add(pickup.PickupID);
+        return collected;
     }
 
     public void RemoveCollected(Pickup_Data pickup)

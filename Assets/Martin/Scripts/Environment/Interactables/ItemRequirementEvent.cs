@@ -5,17 +5,50 @@ using UnityEngine.Events;
 
 public class ItemRequirementEvent : MonoBehaviour, IInteractable
 {
-    [Header("Required Items")]
-    [SerializeField] private List<Item_Data> requiredItems;
+    [Header("Save System")]
+    [SerializeField] private WorldEvent_Data eventData;
 
-    [Header("Interaction text")]
+    [Header("Required Items")]
+    [SerializeField] private List<Item_Data> requiredItems = new();
+
+    [Header("Interaction Text")]
     [SerializeField] private string eventName;
     [SerializeField] private string missingItem;
 
-    [Header("Events to invoke")]
+    [Header("VFX")]
+    [SerializeField] private GameObject _vfx;
+
+    [Header("Events to Invoke")]
     [SerializeField] private List<UnityEvent> events = new();
 
+    [Header("Restore Completed State")]
+    [SerializeField] private UnityEvent onRestoreCompleted;
+
     private bool hasActivated;
+
+    private void Start()
+    {
+        RestoreEventState();
+    }
+
+    private void RestoreEventState()
+    {
+        if (Event_Manager.Instance == null || eventData == null)
+        {
+            Debug.LogWarning("[ItemRequirementEvent] Missing Event_Manager or WorldEvent_Data.", this);
+            return;
+        }
+
+        hasActivated = Event_Manager.Instance.IsCompleted(eventData);
+
+        if (hasActivated)
+        {
+            if (_vfx != null) _vfx.SetActive(false);
+
+            // Restore the state of affected world objects.
+            onRestoreCompleted?.Invoke();
+        }
+    }
 
     private bool CheckIfHasItems()
     {
@@ -25,65 +58,51 @@ public class ItemRequirementEvent : MonoBehaviour, IInteractable
 
         foreach (Item_Data item in requiredItems)
         {
-            if (item == null || !inventory.Contains(item))
-            {
-                return false;
-            }
+            if (item == null || !inventory.Contains(item))  return false;
         }
 
         return true;
-    }
-
-    private void DoEvent()
-    {
-        hasActivated = true;
-
-        foreach (UnityEvent eventToInvoke in events)
-        {
-            eventToInvoke.Invoke();
-        }
     }
 
     public void Interact()
     {
         if (hasActivated) return;
 
-        //If has items
-        if (CheckIfHasItems())
-        {
-            //Remove the items required
-            foreach (Item_Data item in requiredItems)
-            {
-                Inventory_Manager.Instance.RemoveItem(item);
-            }
+        // Don't activate an event that cannot be saved.
+        if (Event_Manager.Instance == null || eventData == null) return;
 
-            //Do the event
-            DoEvent();
+        if (!CheckIfHasItems()) return;
 
-            GetInteractionText();
-        }
-        else
+        // Consume the required items.
+        foreach (Item_Data item in requiredItems)
         {
-            return;
+            Inventory_Manager.Instance.RemoveItem(item);
         }
 
+        DoEvent();
     }
+
+    private void DoEvent()
+    {
+        hasActivated = true;
+
+        // Save before invoking other world events.
+        Event_Manager.Instance.SaveState(eventData, true);
+
+        if (_vfx != null) _vfx.SetActive(false);
+
+        InteractionUI.Instance?.Clear();
+
+        foreach (UnityEvent eventToInvoke in events)
+        {
+            eventToInvoke?.Invoke();
+        }
+    }
+
     public string GetInteractionText()
     {
-        if (hasActivated)
-        {
-            return "";
-        }
-        else
-        {
-            if (CheckIfHasItems())
-            {
-                return eventName;
-            }
-            else
-            {
-                return missingItem;
-            }
-        }
+        if (hasActivated) return "";
+
+        return CheckIfHasItems() ? eventName : missingItem;
     }
 }

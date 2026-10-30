@@ -9468,7 +9468,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionUI
   root: {fileID: 1660642019}
-  interactionText: {fileID: 1284546031}
+  interactionText: {fileID: 1284546033}
+  playerInputHandler: {fileID: 0}
 --- !u!1 &707905381
 GameObject:
   m_ObjectHideFlags: 0
@@ -15332,6 +15333,7 @@ GameObject:
   - component: {fileID: 1284546030}
   - component: {fileID: 1284546032}
   - component: {fileID: 1284546031}
+  - component: {fileID: 1284546033}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -15458,6 +15460,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1284546029}
   m_CullTransparentMesh: 1
+--- !u!114 &1284546033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1284546029}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c81ac1d229a10d4d9cc57de42c18eee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DynamicInputText
+  textComponent: {fileID: 0}
 --- !u!1 &1286564459
 GameObject:
   m_ObjectHideFlags: 0

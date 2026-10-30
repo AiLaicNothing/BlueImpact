@@ -68,8 +68,7 @@ public class SkillPickup : MonoBehaviour, IInteractable
     {
         if (!HasPersistence())
         {
-            Debug.LogWarning(
-                "[SkillPickup] Missing Pickup_Manager or valid Pickup_Data.", this);
+            Debug.LogWarning("[SkillPickup] Missing Pickup_Manager or valid Pickup_Data.", this);
             return;
         }
 
@@ -99,8 +98,7 @@ public class SkillPickup : MonoBehaviour, IInteractable
 
     private void OnPlayerSpawned(PlayerControl player)
     {
-        if (pickedUp)
-            return;
+        if (pickedUp) return;
 
         characterConfigured = false;
         ConfigureForPlayer(player);
@@ -112,8 +110,7 @@ public class SkillPickup : MonoBehaviour, IInteractable
         {
             if (Player_Manager.Instance == null) return;
 
-            GameObject playerObject =
-                Player_Manager.Instance.GetPlayer();
+            GameObject playerObject = Player_Manager.Instance.GetPlayer();
 
             if (playerObject == null) return;
 
@@ -180,10 +177,6 @@ public class SkillPickup : MonoBehaviour, IInteractable
         }
     }
 
-    // =========================
-    // INTERACTION
-    // =========================
-
     public void Interact()
     {
         if (pickedUp || currentSkill == null || currentPlayer == null) return;
@@ -237,10 +230,6 @@ public class SkillPickup : MonoBehaviour, IInteractable
         return $"Desbloquear: {currentSkill.skillName}";
     }
 
-    // =========================
-    // PERSISTENCE
-    // =========================
-
     private bool HasPersistence()
     {
         return Pickup_Manager.Instance != null && pickupData != null &&
@@ -261,10 +250,6 @@ public class SkillPickup : MonoBehaviour, IInteractable
 
         Destroy(gameObject);
     }
-
-    // =========================
-    // VISUALS
-    // =========================
 
     private void SetPickupVisible(bool visible)
     {
