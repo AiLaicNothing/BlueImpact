@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerSpawn_Manager : MonoBehaviour
 {
     public static PlayerSpawn_Manager Instance;
+    public PlayerControl CurrentPlayerControl { get; private set; }
     public static event Action<PlayerControl> OnPlayerSpawned;  
 
     private CharacterInfo currentCharacterInfo;
@@ -37,6 +38,9 @@ public class PlayerSpawn_Manager : MonoBehaviour
 
 
         var playerControl = playerInstance.GetComponent<PlayerControl>();
+
+        CurrentPlayerControl = playerControl;
+
         if (playerControl != null)
         {
             playerControl.CurrentCharacterInfo = currentCharacterInfo;

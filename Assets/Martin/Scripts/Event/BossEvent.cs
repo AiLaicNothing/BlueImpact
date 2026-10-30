@@ -1,7 +1,5 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class BossEvent : MonoBehaviour
 {
@@ -9,12 +7,28 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private GameObject bossPrefab;
     [SerializeField] private Transform spawnPos;
     [SerializeField] private Transform desiredGroundPos;
-    [SerializeField] private float fallSpeed;
+    [SerializeField] private float fallSpeed = 6f;
     [SerializeField] private GameObject smokeVfx;
     private GameObject bossObject;
+    private Boss_MedusaMorgana boss;
 
     [SerializeField] private Transform center;
     [SerializeField] private Transform[] corners;
+    [SerializeField] private EnemySpawner bossSummonSpawner;
+
+    [Header("Boss HUD")]
+    [SerializeField] private BossHealthHUD bossHud;
+
+    [Header("Ritmo de la intro (segundos)")]
+    [SerializeField] private float pauseAfterDoor = 0.4f;
+    [SerializeField] private float barrierWait = 1f;
+    [SerializeField] private float pauseAfterLanding = 0.5f;
+    [SerializeField] private float pauseBeforeCombat = 0.8f;
+
+    [Header("Cinematica de fase 2")]
+    [SerializeField] private CameraRequest phaseTwoCamera;
+    [SerializeField] private float pauseBeforePhaseTwo = 0.5f;
+    [SerializeField] private float pauseAfterPhaseTwo = 0.6f;
 
     [Header("Door Event")]
     [SerializeField] private Transform doorTransform;
@@ -34,7 +48,7 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private CameraRequest bossCamera;
     [SerializeField] private CameraRequest RewardCamera;
 
-    private bool eventActive = false;
+    private bool eventActive;
     private bool hasStarted;
     private bool eventComplete;
 
@@ -44,34 +58,16 @@ public class BossEvent : MonoBehaviour
     private void OnEnable()
     {
         PlayerControl.OnPlayerDied += ResetEvent;
+        PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
     }
 
     private void OnDisable()
     {
         PlayerControl.OnPlayerDied -= ResetEvent;
+        PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
     }
 
-    private void Awake()
-    {
-        // Suscribirse a OnPlayerSpawned para obtener referencia al jugador
-        if (PlayerSpawn_Manager.Instance != null)
-        {
-            PlayerSpawn_Manager.OnPlayerSpawned += OnPlayerSpawned;
-        }
-    }
-
-    private void OnDestroy()
-    {
-        // Desuscribirse para evitar memory leaks
-        if (PlayerSpawn_Manager.Instance != null)
-        {
-            PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
-        }
-    }
-
-    /// <summary>
-    /// Se ejecuta cuando el jugador es instanciado (después de seleccionar personaje)
-    /// </summary>
+    // Se ejecuta cuando el jugador es instanciado (despues de elegir personaje)
     private void OnPlayerSpawned(PlayerControl control)
     {
         playerControl = control;
@@ -79,110 +75,174 @@ public class BossEvent : MonoBehaviour
 
     private void StartBossEvent()
     {
-       StartCoroutine(bossEvent());
+        StartCoroutine(BossSequence());
     }
 
-    private IEnumerator bossEvent()
+    // Secuencia completa, en el orden en que la ve el jugador
+    private IEnumerator BossSequence()
     {
         hasStarted = true;
 
-        Debug.Log("Block inputs");
+        // 1. Se bloquea al jugador. SetMode(Cutscene) ya llama a LockPlayerControl().
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
-        // 📌 NOTA: SetMode(GameMode.Cutscene) llama automáticamente a LockPlayerControl()
-        // NO hacemos doble llamada para evitar sobrescribir previousConstraints
 
-        // 🔇 Silenciar audio (NO está vinculado a GameMode)
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(true);
         }
 
-        Debug.Log("Close door");
+        // 2. La puerta se cierra
         yield return MoveDoor(closePos.position);
+        yield return new WaitForSeconds(pauseAfterDoor);
 
-        //Debug.Log("Create Barrier");
+        // 3. Aparece la barrera
         yield return DoBarrier(true);
 
-        Debug.Log("Try spawn boss");
+        // 4. Entrada del boss: aparece, grita y se muestran sus barras
         yield return SpawnBoss();
 
+        if (boss == null)
+        {
+            Debug.LogError("[BossEvent] El prefab del boss no tiene el componente Boss_MedusaMorgana");
+            ResetEvent();
+            yield break;
+        }
+
+        // 5. El jugador recupera el control y el boss empieza a atacar tras su delay inicial
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(false);
         }
 
         GameModeManager.Instance.SetMode(GameMode.Gameplay);
-        // 📌 NOTA: SetMode(GameMode.Gameplay) llama automáticamente a UnlockPlayerControl()
+        boss.SetCinematic(false);
 
+        Debug.Log("[BossEvent] Inicia el combate");
+
+        // 6. Combate: se espera a que el boss sea destruido
         while (bossObject != null)
         {
             yield return null;
         }
 
         yield return OnDeathEvent();
-
     }
 
     private IEnumerator SpawnBoss()
     {
+        if (bossPrefab == null) yield break;
 
         if (bossCamera != null)
         {
             CameraEventRelay.Instance.Play(bossCamera);
         }
 
-        if (bossPrefab == null) yield break;
-
         bossObject = Instantiate(bossPrefab, spawnPos.position, spawnPos.rotation);
+        boss = bossObject.GetComponentInChildren<Boss_MedusaMorgana>();
 
-        var boss = bossObject.GetComponent<Boss_ChimeraGolem>();
+        if (boss == null) yield break;
 
-        if (boss != null)
+        boss.SetCinematic(true);
+        boss.SetArena(center, corners, bossSummonSpawner);
+        boss.OnSpawn(null, center, false, spawnPos);
+        boss.OnPhaseTwoStarted += OnBossPhaseTwo;
+
+        // Entrada: baja desde el punto de spawn hasta el suelo
+        if (desiredGroundPos != null && fallSpeed > 0f)
         {
-            boss.SetCinematic(true);
-            Debug.Log($"{boss.inCinematic}");
-            boss.GetPositions(center, corners);
-            boss.OnSpawn(null, center, false, spawnPos);
-            Debug.Log($"{player.name}");
-            boss.target = player;
+            while (Vector3.Distance(bossObject.transform.position, desiredGroundPos.position) > 0.01f)
+            {
+                bossObject.transform.position = Vector3.MoveTowards(
+                    bossObject.transform.position,
+                    desiredGroundPos.position,
+                    fallSpeed * Time.deltaTime);
+
+                yield return null;
+            }
+
+            bossObject.transform.position = desiredGroundPos.position;
         }
-
-        //Call camara event to show boss
-
-        var anim = bossObject.GetComponentInChildren<Animator>();
-
-        anim.Play("Caida");
-
-        while (Vector3.Distance(bossObject.transform.position, desiredGroundPos.position) > 0.01f)
-        {
-            bossObject.transform.position = Vector3.MoveTowards(bossObject.transform.position, desiredGroundPos.position, fallSpeed * Time.deltaTime);
-            yield return null;
-        }
-
-        Debug.Log("Desires pos arrived");
-        anim.Play("Aterrizaje");
 
         if (smokeVfx != null)
         {
-            var vfx = Instantiate(smokeVfx, desiredGroundPos.position, Quaternion.identity);
-            Debug.Log("Get vfx");
+            Vector3 vfxPos = desiredGroundPos != null ? desiredGroundPos.position : bossObject.transform.position;
+            GameObject vfx = Instantiate(smokeVfx, vfxPos, Quaternion.identity);
             Destroy(vfx, 1.5f);
         }
 
-        yield return new WaitForSeconds(2.5f);
+        yield return new WaitForSeconds(pauseAfterLanding);
 
-        boss.SetCinematic(false);
-        Debug.Log($"{boss.inCinematic}");
+        // Mira al jugador, grita y mientras tanto aparecen sus barras (se llenan solas)
+        boss.FacePlayerInstant();
 
-        Debug.Log("Start combat");
-        // End camera event
+        if (bossHud != null)
+        {
+            bossHud.Bind(boss);
+            bossHud.Show();
+        }
+
+        yield return boss.PlayIntro();
+
+        yield return new WaitForSeconds(pauseBeforeCombat);
+    }
+
+    // El boss avisa cuando su vida baja del umbral de la fase 2
+    private void OnBossPhaseTwo()
+    {
+        StartCoroutine(PhaseTwoSequence());
+    }
+
+    // Interrumpe el juego, mueve la camara al boss y lo deja hacer su cambio de fase
+    private IEnumerator PhaseTwoSequence()
+    {
+        if (boss == null) yield break;
+
+        Debug.Log("[BossEvent] Cinematica de fase 2");
+
+        // 1. Se bloquea al jugador. SetMode(Cutscene) ya llama a LockPlayerControl().
+        GameModeManager.Instance.SetMode(GameMode.Cutscene);
+
+        if (playerControl != null)
+        {
+            playerControl.MutePlayerAudio(true);
+        }
+
+        // 2. La camara pasa al boss
+        if (phaseTwoCamera != null)
+        {
+            CameraEventRelay.Instance.Play(phaseTwoCamera);
+        }
+
+        yield return new WaitForSeconds(pauseBeforePhaseTwo);
+
+        // 3. Grito, VFX, cambio de modelo y entrada de la fase 2
+        if (boss == null) yield break;
+
+        yield return boss.PlayPhaseTwoTransition();
+
+        // Si el boss murio durante la cinematica, el evento final toma el control
+        if (boss == null) yield break;
+
+        yield return new WaitForSeconds(pauseAfterPhaseTwo);
+
+        // 4. El jugador recupera el control y el boss vuelve a atacar tras su delay inicial
+        if (playerControl != null)
+        {
+            playerControl.MutePlayerAudio(false);
+        }
+
+        GameModeManager.Instance.SetMode(GameMode.Gameplay);
+
+        if (boss != null)
+        {
+            boss.SetCinematic(false);
+        }
     }
 
     private IEnumerator MoveDoor(Vector3 desiredPos)
     {
         if (doorCamera != null)
         {
-            // 📌 Asegurar que doorCamera tenga pausePlayer=true y mutePlayerAudio=true en inspector
             CameraEventRelay.Instance.Play(doorCamera);
         }
 
@@ -201,7 +261,6 @@ public class BossEvent : MonoBehaviour
     {
         if (barrierCamera != null)
         {
-            // 📌 Asegurar que barrierCamera tenga pausePlayer=true y mutePlayerAudio=true en inspector
             CameraEventRelay.Instance.Play(barrierCamera);
         }
 
@@ -210,7 +269,7 @@ public class BossEvent : MonoBehaviour
             barrier.SetActive(isActive);
         }
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(barrierWait);
     }
 
     public void ResetEvent()
@@ -226,14 +285,27 @@ public class BossEvent : MonoBehaviour
             playerControl.MutePlayerAudio(false);
         }
 
+        if (bossHud != null)
+        {
+            bossHud.HideImmediate();
+        }
+
         if (bossObject != null)
         {
             Destroy(bossObject);
         }
 
-        doorTransform.position = openPos.position;
+        boss = null;
 
-        barrier.SetActive(false);
+        if (doorTransform != null && openPos != null)
+        {
+            doorTransform.position = openPos.position;
+        }
+
+        if (barrier != null)
+        {
+            barrier.SetActive(false);
+        }
 
         hasStarted = false;
         eventActive = false;
@@ -241,18 +313,25 @@ public class BossEvent : MonoBehaviour
 
     private IEnumerator OnDeathEvent()
     {
+        // A partir de aqui ya no se debe poder resetear el evento
+        eventComplete = true;
+
         var ending = Ending_Cinematic.Instance;
+
+        if (bossHud != null)
+        {
+            bossHud.Hide();
+        }
 
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
 
-        // 🔇 Silenciar audio
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(true);
-            Debug.Log("[BossEvent] 🔒 Jugador pausado para evento de muerte");
+            Debug.Log("[BossEvent] Jugador pausado para el evento de muerte");
         }
 
-        Debug.Log("SHOW CUTSCENE");
+        Debug.Log("[BossEvent] Mostrando cinematica final");
         ending.ShowCutscene();
 
         yield return new WaitForSeconds(8.5f);
@@ -262,7 +341,7 @@ public class BossEvent : MonoBehaviour
 
         yield return new WaitForSeconds(6f);
 
-        Debug.Log("change to menu");
+        Debug.Log("[BossEvent] Volviendo al menu");
         SceneLoaderManager.Instance.LoadSceneNormal("menu");
     }
 
@@ -270,22 +349,21 @@ public class BossEvent : MonoBehaviour
     {
         if (eventActive) return;
 
-        if (other.gameObject.CompareTag("Player"))
+        if (!other.gameObject.CompareTag("Player")) return;
+
+        player = other.gameObject;
+
+        PlayerControl control = player.GetComponent<PlayerControl>();
+
+        if (control == null)
         {
-            player = other.gameObject;
-
-            var playerControl = player.GetComponent<PlayerControl>();
-
-            if (playerControl != null)
-            {
-                eventActive = true;
-
-                StartBossEvent();
-            }
-            else
-            {
-                Debug.LogError("Boss event didnt get [PlayerControl] component");
-            }
+            Debug.LogError("Boss event didnt get [PlayerControl] component");
+            return;
         }
+
+        playerControl = control;
+        eventActive = true;
+
+        StartBossEvent();
     }
 }

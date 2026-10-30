@@ -3,13 +3,29 @@ using UnityEngine;
 
 public class Boss_MedusaMorgana : EnemyBase
 {
+    [Header("Info")]
+    [SerializeField] private string bossDisplayName = "Medusa Morgana";
+
     [Header("Fases")]
     [Range(0f, 1f)]
     [SerializeField] private float phaseTwoThreshold = 0.6f;
+    [SerializeField] private float firstAttackDelay = 1f;
     [SerializeField] private float pauseBetweenAttacks = 0.75f;
 
+    [Header("Animator (datos de los clips)")]
+    [SerializeField] private float animFps = 30f;
+    [SerializeField] private int screamFrames = 40;
+    [SerializeField] private int swordHitFrame = 12;   // frame del clip Attack Sword donde cae el golpe
+    [SerializeField] private int tailHitFrame = 20;    // frame del clip Attack Cola donde cae el golpe
+
+    [Header("Movimiento")]
+    [SerializeField] private float walkSpeed = 1.5f;   // m/s: distancia que recorre un ciclo de Walk / 1.25 s
+    [SerializeField] private float turnSpeed = 8f;
+
     [Header("Resonancia (Fase 1)")]
-    [SerializeField] private float resonanciaWindUp = 1.5f;      // Z: segundos moviendo la espada
+    [SerializeField] private float resonanciaEngageDistance = 4f;
+    [SerializeField] private float resonanciaWindUp = 2f;        // Z: igual a Incantation (60 frames / fps)
+    [SerializeField] private float resonanciaRecovery = 0.5f;
     [SerializeField] private int resonanciaProjectiles = 6;      // X: proyectiles del area
     [SerializeField] private float resonanciaRangeOffset = 2f;   // 2U de rango melee
     [SerializeField] private float resonanciaRectWidth = 6f;
@@ -20,13 +36,15 @@ public class Boss_MedusaMorgana : EnemyBase
 
     [Header("Part-Titura (Fase 1)")]
     [SerializeField] private float partTituraDuration = 12f;
-    [SerializeField] private float partTituraMoveSpeed = 3f;
-    [SerializeField] private float partTituraSpinSpeed = 720f;
+    [SerializeField] private float partTituraMoveSpeed = 1.2f;  // m/s mientras gira
     [SerializeField] private float partTituraStopDistance = 1.5f;
-    [SerializeField] private float partTituraHitInterval = 1.5f; // Y: segundos entre golpes
-    [SerializeField] private float partTituraHitRange = 2f;
-    [SerializeField] private float partTituraHitRadius = 1.5f;
-    [SerializeField] private float partTituraDamage = 12f;       // DMG x hit
+    [SerializeField] private float partTituraHitInterval = 1.5f; // Y: segundos entre ataques (minimo ~1.5 por el clip de cola)
+    [SerializeField] private float swordHitRadius = 3f;
+    [SerializeField] private float swordHitAngle = 120f;         // cono frontal total en grados (180 = media luna)
+    [SerializeField] private float tailHitAngle = 120f;          // cono frontal total de la cola en grados
+    [SerializeField] private float tailHitRadius = 3.5f;
+    [SerializeField] private float swordDamage = 12f;            // DMG x hit
+    [SerializeField] private float tailDamage = 12f;             // DMG x hit
 
     [Header("Climax Serpentinus (Fase 2)")]
     [SerializeField] private Transform arenaCenter;
@@ -34,10 +52,10 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private float borderWidth = 2f;
     [SerializeField] private float climaxChannelTime = 2f;
     [SerializeField] private float borderWarningTime = 3f;       // X: segundos iluminado antes del dano
-    [SerializeField] private float climaxDuration = 30f;         // Duracion total de la habilidad
+    [SerializeField] private float climaxDuration = 30f;         // duracion total de la habilidad
     [SerializeField] private float borderTickInterval = 0.5f;
     [SerializeField] private float borderDamagePerSecond = 5f;   // DMG x seg
-    [SerializeField] private GameObject arenaBorderVfx;
+    [SerializeField] private GameObject arenaBorderVfx;          // PREFAB: se instancia en el centro de la arena
     [SerializeField] private GameObject golemPrefab;
     [SerializeField] private int golemsToSummon = 5;             // Y: enemigos a invocar
     [SerializeField] private Transform[] summonPoints;
@@ -46,25 +64,85 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private float disonanciaAimTime = 1.5f;
     [SerializeField] private float markDuration = 4f;
     [SerializeField] private float beamDelay = 1f;
-    [SerializeField] private float beamRadius = 1.5f;            // Distancia/radio del haz
+    [SerializeField] private float beamRadius = 1.5f;
     [SerializeField] private float disonanciaDamage = 60f;       // DMG
     [SerializeField] private GameObject markVfx;
     [SerializeField] private GameObject beamWarningVfx;
     [SerializeField] private GameObject beamVfx;
 
-    [Header("Rotacion")]
-    [SerializeField] private float turnSpeed = 8f;
+    [Header("Cambio de fase (2 modelos)")]
+    [SerializeField] private GameObject phaseOneModel;                 // hijo con el modelo y Animator de la fase 1
+    [SerializeField] private GameObject phaseTwoModel;                 // hijo con el modelo y Animator de la fase 2
+    [SerializeField] private GameObject transformVfx;                  // PREFAB: humo o destello que tapa el cambio de modelo
+    [SerializeField] private float swapDelay = 0.2f;                   // espera tras lanzar el VFX, antes de cambiar el modelo
+    [SerializeField] private string phaseTwoIntroTrigger = "Scream";   // trigger del Animator de la fase 2 para su entrada
+    [SerializeField] private float phaseTwoIntroDuration = 2f;         // duracion del clip de entrada de la fase 2
 
-    private bool isAttacking;
-    private bool inPhaseTwo;
+    // BossEvent se suscribe para manejar camara y modo cinematico
+    public event System.Action OnPhaseTwoStarted;
+
+    [Header("Telegrafia y trail")]
+    [SerializeField] private BossAttackTelegraph telegraph;
+
+    [Header("Gizmos (solo en Scene view)")]
+    [SerializeField] private bool showGizmos = true;
+    [SerializeField] private bool showHitAreas = true;
+    [SerializeField] private bool showResonanciaArea = true;
+    [SerializeField] private Color gizmoArenaColor = Color.magenta;
+    [SerializeField] private Color gizmoBorderColor = Color.red;
+    [SerializeField] private Color gizmoSwordColor = new Color(1f, 0.8f, 0f);
+    [SerializeField] private Color gizmoTailColor = Color.cyan;
+    [SerializeField] private Color gizmoResonanciaColor = new Color(1f, 0.4f, 0f);
+    [SerializeField] private Color gizmoSummonColor = Color.green;
 
     public bool inCinematic;
+
+    // Parametros del Animator
+    private static readonly int HashIsMoving = Animator.StringToHash("IsMoving");
+    private static readonly int HashIncantation = Animator.StringToHash("Incantation");
+    private static readonly int HashAttackSword = Animator.StringToHash("AttackSword");
+    private static readonly int HashAttackTail = Animator.StringToHash("AttackTail");
+    private static readonly int HashScream = Animator.StringToHash("Scream");
+    private static readonly int HashIdleState = Animator.StringToHash("Idle");
+
+    private bool isAttacking;
+    private bool canInterrupt = true;
+    private EnemySpawner summonSpawner;
+    private bool inPhaseTwo;
+    private bool phaseTwoStarted;
+    private float nextAttackTime;
+
+    private Coroutine attackRoutine;
+    private GameObject activeMarker;
+    private GameObject activeBorderVfx;
+
+    // Datos que lee la barra de vida en pantalla
+    public string DisplayName => bossDisplayName;
+    public float MaxHp => stats != null ? stats.maxHp : 1f;
+    public bool HasStagger => stats != null && stats.hasStagger;
+    public float StaggerBuild => currentStaggerBuild;
+    public float StaggerThreshold => stats != null ? stats.staggerThreshold : 1f;
+    public bool InPhaseTwo => inPhaseTwo;
 
     protected override void Start()
     {
         base.Start();
 
         if (arenaCenter == null) arenaCenter = transform;
+        if (telegraph == null) telegraph = GetComponent<BossAttackTelegraph>();
+
+        // Arranca con el modelo de la fase 1
+        if (phaseTwoModel != null) phaseTwoModel.SetActive(false);
+
+        if (phaseOneModel != null)
+        {
+            phaseOneModel.SetActive(true);
+
+            Animator phaseOneAnim = phaseOneModel.GetComponentInChildren<Animator>(true);
+            if (phaseOneAnim != null) anim = phaseOneAnim;
+        }
+
+        nextAttackTime = Time.time + firstAttackDelay;
     }
 
     protected override void Update()
@@ -73,40 +151,58 @@ public class Boss_MedusaMorgana : EnemyBase
 
         base.Update();
 
-        if (!inPhaseTwo && GetHealthPercent() < phaseTwoThreshold)
+        if (!phaseTwoStarted && GetHealthPercent() < phaseTwoThreshold)
         {
-            EnterPhaseTwo();
+            StartPhaseTwo();
+            return;
+        }
+
+        // El stagger corta el ataque en curso (salvo las habilidades que no se pueden interrumpir)
+        if (IsStaggered && isAttacking && canInterrupt)
+        {
+            CancelAttack();
         }
 
         HandleAi();
     }
 
-    private void EnterPhaseTwo()
+    protected override void Die()
     {
-        inPhaseTwo = true;
-        Debug.Log("[Morgana] Entrando en fase 2");
+        if (isDead) return;
+
+        CancelAttack();
+
+        if (activeBorderVfx != null) Destroy(activeBorderVfx);
+
+        base.Die();
     }
 
-    // Reemplaza el cuerpo con la propiedad de vida que expone EnemyBase
-    // Ejemplo: return currentHealth / stats.maxHealth;
     private float GetHealthPercent()
     {
-        return 1f;
+        if (stats == null || stats.maxHp <= 0f) return 1f;
+
+        return currentHp / stats.maxHp;
     }
 
     private void HandleAi()
     {
-        if (inCinematic) return;
-        if (isAttacking) return;
-        if (!HasValidPlayer()) return;
+        if (inCinematic || isAttacking || IsStaggered) return;
+
+        if (!HasValidPlayer())
+        {
+            SetMoving(false);
+            return;
+        }
+
+        if (Time.time < nextAttackTime) return;
 
         isAttacking = true;
-        StartCoroutine(AttackRoutine());
+        attackRoutine = StartCoroutine(AttackRoutine());
     }
 
     private IEnumerator AttackRoutine()
     {
-        anim.Play("Idle");
+        canInterrupt = true;
 
         if (!inPhaseTwo)
         {
@@ -117,9 +213,7 @@ public class Boss_MedusaMorgana : EnemyBase
         }
         else
         {
-            int pick = Random.Range(0, 4);
-
-            switch (pick)
+            switch (Random.Range(0, 4))
             {
                 case 0:
                     yield return Resonancia();
@@ -136,17 +230,165 @@ public class Boss_MedusaMorgana : EnemyBase
             }
         }
 
-        yield return new WaitForSeconds(pauseBetweenAttacks);
+        EndAttack();
+    }
+
+    private void EndAttack()
+    {
+        SetMoving(false);
+
+        attackRoutine = null;
+        isAttacking = false;
+        nextAttackTime = Time.time + pauseBetweenAttacks;
+    }
+
+    private void CancelAttack()
+    {
+        if (attackRoutine != null)
+        {
+            StopCoroutine(attackRoutine);
+            attackRoutine = null;
+        }
+
+        ResetAnimatorTriggers();
+        SetMoving(false);
+
+        if (anim != null) anim.CrossFadeInFixedTime(HashIdleState, 0.1f);
+
+        if (activeMarker != null) Destroy(activeMarker);
+
+        if (telegraph != null) telegraph.CancelAll();
 
         isAttacking = false;
+        nextAttackTime = Time.time + pauseBetweenAttacks;
+    }
+
+    // ---------- INTRO Y TRANSICION ----------
+
+    // Lo llama BossEvent durante la introduccion
+    public IEnumerator PlayIntro()
+    {
+        SetMoving(false);
+        Trigger(HashScream);
+
+        yield return new WaitForSeconds(FramesToSeconds(screamFrames));
+    }
+
+    // Se llama una sola vez, en cuanto la vida baja del umbral
+    private void StartPhaseTwo()
+    {
+        phaseTwoStarted = true;
+
+        // Frena la IA y corta el ataque en curso
+        inCinematic = true;
+        CancelAttack();
+
+        Debug.Log("[Morgana] Vida bajo el umbral, inicia el cambio de fase");
+
+        if (OnPhaseTwoStarted != null)
+        {
+            // BossEvent se encarga de la camara y del modo cinematico
+            OnPhaseTwoStarted.Invoke();
+        }
+        else
+        {
+            // Sin BossEvent hace el cambio por su cuenta, sin camara
+            StartCoroutine(PhaseTwoFallback());
+        }
+    }
+
+    private IEnumerator PhaseTwoFallback()
+    {
+        yield return PlayPhaseTwoTransition();
+
+        if (!isDead) SetCinematic(false);
+    }
+
+    // Grito de la fase 1, VFX que tapa el cambio, cambio de modelo y entrada de la fase 2
+    public IEnumerator PlayPhaseTwoTransition()
+    {
+        FaceTargetInstant();
+        SetMoving(false);
+
+        // 1. Grito con el modelo de la fase 1
+        Trigger(HashScream);
+        yield return new WaitForSeconds(FramesToSeconds(screamFrames));
+        if (isDead) yield break;
+
+        // 2. El VFX tapa el cambio de modelo
+        if (transformVfx != null)
+        {
+            GameObject vfx = Instantiate(transformVfx, transform.position, transform.rotation);
+            Destroy(vfx, 3f);
+        }
+
+        yield return new WaitForSeconds(swapDelay);
+        if (isDead) yield break;
+
+        SwapToPhaseTwoModel();
+
+        // Un frame para que el nuevo Animator se inicialice antes de recibir el trigger
+        yield return null;
+        if (isDead) yield break;
+
+        // 3. Entrada del modelo de la fase 2
+        if (anim != null && !string.IsNullOrEmpty(phaseTwoIntroTrigger))
+        {
+            anim.SetTrigger(Animator.StringToHash(phaseTwoIntroTrigger));
+        }
+
+        yield return new WaitForSeconds(phaseTwoIntroDuration);
+        if (isDead) yield break;
+
+        inPhaseTwo = true;
+        Debug.Log("[Morgana] Fase 2 activa");
+    }
+
+    private void SwapToPhaseTwoModel()
+    {
+        if (phaseTwoModel == null)
+        {
+            Debug.LogWarning("[Morgana] phaseTwoModel no asignado, se sigue con el modelo actual");
+            return;
+        }
+
+        ResetAnimatorTriggers();
+        SetMoving(false);
+
+        if (phaseOneModel != null) phaseOneModel.SetActive(false);
+        phaseTwoModel.SetActive(true);
+
+        Animator phaseTwoAnim = phaseTwoModel.GetComponentInChildren<Animator>(true);
+
+        if (phaseTwoAnim != null)
+        {
+            anim = phaseTwoAnim;
+        }
+        else
+        {
+            Debug.LogWarning("[Morgana] phaseTwoModel no tiene Animator");
+        }
     }
 
     // ---------- FASE 1 ----------
 
     private IEnumerator Resonancia()
     {
+        canInterrupt = true;
         Debug.Log("[Morgana] Resonancia");
-        anim.Play("Resonancia_Gesto");
+
+        yield return ApproachPlayer(resonanciaEngageDistance, 3f);
+
+        SetMoving(false);
+        Trigger(HashIncantation);
+
+        if (telegraph != null)
+        {
+            telegraph.StartTelegraph(
+                () => BossAttackTelegraph.Rect(transform.position, transform.forward,
+                    resonanciaRangeOffset, resonanciaRectWidth, resonanciaRectDepth),
+                resonanciaWindUp);
+        }
 
         float timer = 0f;
         while (timer < resonanciaWindUp)
@@ -158,11 +400,11 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (!HasValidPlayer()) yield break;
 
-        anim.Play("Resonancia_Disparo");
+        if (telegraph != null) telegraph.OnHit();
 
         ResonanciaBurst(FlatDirToPlayer());
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(resonanciaRecovery);
     }
 
     private void ResonanciaBurst(Vector3 forward)
@@ -194,51 +436,101 @@ public class Boss_MedusaMorgana : EnemyBase
 
     private IEnumerator PartTitura()
     {
+        canInterrupt = true;
         Debug.Log("[Morgana] Part-Titura");
-        anim.Play("Part_Titura");
+
+        SetMoving(true);
 
         float timer = 0f;
-        float hitTimer = 0f;
+        float nextAttackAt = 0f;
+        float pendingHitAt = -1f;
+        bool nextIsSword = true;
+        bool pendingIsSword = true;
 
         while (timer < partTituraDuration)
         {
             if (!HasValidPlayer()) break;
 
-            Vector3 dir = FlatDirToPlayer();
-            float dist = DistanceToPlayerFlat();
+            // Se orienta hacia el jugador y avanza hacia adelante, para no deslizarse de lado.
+            // El giro visible lo hace la animacion.
+            FaceTarget(turnSpeed);
 
-            transform.Rotate(0f, partTituraSpinSpeed * Time.deltaTime, 0f);
-
-            if (dist > partTituraStopDistance)
+            if (DistanceToPlayerFlat() > partTituraStopDistance)
             {
-                transform.position += dir * partTituraMoveSpeed * Time.deltaTime;
+                transform.position += transform.forward * partTituraMoveSpeed * Time.deltaTime;
             }
 
-            hitTimer += Time.deltaTime;
-
-            if (hitTimer >= partTituraHitInterval)
+            // Cada Y segundos alterna espada y cola
+            if (timer >= nextAttackAt)
             {
-                hitTimer = 0f;
+                pendingIsSword = nextIsSword;
+                nextIsSword = !nextIsSword;
 
-                Vector3 hitCenter = transform.position + transform.forward * partTituraHitRange;
-                DamagePlayerWithin(hitCenter, partTituraHitRadius, partTituraDamage, transform.forward);
+                Trigger(pendingIsSword ? HashAttackSword : HashAttackTail);
+
+                float windup = FramesToSeconds(pendingIsSword ? swordHitFrame : tailHitFrame);
+                float warningRadius = pendingIsSword ? swordHitRadius : tailHitRadius;
+                bool isSword = pendingIsSword;
+                float warningAngle = pendingIsSword ? swordHitAngle : tailHitAngle;
+
+                if (telegraph != null)
+                {
+                    telegraph.StartTelegraph(
+                        () => BossAttackTelegraph.Sector(transform.position, transform.forward, warningRadius, warningAngle),
+                        windup);
+
+                    telegraph.SetTrail(pendingIsSword, true);
+                }
+
+                pendingHitAt = timer + windup;
+                nextAttackAt = timer + partTituraHitInterval;
+            }
+
+            // El dano cae en el frame del golpe, en 360 grados alrededor del boss
+            if (pendingHitAt >= 0f && timer >= pendingHitAt)
+            {
+                pendingHitAt = -1f;
+
+                float radius = pendingIsSword ? swordHitRadius : tailHitRadius;
+                float damage = pendingIsSword ? swordDamage : tailDamage;
+
+                if (telegraph != null)
+                {
+                    telegraph.OnHit();
+                    telegraph.SetTrail(pendingIsSword, false);
+                }
+
+                float hitAngle = pendingIsSword ? swordHitAngle : tailHitAngle;
+
+                DamagePlayerInSector(transform.position, transform.forward, radius, hitAngle, damage, transform.forward);
             }
 
             timer += Time.deltaTime;
             yield return null;
         }
+
+        SetMoving(false);
+        FaceTargetInstant();
     }
 
-    // ---------- FASE 2 ----------
+    // ---------- FASE 2 (animaciones provisionales: Incantation y Scream) ----------
 
     private IEnumerator ClimaxSerpentinus()
     {
+        canInterrupt = false;
         Debug.Log("[Morgana] Climax Serpentinus");
-        anim.Play("Climax_Energia");
+
+        FaceTargetInstant();
+        Trigger(HashIncantation);
 
         yield return new WaitForSeconds(climaxChannelTime);
 
-        if (arenaBorderVfx != null) arenaBorderVfx.SetActive(true);
+        Trigger(HashScream);
+
+        if (arenaBorderVfx != null)
+        {
+            activeBorderVfx = Instantiate(arenaBorderVfx, ArenaCenterPos(), Quaternion.identity);
+        }
 
         // El borde se ilumina como aviso antes de que haga dano
         yield return new WaitForSeconds(borderWarningTime);
@@ -248,7 +540,7 @@ public class Boss_MedusaMorgana : EnemyBase
         float remaining = Mathf.Max(0f, climaxDuration - climaxChannelTime - borderWarningTime);
         yield return BorderDamageOverTime(remaining);
 
-        if (arenaBorderVfx != null) arenaBorderVfx.SetActive(false);
+        if (activeBorderVfx != null) Destroy(activeBorderVfx);
     }
 
     private IEnumerator BorderDamageOverTime(float duration)
@@ -269,7 +561,7 @@ public class Boss_MedusaMorgana : EnemyBase
 
     private bool IsInsideBorder(Vector3 pos)
     {
-        Vector3 center = arenaCenter != null ? arenaCenter.position : transform.position;
+        Vector3 center = ArenaCenterPos();
         Vector2 p = new Vector2(pos.x, pos.z);
         Vector2 c = new Vector2(center.x, center.z);
 
@@ -284,30 +576,30 @@ public class Boss_MedusaMorgana : EnemyBase
             return;
         }
 
-        Vector3 center = arenaCenter != null ? arenaCenter.position : transform.position;
+        if (summonSpawner == null)
+        {
+            Debug.LogWarning("[Morgana] No hay summonSpawner, no se invocan golems");
+            return;
+        }
+
+        Transform fallbackCenter = arenaCenter != null ? arenaCenter : transform;
 
         for (int i = 0; i < golemsToSummon; i++)
         {
-            Vector3 pos;
+            Transform point = (summonPoints != null && summonPoints.Length > 0)
+                ? summonPoints[i % summonPoints.Length]
+                : fallbackCenter;
 
-            if (summonPoints != null && summonPoints.Length > 0)
-            {
-                pos = summonPoints[i % summonPoints.Length].position;
-            }
-            else
-            {
-                Vector2 r = Random.insideUnitCircle * arenaRadius * 0.6f;
-                pos = center + new Vector3(r.x, 0f, r.y);
-            }
-
-            Instantiate(golemPrefab, pos, Quaternion.identity);
+            summonSpawner.SpawnAt(golemPrefab, point, fallbackCenter);
         }
     }
 
     private IEnumerator Disonancia()
     {
+        canInterrupt = false;
         Debug.Log("[Morgana] Disonancia");
-        anim.Play("Disonancia_Apuntar");
+
+        Trigger(HashIncantation);
 
         float aimTimer = 0f;
         while (aimTimer < disonanciaAimTime)
@@ -319,16 +611,15 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (!HasValidPlayer()) yield break;
 
-        GameObject marker = null;
         if (markVfx != null)
         {
-            marker = Instantiate(markVfx, player.transform.position, Quaternion.identity);
+            activeMarker = Instantiate(markVfx, player.transform.position, Quaternion.identity);
         }
 
         Vector3 lastPos = player.transform.position;
         float markTimer = 0f;
 
-        // El jugador queda marcado y el marcador lo sigue durante markDuration
+        // El marcador sigue al jugador durante markDuration
         while (markTimer < markDuration)
         {
             if (HasValidPlayer())
@@ -336,19 +627,24 @@ public class Boss_MedusaMorgana : EnemyBase
                 lastPos = player.transform.position;
             }
 
-            if (marker != null)
+            if (activeMarker != null)
             {
-                marker.transform.position = lastPos + Vector3.up * 0.1f;
+                activeMarker.transform.position = lastPos + Vector3.up * 0.1f;
             }
 
             markTimer += Time.deltaTime;
             yield return null;
         }
 
-        if (marker != null) Destroy(marker);
+        if (activeMarker != null) Destroy(activeMarker);
 
-        // La posicion del haz es donde estaba el jugador al terminar la marca
+        // El haz cae donde estaba el jugador al terminar la marca, no donde esta ahora
         Vector3 beamPos = lastPos;
+
+        if (telegraph != null)
+        {
+            telegraph.StartTelegraph(() => BossAttackTelegraph.Circle(beamPos, beamRadius), beamDelay);
+        }
 
         if (beamWarningVfx != null)
         {
@@ -364,10 +660,59 @@ public class Boss_MedusaMorgana : EnemyBase
             Destroy(beam, 0.5f);
         }
 
+        if (telegraph != null) telegraph.OnHit();
+
         DamagePlayerWithin(beamPos, beamRadius, disonanciaDamage, Vector3.up);
     }
 
-    // ---------- HELPERS ----------
+    // ---------- MOVIMIENTO ----------
+
+    private IEnumerator ApproachPlayer(float desiredDistance, float maxTime)
+    {
+        float t = 0f;
+
+        while (HasValidPlayer() && DistanceToPlayerFlat() > desiredDistance && t < maxTime)
+        {
+            SetMoving(true);
+
+            transform.position += FlatDirToPlayer() * walkSpeed * Time.deltaTime;
+            FaceTarget(turnSpeed);
+
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        SetMoving(false);
+    }
+
+    // ---------- ANIMATOR ----------
+
+    private void SetMoving(bool value)
+    {
+        if (anim != null) anim.SetBool(HashIsMoving, value);
+    }
+
+    private void Trigger(int hash)
+    {
+        if (anim != null) anim.SetTrigger(hash);
+    }
+
+    private void ResetAnimatorTriggers()
+    {
+        if (anim == null) return;
+
+        anim.ResetTrigger(HashIncantation);
+        anim.ResetTrigger(HashAttackSword);
+        anim.ResetTrigger(HashAttackTail);
+        anim.ResetTrigger(HashScream);
+    }
+
+    private float FramesToSeconds(int frames)
+    {
+        return animFps > 0f ? frames / animFps : 0f;
+    }
+
+    // ---------- DANO Y PROYECTILES ----------
 
     private void FireProjectile(Vector3 pos, Vector3 dir, float damage)
     {
@@ -412,6 +757,39 @@ public class Boss_MedusaMorgana : EnemyBase
         }
     }
 
+    // Dano solo si el jugador esta dentro del radio y dentro del cono frontal
+    private void DamagePlayerInSector(Vector3 origin, Vector3 forward, float radius, float angleDeg, float amount, Vector3 hitDir)
+    {
+        if (!HasValidPlayer()) return;
+
+        Vector3 toPlayer = player.transform.position - origin;
+        toPlayer.y = 0f;
+
+        if (toPlayer.magnitude > radius) return;
+
+        if (toPlayer.sqrMagnitude < 0.0001f)
+        {
+            DamagePlayer(amount, hitDir);
+            return;
+        }
+
+        forward.y = 0f;
+
+        float angle = Vector3.Angle(forward, toPlayer);
+
+        if (angle <= angleDeg * 0.5f)
+        {
+            DamagePlayer(amount, hitDir);
+        }
+    }
+
+    // ---------- UTILIDADES ----------
+
+    private Vector3 ArenaCenterPos()
+    {
+        return arenaCenter != null ? arenaCenter.position : transform.position;
+    }
+
     private Vector3 FlatDirToPlayer()
     {
         if (!HasValidPlayer()) return transform.forward;
@@ -438,34 +816,97 @@ public class Boss_MedusaMorgana : EnemyBase
     {
         if (!HasValidPlayer()) return;
 
-        Vector3 dir = FlatDirToPlayer();
-        Quaternion targetRot = Quaternion.LookRotation(dir);
+        Quaternion targetRot = Quaternion.LookRotation(FlatDirToPlayer());
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, speed * Time.deltaTime);
+    }
+
+    private void FaceTargetInstant()
+    {
+        if (!HasValidPlayer()) return;
+
+        transform.rotation = Quaternion.LookRotation(FlatDirToPlayer());
+    }
+
+    // ---------- API PARA BossEvent ----------
+
+    public void FacePlayerInstant()
+    {
+        FaceTargetInstant();
     }
 
     public void SetCinematic(bool value)
     {
         inCinematic = value;
+
+        if (!value)
+        {
+            nextAttackTime = Time.time + firstAttackDelay;
+        }
     }
 
-    public void GetPositions(Transform center, Transform[] corners)
+    // BossEvent lo llama justo despues de instanciar el boss
+    public void SetArena(Transform center, Transform[] points, EnemySpawner spawner)
     {
-        arenaCenter = center;
+        if (center != null) arenaCenter = center;
+        if (points != null && points.Length > 0) summonPoints = points;
+        if (spawner != null) summonSpawner = spawner;
+    }
+
+    private void DrawPolyline(Vector3[] pts, Color color)
+    {
+        Gizmos.color = color;
+
+        for (int i = 0; i < pts.Length; i++)
+        {
+            Gizmos.DrawLine(pts[i], pts[(i + 1) % pts.Length]);
+        }
     }
 
     private void OnDrawGizmosSelected()
     {
-        if (!debug) return;
+        if (!showGizmos) return;
 
-        Vector3 center = arenaCenter != null ? arenaCenter.position : transform.position;
+        Vector3 center = ArenaCenterPos();
+        Vector3 pos = transform.position;
+        Vector3 fwd = transform.forward;
 
-        Gizmos.color = Color.magenta;
+        // Arena y borde de la fase 2
+        Gizmos.color = gizmoArenaColor;
         Gizmos.DrawWireSphere(center, arenaRadius);
 
-        Gizmos.color = Color.red;
+        Gizmos.color = gizmoBorderColor;
         Gizmos.DrawWireSphere(center, arenaRadius - borderWidth);
 
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, resonanciaRangeOffset);
+        // Zonas de golpe de Part-Titura (son alrededor del boss, 360 grados)
+        if (showHitAreas)
+        {
+            Vector3[] swordCone = BossAttackTelegraph.Sector(pos, fwd, swordHitRadius, swordHitAngle);
+            Vector3[] tailCone = BossAttackTelegraph.Sector(pos, fwd, tailHitRadius, tailHitAngle);
+
+            DrawPolyline(swordCone, gizmoSwordColor);
+            DrawPolyline(tailCone, gizmoTailColor);
+        }
+
+        // Area rectangular de Resonancia, contando desde el frente del boss
+        if (showResonanciaArea)
+        {
+            Vector3[] rect = BossAttackTelegraph.Rect(pos, fwd, resonanciaRangeOffset, resonanciaRectWidth, resonanciaRectDepth);
+
+            Gizmos.color = gizmoResonanciaColor;
+            for (int i = 0; i < rect.Length; i++)
+            {
+                Gizmos.DrawLine(rect[i], rect[(i + 1) % rect.Length]);
+            }
+        }
+
+        // Puntos donde aparecen los golems
+        if (summonPoints != null)
+        {
+            Gizmos.color = gizmoSummonColor;
+            foreach (Transform p in summonPoints)
+            {
+                if (p != null) Gizmos.DrawWireSphere(p.position, 0.5f);
+            }
+        }
     }
 }

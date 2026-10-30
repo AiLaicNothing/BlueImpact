@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,8 +8,18 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private List<SpawnEntry> spawnEntries = new();
     public bool hasSpawnedAlready = false;
 
-    private void Start()
+    private readonly List<EnemyBase> activeEnemies = new();
+
+    public event Action<EnemyBase> OnEnemySpawned;
+
+    // Enemigos de este spawner que siguen existiendo (los muertos se destruyen)
+    public int AliveCount
     {
+        get
+        {
+            activeEnemies.RemoveAll(e => e == null);
+            return activeEnemies.Count;
+        }
     }
 
     public void SpawnEnemies()
@@ -33,7 +44,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (entry.enemyPrefab == null || entry.spawnPoint == null) return;
 
-        GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation, enemyHolders.transform);
+        GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation, GetHolder());
 
         EnemyBase enemy = enemyObj.GetComponentInChildren<EnemyBase>();
         if (enemy == null)
@@ -46,6 +57,28 @@ public class EnemySpawner : MonoBehaviour
 
         entry.hasSpawned = true;
         entry.spawnedEnemy = enemy;
+
+        Track(enemy);
+    }
+
+    // Para invocaciones (por ejemplo, los golems del boss): no depende de SpawnEntry
+    public EnemyBase SpawnAt(GameObject prefab, Transform spawnPoint, Transform safePoint)
+    {
+        if (prefab == null || spawnPoint == null) return null;
+
+        GameObject obj = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation, GetHolder());
+
+        EnemyBase enemy = obj.GetComponentInChildren<EnemyBase>();
+        if (enemy == null)
+        {
+            Destroy(obj);
+            return null;
+        }
+
+        enemy.OnSpawn(null, safePoint != null ? safePoint : spawnPoint, false, spawnPoint);
+
+        Track(enemy);
+        return enemy;
     }
 
     public void Respawn(int index)
@@ -63,5 +96,15 @@ public class EnemySpawner : MonoBehaviour
     {
         for (int i = 0; i < spawnEntries.Count; i++) Spawn(i);
     }
-}
 
+    private Transform GetHolder()
+    {
+        return enemyHolders != null ? enemyHolders.transform : transform;
+    }
+
+    private void Track(EnemyBase enemy)
+    {
+        activeEnemies.Add(enemy);
+        OnEnemySpawned?.Invoke(enemy);
+    }
+}

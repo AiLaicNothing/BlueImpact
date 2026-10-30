@@ -194,7 +194,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         ShowHitVfx();
 
-        audio_Source.PlayOneShot(onHit);
+        if (audio_Source != null) audio_Source.PlayOneShot(onHit);
 
         float totalDamage = IsStaggered ? info.damage * 1.5f : info.damage;
         currentHp -= info.damage;
@@ -219,9 +219,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
             ApplyStun(info.stunDuration);
         }
 
-        healthUI.UpdateHealthBar(currentHp, stats.maxHp);
-        staggerUI.UpdateStaggerhBar(currentStaggerBuild, stats.staggerThreshold);
-        barUI.Show();
+        if (healthUI != null) healthUI.UpdateHealthBar(currentHp, stats.maxHp);
+        if (staggerUI != null) staggerUI.UpdateStaggerhBar(currentStaggerBuild, stats.staggerThreshold);
+        if (barUI != null) barUI.Show();
     }
 
     protected virtual void HandleRevenge()
@@ -279,7 +279,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         if (currentStaggerBuild >= stats.staggerThreshold)
         {
-            audio_Source.PlayOneShot(onStagger);
+            if (audio_Source != null) audio_Source.PlayOneShot(onStagger);
             ShowStaggerVfx();
             TriggerStagger();
             return true;

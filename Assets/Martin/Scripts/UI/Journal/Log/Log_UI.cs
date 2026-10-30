@@ -9,7 +9,8 @@ public class Log_UI : MonoBehaviour
     [Header("Log UI Information")]
     [SerializeField] private TextMeshProUGUI logTitle;
     [SerializeField] private Image logImage;
-    [SerializeField] private TextMeshProUGUI logDescription;
+    [SerializeField] private DynamicInputText logDescription;
+    //[SerializeField] private TextMeshProUGUI logDescription;
 
     [Header("Scroll Options")]
     [SerializeField] private Transform logsContainer;
@@ -123,7 +124,11 @@ public class Log_UI : MonoBehaviour
         selectedLog = logData;
 
         logTitle.text = logData.logName;
-        logDescription.text = logData.logDescription;
+
+        //logDescription.text = logData.logDescription;
+
+        logDescription.SetTemplate(logData.logDescription);
+
         logImage.sprite = logData.logIllustration;
         logImage.enabled = logData.logIllustration != null;
     }
@@ -131,7 +136,9 @@ public class Log_UI : MonoBehaviour
     private void ClearLogInformation()
     {
         logTitle.text = "";
-        logDescription.text = "";
+        //logDescription.text = "";
+        logDescription.SetTemplate("");
+
         logImage.sprite = null;
         logImage.enabled = false;
     }
