@@ -52,6 +52,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
     protected float airHangRemaining;
     protected bool isAirHung;
 
+    [Header("Stagger Tuning")]
+    [SerializeField] protected float staggeredDamageMultiplier = 1.5f; // dano extra mientras esta staggered
+
     [Header("Revenge")]
     [SerializeField] protected int revengeThreshold = 3;
     [SerializeField] protected float revengeDecayDelay = 2f;
@@ -119,9 +122,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [SerializeField] Material brokenMat;
     [ColorUsage(true, true)]
     [SerializeField] Color brokenColor = new Color(0.33f, 0.75f, 0.414f, 1f);
-    [SerializeField] Vector2 mainTexSpeed = new Vector2(1,0);
+    [SerializeField] Vector2 mainTexSpeed = new Vector2(1, 0);
     [SerializeField] float distorsionIntensity = 0.01f;
-    [SerializeField] Vector2 distorsionSpeed = new Vector2(0,-1);
+    [SerializeField] Vector2 distorsionSpeed = new Vector2(0, -1);
     string _Color = "_Color";
     string _MainTexSpeed = "_MainTexSpeed";
     string _DistorsionIntensity = "_DistorsionIntensity";
@@ -171,7 +174,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
 
     protected virtual void Update()
-    { 
+    {
 
         if (isDead) return;
 
@@ -196,8 +199,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         if (audio_Source != null) audio_Source.PlayOneShot(onHit);
 
-        float totalDamage = IsStaggered ? info.damage * 1.5f : info.damage;
-        currentHp -= info.damage;
+        float totalDamage = IsStaggered ? info.damage * staggeredDamageMultiplier : info.damage;
+        currentHp -= totalDamage;
 
         if (currentHp <= 0f)
         {
@@ -263,6 +266,10 @@ public class EnemyBase : MonoBehaviour, IDamageable
         isHitStunned = false;
     }
 
+    // Los enemigos normales dejan que el jugador alargue el stagger con un combo.
+    // Un boss lo sobrescribe en false para que recupere su turno (ver Boss_MedusaMorgana).
+    protected virtual bool CanExtendStagger => true;
+
     protected virtual bool HandleStagger(DamageInfo info)
     {
         if (!stats.hasStagger) return false;
@@ -271,7 +278,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         if (isStaggered)
         {
-            ExtendStagger();
+            // Si no se puede extender, el dano entra igual pero la duracion no se reinicia
+            if (CanExtendStagger) ExtendStagger();
+
             return true;
         }
 
@@ -312,7 +321,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
 
     protected virtual IEnumerator StaggerRoutine()
-    { 
+    {
         isStaggered = true;
         isStunned = true;
         yield return new WaitForSeconds(stats.staggerDuration);
@@ -418,7 +427,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         switch (info.throwType)
         {
-            case ThrowType.Push: 
+            case ThrowType.Push:
                 StartReaction(EnemyReactionType.Push, info.hitDirection, info);
                 break;
 
@@ -746,17 +755,17 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
     void StartDeadEffect()
     {
-        if(isStaggered) RemoveBrokenMaterial();
+        if (isStaggered) RemoveBrokenMaterial();
         ChangeMaterials();
         StartCoroutine(DieEffect());
     }
     void ChangeMaterials()
     {
-        foreach(Renderer renderer in allRenderers)
+        foreach (Renderer renderer in allRenderers)
         {
             Material[] originalMats = renderer.sharedMaterials;
             Material[] newMaterials = new Material[originalMats.Length];
-            for(int i = 0; i< originalMats.Length; i++)
+            for (int i = 0; i < originalMats.Length; i++)
             {
                 Material originalMat = originalMats[i];
                 if (originalMat == null) continue;
@@ -769,7 +778,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
                 if (originalMat.HasProperty(baseTexture))
                 {
                     Texture originalTex = originalMat.GetTexture(baseTexture);
-                    if(originalTex != null && clonMat.HasProperty(shaderTexture))
+                    if (originalTex != null && clonMat.HasProperty(shaderTexture))
                     {
                         clonMat.SetTexture(shaderTexture, originalTex);
                     }
@@ -783,13 +792,13 @@ public class EnemyBase : MonoBehaviour, IDamageable
     IEnumerator DieEffect()
     {
         float timePassed = 0f;
-        while(timePassed < durationDissolve)
+        while (timePassed < durationDissolve)
         {
             timePassed += Time.deltaTime;
             float progress = Mathf.Clamp01(timePassed / durationDissolve);
-            foreach(Material mat in clonMaterials)
+            foreach (Material mat in clonMaterials)
             {
-                if(mat != null)
+                if (mat != null)
                 {
                     mat.SetFloat(_DisolveProgress, progress);
                 }
@@ -800,9 +809,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
     }
     private void OnDestroy()
     {
-        if(clonMaterials != null)
+        if (clonMaterials != null)
         {
-            foreach(Material mat in clonMaterials)
+            foreach (Material mat in clonMaterials)
             {
                 if (mat != null) Destroy(mat);
             }

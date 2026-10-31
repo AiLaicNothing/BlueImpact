@@ -80,6 +80,26 @@ public class BossAttackTelegraph : MonoBehaviour
         if (line != null) line.enabled = false;
     }
 
+    // Sector circular: arranca en 'startDeg' desde forward y abarca 'sweepDeg' grados
+    public static Vector3[] Pie(Vector3 center, Vector3 forward, float radius, float startDeg, float sweepDeg, int segments = 48)
+    {
+        forward.y = 0f;
+        forward = forward.sqrMagnitude > 0.0001f ? forward.normalized : Vector3.forward;
+
+        segments = Mathf.Max(4, segments);
+        Vector3[] pts = new Vector3[segments + 2];
+        pts[0] = center;
+
+        for (int i = 0; i <= segments; i++)
+        {
+            float a = startDeg + sweepDeg * (i / (float)segments);
+            Vector3 dir = Quaternion.AngleAxis(a, Vector3.up) * forward;
+            pts[i + 1] = center + dir * radius;
+        }
+
+        return pts;
+    }
+
     // Cono frontal: empieza en el origen y abarca 'angleDeg' grados centrados en forward
     public static Vector3[] Sector(Vector3 origin, Vector3 forward, float radius, float angleDeg, int segments = 24)
     {
