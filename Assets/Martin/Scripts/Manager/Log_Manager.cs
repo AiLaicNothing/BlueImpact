@@ -22,8 +22,23 @@ public class Log_Manager : MonoBehaviour
         }
 
         Instance = this;
-
+        if (SaveLoadManager.canLoad)
+        {
+            LoadData();
+        }
         SortDiscoveredLogs();
+    }
+    void LoadData()
+    {
+        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+        if (loadedData != null)
+        {
+            discoveredLogs.Clear();
+            foreach (Log_Data log in loadedData.discoveredLogs)
+            {
+                discoveredLogs.Add(log);
+            }
+        }
     }
 
     public bool IsDiscoveredLog(Log_Data logData)
@@ -38,6 +53,8 @@ public class Log_Manager : MonoBehaviour
         discoveredLogs.Add(logData);
         SortDiscoveredLogs();
         OnDiscoveredLogsChange?.Invoke();
+
+        SaveLoadManager.Instance.SaveGame("discoveredLogs", discoveredLogs);
     }
 
     public void RemoveLogFromDiscovered(Log_Data logData)

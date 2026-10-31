@@ -22,6 +22,9 @@ public class SaveData
     public int availablePoints;
     public int totalEarnedPoints;
     public List<DiscoveredCheckpoint> discoveredCheckpoints;
+    public List<Log_Data> discoveredLogs;
+    public List<Log_Data> inspectedObjects;
+    public List<Item_Data> inventory;
     public DiscoveredCheckpoint activeCheckpoint;
     public Checkpoint checkpoint;
     public List<Skill> unlockedSkills;

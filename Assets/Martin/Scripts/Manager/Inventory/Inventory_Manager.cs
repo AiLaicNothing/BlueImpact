@@ -23,6 +23,22 @@ public class Inventory_Manager : MonoBehaviour
         }
 
         Instance = this;
+        if (SaveLoadManager.canLoad)
+        {
+            LoadData();
+        }
+    }
+    void LoadData()
+    {
+        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+        if (loadedData != null)
+        {
+            inventory.Clear();
+            foreach (Item_Data item in loadedData.inventory)
+            {
+                inventory.Add(item);
+            }
+        }
     }
 
     public void AddItem(Item_Data item)
@@ -31,6 +47,7 @@ public class Inventory_Manager : MonoBehaviour
 
         inventory.Add(item);
         OnInventoryChange?.Invoke();
+        SaveLoadManager.Instance.SaveGame("inventory", inventory);
     }
 
     public void RemoveItem(Item_Data item)

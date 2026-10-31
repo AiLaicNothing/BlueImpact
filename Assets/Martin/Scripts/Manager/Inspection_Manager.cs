@@ -18,6 +18,22 @@ public class Inspection_Manager : MonoBehaviour
         }
 
         Instance = this;
+        if (SaveLoadManager.canLoad)
+        {
+            LoadData();
+        }
+    }
+    void LoadData()
+    {
+        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
+        if (loadedData != null)
+        {
+            inspectedObjects.Clear();
+            foreach (Log_Data log in loadedData.inspectedObjects)
+            {
+                inspectedObjects.Add(log);
+            }
+        }
     }
 
     public bool IsInspectedObject(Log_Data logData)
@@ -30,5 +46,6 @@ public class Inspection_Manager : MonoBehaviour
         if (log_Data == null || IsInspectedObject(log_Data)) return;
 
         inspectedObjects.Add(log_Data);
+        SaveLoadManager.Instance.SaveGame("inspectedObjects", inspectedObjects);
     }
 }
