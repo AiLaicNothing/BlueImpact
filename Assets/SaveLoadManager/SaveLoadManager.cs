@@ -56,6 +56,15 @@ public class SaveLoadManager : MonoBehaviour
                     data.eventStates.Add(entry);
                 }
                 break;
+            case "discoveredLogs":
+                data.discoveredLogs = (List<Log_Data>)value;
+                break;
+            case "inspectedObjects":
+                data.inspectedObjects = (List<Log_Data>)value;
+                break;
+            case "inventory":
+                data.inventory = (List<Item_Data>)value;
+                break;
             case "availablePoints":
                 data.availablePoints = (int)value;
                 break;

@@ -72,7 +72,7 @@ public class TauntIllusion_Skill : Skill
     }
     void PlaceObject(PlayerControl player)
     {
-        Vector3 placementPosition = projectionObjectSave.transform.position;
+        Vector3 placementPosition = player.transform.position + player.Model.right * projectionOffset.x + player.Model.up * projectionOffset.y + player.Model.forward * projectionOffset.z;
         if (!occupiedPositions.Contains(placementPosition))
         {
             var prefab = Instantiate(objectToPlace, placementPosition, player.Model.rotation);
@@ -82,9 +82,9 @@ public class TauntIllusion_Skill : Skill
             DestroyProjectionObject();
         }
     }
-    void DestroyProjectionObject()
+    public override void DestroyProjectionObject()
     {
-        Destroy(projectionObjectSave); 
+        if(projectionObjectSave != null) Destroy(projectionObjectSave); 
     }
     void DestroyObject(Vector3 placementPosition, GameObject prefab)
     {

@@ -112,7 +112,7 @@ public class FirstJudgment_Skill : Skill
             mat.color = color;
         }
     }
-    void DestroyProjectionObject()
+    public override void DestroyProjectionObject()
     {
         Destroy(projectionObjectSave);
     }

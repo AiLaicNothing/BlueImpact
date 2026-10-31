@@ -102,6 +102,7 @@ public class P_Iddle_AState : PlayerState
             var skill = player.GetSkill(trueIndex);
             if (player.Input.skillCanceled)
             {
+                skill.DestroyProjectionObject();
                 player.skill_AState.SetSkill(skill, trueIndex);
                 player.blockVelocity = true;
                 player.ChangeActionState(player.skill_AState);
