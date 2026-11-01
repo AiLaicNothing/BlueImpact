@@ -16,15 +16,25 @@ public class WaveManager : MonoBehaviour
     [SerializeField] private List<EnemyWave> waves = new();
     [SerializeField] private float delayBetweenWaves = 2f;
 
+    // Las salas normales arrancan solas cuando entra el jugador.
+    // Para las oleadas que invoca un boss hay que apagarlo: las lanza el boss, no el trigger.
+    [SerializeField] private bool startOnPlayerEnter = true;
+
     public event Action OnAllWavesCleared;
 
     public int CurrentWave { get; private set; } = -1;
     public bool IsRunning { get; private set; }
 
+    // true cuando las oleadas ya arrancaron y no queda ningun enemigo vivo
+    public bool AllCleared => hasStarted && !IsRunning;
+
+    public int WaveCount => waves.Count;
+
     private bool hasStarted;
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!startOnPlayerEnter) return;
         if (!other.CompareTag("Player")) return;
 
         StartWaves();
@@ -36,6 +46,17 @@ public class WaveManager : MonoBehaviour
 
         hasStarted = true;
         StartCoroutine(WaveLoop());
+    }
+
+    // Deja las oleadas listas para volver a lanzarse, por si el boss repite el ataque.
+    // No destruye a los enemigos que sigan vivos de la tanda anterior.
+    public void ResetWaves()
+    {
+        StopAllCoroutines();
+
+        IsRunning = false;
+        hasStarted = false;
+        CurrentWave = -1;
     }
 
     private IEnumerator WaveLoop()

@@ -12,8 +12,15 @@ public class BossEvent : MonoBehaviour
     private GameObject bossObject;
     private Boss_MedusaMorgana boss;
 
+    [Header("Arena del boss")]
     [SerializeField] private Transform center;
     [SerializeField] private Transform[] corners;
+
+    // Oleadas que invoca Climax Serpentinus. Este WaveManager debe tener startOnPlayerEnter
+    // en false: lo lanza el boss, no el trigger de la sala.
+    [SerializeField] private WaveManager climaxWaveManager;
+
+    // Respaldo: si no hay climaxWaveManager, el boss invoca golems con este spawner
     [SerializeField] private EnemySpawner bossSummonSpawner;
 
     [Header("Boss HUD")]
@@ -143,7 +150,7 @@ public class BossEvent : MonoBehaviour
         if (boss == null) yield break;
 
         boss.SetCinematic(true);
-        boss.SetArena(center, corners, bossSummonSpawner);
+        boss.SetArena(center, corners, bossSummonSpawner, climaxWaveManager);
         boss.OnSpawn(null, center, false, spawnPos);
         boss.OnPhaseTwoStarted += OnBossPhaseTwo;
 

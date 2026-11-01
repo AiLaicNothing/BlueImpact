@@ -96,16 +96,24 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private float novaSafeAngle = 36f;        // 1/10 del circulo, el hueco seguro
     [SerializeField] private bool novaSafeTowardPlayer = false; // false = hueco aleatorio, true = hacia el jugador
 
-    [Header("Climax Serpentinus (Fase 2)")]
+    [Header("Climax Serpentinus (Fase 2) - Arena")]
     [SerializeField] private Transform arenaCenter;
     [SerializeField] private float arenaRadius = 15f;
     [SerializeField] private float borderWidth = 2f;
     [SerializeField] private float climaxChannelTime = 2f;
     [SerializeField] private float borderWarningTime = 3f;
-    [SerializeField] private float climaxDuration = 30f;
+    [SerializeField] private float climaxDuration = 30f;       // tope maximo: termina antes si limpian las oleadas
     [SerializeField] private float borderTickInterval = 0.5f;
     [SerializeField] private float borderDamagePerSecond = 5f;
     [SerializeField] private GameObject arenaBorderVfx;        // PREFAB
+
+    [Header("Climax Serpentinus - Oleadas (forma principal)")]
+    // Lo pasa BossEvent con SetArena. Ese WaveManager debe tener startOnPlayerEnter en false,
+    // si no, las oleadas se lanzarian solas al entrar el jugador a la sala.
+    [SerializeField] private WaveManager climaxWaves;
+    [SerializeField] private bool climaxEndsWhenWavesCleared = true;
+
+    [Header("Climax Serpentinus - Invocacion simple (solo si no hay WaveManager)")]
     [SerializeField] private GameObject golemPrefab;
     [SerializeField] private int golemsToSummon = 5;
     [SerializeField] private Transform[] summonPoints;
@@ -244,6 +252,24 @@ public class Boss_MedusaMorgana : EnemyBase
         nextAttackTime = Time.time + firstAttackDelay;
 
         WarnPhaseTwoSetup();
+        WarnClimaxSetup();
+    }
+
+    // Climax es el ataque que invoca enemigos. Sin oleadas ni golemPrefab no invoca nada.
+    private void WarnClimaxSetup()
+    {
+        if (climaxWaves != null) return;
+
+        if (golemPrefab == null)
+        {
+            Debug.LogWarning("[Morgana] Climax no va a invocar nada: asigna climaxWaves (desde BossEvent) o golemPrefab");
+            return;
+        }
+
+        if (summonSpawner == null)
+        {
+            Debug.LogWarning("[Morgana] Climax tiene golemPrefab pero no summonSpawner: BossEvent debe pasarlo con SetArena");
+        }
     }
 
     // Avisa en consola lo que va a fallar en fase 2 antes de llegar a ella
@@ -425,12 +451,9 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (activeMarker != null) Destroy(activeMarker);
 
-        // Si se interrumpe Climax a medias, el borde de la arena tiene que irse con el
-        if (activeBorderVfx != null)
-        {
-            Destroy(activeBorderVfx);
-            activeBorderVfx = null;
-        }
+        // Si se interrumpe Climax a medias, el borde de la arena tiene que irse con el.
+        // Los enemigos ya invocados se quedan: el jugador los tiene que limpiar igual.
+        ClearBorderVfx();
 
         if (telegraph != null) telegraph.CancelAll();
 
@@ -944,33 +967,61 @@ public class Boss_MedusaMorgana : EnemyBase
 
         yield return new WaitForSeconds(borderWarningTime);
 
-        SummonGolems();
+        bool usingWaves = StartClimaxSummon();
 
-        float remaining = Mathf.Max(0f, climaxDuration - climaxChannelTime - borderWarningTime);
-        yield return BorderDamageOverTime(remaining);
+        float maxDuration = Mathf.Max(0f, climaxDuration - climaxChannelTime - borderWarningTime);
+        yield return ClimaxActivePhase(maxDuration, usingWaves);
 
-        if (activeBorderVfx != null)
-        {
-            Destroy(activeBorderVfx);
-            activeBorderVfx = null;
-        }
+        ClearBorderVfx();
 
         yield return Recover(recoveryClimax);
     }
 
-    private IEnumerator BorderDamageOverTime(float duration)
+    // Lanza las oleadas si hay WaveManager. Si no, cae a la invocacion simple de golems.
+    // Devuelve true cuando se usaron oleadas.
+    private bool StartClimaxSummon()
+    {
+        if (climaxWaves != null)
+        {
+            // Permite repetir el ataque mas de una vez en el mismo combate
+            climaxWaves.ResetWaves();
+            climaxWaves.StartWaves();
+
+            Debug.Log("[Morgana] Climax lanza " + climaxWaves.WaveCount + " oleadas");
+            return true;
+        }
+
+        SummonGolems();
+        return false;
+    }
+
+    // El borde de la arena hace dano mientras dura el ataque.
+    // Con oleadas, el ataque termina antes si el jugador las limpia.
+    private IEnumerator ClimaxActivePhase(float maxDuration, bool usingWaves)
     {
         float timer = 0f;
+        float nextTickAt = 0f;
 
-        while (timer < duration)
+        while (timer < maxDuration)
         {
-            if (HasValidPlayer() && IsInsideBorder(player.transform.position))
+            if (usingWaves && climaxEndsWhenWavesCleared && climaxWaves != null && climaxWaves.AllCleared)
             {
-                DamagePlayer(borderDamagePerSecond * borderTickInterval, Vector3.zero);
+                Debug.Log("[Morgana] Oleadas limpiadas, Climax termina antes de tiempo");
+                break;
             }
 
-            yield return new WaitForSeconds(borderTickInterval);
-            timer += borderTickInterval;
+            if (timer >= nextTickAt)
+            {
+                nextTickAt = timer + borderTickInterval;
+
+                if (HasValidPlayer() && IsInsideBorder(player.transform.position))
+                {
+                    DamagePlayer(borderDamagePerSecond * borderTickInterval, Vector3.zero);
+                }
+            }
+
+            timer += Time.deltaTime;
+            yield return null;
         }
     }
 
@@ -981,11 +1032,20 @@ public class Boss_MedusaMorgana : EnemyBase
         return FlatDistance(pos, center) >= arenaRadius - borderWidth;
     }
 
+    private void ClearBorderVfx()
+    {
+        if (activeBorderVfx == null) return;
+
+        Destroy(activeBorderVfx);
+        activeBorderVfx = null;
+    }
+
+    // Respaldo cuando no hay WaveManager: suelta los golems de una sola tanda
     private void SummonGolems()
     {
         if (golemPrefab == null)
         {
-            Debug.LogWarning("[Morgana] golemPrefab no asignado");
+            Debug.LogWarning("[Morgana] Climax no invoca nada: falta climaxWaves y tambien golemPrefab");
             return;
         }
 
@@ -1333,12 +1393,14 @@ public class Boss_MedusaMorgana : EnemyBase
         }
     }
 
-    // BossEvent lo llama justo despues de instanciar el boss
-    public void SetArena(Transform center, Transform[] points, EnemySpawner spawner)
+    // BossEvent lo llama justo despues de instanciar el boss.
+    // El prefab del boss no puede guardar referencias de escena, por eso se pasan aqui.
+    public void SetArena(Transform center, Transform[] points, EnemySpawner spawner, WaveManager waves = null)
     {
         if (center != null) arenaCenter = center;
         if (points != null && points.Length > 0) summonPoints = points;
         if (spawner != null) summonSpawner = spawner;
+        if (waves != null) climaxWaves = waves;
     }
 
     // ---------- GIZMOS ----------
