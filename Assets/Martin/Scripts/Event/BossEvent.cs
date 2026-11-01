@@ -168,6 +168,9 @@ public class BossEvent : MonoBehaviour
             }
 
             bossObject.transform.position = desiredGroundPos.position;
+
+            // Toca el suelo: golpe de impacto
+            boss.PlayLandingSound();
         }
 
         if (smokeVfx != null)

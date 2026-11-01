@@ -307,7 +307,7 @@ AudioSource:
   m_GameObject: {fileID: 4287723914519451782}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -3118639272202228583, guid: cabe997dde1c4294ebc81b6f96928f1f, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
@@ -439,6 +439,7 @@ GameObject:
   - component: {fileID: 7682152183505970049}
   - component: {fileID: 4758583003967911297}
   - component: {fileID: 6346870995609632553}
+  - component: {fileID: 4049031512844446935}
   m_Layer: 8
   m_Name: Morgana
   m_TagString: Enemy
@@ -648,9 +649,15 @@ MonoBehaviour:
   borderTickInterval: 0.5
   borderDamagePerSecond: 5
   arenaBorderVfx: {fileID: 0}
-  golemPrefab: {fileID: 0}
+  climaxWaves: {fileID: 0}
+  climaxEndsWhenWavesCleared: 1
+  golemPrefab: {fileID: 3697640618655901685, guid: c92f28ef3ad074a49b2529884f168c14, type: 3}
   golemsToSummon: 5
-  summonPoints: []
+  summonPoints:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   disonanciaAimTime: 1.5
   markDuration: 4
   beamDelay: 1
@@ -667,6 +674,9 @@ MonoBehaviour:
   phaseTwoIntroTrigger: Scream
   phaseTwoIntroDuration: 2
   telegraph: {fileID: 6346870995609632553}
+  bossAudio: {fileID: 4049031512844446935}
+  playMusicFromBoss: 1
+  hurtVoiceCooldown: 1.2
   meleeSweepEnabled: 1
   swordSlashWave:
     damage: 30
@@ -726,6 +736,256 @@ MonoBehaviour:
   swordTrail: {fileID: 3913403999339781288}
   tailTrail: {fileID: 1496257251543921133}
   trailTime: 0.3
+--- !u!114 &4049031512844446935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7026627209289088953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91e87a629e97803428da7d24c43e7d3f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossAudio
+  sfxSource: {fileID: 0}
+  voiceSource: {fileID: 0}
+  musicSource: {fileID: 0}
+  sfxSpatialBlend: 1
+  voiceSpatialBlend: 0.6
+  minDistance: 5
+  maxDistance: 45
+  sfxVolume: 1
+  voiceVolume: 1
+  loopVolume: 1
+  musicVolume: 0.6
+  loopFadeIn: 0.12
+  loopFadeOut: 0.18
+  musicFade: 1.5
+  introScream:
+    clips:
+    - {fileID: 8300000, guid: e41163a696f4b9e4584eda83a7fb4a00, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  landImpact:
+    clips:
+    - {fileID: 8300000, guid: bd258a308c2166e4784f356a0a1aca6d, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  phaseScream:
+    clips:
+    - {fileID: 8300000, guid: aaf64d0cdb676a5448126ca0d093c2c9, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  phaseTransform:
+    clips:
+    - {fileID: 8300000, guid: 2cd457ad1ae2df74788e6572f961c72d, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  phaseTwoEntrance:
+    clips:
+    - {fileID: 8300000, guid: dbcd8c63d75b45d4da38f7a976b4220b, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  stepsLoop:
+    clips:
+    - {fileID: 8300000, guid: e3aed3c7eb988dc4f8faf3ced601ad53, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  incantationVoice:
+    clips:
+    - {fileID: 8300000, guid: 12e73d1da8c2d964a8ebf9d6668e973d, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  castChargeLoop:
+    clips:
+    - {fileID: 8300000, guid: f085d889a49476f428d159486ba6cabc, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  vulnerableOpen:
+    clips:
+    - {fileID: 8300000, guid: 3eabf35d83d5cdb4da3bf187b89c62d3, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  castBroken:
+    clips:
+    - {fileID: 8300000, guid: e6f2b73aad06a944791515a3bd69b2a7, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  brokenLoop:
+    clips:
+    - {fileID: 8300000, guid: ff2fa5f0053abf84487c95cbb81654f0, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  castRecover:
+    clips:
+    - {fileID: 8300000, guid: 87f3758a686b1f843ac33dbe4c0d7b8d, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  laserWarnLoop:
+    clips:
+    - {fileID: 8300000, guid: 55274cba6a7e5c244ab6aa77cf7898a8, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  laserFireStart:
+    clips:
+    - {fileID: 8300000, guid: 4c9803b4843876c43ad792cadbfdeaad, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  laserFireLoop:
+    clips:
+    - {fileID: 8300000, guid: 00b78cb9e927e4e4c98371e74a6cbbfb, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  laserTickHit:
+    clips:
+    - {fileID: 8300000, guid: c58aebc47642a4d469a500a8a4fbf007, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  swordSwing:
+    clips:
+    - {fileID: 8300000, guid: fdc5c685a3489a14d9801b8e6381c5d7, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  tailSwing:
+    clips:
+    - {fileID: 8300000, guid: ceccf3189d5fe3f4d929fb1511c36d9a, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  swordWave:
+    clips:
+    - {fileID: 8300000, guid: 7377f0d63988e1e49a2f09984b11b0ff, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  tailWave:
+    clips:
+    - {fileID: 8300000, guid: a483be5a7c931d542b190841dfb86f62, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  meleeHit:
+    clips:
+    - {fileID: 8300000, guid: 6354be989d4528840849ca006abec1ba, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  novaChargeLoop:
+    clips:
+    - {fileID: 8300000, guid: 113dcf8d27a7370469c354bef7154863, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  novaBlast:
+    clips:
+    - {fileID: 8300000, guid: 93debfcd0cb822840b7f79fef794c14f, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  novaHit:
+    clips:
+    - {fileID: 8300000, guid: 3d1ad5e3f7ba8ef4ba45304f85aea79f, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  climaxScream:
+    clips:
+    - {fileID: 8300000, guid: 8a5b11b6b22290a498e5edfce533fe28, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  arenaBorderStart:
+    clips:
+    - {fileID: 8300000, guid: fe7b4cbd35e35734d9b66c2e3b41fa4a, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  arenaBorderLoop:
+    clips:
+    - {fileID: 8300000, guid: 1679d4cca334d9447a45828b549f7d6d, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  borderTick:
+    clips:
+    - {fileID: 8300000, guid: f20b863b044205948a64a1b525bc91a0, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  waveSummon:
+    clips:
+    - {fileID: 8300000, guid: 3a1f613ef21b57046ad22283eee09103, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  markPlaced:
+    clips:
+    - {fileID: 8300000, guid: 58d40d338982a0f47b9c79eec25eca1c, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  markLoop:
+    clips:
+    - {fileID: 8300000, guid: 811c1dc714aa47949b14f6f5963a09d2, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  beamWarning:
+    clips:
+    - {fileID: 8300000, guid: 8210fedfb2dc42c44bf0797cdc1e65f7, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  beamImpact:
+    clips:
+    - {fileID: 8300000, guid: 4cf5acfd16d36e04aa1a515bf043e8c4, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  hurtVoice:
+    clips:
+    - {fileID: 8300000, guid: af3cfcc8f900f804c8a1c8d6b34ebd7a, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  staggerStart:
+    clips:
+    - {fileID: 8300000, guid: e9ce69c51cfc4994c8c926c6cac41113, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  staggerEnd:
+    clips:
+    - {fileID: 8300000, guid: f79b7b5fc039f774ca3a0659200a7c9b, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  death:
+    clips:
+    - {fileID: 8300000, guid: bb7a37a089a72854ca4c2a63b0a94803, type: 3}
+    volume: 1
+    pitchMin: 0.95
+    pitchMax: 1.05
+  phaseOneMusic: {fileID: 8300000, guid: fad0d8f8b6ac47546ac2c582881a8774, type: 3}
+  phaseTwoMusic: {fileID: 8300000, guid: 243ebb69dc0dc744c9daeab63339133d, type: 3}
 --- !u!1 &7130762509570270426
 GameObject:
   m_ObjectHideFlags: 0

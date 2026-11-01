@@ -140,6 +140,12 @@ public class Boss_MedusaMorgana : EnemyBase
     [Header("Telegrafia y trail")]
     [SerializeField] private BossAttackTelegraph telegraph;
 
+    [Header("Audio")]
+    // Si lo dejas vacio se busca en el propio boss y sus hijos
+    [SerializeField] private BossAudio bossAudio;
+    [SerializeField] private bool playMusicFromBoss = true;
+    [SerializeField] private float hurtVoiceCooldown = 1.2f;  // para que no se queje en cada golpe de un combo
+
     [Header("Ondas de corte (Sword Beam)")]
     [SerializeField] private bool meleeSweepEnabled = true;    // false = solo la onda, sin dano de cono
     [SerializeField] private SlashWaveConfig swordSlashWave = new SlashWaveConfig();
@@ -188,6 +194,12 @@ public class Boss_MedusaMorgana : EnemyBase
     private readonly List<LineRenderer> lasers = new List<LineRenderer>();
     private readonly List<Vector3> laserDirs = new List<Vector3>();
     private Vector3 markedPosition;
+
+    // Estado para el audio: detecta golpes y stagger comparando contra el frame anterior,
+    // asi no hay que tocar EnemyBase ni exponer sus campos privados
+    private float lastHpForAudio;
+    private bool wasStaggeredForAudio;
+    private float nextHurtVoiceAt;
 
     private Coroutine attackRoutine;
     private Coroutine swingRoutine;
@@ -249,10 +261,21 @@ public class Boss_MedusaMorgana : EnemyBase
             if (phaseOneAnim != null) anim = phaseOneAnim;
         }
 
+        if (bossAudio == null) bossAudio = GetComponentInChildren<BossAudio>();
+
+        lastHpForAudio = currentHp;
+
+        if (bossAudio != null && playMusicFromBoss)
+        {
+            bossAudio.StartPhaseOneMusic();
+        }
+
         nextAttackTime = Time.time + firstAttackDelay;
 
         WarnPhaseTwoSetup();
         WarnClimaxSetup();
+
+        if (bossAudio == null) Debug.LogWarning("[Morgana] Sin BossAudio: el boss va a pelear en silencio");
     }
 
     // Climax es el ataque que invoca enemigos. Sin oleadas ni golemPrefab no invoca nada.
@@ -297,6 +320,8 @@ public class Boss_MedusaMorgana : EnemyBase
 
         base.Update();
 
+        HandleAudioState();
+
         if (!phaseTwoStarted && GetHealthPercent() < phaseTwoThreshold)
         {
             StartPhaseTwo();
@@ -329,7 +354,38 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (activeBorderVfx != null) Destroy(activeBorderVfx);
 
+        // Corta todos los bucles de golpe y suelta el grito de muerte
+        if (bossAudio != null) bossAudio.PlayDeath();
+
         base.Die();
+    }
+
+    // Suena la queja al recibir dano y el stagger, detectando el cambio contra el frame anterior
+    private void HandleAudioState()
+    {
+        if (bossAudio == null) return;
+
+        if (currentHp < lastHpForAudio - 0.01f && Time.time >= nextHurtVoiceAt)
+        {
+            nextHurtVoiceAt = Time.time + hurtVoiceCooldown;
+            bossAudio.PlayHurt();
+        }
+
+        lastHpForAudio = currentHp;
+
+        if (IsStaggered && !wasStaggeredForAudio)
+        {
+            wasStaggeredForAudio = true;
+
+            // El stagger corta cualquier ataque, asi que tambien su audio
+            bossAudio.StopAllLoops();
+            bossAudio.PlayStaggerStart();
+        }
+        else if (!IsStaggered && wasStaggeredForAudio)
+        {
+            wasStaggeredForAudio = false;
+            bossAudio.PlayStaggerEnd();
+        }
     }
 
     // Pegarle durante el stagger no reinicia su duracion. El dano sigue entrando (con el
@@ -417,6 +473,10 @@ public class Boss_MedusaMorgana : EnemyBase
         SetMoving(false);
         CloseCastWindow();
 
+        // Red de seguridad: al terminar un ataque no debe quedar ningun bucle sonando.
+        // Aqui no se pisa el tambaleo, porque un casteo roto pasa por CancelAttack, no por aqui.
+        if (bossAudio != null) bossAudio.StopAllLoops();
+
         attackRoutine = null;
         isAttacking = false;
         nextAttackTime = Time.time + pauseBetweenAttacks;
@@ -446,6 +506,15 @@ public class Boss_MedusaMorgana : EnemyBase
         SetMoving(false);
         HideLasers();
         CloseCastWindow();
+
+        // Se cortan los bucles del ataque que se interrumpio: laser, borde, marca.
+        // El canal del casteo no se toca aqui, porque si se rompio lo usa el tambaleo.
+        if (bossAudio != null)
+        {
+            bossAudio.StopLaser();
+            bossAudio.StopArenaBorder();
+            bossAudio.StopMark();
+        }
 
         if (anim != null) anim.CrossFadeInFixedTime(HashIdleState, 0.1f);
 
@@ -478,13 +547,19 @@ public class Boss_MedusaMorgana : EnemyBase
 
         // Aviso en el mundo: el jugador mira al boss, no al HUD
         if (vulnerableVfx != null) vulnerableVfx.SetActive(true);
+        if (bossAudio != null) bossAudio.StartCastCharge();
     }
 
     private void CloseCastWindow()
     {
+        // Solo actua si estaba abierta, si no apagaria bucles que no abrio
+        bool wasOpen = castWindowOpen;
         castWindowOpen = false;
 
         if (vulnerableVfx != null) vulnerableVfx.SetActive(false);
+
+        // Si el casteo se rompio, el canal ya lo tomo el sonido de tambaleo
+        if (wasOpen && !castBroken && bossAudio != null) bossAudio.StopCastCharge();
     }
 
     // El casteo se rompe: el ataque se pierde y el boss queda abierto varios segundos
@@ -495,6 +570,15 @@ public class Boss_MedusaMorgana : EnemyBase
         Debug.Log("[Morgana] Casteo roto por dano, el boss queda abierto " + castBreakStunDuration + "s");
 
         CancelAttack();
+
+        // Despues de CancelAttack, para que el tambaleo tome el canal que dejo la carga.
+        // El cooldown evita que la queja del golpe suene encima del grito de rotura.
+        if (bossAudio != null)
+        {
+            nextHurtVoiceAt = Time.time + hurtVoiceCooldown;
+            bossAudio.PlayCastBroken();
+        }
+
         StartCoroutine(CastBrokenRoutine());
     }
 
@@ -524,6 +608,8 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (isDead) yield break;
 
+        if (bossAudio != null) bossAudio.StopCastBroken();
+
         isAttacking = false;
         nextAttackTime = Time.time + pauseBetweenAttacks;
     }
@@ -547,7 +633,15 @@ public class Boss_MedusaMorgana : EnemyBase
         SetMoving(false);
         Trigger(HashScream);
 
+        if (bossAudio != null) bossAudio.PlayIntroScream();
+
         yield return new WaitForSeconds(FramesToSeconds(screamFrames));
+    }
+
+    // La llama BossEvent al tocar el suelo durante la entrada
+    public void PlayLandingSound()
+    {
+        if (bossAudio != null) bossAudio.PlayLandImpact();
     }
 
     private void StartPhaseTwo()
@@ -582,6 +676,13 @@ public class Boss_MedusaMorgana : EnemyBase
         FaceTargetInstant();
         SetMoving(false);
 
+        // Nada del ataque anterior debe seguir sonando durante la cinematica
+        if (bossAudio != null)
+        {
+            bossAudio.StopAllLoops();
+            bossAudio.PlayPhaseScream();
+        }
+
         Trigger(HashScream);
         yield return new WaitForSeconds(FramesToSeconds(screamFrames));
         if (isDead) yield break;
@@ -591,6 +692,8 @@ public class Boss_MedusaMorgana : EnemyBase
             GameObject vfx = Instantiate(transformVfx, transform.position, transform.rotation);
             Destroy(vfx, 3f);
         }
+
+        if (bossAudio != null) bossAudio.PlayPhaseTransform();
 
         yield return new WaitForSeconds(swapDelay);
         if (isDead) yield break;
@@ -603,6 +706,13 @@ public class Boss_MedusaMorgana : EnemyBase
         if (anim != null && !string.IsNullOrEmpty(phaseTwoIntroTrigger))
         {
             anim.SetTrigger(Animator.StringToHash(phaseTwoIntroTrigger));
+        }
+
+        if (bossAudio != null)
+        {
+            bossAudio.PlayPhaseTwoEntrance();
+
+            if (playMusicFromBoss) bossAudio.StartPhaseTwoMusic();
         }
 
         yield return new WaitForSeconds(phaseTwoIntroDuration);
@@ -685,6 +795,7 @@ public class Boss_MedusaMorgana : EnemyBase
         Debug.Log("[Morgana] Resonancia");
 
         Trigger(HashIncantation);
+        if (bossAudio != null) bossAudio.PlayIncantation();
 
         // Gesto de espada: lineas finas que muestran hacia donde van los laseres.
         // Durante el aviso el jugador puede romper el casteo si le mete suficiente dano.
@@ -710,6 +821,13 @@ public class Boss_MedusaMorgana : EnemyBase
     {
         count = Mathf.Max(1, count);
         EnsureLasers(count);
+
+        // El zumbido fino del apuntado y el laser que quema son sonidos distintos
+        if (bossAudio != null)
+        {
+            if (damaging) bossAudio.StartLaserFire();
+            else bossAudio.StartLaserWarn();
+        }
 
         bool initialized = false;
         float t = 0f;
@@ -761,6 +879,8 @@ public class Boss_MedusaMorgana : EnemyBase
                 {
                     nextTickAt = Time.time + laserTickInterval;
                     DamagePlayer(laserDamagePerTick, dir);
+
+                    if (bossAudio != null) bossAudio.PlayLaserTickHit(chest);
                 }
             }
 
@@ -770,6 +890,8 @@ public class Boss_MedusaMorgana : EnemyBase
         }
 
         HideLasers();
+
+        if (bossAudio != null) bossAudio.StopLaser();
     }
 
     // ---------- PART-TITURA (FASE 1) ----------
@@ -813,6 +935,8 @@ public class Boss_MedusaMorgana : EnemyBase
     {
         Trigger(isSword ? HashAttackSword : HashAttackTail);
 
+        if (bossAudio != null) bossAudio.PlaySwing(isSword);
+
         float activeStart = FramesToSeconds(isSword ? swordActiveStartFrame : tailActiveStartFrame);
         float activeEnd = FramesToSeconds(isSword ? swordActiveEndFrame : tailActiveEndFrame);
         float damage = isSword ? swordDamage : tailDamage;
@@ -849,6 +973,8 @@ public class Boss_MedusaMorgana : EnemyBase
                 if (hitDir.sqrMagnitude < 0.0001f) hitDir = transform.forward;
 
                 DamagePlayer(damage, hitDir.normalized);
+
+                if (bossAudio != null) bossAudio.PlayMeleeHit(cur);
             }
 
             prev = cur;
@@ -872,6 +998,8 @@ public class Boss_MedusaMorgana : EnemyBase
 
         // Espada: sigue la altura del pecho del jugador. Cola: viaja a ras del suelo.
         BossSlashWave.Launch(origin, dir, cfg, player.transform, !isSword);
+
+        if (bossAudio != null) bossAudio.PlayWaveLaunch(isSword);
     }
 
     private Vector3 PlayerChestPos()
@@ -906,6 +1034,8 @@ public class Boss_MedusaMorgana : EnemyBase
         FaceTargetInstant();
         Trigger(HashIncantation);
 
+        if (bossAudio != null) bossAudio.PlayIncantation();
+
         // Se dibuja la zona que hace dano: el circulo con el hueco seguro abierto
         if (telegraph != null)
         {
@@ -917,10 +1047,17 @@ public class Boss_MedusaMorgana : EnemyBase
         // Los 5 segundos de canalizacion son la mejor oportunidad del jugador:
         // si le mete castBreakDamage aqui, la Nova entera se cancela
         OpenCastWindow(novaChannelTime);
+
+        // Despues de OpenCastWindow: la Nova tiene su propia carga y reemplaza a la generica
+        if (bossAudio != null) bossAudio.StartNovaCharge();
+
         yield return new WaitForSeconds(novaChannelTime);
         CloseCastWindow();
 
         if (telegraph != null) telegraph.OnHit();
+
+        // Corta el bucle de carga y suelta la detonacion
+        if (bossAudio != null) bossAudio.PlayNovaBlast();
 
         if (HasValidPlayer())
         {
@@ -934,6 +1071,8 @@ public class Boss_MedusaMorgana : EnemyBase
                 Vector3 hitDir = playerPos - center;
                 hitDir.y = 0f;
                 DamagePlayer(novaDamage, hitDir.normalized);
+
+                if (bossAudio != null) bossAudio.PlayNovaHit(playerPos);
             }
         }
 
@@ -953,12 +1092,20 @@ public class Boss_MedusaMorgana : EnemyBase
         FaceTargetInstant();
         Trigger(HashIncantation);
 
+        if (bossAudio != null) bossAudio.PlayIncantation();
+
         // Durante la canalizacion el jugador puede negar el ataque entero
         OpenCastWindow(climaxChannelTime);
         yield return new WaitForSeconds(climaxChannelTime);
         CloseCastWindow();
 
         Trigger(HashScream);
+
+        if (bossAudio != null)
+        {
+            bossAudio.PlayClimaxScream();
+            bossAudio.StartArenaBorder();
+        }
 
         if (arenaBorderVfx != null)
         {
@@ -969,10 +1116,14 @@ public class Boss_MedusaMorgana : EnemyBase
 
         bool usingWaves = StartClimaxSummon();
 
+        if (bossAudio != null) bossAudio.PlayWaveSummon();
+
         float maxDuration = Mathf.Max(0f, climaxDuration - climaxChannelTime - borderWarningTime);
         yield return ClimaxActivePhase(maxDuration, usingWaves);
 
         ClearBorderVfx();
+
+        if (bossAudio != null) bossAudio.StopArenaBorder();
 
         yield return Recover(recoveryClimax);
     }
@@ -1017,6 +1168,8 @@ public class Boss_MedusaMorgana : EnemyBase
                 if (HasValidPlayer() && IsInsideBorder(player.transform.position))
                 {
                     DamagePlayer(borderDamagePerSecond * borderTickInterval, Vector3.zero);
+
+                    if (bossAudio != null) bossAudio.PlayBorderTick(player.transform.position);
                 }
             }
 
@@ -1077,6 +1230,7 @@ public class Boss_MedusaMorgana : EnemyBase
         Debug.Log("[Morgana] Disonancia");
 
         Trigger(HashIncantation);
+        if (bossAudio != null) bossAudio.PlayIncantation();
 
         // Apunta con laseres finos hacia el jugador. Se puede romper durante el apuntado.
         OpenCastWindow(disonanciaAimTime);
@@ -1096,6 +1250,8 @@ public class Boss_MedusaMorgana : EnemyBase
 
         markedPosition = player.transform.position;
 
+        if (bossAudio != null) bossAudio.PlayMarkPlaced(markedPosition);
+
         // El marcador y los laseres siguen al jugador durante la marca
         markRoutine = StartCoroutine(MarkFollowRoutine(markDuration));
         yield return LaserRoutine(markDuration, true, LaserCount, disonanciaTrackSpeed);
@@ -1108,6 +1264,8 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (activeMarker != null) Destroy(activeMarker);
 
+        if (bossAudio != null) bossAudio.StopMark();
+
         // El haz cae donde estaba el jugador al terminar la marca
         Vector3 beamPos = markedPosition;
 
@@ -1115,6 +1273,8 @@ public class Boss_MedusaMorgana : EnemyBase
         {
             telegraph.StartTelegraph(() => BossAttackTelegraph.Circle(beamPos, beamRadius), beamDelay);
         }
+
+        if (bossAudio != null) bossAudio.PlayBeamWarning(beamPos);
 
         if (beamWarningVfx != null)
         {
@@ -1131,6 +1291,8 @@ public class Boss_MedusaMorgana : EnemyBase
         }
 
         if (telegraph != null) telegraph.OnHit();
+
+        if (bossAudio != null) bossAudio.PlayBeamImpact(beamPos);
 
         DamagePlayerWithin(beamPos, beamRadius, disonanciaDamage, Vector3.up);
 
@@ -1264,6 +1426,9 @@ public class Boss_MedusaMorgana : EnemyBase
     private void SetMoving(bool value)
     {
         if (anim != null) anim.SetBool(HashIsMoving, value);
+
+        // El bucle de pasos no se reinicia aunque esto se llame en cada frame
+        if (bossAudio != null) bossAudio.SetSteps(value);
     }
 
     private void Trigger(int hash)
