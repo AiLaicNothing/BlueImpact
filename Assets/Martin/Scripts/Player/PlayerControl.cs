@@ -19,6 +19,8 @@ public class PlayerControl : Controller, IDamageable
     [Header("Coyote Time")]
     [SerializeField, Min(0f)] private float coyoteTime = 0.15f;
     private float coyoteExpireTime = float.NegativeInfinity;
+    private float lastGroundedTime = float.NegativeInfinity;
+    private bool hasJumpedSinceGrounded;
 
     public float gravity = 10;
     public float slideGravity = 5f;
@@ -697,14 +699,18 @@ public class PlayerControl : Controller, IDamageable
 
     private void HandleMovement()
     {
-        //--> Check if is grounded
         mover.CheckForGround();
 
         currentState = DecideControllerState();
 
-        //Add gravity if its not grounded
-        HandleMomentum();
+        // Remember the last moment the player was grounded.
+        if (currentState == ControllerState.Grounded)
+        {
+            lastGroundedTime = Time.time;
+            hasJumpedSinceGrounded = false;
+        }
 
+        HandleMomentum();
         HandleJump();
 
         Vector3 _velocity = Vector3.zero;
@@ -720,11 +726,7 @@ public class PlayerControl : Controller, IDamageable
 
         _velocity += _worldMomentum;
 
-        //If player is grounded or sliding on a slope, extend mover's sensor range;
-        //This enables the player to walk up/down stairs and slopes without losing ground contact;
         mover.SetExtendSensorRange(IsGrounded());
-
-        //Set mover velocity
         mover.SetVelocity(_velocity);
 
         savedVel = _velocity;
@@ -765,12 +767,14 @@ public class PlayerControl : Controller, IDamageable
     {
         bool isGrounded = currentState == ControllerState.Grounded;
 
-        bool canCoyoteJump =
-            currentState == ControllerState.Falling &&
-            Time.time < coyoteExpireTime;
+        // Allow jumping after walking off an edge.
+        bool canCoyoteJump = currentState == ControllerState.Falling &&
+            !hasJumpedSinceGrounded &&
+            Time.time - lastGroundedTime <= coyoteTime;
 
         if (!isGrounded && !canCoyoteJump) return;
 
+        // Keep the existing jump input and input lock.
         if ((jumpKeyIsPressed || jumpKeyWasPressed) && !jumpInputIsLocked)
         {
             if (isGrounded)
@@ -778,8 +782,10 @@ public class PlayerControl : Controller, IDamageable
                 OnGroundContactLost();
             }
 
-            // Consume coyote time.
-            coyoteExpireTime = float.NegativeInfinity;
+            // Prevent another jump until landing.
+            hasJumpedSinceGrounded = true;
+            lastGroundedTime = float.NegativeInfinity;
+            jumpInputIsLocked = true;
 
             OnJumpStart();
             PlayAudio(jump, sfxVolume);
