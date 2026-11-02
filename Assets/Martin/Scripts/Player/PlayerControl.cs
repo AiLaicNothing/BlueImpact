@@ -16,6 +16,10 @@ public class PlayerControl : Controller, IDamageable
     //Jump duration variables;
     public float jumpDuration = 0.2f;
     float currentJumpStartTime = 0f;
+    [Header("Coyote Time")]
+    [SerializeField, Min(0f)] private float coyoteTime = 0.15f;
+    private float coyoteExpireTime = float.NegativeInfinity;
+
     public float gravity = 10;
     public float slideGravity = 5f;
 
@@ -481,19 +485,24 @@ public class PlayerControl : Controller, IDamageable
         {
             if (_isRising)
             {
+                coyoteExpireTime = float.NegativeInfinity;
                 OnGroundContactLost();
                 return ControllerState.Rising;
             }
             if (!mover.IsGrounded())
             {
+                coyoteExpireTime = float.NegativeInfinity;
                 OnGroundContactLost();
                 return ControllerState.Falling;
             }
             if (_isSliding)
             {
+                coyoteExpireTime = float.NegativeInfinity;
                 OnGroundContactLost();
                 return ControllerState.Sliding;
             }
+
+            coyoteExpireTime = float.NegativeInfinity;
             return ControllerState.Grounded;
         }
 
@@ -754,17 +763,28 @@ public class PlayerControl : Controller, IDamageable
 
     private void HandleJump()
     {
-        if (currentState == ControllerState.Grounded)
-        {
-            if ((jumpKeyIsPressed == true || jumpKeyWasPressed) && !jumpInputIsLocked)
-            {
-                //Call events;
-                OnGroundContactLost();
-                OnJumpStart();
-                PlayAudio(jump, sfxVolume);
+        bool isGrounded = currentState == ControllerState.Grounded;
 
-                currentState = ControllerState.Jumping;
+        bool canCoyoteJump =
+            currentState == ControllerState.Falling &&
+            Time.time < coyoteExpireTime;
+
+        if (!isGrounded && !canCoyoteJump) return;
+
+        if ((jumpKeyIsPressed || jumpKeyWasPressed) && !jumpInputIsLocked)
+        {
+            if (isGrounded)
+            {
+                OnGroundContactLost();
             }
+
+            // Consume coyote time.
+            coyoteExpireTime = float.NegativeInfinity;
+
+            OnJumpStart();
+            PlayAudio(jump, sfxVolume);
+
+            currentState = ControllerState.Jumping;
         }
     }
 
@@ -1363,6 +1383,8 @@ public class PlayerControl : Controller, IDamageable
     private void OnJumpStart()
     {
         if (useLocalMomentum) momentum = tr.localToWorldMatrix * momentum;
+
+        momentum = VectorMath.RemoveDotVector(momentum, tr.up);
 
         momentum += tr.up * jumpSpeed;
 
