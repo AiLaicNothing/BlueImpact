@@ -11,7 +11,7 @@ public class CharacterStats : MonoBehaviour
     [SerializeField] private int currentHp;
     [SerializeField] private int hpRegen = 3;
     [SerializeField] private int currentMp;
-    [SerializeField] private int mpRegen = 5;
+    [SerializeField, Range(0, 100)] private int mpRegen = 5;
     [SerializeField] private int currentStamina;
     [SerializeField] private int staminaRegen = 4;
 
@@ -122,10 +122,12 @@ public class CharacterStats : MonoBehaviour
 
     private void RegenMp()
     {
-        if (currentMp >= maxMp || mpRegen <= 0)
-            return;
+        if (currentMp >= maxMp || mpRegen <= 0) return;
 
-        mpRegenAccumulator += mpRegen * Time.deltaTime;
+        // mpRegen represents % of maximum MP regenerated per second.
+        float regenPerSecond = maxMp * (mpRegen / 100f);
+
+        mpRegenAccumulator += regenPerSecond * Time.deltaTime;
 
         int amount = Mathf.FloorToInt(mpRegenAccumulator);
 
