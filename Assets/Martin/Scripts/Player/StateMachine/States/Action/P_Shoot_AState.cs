@@ -25,14 +25,6 @@ public class P_Shoot_AState : PlayerState
             saveTargetPoint = player.GetViewPoint();
         }
 
-        //Shoot if shooting if has resourses
-        //if (!player.PlayerStatsManager.CanConsume(player.ShootData.resourceType, player.ShootData.cost))
-        //{
-        //    Debug.Log($"No hay {player.ShootData.resourceType} para {player.ShootData.name} [Shoot]");
-        //    player.ChangeActionState(player.iddle_AState);
-        //    return;
-        //}
-
         if (!player._Stats.CanConsume(player.ShootData.statsType, player.ShootData.cost))
         {
             Debug.Log($"No hay {player.ShootData.resourceType} para {player.ShootData.name} [Shoot]");
@@ -40,7 +32,6 @@ public class P_Shoot_AState : PlayerState
             return;
         }
 
-        //player.PlayerStatsManager.Consume(player.ShootData.resourceType, player.ShootData.cost);
         player._Stats.ConsumeStat(player.ShootData.statsType, player.ShootData.cost);
 
         Debug.Log("Shoot State");

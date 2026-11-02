@@ -158,6 +158,7 @@ public class P_Projectile : MonoBehaviour
         // Paredes y suelo: el proyectil desaparece
         if (other.CompareTag("Wall") || other.CompareTag("Ground"))
         {
+            Debug.Log("Hit Wall/Ground");
             Destroy(gameObject);
             return;
         }
