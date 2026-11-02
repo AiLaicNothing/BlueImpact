@@ -28,9 +28,10 @@ public class MainMenuManager : MonoBehaviour
 
     private bool isTransitioning = false;
 
-    int firstSave;
+    private int firstSave;
     public bool reset;
-    bool saved;
+    private bool saved;
+
     private void Awake()
     {
         if (newGameButton != null)
@@ -62,37 +63,38 @@ public class MainMenuManager : MonoBehaviour
         ClearSelection();
         TakeCursor();
     }
-    void LoadSave()
-    {
 
+    private void LoadSave()
+    {
         if (reset)
         {
             PlayerPrefs.SetInt("FirstSave", 0);
-            Debug.Log(firstSave);
             reset = false;
         }
+
+        SaveLoadManager save = SaveLoadManager.Instance;
+        if (save == null)
+        {
+            Debug.LogWarning("MainMenuManager: SaveLoadManager no existe en la escena.");
+            if (playButton != null) playButton.interactable = false;
+            return;
+        }
+
         firstSave = PlayerPrefs.GetInt("FirstSave", 0);
-        Debug.Log(firstSave);
         if (firstSave == 0)
         {
             saved = false;
-            SaveLoadManager.Instance.SaveGame("gameCreated", saved);
+            save.SaveGame("gameCreated", saved);
             PlayerPrefs.SetInt("FirstSave", 1);
-            Debug.Log(firstSave);
         }
-        SaveData loadedData = SaveLoadManager.Instance.LoadGame();
-        if (loadedData != null)
+
+        SaveData loadedData = save.LoadGame();
+        if (loadedData != null && playButton != null)
         {
-            if (!loadedData.gameCreated)
-            {
-                playButton.interactable = false;
-            }
-            else
-            {
-                playButton.interactable = true;
-            }
+            playButton.interactable = loadedData.gameCreated;
         }
     }
+
     private void OnEnable()
     {
         Time.timeScale = 1f;
@@ -133,16 +135,20 @@ public class MainMenuManager : MonoBehaviour
     private void OnNewGameClicked()
     {
         if (isTransitioning) return;
+
         saved = true;
-        SaveLoadManager.Instance.SaveGame("gameCreated", saved);
+        if (SaveLoadManager.Instance != null)
+            SaveLoadManager.Instance.SaveGame("gameCreated", saved);
+
         SaveLoadManager.canLoad = false;
         PlayButtonSound();
         StartCoroutine(FadeOutAndLoadScene(gameSceneName));
-
     }
+
     private void OnPlayButtonClicked()
     {
         if (isTransitioning) return;
+
         SaveLoadManager.canLoad = true;
         PlayButtonSound();
         StartCoroutine(FadeOutAndLoadScene(gameSceneName));
@@ -190,6 +196,8 @@ public class MainMenuManager : MonoBehaviour
 
     private IEnumerator FadeOut()
     {
+        if (menuCanvasGroup == null) yield break;
+
         float elapsed = 0f;
 
         while (elapsed < fadeDuration)

@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class Slime_HitAndRun : EnemyBase
+public class Slime : EnemyBase
 {
     [Header("Targeting")]
     [SerializeField] private float attackRange = 2.5f;
@@ -24,6 +24,7 @@ public class Slime_HitAndRun : EnemyBase
     [SerializeField] private float retreatDistance = 5f;
     [SerializeField] private float retreatSpeed = 7f;
     [SerializeField] private float recoveryDuration = 1.5f;
+    [SerializeField] private float chaseSpeed = 4.5f;
 
     [Header("Detection")]
     [SerializeField] private float detectionRange = 8f;
@@ -55,6 +56,8 @@ public class Slime_HitAndRun : EnemyBase
     private int patrolIndex;
     private int patrolDir = 1;
 
+    private float nextPlayerSearchTime;
+
     protected override void Awake()
     {
         base.Awake();
@@ -71,7 +74,7 @@ public class Slime_HitAndRun : EnemyBase
 
         if (isDead) return;
         if (isStunned || IsStaggered) return;
-        if (agent.enabled == false) return;
+        if (agent == null || !agent.enabled) return;
 
         UpdateTarget();
         HandleDetection();
@@ -97,10 +100,11 @@ public class Slime_HitAndRun : EnemyBase
 
     private void UpdateTarget()
     {
-        if (!HasValidPlayer())
-        {
-            player = FindFirstObjectByType<PlayerControl>();
-        }
+        // Respaldo de búsqueda del jugador, con throttle: FindFirstObjectByType es costoso
+        if (HasValidPlayer() || Time.time < nextPlayerSearchTime) return;
+
+        nextPlayerSearchTime = Time.time + 1f;
+        player = FindFirstObjectByType<PlayerControl>();
     }
 
     private bool HasLineOfSight()
@@ -130,7 +134,8 @@ public class Slime_HitAndRun : EnemyBase
 
     private void HandleDetection()
     {
-        if (safeZone == null) return;
+        Transform home = HomePoint;
+        if (home == null) return;
 
         if (!HasValidPlayer())
         {
@@ -140,7 +145,7 @@ public class Slime_HitAndRun : EnemyBase
             return;
         }
 
-        float playerDistHome = Vector3.Distance(player.transform.position, safeZone.position);
+        float playerDistHome = Vector3.Distance(player.transform.position, home.position);
         float distPlayer = DistanceToPlayer();
 
         if (!hasDetectedPlayer)
@@ -200,7 +205,7 @@ public class Slime_HitAndRun : EnemyBase
         else if (returningHome)
         {
             agent.isStopped = false;
-            agent.SetDestination(spawnPos.position);
+            if (spawnPos != null) agent.SetDestination(spawnPos.position);
 
             RotateToVelocity();
 
@@ -419,7 +424,7 @@ public class Slime_HitAndRun : EnemyBase
         if (agent != null)
         {
             agent.isStopped = true;
-            agent.speed = 4.5f; // Restaurar velocidad de persecución
+            agent.speed = chaseSpeed; // Restaurar velocidad de persecución
         }
 
         // Durante la recuperación: solo mantener rotación hacia el jugador

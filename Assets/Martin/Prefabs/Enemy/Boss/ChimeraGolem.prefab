@@ -274,12 +274,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6042008571969152964}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 2.453}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 50, y: 50, z: 50}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7234911921980922091}
+  m_Father: {fileID: 5249590662068271819}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6395441284657150504
 GameObject:
@@ -405,7 +405,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6129183676000030921}
-  - {fileID: 6882840736087324763}
   - {fileID: 6107374306239597843}
   - {fileID: 720179260866161089}
   - {fileID: 5939479035034280095}
@@ -498,6 +497,7 @@ MonoBehaviour:
   knockDownRecoverDelay: 0.15
   airGravityMultiplier: 0.7
   airHangDuration: 0.75
+  staggeredDamageMultiplier: 1.5
   revengeThreshold: 3
   revengeDecayDelay: 2
   safeZone: {fileID: 0}
@@ -515,30 +515,63 @@ MonoBehaviour:
   mainTexSpeed: {x: 1, y: 0}
   distorsionIntensity: 0.01
   distorsionSpeed: {x: 0, y: -1}
+  detectionRange: 30
+  maxChaseDistance: 45
+  detectionDelay: 0.25
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  targetRayHeight: 1.2
+  playerSearchInterval: 0.5
+  pauseBetweenAttacks: 0.75
+  specialMinNormals: 3
+  specialMaxNormals: 5
+  meleeRange: 4
+  midRange: 10
   dashSpeed: 25
   stopDistance: 4
+  maxDashDistance: 2
   attackDelay: 0.5
+  secondSwingDelay: 0.8
+  cisRecovery: 1.5
   hitBoxHit: {x: 3.5, y: 3.5, z: 3.5}
   hitVfx: {fileID: 0}
+  armTellVfx: {fileID: 0}
   fieldOffset: {x: 0, y: 0, z: 0}
   withereZone: {fileID: 4105817315745025338, guid: 5f1ddc4ece2590348aa8e98272be67f8, type: 3}
-  startUpDuration: 1
-  channelDuration: 6
-  rainRadius: 35
+  fieldWarningVfx: {fileID: 3066179391836259070, guid: ac06172ef7e530741a2e8254c2540714, type: 3}
+  fieldVfx: {fileID: 6145094961214585180, guid: 49e14dc5212138f489778dfd105acdc3, type: 3}
+  fieldWarnTime: 1.2
+  fieldDamagePerTick: 8
+  fieldDuration: 4
+  fieldTickRate: 0.5
+  fieldRecovery: 1.5
+  uelChannelTime: 2
+  uelWaves: 3
   fireballsPerWave: 15
   waveInterval: 0.5
+  waveGap: 1.5
+  uelRecovery: 3
+  rainRadius: 35
   spawnHeight: 18
+  fireballDamage: 22
   fireballPrefab: {fileID: 8952754787391683549, guid: 9e77a5905b9e599469cd2f227fb220e0, type: 3}
   magicCircleVfx: {fileID: 7689881771256709887, guid: 785b7f2a4565599458d1decbdfda92c7, type: 3}
   warningVfx: {fileID: 3415432002743325365, guid: b2f6159d9d8e1c54cbb19a4f8f7fe7d5, type: 3}
   offsetWarning: {x: 0, y: 0, z: 0}
   bulletPerShoot: 6
   timeBtwShoot: 0.2
+  carTell: 0.6
+  carDamage: 15
+  carRecovery: 1.5
   firePoint: {fileID: 6882840736087324763}
   bulletPrefab: {fileID: 8499267714821707363, guid: 71e2044fa01baca4cbfcc18c220214e7, type: 3}
   shootVfx: {fileID: 0}
+  slamTell: 0.8
   hitBoxRadius: 7
-  smokeVfx: {fileID: 5610010966355794069, guid: 803ecf87f61d9fb4f84ba6319ba95c9c, type: 3}
+  shockInnerRadius: 3
+  slamRecovery: 2.5
+  smokeVfx: {fileID: 4692634598805455939, guid: 656622d89d481694fa5957e7a15bd76f, type: 3}
   targerLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -546,6 +579,7 @@ MonoBehaviour:
   corners: []
   target: {fileID: 0}
   inCinematic: 0
+  verboseLogs: 0
 --- !u!195 &4458573657769817997
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -948,12 +982,20 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 1079823192497553590, guid: bb16a7846bcab1d4ab9d3bf049ef4c65, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6882840736087324763}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bb16a7846bcab1d4ab9d3bf049ef4c65, type: 3}
 --- !u!4 &3247186861903563213 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7725455270575420336, guid: bb16a7846bcab1d4ab9d3bf049ef4c65, type: 3}
+  m_PrefabInstance: {fileID: 5054735999268223613}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5249590662068271819 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1079823192497553590, guid: bb16a7846bcab1d4ab9d3bf049ef4c65, type: 3}
   m_PrefabInstance: {fileID: 5054735999268223613}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6345127362610561197

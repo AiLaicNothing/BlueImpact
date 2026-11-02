@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,6 +28,8 @@ public class Inspection_Manager : MonoBehaviour
         if (loadedData != null)
         {
             inspectedObjects.Clear();
+            if (loadedData.inspectedObjects == null) return;
+
             foreach (Log_Data log in loadedData.inspectedObjects)
             {
                 inspectedObjects.Add(log);

@@ -27,6 +27,8 @@ public class Pickup_Manager : MonoBehaviour
         if (loadedData != null)
         {
             collectedPickups.Clear();
+            if (loadedData.collectedPickups == null) return;
+
             foreach (string pickupID in loadedData.collectedPickups)
             {
                 collectedPickups.Add(pickupID);

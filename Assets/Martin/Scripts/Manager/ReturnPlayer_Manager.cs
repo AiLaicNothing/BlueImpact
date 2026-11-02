@@ -19,7 +19,7 @@ public class ReturnPlayer_Manager : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (playerObj == null)
+        if (playerObj == null && Player_Manager.Instance != null)
         {
             playerObj = Player_Manager.Instance.GetPlayer();
         }
@@ -27,6 +27,8 @@ public class ReturnPlayer_Manager : MonoBehaviour
 
     public void ReturnPlayer()
     {
+        if (playerObj == null || playerFather == null) return;
+
         playerObj.transform.SetParent(playerFather.transform);
     }
 }

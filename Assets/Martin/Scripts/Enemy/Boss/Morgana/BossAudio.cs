@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 // Un sonido con variaciones. Si pones varios clips, elige uno al azar en cada disparo,
 // asi el mismo golpe no suena identico diez veces seguidas.
@@ -77,6 +78,18 @@ public class BossAudio : MonoBehaviour
     [SerializeField] private AudioSource sfxSource;     // golpes, impactos, disparos
     [SerializeField] private AudioSource voiceSource;   // gritos y voz, para que no corten un golpe
     [SerializeField] private AudioSource musicSource;   // musica del combate
+
+    [Header("Audio Mixer (grupos de GameAudioMixer)")]
+    // Cada fuente que crea este script sale por el grupo que le pongas aqui.
+    // Si dejas un grupo vacio, esa fuente va directo al Master del proyecto.
+    [SerializeField] private AudioMixerGroup sfxGroup;
+    [SerializeField] private AudioMixerGroup voiceGroup;    // vacio = usa sfxGroup
+    [SerializeField] private AudioMixerGroup musicGroup;
+    [SerializeField] private AudioMixerGroup ambientGroup;  // vacio = usa sfxGroup
+
+    // Que bucles salen por Ambient en vez de SFX. El borde de la arena es un zumbido
+    // continuo de fondo, por eso viene marcado por defecto.
+    [SerializeField] private Loop[] ambientLoops = { Loop.Arena };
 
     [Header("Espacializacion")]
     [Tooltip("1 = sonido 3D que baja con la distancia. 0 = 2D, se oye igual en toda la sala.")]
@@ -190,15 +203,37 @@ public class BossAudio : MonoBehaviour
 
     private void Awake()
     {
-        sfxSource = EnsureSource(sfxSource, "SFX", sfxSpatialBlend, false);
-        voiceSource = EnsureSource(voiceSource, "Voice", voiceSpatialBlend, false);
-        musicSource = EnsureSource(musicSource, "Music", 0f, true);
+        sfxSource = EnsureSource(sfxSource, "SFX", sfxSpatialBlend, false, sfxGroup);
+        voiceSource = EnsureSource(voiceSource, "Voice", voiceSpatialBlend, false, VoiceGroup);
+        musicSource = EnsureSource(musicSource, "Music", 0f, true, musicGroup);
 
         for (int i = 0; i < LoopChannelCount; i++)
         {
-            loopSources[i] = EnsureSource(null, "Loop_" + ((Loop)i), sfxSpatialBlend, true);
+            AudioMixerGroup group = IsAmbientLoop((Loop)i) ? AmbientGroup : sfxGroup;
+
+            loopSources[i] = EnsureSource(null, "Loop_" + ((Loop)i), sfxSpatialBlend, true, group);
             loopSources[i].volume = 0f;
         }
+
+        if (sfxGroup == null && musicGroup == null)
+        {
+            Debug.LogWarning("[BossAudio] Sin grupos de mixer asignados: el audio del boss sale por el Master y no lo controlan los sliders de SFX y Musica");
+        }
+    }
+
+    private AudioMixerGroup VoiceGroup => voiceGroup != null ? voiceGroup : sfxGroup;
+    private AudioMixerGroup AmbientGroup => ambientGroup != null ? ambientGroup : sfxGroup;
+
+    private bool IsAmbientLoop(Loop channel)
+    {
+        if (ambientLoops == null) return false;
+
+        for (int i = 0; i < ambientLoops.Length; i++)
+        {
+            if (ambientLoops[i] == channel) return true;
+        }
+
+        return false;
     }
 
     private void OnDisable()
@@ -207,7 +242,7 @@ public class BossAudio : MonoBehaviour
         StopAllLoopsImmediate();
     }
 
-    private AudioSource EnsureSource(AudioSource existing, string label, float spatial, bool loop)
+    private AudioSource EnsureSource(AudioSource existing, string label, float spatial, bool loop, AudioMixerGroup group)
     {
         AudioSource src = existing;
 
@@ -225,6 +260,9 @@ public class BossAudio : MonoBehaviour
         src.rolloffMode = AudioRolloffMode.Linear;
         src.minDistance = minDistance;
         src.maxDistance = maxDistance;
+
+        // Solo se pisa si hay grupo. Asi una fuente que ya configuraste a mano no se rompe.
+        if (group != null) src.outputAudioMixerGroup = group;
 
         return src;
     }
@@ -254,7 +292,9 @@ public class BossAudio : MonoBehaviour
         PlayOne(voiceSource, sound, voiceVolume);
     }
 
-    // Reproduce un sonido puntual en una posicion concreta del mundo (impactos lejos del boss)
+    // Reproduce un sonido puntual en una posicion concreta del mundo (impactos lejos del boss).
+    // No se usa AudioSource.PlayClipAtPoint porque esa fuente no pasa por el mixer:
+    // se saltaria el grupo SFX y los sliders de volumen del juego no la controlarian.
     private void PlaySfxAt(BossSound sound, Vector3 position)
     {
         if (sound == null || !sound.HasClip) return;
@@ -262,7 +302,24 @@ public class BossAudio : MonoBehaviour
         AudioClip clip = sound.Pick();
         if (clip == null) return;
 
-        AudioSource.PlayClipAtPoint(clip, position, sound.volume * sfxVolume);
+        GameObject go = new GameObject("Audio_OneShot_" + clip.name);
+        go.transform.position = position;
+
+        AudioSource src = go.AddComponent<AudioSource>();
+        src.clip = clip;
+        src.volume = sound.volume * sfxVolume;
+        src.pitch = sound.PickPitch();
+        src.spatialBlend = sfxSpatialBlend;
+        src.rolloffMode = AudioRolloffMode.Linear;
+        src.minDistance = minDistance;
+        src.maxDistance = maxDistance;
+
+        if (sfxGroup != null) src.outputAudioMixerGroup = sfxGroup;
+
+        src.Play();
+
+        // Con pitch bajo el clip dura mas, por eso la vida se ajusta al pitch real
+        Destroy(go, clip.length / Mathf.Max(0.1f, src.pitch) + 0.1f);
     }
 
     // ---------- BUCLES ----------

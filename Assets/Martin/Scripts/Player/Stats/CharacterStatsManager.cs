@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using UnityEngine;
 
 //This Manager would know the stats in point of the player
@@ -8,6 +7,8 @@ using UnityEngine;
 public class CharacterStatsManager : MonoBehaviour
 {
     public static CharacterStatsManager Instance;
+
+    private static readonly StatsType[] AllStats = (StatsType[])Enum.GetValues(typeof(StatsType));
 
     [Header("Debug")]
     [SerializeField] private bool debug;
@@ -43,7 +44,14 @@ public class CharacterStatsManager : MonoBehaviour
             return;
         }
 
-        Instance = this;    
+        Instance = this;
+
+        // Crear las claves desde el inicio para que los getters no fallen antes de Initialize
+        foreach (StatsType stat in AllStats)
+        {
+            allocatedPoints[stat] = 0;
+            pendingPoints[stat] = 0;
+        }
     }
 
 
@@ -69,7 +77,7 @@ public class CharacterStatsManager : MonoBehaviour
         allocatedPoints.Clear();
         pendingPoints.Clear();
 
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
+        foreach (StatsType stat in AllStats)
         {
             allocatedPoints[stat] = 0;
             pendingPoints[stat] = 0;
@@ -90,6 +98,8 @@ public class CharacterStatsManager : MonoBehaviour
 
     public int GetBaseStat(StatsType statType)
     {
+        if (characterData == null) return 0;
+
         return characterData.baseStats.GetStat(statType);
     }
 
@@ -107,7 +117,7 @@ public class CharacterStatsManager : MonoBehaviour
     {
         int total = 0;
 
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
+        foreach (StatsType stat in AllStats)
         {
             total += pendingPoints[stat];
         }
@@ -159,19 +169,30 @@ public class CharacterStatsManager : MonoBehaviour
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
         if (loadedData != null)
         {
-            availablePoints = loadedData.availablePoints;
             totalEarnedPoints = loadedData.totalEarnedPoints;
-            allocatedPoints.Clear();
-            foreach (StatSavedEntry entry in loadedData.savedStats)
+
+            // Reinicia las claves y luego aplica lo guardado.
+            // pendingPoints también se rellena: si no, los puntos disponibles salían mal.
+            foreach (StatsType stat in AllStats)
             {
-                allocatedPoints[entry.statType] = entry.points;
+                allocatedPoints[stat] = 0;
+                pendingPoints[stat] = 0;
+            }
+
+            if (loadedData.savedStats != null)
+            {
+                foreach (StatSavedEntry entry in loadedData.savedStats)
+                {
+                    allocatedPoints[entry.statType] = entry.points;
+                    pendingPoints[entry.statType] = entry.points;
+                }
             }
              
         }
     }
     public void ApplyStats()
     {
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
+        foreach (StatsType stat in AllStats)
         {
             allocatedPoints[stat] = pendingPoints[stat];
 
@@ -187,7 +208,7 @@ public class CharacterStatsManager : MonoBehaviour
 
     public void CancelChanges()
     {
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
+        foreach (StatsType stat in AllStats)
         {
             pendingPoints[stat] = allocatedPoints[stat];
         }
@@ -203,7 +224,7 @@ public class CharacterStatsManager : MonoBehaviour
     {
         int usedPoint = 0;
 
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
+        foreach (StatsType stat in AllStats)
         {
             usedPoint += pendingPoints[stat];
         }
@@ -215,7 +236,6 @@ public class CharacterStatsManager : MonoBehaviour
             availablePoints = 0;
         }
 
-        SaveLoadManager.Instance.SaveGame("availablePoints", availablePoints);
 
     }
 
@@ -250,7 +270,7 @@ public class CharacterStatsManager : MonoBehaviour
 
     public void BeginEdit()
     {
-        foreach (StatsType stat in Enum.GetValues(typeof(StatsType)))
+        foreach (StatsType stat in AllStats)
         {
             pendingPoints[stat] = allocatedPoints[stat];
         }

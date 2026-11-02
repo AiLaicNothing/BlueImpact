@@ -10,6 +10,7 @@ public class Miniboss_LavaGolem : EnemyBase
     [SerializeField] private float detectionDelay = 0.25f;
     [SerializeField] private LayerMask obstacleLayer;
     [SerializeField] private float targetRayHeight = 1.2f;
+    [SerializeField] private float playerSearchInterval = 0.5f;
 
     [Header("Movement")]
     [SerializeField] private float chaseSpeed = 5f;
@@ -21,7 +22,9 @@ public class Miniboss_LavaGolem : EnemyBase
     [SerializeField] private Vector3 flujoHitBoxSize = new Vector3(3f, 3f, 3f);
     [SerializeField] private Vector3 flujoHitBoxPos = new Vector3(0f, 1f, 2.5f);
     [SerializeField] private int flujoMeleeDamage = 18;
+    [SerializeField] private float flujoImpactRadius = 2.5f; // brazos tumbados contra el suelo: radio alrededor de los pies
     [SerializeField] private GameObject flujoVfx;
+    [SerializeField] private float vfxLifetime = 3f;
 
     [Header("Flujo - Tackle (dash)")]
     [SerializeField] private float tackleSpeed = 12f;
@@ -45,8 +48,8 @@ public class Miniboss_LavaGolem : EnemyBase
     [SerializeField] private float meleeChanceWhenClose = 0.85f;
 
     [Header("Llamarada Densa - Projectile")]
-    [SerializeField] private float llamaradaRange = 10f;
-    [SerializeField] private float llamaradaChargeTime = 5f;
+    [SerializeField] private float llamaradaRange = 12f;      // solo dispara dentro de este rango; si está más lejos, se acerca
+    [SerializeField] private float llamaradaChargeTime = 2.5f;
     [SerializeField] private GameObject fireballPrefab;
     [SerializeField] private Transform firePoint;
     [SerializeField] private int llamaradaDamage = 50;
@@ -59,7 +62,6 @@ public class Miniboss_LavaGolem : EnemyBase
     [Header("Animation")]
     [SerializeField] private Animator golemAnim;
     [SerializeField] private float moveAnimThreshold = 0.1f;
-    [SerializeField] private float animDampTime = 0.1f;
     private static readonly int IsMovingHash = Animator.StringToHash("IsMoving");
     private static readonly int TackleHash = Animator.StringToHash("Tackle");
     private static readonly int PunchHash = Animator.StringToHash("Punch");
@@ -68,47 +70,55 @@ public class Miniboss_LavaGolem : EnemyBase
 
     [Header("Debug")]
     [SerializeField] private GameObject hitBoxPrefab;
+    [SerializeField] private bool verboseLogs = false;
 
     private bool hasDetectedPlayer;
     private bool isFollowingPlayer;
     private bool returningHome;
     private bool isPerformingAction;
     private float detectionTimer;
+    private float nextPlayerSearchTime;
 
     private int patrolIndex;
     private int patrolDir = 1;
     private float actionCooldown;
-    private int attackCount;
-    private int nextSpecialThreshold;
+
+    private float baseAcceleration = 8f;
+    private Coroutine actionRoutine;
+    private GameObject activeChargeVfx;
+    private readonly Collider[] overlapBuffer = new Collider[16];
 
     protected override void Awake()
     {
         base.Awake();
 
+        if (golemAnim == null)
+            golemAnim = GetComponentInChildren<Animator>();
+
         if (agent != null)
         {
             agent.updateRotation = false;
             agent.speed = chaseSpeed;
-            agent.stoppingDistance = 0.25f;
+            agent.stoppingDistance = stopDistance;
+            baseAcceleration = agent.acceleration;
         }
 
-        if (golemAnim == null)
-            golemAnim = GetComponentInChildren<Animator>();
-
-        nextSpecialThreshold = Random.Range(2, 4);
     }
 
     protected override void Update()
     {
         base.Update();
 
-        if (isDead) return;
-        if (isStunned || IsStaggered) return;
+        if (isDead || isStunned || IsStaggered)
+        {
+            CancelAction();
+            return;
+        }
+
         if (agent == null || !agent.enabled) return;
 
         UpdateTarget();
         HandleDetection();
-
         UpdateAnimation();
 
         if (isPerformingAction) return;
@@ -117,9 +127,81 @@ public class Miniboss_LavaGolem : EnemyBase
         HandleMovement();
     }
 
+    private void OnDisable()
+    {
+        isPerformingAction = false;
+        actionRoutine = null;
+        ClearChargeVfx();
+    }
+
+    // ---------- Utilidades ----------
+
+    private void Log(string message)
+    {
+        if (verboseLogs) Debug.Log("[LavaGolem] " + message);
+    }
+
+    private void SetTrigger(int hash)
+    {
+        if (golemAnim != null) golemAnim.SetTrigger(hash);
+    }
+
+    private void StopAgent()
+    {
+        if (agent == null || !agent.enabled) return;
+        agent.isStopped = true;
+        agent.ResetPath();
+    }
+
+    private void ResetAgentDefaults()
+    {
+        if (agent == null || !agent.enabled) return;
+        agent.speed = chaseSpeed;
+        agent.acceleration = baseAcceleration;
+        agent.stoppingDistance = stopDistance;
+        StopAgent();
+    }
+
+    private void ClearChargeVfx()
+    {
+        if (activeChargeVfx != null) Destroy(activeChargeVfx);
+        activeChargeVfx = null;
+    }
+
+    // ---------- Control de acciones ----------
+
+    private void StartAction(IEnumerator routine)
+    {
+        isPerformingAction = true;
+        actionRoutine = StartCoroutine(routine);
+    }
+
+    private void FinishAction(float cooldown)
+    {
+        isPerformingAction = false;
+        actionRoutine = null;
+        actionCooldown = cooldown;
+    }
+
+    // Se llama si el golem muere o es aturdido a mitad de un ataque.
+    private void CancelAction()
+    {
+        if (!isPerformingAction && actionRoutine == null) return;
+
+        if (actionRoutine != null) StopCoroutine(actionRoutine);
+        ClearChargeVfx();
+        ResetAgentDefaults();
+
+        isPerformingAction = false;
+        actionRoutine = null;
+        actionCooldown = Mathf.Max(actionCooldown, 0.5f);
+    }
+
+    // ---------- Objetivo y detección ----------
+
     private void UpdateAnimation()
     {
-        if (golemAnim == null) return;
+        if (golemAnim == null || agent == null) return;
 
         bool moving = agent.enabled && !agent.isStopped &&
                       agent.velocity.sqrMagnitude > moveAnimThreshold * moveAnimThreshold;
@@ -132,10 +214,11 @@ public class Miniboss_LavaGolem : EnemyBase
 
     private void UpdateTarget()
     {
-        if (!HasValidPlayer())
-        {
-            player = FindFirstObjectByType<PlayerControl>();
-        }
+        if (HasValidPlayer()) return;
+        if (Time.time < nextPlayerSearchTime) return;
+
+        nextPlayerSearchTime = Time.time + playerSearchInterval;
+        player = FindFirstObjectByType<PlayerControl>();
     }
 
     private bool HasLineOfSight()
@@ -151,9 +234,7 @@ public class Miniboss_LavaGolem : EnemyBase
         if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
         {
             if (hit.transform != player.transform && hit.transform.root != player.transform.root)
-            {
                 return false;
-            }
         }
 
         return true;
@@ -185,7 +266,8 @@ public class Miniboss_LavaGolem : EnemyBase
                 {
                     hasDetectedPlayer = true;
                     isFollowingPlayer = true;
-                    Debug.Log($"[LavaGolem] Jugador detectado a {distPlayer:F2}m");
+                    returningHome = false;
+                    Log($"Jugador detectado a {distPlayer:F2}m");
                 }
             }
             else
@@ -193,38 +275,34 @@ public class Miniboss_LavaGolem : EnemyBase
                 detectionTimer = 0f;
             }
         }
-        else
+        else if (playerDistHome > maxChaseDistance)
         {
-            if (playerDistHome > maxChaseDistance)
-            {
-                hasDetectedPlayer = false;
-                isFollowingPlayer = false;
-                returningHome = true;
-                detectionTimer = 0f;
-                Debug.Log("[LavaGolem] Jugador perdido - retornando a spawn");
-            }
+            hasDetectedPlayer = false;
+            isFollowingPlayer = false;
+            returningHome = true;
+            detectionTimer = 0f;
+            Log("Jugador perdido - retornando a spawn");
         }
     }
+
+    // ---------- Movimiento ----------
 
     private void HandleMovement()
     {
         if (isFollowingPlayer && HasValidPlayer())
         {
-            float distance = DistanceToPlayer();
-
             agent.isStopped = false;
             agent.SetDestination(player.transform.position);
 
-            if (distance <= flujoCineticoRange)
+            if (DistanceToPlayer() <= flujoCineticoRange)
                 FacePlayerSmooth();
             else
                 RotateToVelocity();
         }
-        else if (returningHome)
+        else if (returningHome && spawnPos != null)
         {
             agent.isStopped = false;
             agent.SetDestination(spawnPos.position);
-
             RotateToVelocity();
 
             if (!agent.pathPending && agent.remainingDistance <= patrolStopDistance)
@@ -233,7 +311,7 @@ public class Miniboss_LavaGolem : EnemyBase
                 agent.ResetPath();
             }
         }
-        else if (hasPatrol)
+        else if (hasPatrol && patrolZones != null && patrolZones.Length > 0)
         {
             agent.isStopped = false;
             HandlePatrol();
@@ -241,6 +319,7 @@ public class Miniboss_LavaGolem : EnemyBase
         }
         else
         {
+            returningHome = false;
             agent.ResetPath();
         }
     }
@@ -249,139 +328,109 @@ public class Miniboss_LavaGolem : EnemyBase
     {
         if (patrolZones == null || patrolZones.Length == 0) return;
 
+        if (patrolZones.Length == 1)
+        {
+            agent.SetDestination(patrolZones[0].position);
+            return;
+        }
+
         Transform posDesired = patrolZones[patrolIndex];
         agent.SetDestination(posDesired.position);
 
         float dist = Vector3.Distance(transform.position, posDesired.position);
+        if (dist > patrolStopDistance) return;
 
-        if (dist <= patrolStopDistance)
+        patrolIndex += patrolDir;
+
+        if (patrolIndex >= patrolZones.Length)
         {
-            patrolIndex += patrolDir;
-
-            if (patrolIndex >= patrolZones.Length)
-            {
-                patrolIndex = patrolZones.Length - 2;
-                patrolDir = -1;
-            }
-            else if (patrolIndex < 0)
-            {
-                patrolIndex = 1;
-                patrolDir = 1;
-            }
+            patrolIndex = patrolZones.Length - 2;
+            patrolDir = -1;
+        }
+        else if (patrolIndex < 0)
+        {
+            patrolIndex = 1;
+            patrolDir = 1;
         }
     }
+
+    // ---------- Selección de ataque ----------
 
     private void HandleActions()
     {
-        if (isPerformingAction || !hasDetectedPlayer || !HasValidPlayer()) return;
+        if (!hasDetectedPlayer || !HasValidPlayer()) return;
 
         actionCooldown -= Time.deltaTime;
+        if (actionCooldown > 0f) return;
 
-        if (actionCooldown <= 0f)
+        // Sin especial: dos ataques, elegidos por distancia (de cerca casi siempre Flujo; de lejos, mezcla)
+        bool close = DistanceToPlayer() <= flujoCineticoRange;
+        bool useFlujo = close ? Random.value < meleeChanceWhenClose : Random.value > 0.4f;
+
+        if (useFlujo)
         {
-            Debug.Log($"[LavaGolem] Decidiendo ataque - Contador: {attackCount}/{nextSpecialThreshold}");
-
-            if (attackCount >= nextSpecialThreshold)
-            {
-                attackCount = 0;
-                nextSpecialThreshold = Random.Range(2, 4);
-                Debug.Log("[LavaGolem] ATAQUE ESPECIAL: Llamarada Densa");
-                StartCoroutine(PerformLlamarada());
-            }
-            else
-            {
-                bool close = DistanceToPlayer() <= flujoCineticoRange;
-                bool useFlujo = close ? Random.value < meleeChanceWhenClose : Random.value > 0.4f;
-
-                if (useFlujo)
-                {
-                    Debug.Log("[LavaGolem] ATAQUE NORMAL: Flujo Cinético");
-                    StartCoroutine(PerformFlujo());
-                }
-                else
-                {
-                    Debug.Log("[LavaGolem] ATAQUE NORMAL: Llamarada Densa");
-                    StartCoroutine(PerformLlamarada());
-                }
-
-                attackCount++;
-            }
+            Log("ATAQUE NORMAL: Flujo Cinético");
+            StartAction(PerformFlujo());
+        }
+        else
+        {
+            Log("ATAQUE NORMAL: Llamarada Densa");
+            StartAction(PerformLlamarada());
         }
     }
 
+    // ---------- Flujo Cinético (melee) ----------
+
     private IEnumerator PerformFlujo()
     {
-        Debug.Log("[Flujo] Iniciando Flujo Cinético");
-        isPerformingAction = true;
+        StopAgent();
 
-        if (agent != null)
+        if (DistanceToPlayer() > flujoCineticoRange)
         {
-            agent.isStopped = true;
-            agent.ResetPath();
+            Log("Demasiado lejos, acercándose...");
+            yield return ApproachPlayer(flujoCineticoRange, 2f);
         }
 
-        float distance = DistanceToPlayer();
-        Debug.Log($"[Flujo] Distancia al jugador: {distance:F2}m (rango necesario: {flujoCineticoRange}m)");
-
-        // Si está muy lejos, acercarse primero
-        if (distance > flujoCineticoRange)
+        if (!HasValidPlayer())
         {
-            Debug.Log("[Flujo] Demasiado lejos, acercándose...");
-            if (agent != null)
-            {
-                agent.isStopped = false;
-            }
-
-            float timeout = 2f;
-            float elapsed = 0f;
-
-            while (distance > flujoCineticoRange && elapsed < timeout)
-            {
-                if (HasValidPlayer())
-                {
-                    agent.SetDestination(player.transform.position);
-                    RotateToVelocity();
-                    distance = DistanceToPlayer();
-                }
-
-                elapsed += Time.deltaTime;
-                yield return null;
-            }
-
-            if (agent != null)
-            {
-                agent.isStopped = true;
-                agent.ResetPath();
-            }
-
-            Debug.Log($"[Flujo] En rango - Distancia final: {distance:F2}m");
+            FinishAction(0.5f);
+            yield break;
         }
 
-        // Tackle: el boss se lanza hacia el jugador mientras dura el clip
-        Debug.Log($"[Flujo] Tackle ({TackleDuration:F3}s)");
+        // Tackle: el golem se lanza hacia el jugador mientras dura el clip
         FaceTargetInstant();
-        golemAnim.SetTrigger(TackleHash);
+        SetTrigger(TackleHash);
         yield return TackleDash();
 
         // Punch: el daño sale del Animation Event OnFlujoImpact en el frame de impacto
-        Debug.Log($"[Flujo] Punch ({PunchDuration:F3}s)");
-        golemAnim.SetTrigger(PunchHash);
+        SetTrigger(PunchHash);
         yield return new WaitForSeconds(PunchDuration);
 
-        isPerformingAction = false;
-        actionCooldown = flujoCooldown + Random.Range(0f, cooldownVariance);
-        Debug.Log("[Flujo] Flujo Cinético completado");
+        FinishAction(flujoCooldown + Random.Range(0f, cooldownVariance));
+        Log("Flujo Cinético completado");
+    }
+
+    private IEnumerator ApproachPlayer(float range, float timeout)
+    {
+        agent.isStopped = false;
+        float elapsed = 0f;
+
+        while (elapsed < timeout && HasValidPlayer() && DistanceToPlayer() > range)
+        {
+            agent.SetDestination(player.transform.position);
+            RotateToVelocity();
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        StopAgent();
     }
 
     private IEnumerator TackleDash()
     {
-        float prevSpeed = agent.speed;
-        float prevAccel = agent.acceleration;
-        float prevStop = agent.stoppingDistance;
-
         agent.isStopped = false;
         agent.speed = tackleSpeed;
-        agent.acceleration = 100f;          // arranque casi instantáneo
+        agent.acceleration = 100f; // arranque casi instantáneo
         agent.stoppingDistance = tackleStopDistance;
 
         float t = 0f;
@@ -395,16 +444,11 @@ public class Miniboss_LavaGolem : EnemyBase
             t += Time.deltaTime;
             yield return null;
 
-            // Si ya llegó al jugador, detiene el dash
             if (!agent.pathPending && agent.hasPath && agent.remainingDistance <= tackleStopDistance)
                 break;
         }
 
-        agent.ResetPath();
-        agent.isStopped = true;
-        agent.speed = prevSpeed;
-        agent.acceleration = prevAccel;
-        agent.stoppingDistance = prevStop;
+        ResetAgentDefaults();
 
         // Si el dash terminó antes, completa el tiempo del clip mirando al jugador
         float remaining = TackleDuration - t;
@@ -426,24 +470,27 @@ public class Miniboss_LavaGolem : EnemyBase
     // Llamado por el Animation Event del clip Punch
     public void OnFlujoImpact()
     {
-        Vector3 center = GetFlujoHitCenter();
+        // Brazos tumbados contra el suelo: daño en radio alrededor de los pies
+        Vector3 center = transform.position;
 
         if (flujoVfx != null)
-            Instantiate(flujoVfx, center, Quaternion.identity);
+            Destroy(Instantiate(flujoVfx, center, Quaternion.identity), vfxLifetime);
         else
-            Debug.LogWarning("[Flujo] flujoVfx NO asignado");
+            Debug.LogWarning("[LavaGolem] flujoVfx NO asignado");
 
-        Collider[] hits = Physics.OverlapBox(center, flujoHitBoxSize * 0.5f, transform.rotation);
-        Debug.Log($"[Flujo] Hitbox check: {hits.Length} colisiones detectadas");
+        int count = Physics.OverlapSphereNonAlloc(center, flujoImpactRadius, overlapBuffer);
+        Log($"Impacto: {count} colisiones detectadas");
 
-        ShowHitbox(center, flujoHitBoxSize, transform.rotation);
+        // Un jugador puede tener varios colliders: se daña una sola vez por impacto
+        var damaged = new System.Collections.Generic.HashSet<IDamageable>();
 
-        foreach (Collider hit in hits)
+        for (int i = 0; i < count; i++)
         {
+            Collider hit = overlapBuffer[i];
             if (!hit.CompareTag("Player")) continue;
 
             IDamageable damageable = hit.GetComponentInParent<IDamageable>();
-            if (damageable == null) continue;
+            if (damageable == null || !damaged.Add(damageable)) continue;
 
             DamageInfo info = new DamageInfo
             {
@@ -451,118 +498,80 @@ public class Miniboss_LavaGolem : EnemyBase
                 hitDirection = transform.forward,
             };
             damageable.TakeDamage(in info);
-            Debug.Log($"[Flujo] ¡IMPACTO! Aplicado {flujoMeleeDamage} daño");
+            Log($"IMPACTO! Aplicado {flujoMeleeDamage} daño");
         }
     }
 
+    // ---------- Llamarada Densa (proyectil) ----------
+
     private IEnumerator PerformLlamarada()
     {
-        Debug.Log("[Llamarada] Iniciando Llamarada Densa");
-        isPerformingAction = true;
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
+        StopAgent();
         FaceTargetInstant();
 
-        // VFX de carga
-        GameObject chargeEffect = null;
-        if (chargeVfx != null && firePoint != null)
+        // Si está lejos, se acerca primero: la bola solo sale dentro de llamaradaRange
+        if (DistanceToPlayer() > llamaradaRange)
         {
-            Debug.Log("[Llamarada] Instanciando VFX de carga");
-            chargeEffect = Instantiate(chargeVfx, firePoint.position, Quaternion.identity);
-            chargeEffect.transform.SetParent(firePoint);
-        }
-        else
-        {
-            Debug.LogWarning("[Llamarada] chargeVfx o firePoint NO asignados");
+            Log("Demasiado lejos para disparar, acercándose...");
+            yield return ApproachPlayer(llamaradaRange, 3f);
         }
 
-        // Tiempo de carga
-        Debug.Log($"[Llamarada] Cargando durante {llamaradaChargeTime}s...");
+        if (!HasValidPlayer())
+        {
+            FinishAction(0.5f);
+            yield break;
+        }
+
+        if (chargeVfx != null && firePoint != null)
+            activeChargeVfx = Instantiate(chargeVfx, firePoint.position, Quaternion.identity, firePoint);
+
+        // Carga
         float chargeTimer = 0f;
         while (chargeTimer < llamaradaChargeTime)
         {
-            if (HasValidPlayer())
-            {
-                FaceTargetInstant();
-            }
+            if (HasValidPlayer()) FaceTargetInstant();
 
             chargeTimer += Time.deltaTime;
             yield return null;
         }
 
-        Debug.Log("[Llamarada] Carga completada!");
-
-        // Disparar
-        Debug.Log("[Llamarada] Reproduciendo animación 'Llamarada_Cast'");
-        golemAnim.SetTrigger(FireBallHash);
-
-        if (chargeEffect != null)
-        {
-            Destroy(chargeEffect);
-        }
+        ClearChargeVfx();
+        SetTrigger(FireBallHash);
 
         if (castVfx != null && firePoint != null)
-        {
-            Debug.Log("[Llamarada] Instanciando VFX de disparo");
-            Instantiate(castVfx, firePoint.position, Quaternion.identity);
-        }
+            Destroy(Instantiate(castVfx, firePoint.position, Quaternion.identity), vfxLifetime);
 
         if (!HasValidPlayer())
         {
-            Debug.LogError("[Llamarada] Jugador NO válido!");
-            isPerformingAction = false;
-            actionCooldown = 3f;
+            Debug.LogWarning("[LavaGolem] Llamarada cancelada: jugador no válido");
+            FinishAction(3f);
             yield break;
         }
 
-        if (fireballPrefab == null)
+        if (fireballPrefab == null || firePoint == null)
         {
-            Debug.LogError("[Llamarada] fireballPrefab NO asignado en Inspector!");
-            isPerformingAction = false;
-            actionCooldown = 3f;
+            Debug.LogError("[LavaGolem] fireballPrefab o firePoint NO asignados en el Inspector");
+            FinishAction(3f);
             yield break;
         }
 
-        if (firePoint == null)
-        {
-            Debug.LogError("[Llamarada] firePoint NO asignado en Inspector!");
-            isPerformingAction = false;
-            actionCooldown = 3f;
-            yield break;
-        }
-
-        Debug.Log("[Llamarada] Creando proyectil...");
         Vector3 targetPos = player.transform.position + Vector3.up * 0.5f;
         Vector3 dir = (targetPos - firePoint.position).normalized;
 
-        Debug.Log($"[Llamarada] Desde: {firePoint.position}, Hacia: {targetPos}, Dirección: {dir}");
-
         GameObject proj = Instantiate(fireballPrefab, firePoint.position, Quaternion.LookRotation(dir));
-        Debug.Log($"[Llamarada] Proyectil instanciado: {proj.name}");
 
-        var projectile = proj.GetComponent<E_Projectile>();
-
-        if (projectile != null)
-        {
-            Debug.Log($"[Llamarada] Inicializando proyectil con daño {llamaradaDamage}");
+        if (proj.TryGetComponent(out E_Projectile projectile))
             projectile.InitProj(llamaradaDamage, dir);
-        }
         else
-        {
-            Debug.LogError("[Llamarada] El prefab NO tiene componente E_Projectile!");
-        }
+            Debug.LogError("[LavaGolem] El prefab de la fireball no tiene componente E_Projectile");
 
         yield return new WaitForSeconds(FireBallDuration);
 
-        isPerformingAction = false;
-        actionCooldown = llamaradaCooldown + Random.Range(0f, cooldownVariance);
-        Debug.Log("[Llamarada] Llamarada Densa completada");
+        FinishAction(llamaradaCooldown + Random.Range(0f, cooldownVariance));
+        Log("Llamarada Densa completada");
     }
+
+    // ---------- Rotación y utilidades de posición ----------
 
     private void RotateToVelocity()
     {
@@ -618,39 +627,27 @@ public class Miniboss_LavaGolem : EnemyBase
         Destroy(box, 0.2f);
     }
 
+    // ---------- Gizmos ----------
+
     private void OnDrawGizmosSelected()
     {
-        Vector3 center = GetFlujoHitCenter();
-
-        Matrix4x4 prev = Gizmos.matrix;
-        Gizmos.matrix = Matrix4x4.TRS(center, transform.rotation, flujoHitBoxSize);
-
-        Gizmos.color = new Color(1f, 0.4f, 0f, 0.25f);
-        Gizmos.DrawCube(Vector3.zero, Vector3.one);
-
         Gizmos.color = new Color(1f, 0.4f, 0f, 1f);
-        Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
-
-        Gizmos.matrix = prev;
+        Gizmos.DrawWireSphere(transform.position, flujoImpactRadius);
     }
 
     private void OnDrawGizmos()
     {
         if (!debug) return;
 
-        // Detection range
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
 
-        // Flujo range
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, flujoCineticoRange);
 
-        // Llamarada range
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, llamaradaRange);
 
-        // Safe zone
         if (safeZone != null)
         {
             Gizmos.color = Color.green;

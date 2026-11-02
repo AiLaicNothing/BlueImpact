@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -89,11 +88,11 @@ public class Goblin_Range : EnemyBase
 
         if (agent.velocity.sqrMagnitude >= 0.01f)
         {
-            anim.Play("Walk");
+            PlayLoop("Walk");
         }
         else
         {
-            anim.Play("Idle");
+            PlayLoop("Idle");
         }
     }
 
@@ -137,7 +136,8 @@ public class Goblin_Range : EnemyBase
 
     private void HandleDetection()
     {
-        if (safeZone == null) return;
+        Transform home = HomePoint;
+        if (home == null) return;
 
         if (instantDetection)
         {
@@ -154,7 +154,7 @@ public class Goblin_Range : EnemyBase
             return;
         }
 
-        float playerDistHome = Vector3.Distance(player.transform.position, safeZone.position);
+        float playerDistHome = Vector3.Distance(player.transform.position, home.position);
         float distPlayer = DistanceToPlayer();
 
         if (!hasDetectedPlayer)
@@ -245,7 +245,7 @@ public class Goblin_Range : EnemyBase
         else if (returningHome)
         {
             agent.isStopped = false;
-            agent.SetDestination(spawnPos.position);
+            if (spawnPos != null) agent.SetDestination(spawnPos.position);
             RotateToVelocity();
 
 
@@ -259,7 +259,6 @@ public class Goblin_Range : EnemyBase
         {
             agent.isStopped = false;
             HandlePatrol();
-            agent.SetDestination(spawnPos.position);
         }
         else
         {
@@ -389,7 +388,7 @@ public class Goblin_Range : EnemyBase
             agent.ResetPath();
         }
 
-        anim.Play("Attack");
+        PlayAnim("Attack");
 
         isPerformingAction = true;
 
@@ -418,7 +417,7 @@ public class Goblin_Range : EnemyBase
             yield return new WaitForSeconds(remainingTime);
         }
 
-        anim.Play("Idle");
+        PlayAnim("Idle");
 
         yield return new WaitForSeconds(recoveryTime);
 
@@ -519,11 +518,14 @@ public class Goblin_Range : EnemyBase
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
 
+        Transform home = HomePoint;
+        if (home == null) return;
+
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(safeZone.position, 1f);
+        Gizmos.DrawWireSphere(home.position, 1f);
 
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(safeZone.position, maxChaseDistance);
+        Gizmos.DrawWireSphere(home.position, maxChaseDistance);
     }
 }
 

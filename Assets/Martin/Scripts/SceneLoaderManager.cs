@@ -93,9 +93,12 @@ public class SceneLoaderManager : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(sceneName)) yield break;
 
+        // Sin este yield, si la carga ya terminó pero LoadSceneAndWait aún no
+        // la quitó de activeLoads, el bucle giraba sin ceder y congelaba Unity.
         while (activeLoads.TryGetValue(sceneName, out AsyncOperation loading))
         {
             while (!loading.isDone) yield return null;
+            yield return null;
         }
 
         Scene scene = SceneManager.GetSceneByName(sceneName);

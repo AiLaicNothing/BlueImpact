@@ -96,11 +96,11 @@ public class Undead : EnemyBase
 
         if (agent.velocity.sqrMagnitude >= 0.01f)
         {
-            anim.Play("Walk");
+            PlayLoop("Walk");
         }
         else
         {
-            anim.Play("Idle");
+            PlayLoop("Idle");
         }
     }
 
@@ -141,7 +141,8 @@ public class Undead : EnemyBase
 
     private void HandleDetection()
     {
-        if (safeZone == null)
+        Transform home = HomePoint;
+        if (home == null)
             return;
 
         if (instantDetection)
@@ -159,7 +160,7 @@ public class Undead : EnemyBase
             return;
         }
 
-        float distHome = Vector3.Distance(transform.position, safeZone.position);
+        float distHome = Vector3.Distance(transform.position, home.position);
         float distPlayer = DistanceToPlayer();
 
         if (!hasDetectedPlayer)
@@ -185,6 +186,7 @@ public class Undead : EnemyBase
             {
                 hasDetectedPlayer = false;
                 isFollowingPlayer = false;
+                returningHome = true; // Antes nunca se activaba: el enemigo se quedaba parado al perder al jugador
                 detectionTimer = 0f;
             }
         }
@@ -217,7 +219,7 @@ public class Undead : EnemyBase
         else if (returningHome)
         {
             agent.isStopped = false;
-            agent.SetDestination(spawnPos.position);
+            if (spawnPos != null) agent.SetDestination(spawnPos.position);
 
             RotateToVelocity();
             //anim.Play("Walk");
@@ -281,7 +283,7 @@ public class Undead : EnemyBase
         actionTimer += Time.deltaTime;
 
         float distance = DistanceToPlayer();
-        float hpPercent = CurrentHp / stats.maxHp;
+        float hpPercent = stats.maxHp > 0f ? CurrentHp / stats.maxHp : 1f;
 
         if (actionTimer >= 0.8f)
         {
@@ -289,7 +291,6 @@ public class Undead : EnemyBase
             {
                 if (Random.value <= consecutiveCutsChance && consecutiveCutsRoutine == null)
                 {
-                    Debug.Log("[Undead] Use consecutive Attacks");
 
                     consecutiveCutsRoutine = StartCoroutine(PerformConsecutiveCuts());
                     return;
@@ -298,7 +299,6 @@ public class Undead : EnemyBase
 
             if (distance <= attackRange && HasLineOfSightToPlayer() && IsFacingTarget() && attackRoutine == null)
             {
-                Debug.Log("[Undead] Use Attacks");
                 attackRoutine = StartCoroutine(PerformAttack());
             }
         }
@@ -316,7 +316,7 @@ public class Undead : EnemyBase
         agent.ResetPath();
         isPerformingAction = true;
 
-        anim.Play("Attack");
+        PlayAnim("Attack");
 
         FaceTargetInstant();
 
@@ -384,7 +384,8 @@ public class Undead : EnemyBase
 
         if (consecutiveCutsSFX != null)
         {
-            Instantiate(consecutiveCutsSFX, transform.position, Quaternion.identity);
+            var sfxInstance = Instantiate(consecutiveCutsSFX, transform.position, Quaternion.identity);
+            Destroy(sfxInstance, 3f); // Evita acumular SFX que nunca se destruyen
         }
 
         // Charge phase: stand still, face the player.
@@ -601,10 +602,13 @@ public class Undead : EnemyBase
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
 
+        Transform home = HomePoint;
+        if (home == null) return;
+
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(safeZone.position, 1f);
+        Gizmos.DrawWireSphere(home.position, 1f);
 
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(safeZone.position, maxChaseDistance);
+        Gizmos.DrawWireSphere(home.position, maxChaseDistance);
     }
 }

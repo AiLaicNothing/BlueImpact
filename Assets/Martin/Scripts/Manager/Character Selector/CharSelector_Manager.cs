@@ -29,7 +29,7 @@ public class CharSelector_Manager : MonoBehaviour
 
     public CharacterInfo GetCharacterInfo(int index)
     {
-        if (index < 0 || index >= characters.Length) return null;
+        if (characters == null || index < 0 || index >= characters.Length) return null;
 
         return characters[index];
     }

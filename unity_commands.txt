@@ -1,0 +1,64 @@
+﻿=== material ===
+name	description	parameterCount	parameters
+material get_properties	Read a material's shader, render queue, enabled keywords, and all shader properties with their current values (Color as [r,g,b,a], Vector as [x,y,z,w], Texture as an object reference).	1	--material
+material get_shader_properties	Introspect a shader's declared property list (name, description, type Color|Vector|Float|Range|TexEnv|Int, range, textureDimension, flags). Provide 'shader' (by name) OR 'material' (read the shader off that material).	2	--shader, --material
+material list_shaders	Discover available shaders so an agent can pick a valid name for material set_properties / asset create. Returns [{ name, assetPath|null, isBuiltin, isSupported }].	3	--filter, --includeBuiltin, --limit
+material set_properties	Set shader properties on a material (Float/Range/Int=number; Color=[r,g,b,a] or "#RRGGBBAA" hex; Vector=[x,y,z,w]; Texture=an object reference or null to clear), optionally reassign the shader, set the render queue, and toggle keywords. Unknown names / type mismatches are reported in unknown[].	8	--material, --shader, --properties, --renderQueue, --enableKeywords, --disableKeywords, --confirm, --dry_run
+=== asset ===
+name	description	parameterCount	parameters
+asset copy	Copy an asset to a new path under the authoring root. The copy gets a fresh GUID.	4	--asset, --destination, --confirm, --dry_run
+asset create	Create a new ScriptableObject (or other UnityEngine.Object) asset of the given type at a path under the authoring root.	5	--path, --type, --shader, --confirm, --dry_run
+asset create_folder	Create a folder under the authoring root (creates intermediate folders).	1	--path
+asset delete	Delete an asset from the project. Destructive: requires confirm=true.	3	--asset, --confirm, --dry_run
+asset find	Find assets by type and/or name and/or label, returning their path, GUID and type. At least one filter is required.	5	--type, --name, --label, --search_in, --limit
+asset get_import_settings	Read an asset's import settings, structured by importer type (texture/model/audio), including the default-platform fields and (for textures/audio) one platform override block.	2	--asset, --platform
+asset import	Import an external file (e.g. a texture, model, audio clip) into the project by copying it to a path under the authoring root, then importing it.	4	--source, --path, --confirm, --dry_run
+asset move	Move (or rename via a new path) an asset to a new location under the authoring root. Preserves the asset's GUID.	3	--asset, --destination, --dry_run
+asset read_text	Read a UTF-8 text file under the authoring root and return its contents.	2	--path, --max_bytes
+asset rename	Rename an asset in place (keeps it in the same folder, keeps its GUID).	3	--asset, --new_name, --dry_run
+asset set_import_settings	Set import settings on an asset's AssetImporter (default platform top-level properties, or a texture/audio per-platform override) and re-import it.	4	--asset, --settings, --platform, --dry_run
+asset write_text	Write UTF-8 text to a file under the authoring root, then import it. Overwriting an existing file requires confirm=true.	4	--path, --contents, --confirm, --dry_run
+=== editor ===
+name	description	parameterCount	parameters
+editor focus	Bring the Unity Editor window to the foreground	0	
+editor invoke_menu	Execute an Editor menu item by path, or list available items when no path is given	1	--path
+editor save_all	Save all open scenes that have unsaved changes.	0	
+editor search	Run a Unity Search query and return structured results.	2	--query, --limit
+editor set_auto_tick	Keep the editor ticking while unfocused by forcing EditorApplication.SignalTick at a throttled rate	3	--enable, --interval_ms, --persist
+editor status	Get detailed Unity Editor status and state information	0	
+editor.playmode list_instances	List running Editor instances reachable over Pipeline (this Editor + its MPPM virtual player clones). Connect to one with 'unity command --project-path <its projectPath>'.	0	
+editor.playmode pause	Toggle pause state of Unity Editor play mode	0	
+editor.playmode set_run_in_background	Override the project's Run In Background Player Setting, recording enough state to restore it later and to keep it out of builds	1	--enable
+editor.playmode start	Enter Unity Editor play mode	0	
+editor.playmode stop	Exit Unity Editor play mode	0	
+=== script ===
+name	description	parameterCount	parameters
+script attach	Add a MonoBehaviour to a GameObject by its (compiled) type name OR by its script asset path. Provide exactly one of 'type' or 'script'. If the type isn't compiled yet, returns a recoverable error: script recompile, poll script recompile_status, then retry.	3	--target, --type, --script
+script create	Create a new C# script (default base class MonoBehaviour) from a template under the authoring root. NOTE: the type does not exist until a recompile completes ÔÇö to attach it, call script recompile, poll script recompile_status, then script attach.	5	--name, --path, --namespace, --base_class, --overwrite
+script eval	Evaluate C# code dynamically using Roslyn compiler	2	--code, --timeout
+script eval_file	Evaluate C# code read from a .cs file on disk	2	--file, --timeout
+script recompile	Force a script recompile (works while unfocused/minimized). Poll script recompile_status for completion.	1	--focus
+script recompile_status	Get the status of the last recompile: idle | triggered | compiling | completed | up_to_date.	0	
+script run	Compile a project C# file in memory (no domain reload) and execute a named static entry point. The builder-pattern path for bulk construction. Still arbitrary code execution ÔÇö shares script eval's capability gate.	9	--file, --entry, --args, --mode, --references, --defines, --pdb, --timeout, --dry_run
+script.methodreload cleanup	Remove old method reload DLL versions and clear registry	2	--assemblyDir, --force_domain_reload
+script.methodreload generate_link_xml	Generate ProjectSettings/Packages/com.unity.pipeline/MethodReload.link.xml: per-type preservation of the engine/package types the game's assemblies reference and of the game's own types, plus the interpreter's host surface and [MethodReload] targets. Applied to IL2CPP development builds only, while the Pipeline is enabled in development builds. Pass delete=true to remove the file instead.	1	--delete
+script.methodreload reload	Compile and apply in-place [MethodReload] edits from a source file	4	--filename, --timeout, --assemblyDir, --pdb
+script.methodreload reload_editor	Compile in-place [MethodReload] edits and run them through the IlInterpreter VM in this process instead of Assembly.Load (IL2CPP-safe; only a minimal host API + the target type are available)	4	--filename, --timeout, --assemblyDir, --pdb
+script.methodreload reload_player	Compile a file's (or folder's) [MethodReload] method(s) and push the IL to a connected player (IL2CPP-safe) over PlayerConnection. Folders are walked recursively and pushed once.	2	--filename, --player
+script.methodreload status	Show current method reload registry status and statistics	0	
+=== prefab ===
+name	description	parameterCount	parameters
+prefab apply_overrides	Apply a prefab instance's overrides back to its source prefab asset.	1	--instance
+prefab create	Save a GameObject as a prefab asset at a project path; the source becomes a connected instance.	2	--source, --path
+prefab create_variant	Create a prefab variant asset that inherits from a base prefab.	2	--base, --path
+prefab instantiate	Instantiate a prefab asset into a loaded scene and return the created instance.	3	--prefab, --scene_path, --name
+prefab revert_overrides	Revert a prefab instance's overrides so it matches its source prefab asset.	1	--instance
+prefab save_contents	Open a prefab asset in an isolated prefab stage, apply a declarative edit, and save it back (nested-prefab safe).	5	--prefab, --rename_child, --new_name, --set_active_child, --active
+prefab unpack	Unpack a prefab instance into plain GameObjects (outermost level or completely).	2	--instance, --completely
+=== editor.playmode ===
+name	description	parameterCount	parameters
+editor.playmode list_instances	List running Editor instances reachable over Pipeline (this Editor + its MPPM virtual player clones). Connect to one with 'unity command --project-path <its projectPath>'.	0	
+editor.playmode pause	Toggle pause state of Unity Editor play mode	0	
+editor.playmode set_run_in_background	Override the project's Run In Background Player Setting, recording enough state to restore it later and to keep it out of builds	1	--enable
+editor.playmode start	Enter Unity Editor play mode	0	
+editor.playmode stop	Exit Unity Editor play mode	0	

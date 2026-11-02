@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,7 +16,7 @@ public class P_Projectile : MonoBehaviour
     [SerializeField] private float destroyTime = 2.5f;
 
     [Header("Sfx")]
-    [SerializeField] private GameObject sfx;
+    [SerializeField] private GameObject sfx; // Reservado: todavía no se reproduce
 
     private float retargetTimer;
 
@@ -33,12 +32,15 @@ public class P_Projectile : MonoBehaviour
 
     private Vector3 lockTargetPos;
 
+    // Un proyectil atraviesa enemigos, pero cada uno solo recibe un golpe
+    private readonly HashSet<IDamageable> damagedTargets = new HashSet<IDamageable>();
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
     }
 
-    public void Initialize(HitData hitdata, PlayerControl player,Vector3 dir, float spd, Vector3 lockTargetPos)
+    public void Initialize(HitData hitdata, PlayerControl player, Vector3 dir, float spd, Vector3 lockTargetPos)
     {
         hitData = hitdata;
         this.player = player;
@@ -60,27 +62,7 @@ public class P_Projectile : MonoBehaviour
             staggerBuild = hitData.staggerCharge
         };
 
-
         this.lockTargetPos = lockTargetPos;
-
-        /*if (isHoming)
-        {
-            if (target == null)
-            {
-                if (hasTarget && this.lockTargetPos != Vector3.zero)
-                {
-                    target = GetClosestToPoint(lockTargetPos);
-                }
-                else if (randomTarget)
-                {
-                    target = GetRandomTarget(transform.position);
-                }
-                else
-                {
-                    target = GetClosestTarget(transform.position);
-                }
-            }
-        }*/
 
         if (rb != null)
         {
@@ -93,7 +75,7 @@ public class P_Projectile : MonoBehaviour
 
     private void FixedUpdate()
     {
-        return;
+        // Homing desactivado por defecto (isHoming = false)
         if (rb == null || !isHoming) return;
 
         retargetTimer -= Time.fixedDeltaTime;
@@ -121,7 +103,6 @@ public class P_Projectile : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, Time.fixedDeltaTime * 10f);
         }
     }
-
 
     Transform GetClosestTarget(Vector3 origin)
     {
@@ -174,20 +155,21 @@ public class P_Projectile : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Enemy"))
-        {
-            IDamageable target = other.GetComponent<IDamageable>();
-
-            if (target != null)
-            {
-                target.TakeDamage(info);
-            }
-
-            //Destroy(gameObject);
-        }
+        // Paredes y suelo: el proyectil desaparece
         if (other.CompareTag("Wall") || other.CompareTag("Ground"))
         {
-            //Destroy(gameObject);
+            Destroy(gameObject);
+            return;
+        }
+
+        if (!other.CompareTag("Enemy")) return;
+
+        IDamageable target = other.GetComponentInParent<IDamageable>();
+
+        // Varios colliders del mismo enemigo cuentan como un solo impacto
+        if (target != null && damagedTargets.Add(target))
+        {
+            target.TakeDamage(info);
         }
     }
 }

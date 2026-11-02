@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +24,9 @@ public class PlayerStatsManager : MonoBehaviour
     private Dictionary<StatDefinition, RuntimeStat> runtimeStats;
     private Dictionary<StatDefinition, int> actualValues;        // ✅ Valores actuales para combate
     private Dictionary<StatDefinition, float> regenTimers;
+
+    // Búsqueda StatType -> StatDefinition hecha una vez en Init (antes se hacía con strings cada frame).
+    private readonly Dictionary<StatType, StatDefinition> statDefByType = new();
 
     public CharacterDefinition CharacterDefinition => characterDefinition;
     public StatsConfig StatsConfig => statsConfig;
@@ -67,6 +71,7 @@ public class PlayerStatsManager : MonoBehaviour
         runtimeStats = new Dictionary<StatDefinition, RuntimeStat>();
         actualValues = new Dictionary<StatDefinition, int>();
         regenTimers = new Dictionary<StatDefinition, float>();
+        statDefByType.Clear();
 
         foreach (CharacterStatValue statValue in characterDefinition.baseStats)
         {
@@ -82,6 +87,15 @@ public class PlayerStatsManager : MonoBehaviour
             // ✅ Inicializar valor actual igual al máximo (lleno)
             actualValues.Add(statValue.stat, statValue.baseValue);
             regenTimers.Add(statValue.stat, 0f);
+
+            if (Enum.TryParse(statValue.stat.statName, out StatType statType))
+            {
+                statDefByType[statType] = statValue.stat;
+            }
+            else
+            {
+                Debug.LogWarning($"{nameof(PlayerStatsManager)}: '{statValue.stat.statName}' no coincide con ningún StatType.", this);
+            }
         }
     }
 
@@ -123,16 +137,8 @@ public class PlayerStatsManager : MonoBehaviour
     {
         EnsureInitialized();
 
-        foreach (var kvp in runtimeStats)
-        {
-            if (kvp.Key.statName == statType.ToString())
-            {
-                return kvp.Key;
-            }
-        }
-
-        Debug.LogWarning($"StatDefinition no encontrada para {statType}");
-        return null;
+        // Sin warning aquí: se llama cada frame desde Update.
+        return statDefByType.TryGetValue(statType, out StatDefinition def) ? def : null;
     }
 
     /// <summary>

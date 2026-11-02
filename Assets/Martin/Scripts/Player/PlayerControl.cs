@@ -1,12 +1,9 @@
 ﻿using CMF;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
-using static UnityEngine.Analytics.IAnalytic;
 
 public class PlayerControl : Controller, IDamageable
 {
@@ -78,6 +75,7 @@ public class PlayerControl : Controller, IDamageable
     [SerializeField] private MeleeAttackCombo airCombo;
     private StatsManager statsManager;
     private Coroutine attackMovementRoutine;
+    private readonly HashSet<IDamageable> damagedThisSwing = new HashSet<IDamageable>();
 
     [Header("Range")]
     [SerializeField] private bool isRange;
@@ -124,10 +122,14 @@ public class PlayerControl : Controller, IDamageable
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
         if (loadedData != null)
         {
-            unlockedSkills = loadedData.unlockedSkills;
-            for(int i = 0; i < loadedData.equipedSkills.Length; i++)
+            unlockedSkills = loadedData.unlockedSkills ?? new List<Skill>();
+
+            if (loadedData.equipedSkills != null)
             {
-                skills[i] = loadedData.equipedSkills[i];
+                for (int i = 0; i < loadedData.equipedSkills.Length && i < skills.Length; i++)
+                {
+                    skills[i] = loadedData.equipedSkills[i];
+                }
             }
             
             for(int i = 0; i < skills.Length; i++)
@@ -142,6 +144,7 @@ public class PlayerControl : Controller, IDamageable
             return;
 
         unlockedSkills.Add(skill);
+        SaveLoadManager.Instance.SaveGame("unlockedSkills", unlockedSkills);
         Debug.Log($"✅ Desbloqueada: {skill.skillName}");
 
         TryAutoEquipSkill(skill);
@@ -153,9 +156,7 @@ public class PlayerControl : Controller, IDamageable
 
         for (int i = 0; i < slotCount; i++)
         {
-            unlockedSkills.Add(skill);
-            SaveLoadManager.Instance.SaveGame("unlockedSkills", unlockedSkills);
-            Debug.Log($"✅ Desbloqueada: {skill.skillName}");
+            // Antes se añadía la habilidad a unlockedSkills en cada vuelta del bucle (duplicados)
             if (skills[i] == null)
             {
                 EquipSkill(i, skill);
@@ -218,6 +219,7 @@ public class PlayerControl : Controller, IDamageable
     private RigidbodyConstraints previousConstraints = RigidbodyConstraints.None;
 
     private Rigidbody rb;
+    private Collider bodyCollider;
     private Animator anim;
     private Camera mainCam;
     private PlayerInputHandler input;
@@ -276,6 +278,13 @@ public class PlayerControl : Controller, IDamageable
         RegisterStates();
         mainCam = Camera.main;
 
+        // Si no se asignó la cámara en el inspector, usar la principal
+        if (camTransform == null && mainCam != null) camTransform = mainCam.transform;
+
+        // Crear cooldowns aquí: IsSkillReady puede llamarse antes de Start
+        skillsCD = new float[maxSkillSlot];
+        bodyCollider = GetComponent<Collider>();
+
         //  Obtener PlayerStatsManager
         playerStatsManager = GetComponent<PlayerStatsManager>();
         if (playerStatsManager != null)
@@ -288,11 +297,11 @@ public class PlayerControl : Controller, IDamageable
     private void Start()
     {
         asd = FindAnyObjectByType<P_Skill_UI>();
-        asd.RefreshIcons();
+        if (asd != null) asd.RefreshIcons();
         InitializeSkills();
         if (SaveLoadManager.canLoad)
         {
-            asd.RefreshIcons();
+            if (asd != null) asd.RefreshIcons();
         }
         // ✅ ASIGNAR UI INPUT MODULE
         var playerInput = GetComponent<PlayerInput>();
@@ -358,7 +367,14 @@ public class PlayerControl : Controller, IDamageable
 
     private void Update()
     {
-        if (isDead) return;
+        // Muerto: se corta el loop de pasos aquí, porque la máquina de estados ya no corre
+        if (isDead)
+        {
+            StopFootsteps();
+            return;
+        }
+
+        UpdateFootsteps();
 
         //CheckGround();
 
@@ -367,6 +383,49 @@ public class PlayerControl : Controller, IDamageable
         moveSM.Update();
         HandleJumpKeyInput();
         actionSM.Update();
+    }
+
+    // ==================== PASOS ====================
+
+    // Único control del loop de pasos. Solo suena al caminar en el suelo:
+    // no en dash, ataque, aire, muerte, cinemática ni con el personaje bloqueado.
+    private void UpdateFootsteps()
+    {
+        bool canWalk =
+            !isDead &&
+            !IsInputLocked &&
+            !blockVelocity &&
+            !isPerformingAct &&
+            IsGrounded() &&
+            Input.moveInput.magnitude > 0.1f &&
+            Mathf.Abs(rb.linearVelocity.y) < 1f;
+
+        Vector3 flatVelocity = rb.linearVelocity;
+        flatVelocity.y = 0f;
+
+        if (canWalk && flatVelocity.magnitude > 0.1f)
+            PlayFootstepLoop();
+        else
+            StopFootsteps();
+    }
+
+    private void PlayFootstepLoop()
+    {
+        if (isAudioMuted || walk == null || audioLoopSource == null) return;
+        if (audioLoopSource.isPlaying && audioLoopSource.clip == walk) return;
+
+        audioLoopSource.clip = walk;
+        audioLoopSource.loop = true;
+        audioLoopSource.volume = 1f;
+        audioLoopSource.Play();
+    }
+
+    public void StopFootsteps()
+    {
+        if (audioLoopSource != null && audioLoopSource.isPlaying && audioLoopSource.clip == walk)
+        {
+            audioLoopSource.Stop();
+        }
     }
 
     void HandleJumpKeyInput()
@@ -504,8 +563,6 @@ public class PlayerControl : Controller, IDamageable
 
         if (currentState == ControllerState.Jumping)
         {
-            PlayAudio(jump, sfxVolume);
-
             //Check for jump timeout;
             if ((Time.time - currentJumpStartTime) > jumpDuration) return ControllerState.Rising;
 
@@ -690,7 +747,7 @@ public class PlayerControl : Controller, IDamageable
     {
         Vector3 _velocity = CalculateMoveDir();
 
-        _velocity *= moveSpeed;
+        _velocity *= moveSpeed * CurrentSpeedMultiplier;
 
         return _velocity;
     }
@@ -704,6 +761,7 @@ public class PlayerControl : Controller, IDamageable
                 //Call events;
                 OnGroundContactLost();
                 OnJumpStart();
+                PlayAudio(jump, sfxVolume);
 
                 currentState = ControllerState.Jumping;
             }
@@ -834,13 +892,16 @@ public class PlayerControl : Controller, IDamageable
             StartCoroutine(SpawnVfxAttack(attack));
         }
 
+        damagedThisSwing.Clear();
+
         foreach (var hit in hits)
         {
             if (hit.CompareTag("Enemy"))
             {
-                IDamageable damageable = hit.GetComponent<IDamageable>();
+                IDamageable damageable = hit.GetComponentInParent<IDamageable>();
 
-                if (damageable != null)
+                // Un enemigo con varios colliders recibe un solo golpe por ataque
+                if (damageable != null && damagedThisSwing.Add(damageable))
                 {
 
                     Vector3 hitDir = playerModel.transform.forward;
@@ -862,7 +923,6 @@ public class PlayerControl : Controller, IDamageable
 
                     damageable.TakeDamage(in info);
 
-                    Debug.Log("Player Hit");
                 }
             }
         }
@@ -896,7 +956,7 @@ public class PlayerControl : Controller, IDamageable
 
         Vector3 dir = delta / distance;
 
-        Collider coll = GetComponent<Collider>();
+        Collider coll = bodyCollider;
 
         if (coll == null) return delta;
 
@@ -967,7 +1027,7 @@ public class PlayerControl : Controller, IDamageable
 
         while (elapsed < attack.moveDuration)
         {
-            if (!isPerformingAct) yield break;
+            if (!isPerformingAct) break;
 
             elapsed += Time.deltaTime;
 
@@ -1174,6 +1234,23 @@ public class PlayerControl : Controller, IDamageable
     //=====================         HEALTH RELATED           ============================
     //===================================================================================
 
+    // ==================== RALENTIZACIÓN ====================
+
+    // Multiplicador de velocidad de movimiento (1 = normal). Expira solo: quien lo aplica debe refrescarlo.
+    private float slowMultiplier = 1f;
+    private float slowUntil = -1f;
+
+    private float CurrentSpeedMultiplier => Time.time < slowUntil ? slowMultiplier : 1f;
+
+    // Si ya hay una ralentización activa, se queda la más fuerte. La duración siempre se extiende.
+    public void ApplySlow(float multiplier, float duration)
+    {
+        float m = Mathf.Clamp01(multiplier);
+
+        slowMultiplier = Time.time < slowUntil ? Mathf.Min(slowMultiplier, m) : m;
+        slowUntil = Mathf.Max(slowUntil, Time.time + Mathf.Max(0f, duration));
+    }
+
     public void TakeDamage(in DamageInfo info)
     {
         if (isDead) return;
@@ -1209,6 +1286,7 @@ public class PlayerControl : Controller, IDamageable
 
         // 🔊 Sonido de muerte
         PlayAudio(onDead, sfxVolume);
+        StopFootsteps();
 
         // 📢 Avisar a cualquier sistema suscrito (ej. DeathScreenUI, eventos de elevador)
         OnPlayerDied?.Invoke();
@@ -1235,7 +1313,7 @@ public class PlayerControl : Controller, IDamageable
 
             if (rb.linearVelocity.magnitude < 0.01f) return;
 
-            if (audioLoopSource.isPlaying) return;
+            if (audioLoopSource == null || audioLoopSource.isPlaying) return;
 
             audioLoopSource.clip = audio;
             audioLoopSource.loop = true;
@@ -1244,7 +1322,7 @@ public class PlayerControl : Controller, IDamageable
         }
         else
         {
-            audioLoopSource.Stop();
+            if (audioLoopSource != null) audioLoopSource.Stop();
         }
     }
 

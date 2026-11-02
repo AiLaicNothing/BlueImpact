@@ -4,9 +4,9 @@ using System.Collections;
 
 /// <summary>
 /// 🎵 Audio_Manager - Gestor centralizado de audio
-/// 
+///
 /// ⚠️ UBICACIÓN: Escena de MENU (como DontDestroyOnLoad)
-/// 
+///
 /// Canales de volumen: Master, Music, SFX, Ambient
 /// ✅ Reproducción de música con fade transitions
 /// ✅ Pool de AudioSources para efectos simultáneos
@@ -27,7 +27,7 @@ public class Audio_Manager : MonoBehaviour
 
     private AudioSource[] sfxPool;
     private int currentPoolIndex = 0;
-    private bool isMusicTransitioning = false;
+    private Coroutine musicRoutine;
 
     // ==================== INICIALIZACIÓN ====================
 
@@ -50,9 +50,6 @@ public class Audio_Manager : MonoBehaviour
         }
 
         InitializeSFXPool();
-        SyncVolumesWithMixer();
-
-        Debug.Log("✅ Audio_Manager inicializado");
     }
 
     private void InitializeSFXPool()
@@ -65,17 +62,6 @@ public class Audio_Manager : MonoBehaviour
             sfxPool[i].outputAudioMixerGroup = sfxGroup;
             sfxPool[i].playOnAwake = false;
         }
-
-        Debug.Log($"✅ SFX Pool creado con {sfxPoolSize} AudioSources");
-    }
-
-    private void SyncVolumesWithMixer()
-    {
-        audioMixer.GetFloat("MasterVolume", out float masterVol);
-        audioMixer.GetFloat("MusicVolume", out float musicVol);
-        audioMixer.GetFloat("SFXVolume", out float sfxVol);
-        audioMixer.GetFloat("AmbientVolume", out float ambientVol);
-        Debug.Log("🔊 Volúmenes sincronizados desde AudioMixer");
     }
 
     // ==================== MÚSICA ====================
@@ -83,13 +69,16 @@ public class Audio_Manager : MonoBehaviour
     public void PlayMusic(AudioClip musicClip, float fadeDuration = 1f)
     {
         if (musicClip == null) return;
-        StartCoroutine(FadeMusicTransition(musicClip, fadeDuration));
+
+        // Si llega otra canción durante un fade, se cancela el fade anterior
+        // (antes dos corrutinas se pisaban el volumen).
+        if (musicRoutine != null) StopCoroutine(musicRoutine);
+
+        musicRoutine = StartCoroutine(FadeMusicTransition(musicClip, fadeDuration));
     }
 
     private IEnumerator FadeMusicTransition(AudioClip newClip, float fadeDuration)
     {
-        isMusicTransitioning = true;
-
         if (musicSource.isPlaying)
         {
             yield return StartCoroutine(FadeAudioSource(musicSource, musicSource.volume, 0f, fadeDuration));
@@ -102,11 +91,17 @@ public class Audio_Manager : MonoBehaviour
 
         yield return StartCoroutine(FadeAudioSource(musicSource, 0f, 1f, fadeDuration));
 
-        isMusicTransitioning = false;
+        musicRoutine = null;
     }
 
     private IEnumerator FadeAudioSource(AudioSource source, float startVolume, float endVolume, float duration)
     {
+        if (duration <= 0f)
+        {
+            source.volume = endVolume;
+            yield break;
+        }
+
         float elapsed = 0f;
 
         while (elapsed < duration)
@@ -119,14 +114,23 @@ public class Audio_Manager : MonoBehaviour
         source.volume = endVolume;
     }
 
-    public void PauseMusic() { if (musicSource.isPlaying) musicSource.Pause(); }
-    public void ResumeMusic() { if (!musicSource.isPlaying && musicSource.clip != null) musicSource.Play(); }
+    public void PauseMusic()
+    {
+        if (musicSource.isPlaying) musicSource.Pause();
+    }
+
+    public void ResumeMusic()
+    {
+        // UnPause continúa desde donde se pausó; Play() empezaba la canción de cero.
+        if (musicSource.clip != null) musicSource.UnPause();
+    }
 
     // ==================== SFX ====================
 
     public void PlaySFX(AudioClip clip, float volume = 1f)
     {
         if (clip == null) return;
+
         AudioSource source = GetNextAvailableSFXSource();
         source.outputAudioMixerGroup = sfxGroup;
         source.spatialBlend = 0f;
@@ -136,6 +140,7 @@ public class Audio_Manager : MonoBehaviour
     public void PlaySFX3D(AudioClip clip, Vector3 position, float volume = 1f)
     {
         if (clip == null) return;
+
         AudioSource source = GetNextAvailableSFXSource();
         source.transform.position = position;
         source.outputAudioMixerGroup = sfxGroup;
@@ -146,6 +151,7 @@ public class Audio_Manager : MonoBehaviour
     public void PlayAmbientSound(AudioClip clip, float volume = 1f)
     {
         if (clip == null) return;
+
         AudioSource source = GetNextAvailableSFXSource();
         source.outputAudioMixerGroup = ambientGroup;
         source.spatialBlend = 0f;
@@ -171,46 +177,42 @@ public class Audio_Manager : MonoBehaviour
     public void PauseAllAudio()
     {
         if (musicSource.isPlaying) musicSource.Pause();
+
         foreach (var source in sfxPool)
+        {
             if (source.isPlaying) source.Pause();
-        Debug.Log("⏸️ Todo el audio pausado");
+        }
     }
 
     public void ResumeAllAudio()
     {
-        if (musicSource.clip != null) musicSource.Play();
-        foreach (var source in sfxPool) source.Play();
-        Debug.Log("▶️ Todo el audio reanudado");
+        // UnPause solo reanuda lo que estaba pausado.
+        // Antes se usaba Play(), que reiniciaba la música y reproducía las fuentes vacías.
+        musicSource.UnPause();
+
+        foreach (var source in sfxPool) source.UnPause();
     }
 
     // ==================== CONTROL DE VOLUMEN ====================
 
     public void SetMasterVolume(float volume)
     {
-        volume = Mathf.Clamp01(volume);
-        audioMixer.SetFloat("MasterVolume", VolumeToDecibels(volume));
-        Debug.Log($"🔊 Master: {volume:P0}");
+        audioMixer.SetFloat("MasterVolume", VolumeToDecibels(Mathf.Clamp01(volume)));
     }
 
     public void SetMusicVolume(float volume)
     {
-        volume = Mathf.Clamp01(volume);
-        audioMixer.SetFloat("MusicVolume", VolumeToDecibels(volume));
-        Debug.Log($"🎵 Music: {volume:P0}");
+        audioMixer.SetFloat("MusicVolume", VolumeToDecibels(Mathf.Clamp01(volume)));
     }
 
     public void SetSFXVolume(float volume)
     {
-        volume = Mathf.Clamp01(volume);
-        audioMixer.SetFloat("SFXVolume", VolumeToDecibels(volume));
-        Debug.Log($"🔊 SFX: {volume:P0}");
+        audioMixer.SetFloat("SFXVolume", VolumeToDecibels(Mathf.Clamp01(volume)));
     }
 
     public void SetAmbientVolume(float volume)
     {
-        volume = Mathf.Clamp01(volume);
-        audioMixer.SetFloat("AmbientVolume", VolumeToDecibels(volume));
-        Debug.Log($"🔊 Ambient: {volume:P0}");
+        audioMixer.SetFloat("AmbientVolume", VolumeToDecibels(Mathf.Clamp01(volume)));
     }
 
     // ==================== GETTERS ====================

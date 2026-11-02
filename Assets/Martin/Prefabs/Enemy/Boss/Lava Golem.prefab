@@ -498,6 +498,7 @@ MonoBehaviour:
   knockDownRecoverDelay: 0.15
   airGravityMultiplier: 0.7
   airHangDuration: 0.75
+  staggeredDamageMultiplier: 1.5
   revengeThreshold: 3
   revengeDecayDelay: 2
   safeZone: {fileID: 0}
@@ -522,6 +523,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4096
   targetRayHeight: 1.2
+  playerSearchInterval: 0.5
   chaseSpeed: 5
   stopDistance: 4
   turnSpeed: 10
@@ -529,7 +531,9 @@ MonoBehaviour:
   flujoHitBoxSize: {x: 5.52, y: 2.66, z: 3.5}
   flujoHitBoxPos: {x: 0, y: 1.06, z: 2.57}
   flujoMeleeDamage: 40
-  flujoVfx: {fileID: 0}
+  flujoImpactRadius: 2.5
+  flujoVfx: {fileID: 3566541862902321816, guid: c99cb984fa59a044dbc0540bea3c527c, type: 3}
+  vfxLifetime: 3
   tackleSpeed: 12
   tackleStopDistance: 1
   animFps: 24
@@ -551,8 +555,8 @@ MonoBehaviour:
   patrolStopDistance: 0.5
   golemAnim: {fileID: 3611923102724516456}
   moveAnimThreshold: 0.1
-  animDampTime: 0.1
   hitBoxPrefab: {fileID: 0}
+  verboseLogs: 0
 --- !u!195 &4458573657769817997
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -819,6 +823,10 @@ PrefabInstance:
     - target: {fileID: 7810792699094739852, guid: 9a245dbcbc0249f438c04574fd136053, type: 3}
       propertyPath: m_Name
       value: Enemy-Ui
+      objectReference: {fileID: 0}
+    - target: {fileID: 7810792699094739852, guid: 9a245dbcbc0249f438c04574fd136053, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

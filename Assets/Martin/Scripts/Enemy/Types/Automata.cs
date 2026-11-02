@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class Automata : EnemyBase
 {
@@ -10,8 +9,8 @@ public class Automata : EnemyBase
     [SerializeField] private float moveSpeed = 4.5f;
     [SerializeField] private float attackRange = 8f;
     [Range(0f, 360f)]
-    [SerializeField] private float facingAngleThreshold;
-    [SerializeField] private float turnSpeed;
+    [SerializeField] private float facingAngleThreshold = 15f;
+    [SerializeField] private float turnSpeed = 12f;
 
     [Header("Attack-1")]
     [SerializeField] private int ammountPerAttack1;
@@ -82,11 +81,11 @@ public class Automata : EnemyBase
 
         if (agent.velocity.sqrMagnitude >= 0.01f)
         {
-            anim.Play("Walk");
+            PlayLoop("Walk");
         }
         else
         {
-            anim.Play("Idle");
+            PlayLoop("Idle");
         }
     }
 
@@ -125,7 +124,8 @@ public class Automata : EnemyBase
 
     private void HandleDetection()
     {
-        if (safeZone == null)
+        Transform home = HomePoint;
+        if (home == null)
             return;
 
         if (instantDetection)
@@ -143,7 +143,7 @@ public class Automata : EnemyBase
             return;
         }
 
-        float distHome = Vector3.Distance(transform.position, safeZone.position);
+        float distHome = Vector3.Distance(transform.position, home.position);
         float distPlayer = DistanceToPlayer();
 
         if (!hasDetectedPlayer)
@@ -169,6 +169,7 @@ public class Automata : EnemyBase
             {
                 hasDetectedPlayer = false;
                 isFollowingPlayer = false;
+                returningHome = true; // Antes nunca se activaba: el enemigo se quedaba parado al perder al jugador
                 detectionTimer = 0f;
             }
         }
@@ -200,7 +201,7 @@ public class Automata : EnemyBase
         else if (returningHome)
         {
             agent.isStopped = false;
-            agent.SetDestination(spawnPos.position);
+            if (spawnPos != null) agent.SetDestination(spawnPos.position);
 
             RotateToVelocity();
 
@@ -228,7 +229,6 @@ public class Automata : EnemyBase
 
         Transform posDesired = patrolZones[patrolIndex];
         agent.SetDestination(posDesired.position);
-        anim.Play("Walk");
         RotateToVelocity();
 
         float dist = Vector3.Distance(transform.position, posDesired.position);
@@ -276,7 +276,7 @@ public class Automata : EnemyBase
     {
         isPerformingAction = true;
 
-        anim.Play("Disparo_1");
+        PlayAnim("Disparo_1");
 
         if (agent != null)
         {
@@ -314,7 +314,7 @@ public class Automata : EnemyBase
         Vector3 dashDir = GetAttackForward();
         float moved = 0f;
 
-        anim.Play("Dash");
+        PlayAnim("Dash");
 
         while (moved < dashDistance)
         {
@@ -328,7 +328,7 @@ public class Automata : EnemyBase
 
         FaceTargetInstant();
 
-        anim.Play("Disparo_dash");
+        PlayAnim("Disparo_dash");
 
         int count = Mathf.Max(1, ammountPerAttack2);
         for (int i = 0; i < count; i++)
@@ -349,7 +349,7 @@ public class Automata : EnemyBase
     {
         isPerformingAction = true;
 
-        anim.Play("Disparo_3");
+        PlayAnim("Disparo_3");
 
         if (agent != null)
         {

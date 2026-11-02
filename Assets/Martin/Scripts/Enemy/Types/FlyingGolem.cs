@@ -146,6 +146,7 @@ public class FlyingGolem : EnemyBase
         if (isDead) return;
 
         isDead = true;
+        StopEnemyRoutines();
 
         if (agent != null)
         {
@@ -153,7 +154,8 @@ public class FlyingGolem : EnemyBase
             agent.enabled = false;
         }
 
-        Destroy(father);
+        // Si no se asignó "father", destruye el propio enemigo para que no quede un zombi
+        Destroy(father != null ? father : gameObject);
     }
 
     protected override void Update()
@@ -192,14 +194,9 @@ public class FlyingGolem : EnemyBase
         HandleMovement();
         //UpdateHoverVisual();
 
-        if (agent.velocity.sqrMagnitude >= 0.01f)
-        {
-            anim.Play("Patrol");
-        }
-        else
-        {
-            anim.Play("Idle");
-        }
+        if (anim == null || agent == null) return;
+
+        anim.Play(agent.velocity.sqrMagnitude >= 0.01f ? "Patrol" : "Idle");
     }
 
     // =========================================================
@@ -499,8 +496,6 @@ public class FlyingGolem : EnemyBase
 
     private IEnumerator PerformAttackOne()
     {
-        Debug.Log("Flying Golem: attack 1");
-
         if (!HasValidPlayer()) yield break;
 
         anim.Play("Bomb");
@@ -557,8 +552,6 @@ public class FlyingGolem : EnemyBase
 
     private IEnumerator PerformAttackTwo()
     {
-        Debug.Log("Flying Golem: attack 2");
-
         if (!HasValidPlayer()) yield break;
 
         anim.Play("Attack 0");
@@ -908,6 +901,8 @@ public class FlyingGolem : EnemyBase
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
+
+        if (safeZone == null) return;
 
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(safeZone.position, 1f);

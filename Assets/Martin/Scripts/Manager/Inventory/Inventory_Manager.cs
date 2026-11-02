@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +7,7 @@ public class Inventory_Manager : MonoBehaviour
     public static Inventory_Manager Instance;
 
     [Header("List of item")]
-    [SerializeField] private List<Item_Data> inventory = new ();
+    [SerializeField] private List<Item_Data> inventory = new();
 
     public event Action OnInventoryChange;
 
@@ -23,21 +22,25 @@ public class Inventory_Manager : MonoBehaviour
         }
 
         Instance = this;
+
         if (SaveLoadManager.canLoad)
         {
             LoadData();
         }
     }
-    void LoadData()
+
+    private void LoadData()
     {
+        if (SaveLoadManager.Instance == null) return;
+
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
-        if (loadedData != null)
+        if (loadedData == null || loadedData.inventory == null) return;
+
+        inventory.Clear();
+        foreach (Item_Data item in loadedData.inventory)
         {
-            inventory.Clear();
-            foreach (Item_Data item in loadedData.inventory)
-            {
-                inventory.Add(item);
-            }
+            // Los Item_Data llegan null desde JsonUtility (ver SaveData). Se omiten.
+            if (item != null) inventory.Add(item);
         }
     }
 
@@ -47,14 +50,23 @@ public class Inventory_Manager : MonoBehaviour
 
         inventory.Add(item);
         OnInventoryChange?.Invoke();
-        SaveLoadManager.Instance.SaveGame("inventory", inventory);
+        SaveInventory();
     }
 
     public void RemoveItem(Item_Data item)
     {
         if (item == null) return;
+        if (!inventory.Remove(item)) return;
 
-        inventory.Remove(item);
         OnInventoryChange?.Invoke();
+        SaveInventory();
+    }
+
+    private void SaveInventory()
+    {
+        if (SaveLoadManager.Instance != null)
+        {
+            SaveLoadManager.Instance.SaveGame("inventory", inventory);
+        }
     }
 }

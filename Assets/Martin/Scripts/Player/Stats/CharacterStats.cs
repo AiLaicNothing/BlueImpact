@@ -1,7 +1,6 @@
 using System.Collections;
-using Unity.VisualScripting;
+using System.Collections.Generic;
 using UnityEngine;
-
 
 //This would go in the Player
 //This script is in charge of handling live stats like hp, mp and stamina
@@ -14,7 +13,7 @@ public class CharacterStats : MonoBehaviour
     [SerializeField] private int currentMp;
     [SerializeField] private int mpRegen = 5;
     [SerializeField] private int currentStamina;
-    [SerializeField] private int staminaRegen= 4;
+    [SerializeField] private int staminaRegen = 4;
 
     private int maxHp;
     private int maxMp;
@@ -32,6 +31,9 @@ public class CharacterStats : MonoBehaviour
     private int baseMpRegen;
     private int baseStaminaRegen;
 
+    // Cuántos buffs de regeneración activos hay por tipo.
+    private readonly Dictionary<StatsType, int> activeBuffs = new Dictionary<StatsType, int>();
+
     public int MaxHp => maxHp;
     public int CurrentHp => currentHp;
     public int MaxMp => maxMp;
@@ -42,17 +44,18 @@ public class CharacterStats : MonoBehaviour
     private void Awake()
     {
         stats = CharacterStatsManager.Instance;
+
+        // Se guardan en Awake (no en Start) para que un buff llamado antes de Start
+        // no tome 0 como valor base.
+        baseHpRegen = hpRegen;
+        baseMpRegen = mpRegen;
+        baseStaminaRegen = staminaRegen;
     }
 
     private void Start()
     {
         SetStatsValue();
         SetInitialValue();
-
-        // Preserve the original regeneration values.
-        baseHpRegen = hpRegen;
-        baseMpRegen = mpRegen;
-        baseStaminaRegen = staminaRegen;
 
         if (stats != null)
             stats.OnStatsChanged += RefreshStats;
@@ -76,6 +79,8 @@ public class CharacterStats : MonoBehaviour
 
     private void SetStatsValue()
     {
+        if (stats == null) return;
+
         maxHp = stats.GetCurrentStat(StatsType.Health) * 10;
         maxMp = stats.GetCurrentStat(StatsType.Mana) * 5;
         maxStamina = stats.GetCurrentStat(StatsType.Stamina) * 5;
@@ -90,10 +95,6 @@ public class CharacterStats : MonoBehaviour
 
     private void RefreshStats()
     {
-        int previousMaxHp = maxHp;
-        int previousMaxMp = maxMp;
-        int previousMaxStamina = maxStamina;
-
         SetStatsValue();
 
         // Keep current values within the updated maximums.
@@ -156,38 +157,52 @@ public class CharacterStats : MonoBehaviour
     // Temporarily multiplies the regeneration rate for the selected stat.
     public void IncreaseRegen(StatsType type, int multiplier, float duration)
     {
+        if (!IsRegenType(type)) return;
+
         StartCoroutine(IncreaseRegenRoutine(type, multiplier, duration));
     }
 
     private IEnumerator IncreaseRegenRoutine(StatsType type, int multiplier, float duration)
     {
-        int originalRegen = 0;
+        // Siempre se parte del valor base, no del ya aumentado:
+        // antes, dos buffs solapados se multiplicaban y el regen quedaba aumentado para siempre.
+        activeBuffs[type] = GetActiveBuffCount(type) + 1;
+        SetRegen(type, GetBaseRegen(type) * multiplier);
 
-        // Get the original regeneration value.
-        if (type == StatsType.Health) originalRegen = hpRegen;
-
-        else if (type == StatsType.Mana) originalRegen = mpRegen;
-
-        else if (type == StatsType.Stamina) originalRegen = staminaRegen;
-
-        // Increase regeneration.
-        int boostedRegen = originalRegen * multiplier;
-
-        if (type == StatsType.Health) hpRegen = boostedRegen;
-
-        else if (type == StatsType.Mana) mpRegen = boostedRegen;
-
-        else if (type == StatsType.Stamina) staminaRegen = boostedRegen;
-
-        // Wait for the buff duration.
         yield return new WaitForSeconds(duration);
 
-        // Restore the original regeneration.
-        if (type == StatsType.Health) hpRegen = originalRegen;
+        activeBuffs[type] = GetActiveBuffCount(type) - 1;
 
-        else if (type == StatsType.Mana) mpRegen = originalRegen;
+        // Solo se vuelve al valor base cuando termina el último buff de ese tipo.
+        if (GetActiveBuffCount(type) <= 0)
+        {
+            activeBuffs[type] = 0;
+            SetRegen(type, GetBaseRegen(type));
+        }
+    }
 
-        else if (type == StatsType.Stamina) staminaRegen = originalRegen;
+    private int GetActiveBuffCount(StatsType type)
+    {
+        return activeBuffs.TryGetValue(type, out int count) ? count : 0;
+    }
+
+    private static bool IsRegenType(StatsType type)
+    {
+        return type == StatsType.Health || type == StatsType.Mana || type == StatsType.Stamina;
+    }
+
+    private int GetBaseRegen(StatsType type)
+    {
+        if (type == StatsType.Health) return baseHpRegen;
+        if (type == StatsType.Mana) return baseMpRegen;
+        return baseStaminaRegen;
+    }
+
+    private void SetRegen(StatsType type, int value)
+    {
+        if (type == StatsType.Health) hpRegen = value;
+        else if (type == StatsType.Mana) mpRegen = value;
+        else if (type == StatsType.Stamina) staminaRegen = value;
     }
 
     public bool IsDead()

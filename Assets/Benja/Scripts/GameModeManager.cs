@@ -61,7 +61,6 @@ public class GameModeManager : MonoBehaviour
                 // ❌ Sin mouse, bloqueado al centro
                 Cursor.visible = false;
                 Cursor.lockState = CursorLockMode.Locked;
-                Debug.Log("🎮 Cursor bloqueado (Gameplay)");
                 break;
 
             case GameMode.UI:
@@ -71,7 +70,6 @@ public class GameModeManager : MonoBehaviour
                 // ✅ Con mouse, visible
                 Cursor.visible = true;
                 Cursor.lockState = CursorLockMode.None;
-                Debug.Log("🖱️ Cursor desbloqueado (UI/Menu)");
                 break;
         }
     }

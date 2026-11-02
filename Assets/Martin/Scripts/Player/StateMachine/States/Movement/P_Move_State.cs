@@ -30,7 +30,7 @@ public class P_Move_State : PlayerState
     public override void OnUpdate()
     {
         base.OnUpdate();
-        player.PlayConstantAudio(player.walk, 1, false);
+        // Los pasos los controla PlayerControl.UpdateFootsteps (no desde el estado, para que no suenen en dash, ataque o muerte)
 
         if (!player.IsGrounded())
         {

@@ -34,6 +34,8 @@ public class Log_Manager : MonoBehaviour
         if (loadedData != null)
         {
             discoveredLogs.Clear();
+            if (loadedData.discoveredLogs == null) return;
+
             foreach (Log_Data log in loadedData.discoveredLogs)
             {
                 discoveredLogs.Add(log);
@@ -68,7 +70,8 @@ public class Log_Manager : MonoBehaviour
     {
         discoveredLogs.Sort((a, b) =>
         {
-            if (a == null || b == null) return 0;
+            // Los nulos van al final
+            if (a == null && b == null) return 0;
             if (a == null) return 1;
             if (b == null) return -1;
 

@@ -74,6 +74,7 @@ MonoBehaviour:
   knockDownRecoverDelay: 0.15
   airGravityMultiplier: 0.7
   airHangDuration: 0.75
+  staggeredDamageMultiplier: 1.5
   revengeThreshold: 3
   revengeDecayDelay: 2
   safeZone: {fileID: 0}
@@ -179,9 +180,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5
-  m_Height: 1.5
+  m_Height: 2.22
   m_Direction: 1
-  m_Center: {x: 0, y: 0, z: 0.3}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1202737644284280135
 GameObject:
   m_ObjectHideFlags: 0
@@ -649,7 +650,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 748493645842915378, guid: 9a245dbcbc0249f438c04574fd136053, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 1.5
+      value: 1.75
       objectReference: {fileID: 0}
     - target: {fileID: 748493645842915378, guid: 9a245dbcbc0249f438c04574fd136053, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

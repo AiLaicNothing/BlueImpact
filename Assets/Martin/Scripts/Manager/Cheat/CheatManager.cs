@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 public class CheatManager : MonoBehaviour
 {
@@ -30,71 +30,66 @@ public class CheatManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKey(KeyCode.P))
-        {
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                TeleportTo(LevelTuto);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                TeleportTo(Level1);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha3))
-            {
-                TeleportTo(Level2);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha4))
-            {
-                StartCoroutine(TeleportToLevel("Zone_03", "", Level3));
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha5))
-            {
-                StartCoroutine(TeleportToLevel("Testing4", "Zone_03", Level4));
+        if (isTeleporting) return;
 
-                TeleportTo(Level4);
-            }
+        Keyboard kb = Keyboard.current;
+        if (kb == null || !kb.pKey.isPressed) return;
+
+        if (kb.digit1Key.wasPressedThisFrame)
+        {
+            TeleportTo(LevelTuto);
+        }
+        else if (kb.digit2Key.wasPressedThisFrame)
+        {
+            TeleportTo(Level1);
+        }
+        else if (kb.digit3Key.wasPressedThisFrame)
+        {
+            TeleportTo(Level2);
+        }
+        else if (kb.digit4Key.wasPressedThisFrame)
+        {
+            StartCoroutine(TeleportToLevel("Zone_03", "", Level3));
+        }
+        else if (kb.digit5Key.wasPressedThisFrame)
+        {
+            // Antes había un TeleportTo(Level4) aquí que movía al jugador antes de cargar la escena.
+            StartCoroutine(TeleportToLevel("Testing4", "Zone_03", Level4));
         }
     }
 
-    private IEnumerator TeleportToLevel(string SceneToLoad,string SceneToUnload, Transform teleportPOint)
+    private IEnumerator TeleportToLevel(string sceneToLoad, string sceneToUnload, Transform teleportPoint)
     {
-        if (player == null)
+        if (player == null || SceneLoaderManager.Instance == null)
         {
-            Debug.LogWarning("CheatManager: Player not assigned.");
+            Debug.LogWarning("CheatManager: Player o SceneLoaderManager no disponibles.");
             yield break;
         }
 
         isTeleporting = true;
+        try
+        {
+            Debug.Log("Teleporting to: " + sceneToLoad);
 
-        Debug.Log("Teleporting to: " + SceneToLoad);
+            // 1. Cargar la escena destino y esperar
+            yield return StartCoroutine(SceneLoaderManager.Instance.LoadSceneAndWait(sceneToLoad));
 
-        // --------------------------------------------------
-        // 1. Load destination scene and WAIT
-        // --------------------------------------------------
+            // 2. Teletransportar
+            TeleportTo(teleportPoint);
 
-        yield return StartCoroutine( SceneLoaderManager.Instance.LoadSceneAndWait(SceneToLoad));
+            // 3. Descargar la escena anterior (si se indicó)
+            if (!string.IsNullOrEmpty(sceneToUnload))
+            {
+                yield return StartCoroutine(SceneLoaderManager.Instance.UnloadSceneAndWait(sceneToUnload));
+            }
 
-        // --------------------------------------------------
-        // 3. Force teleport
-        // --------------------------------------------------
-
-        TeleportTo(teleportPOint);
-
-        // --------------------------------------------------
-        // 4. Unload previous scenes
-        // --------------------------------------------------
-
-        yield return StartCoroutine(UnloadOtherLevelScenes(SceneToUnload));
-
-        isTeleporting = false;
-
-        Debug.Log("Teleport complete.");
-    }
-
-    private IEnumerator UnloadOtherLevelScenes(string destinationScene)
-    {
-        yield return StartCoroutine(SceneLoaderManager.Instance.UnloadSceneAndWait(destinationScene));
+            Debug.Log("Teleport complete.");
+        }
+        finally
+        {
+            // Se libera aunque la carga falle o se detenga la corrutina
+            isTeleporting = false;
+        }
     }
 
     private void TeleportTo(Transform desiredPos)
@@ -117,23 +112,11 @@ public class CheatManager : MonoBehaviour
             player.transform.position = desiredPos.position;
         }
 
-        if (controller != null)controller.enabled = true;
-    }
-
-
-    private void UnlockSkills()
-    {
-
-    }
-
-    private void GetPoints()
-    {
-
+        if (controller != null) controller.enabled = true;
     }
 
     public void SetPlayerTarget(GameObject player)
     {
         this.player = player;
     }
-
 }

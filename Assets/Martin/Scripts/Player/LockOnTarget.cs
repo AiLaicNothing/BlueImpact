@@ -82,6 +82,8 @@ public class LockOnTarget : MonoBehaviour
 
     private void Start()
     {
+        if (P_TargetSelector_UI.Instance == null) return;
+
         P_TargetSelector_UI.Instance.SetIcon(aimIcon);
 
         if (aimIcon != null) P_TargetSelector_UI.Instance.HideIcon();
@@ -193,7 +195,7 @@ public class LockOnTarget : MonoBehaviour
 
         DisableNormalRotation();
 
-        if (aimIcon != null) P_TargetSelector_UI.Instance.ShowIcon();
+        if (aimIcon != null && P_TargetSelector_UI.Instance != null) P_TargetSelector_UI.Instance.ShowIcon();
 
         if (debugLockOn)
         {
@@ -217,7 +219,8 @@ public class LockOnTarget : MonoBehaviour
 
         RestoreNormalRotation();
 
-        if (aimIcon != null) P_TargetSelector_UI.Instance.HideIcon();
+        // OnDisable también llama aquí: el HUD puede estar ya destruido
+        if (aimIcon != null && P_TargetSelector_UI.Instance != null) P_TargetSelector_UI.Instance.HideIcon();
     }
 
     // =========================
@@ -334,6 +337,8 @@ public class LockOnTarget : MonoBehaviour
             mainCamera.WorldToScreenPoint(
                 GetTargetPoint(currentTarget)
             );
+
+        if (P_TargetSelector_UI.Instance == null) return;
 
         P_TargetSelector_UI.Instance.GetIcon().transform.position = screenPosition;
     }

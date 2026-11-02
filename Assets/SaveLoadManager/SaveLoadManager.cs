@@ -1,14 +1,20 @@
 using UnityEngine;
+using System;
 using System.IO;
-using System.Collections.Generic;
+
 public class SaveLoadManager : MonoBehaviour
 {
     public static SaveLoadManager Instance { get; private set; }
-    string filePath;
+
+    // Lo fija el menú: true al pulsar "Continuar", false en "Nueva partida".
     public static bool canLoad;
+
+    // Se calcula al usarse (no en Awake): ningún script que guarde antes que este recibe una ruta null.
+    private static string FilePath => Path.Combine(Application.persistentDataPath, "savefile.json");
+
     private void Awake()
     {
-        if(Instance != null && Instance != this)
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
@@ -16,15 +22,12 @@ public class SaveLoadManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        filePath = Application.persistentDataPath + "/savefile.json";
-    }
-    private void Start()
-    {
     }
 
     public void SaveGame(string fieldName, object value)
     {
         SaveData data = LoadGameRaw();
+        if (data == null) return; // No sobrescribir el archivo si no se pudo leer
 
         switch (fieldName)
         {
@@ -32,7 +35,7 @@ public class SaveLoadManager : MonoBehaviour
                 data.currentIndexCharacter = (int)value;
                 break;
             case "allocatedPoints":
-                var dict = (Dictionary<StatsType, int>)value;
+                var dict = (System.Collections.Generic.Dictionary<StatsType, int>)value;
                 data.savedStats.Clear();
                 foreach (var kvp in dict)
                 {
@@ -40,30 +43,26 @@ public class SaveLoadManager : MonoBehaviour
                 }
                 break;
             case "collectedPickups":
-                HashSet<string> pickupSet = (HashSet<string>)value;
+                var pickupSet = (System.Collections.Generic.HashSet<string>)value;
                 data.collectedPickups.Clear();
                 data.collectedPickups.AddRange(pickupSet);
                 break;
             case "eventStates":
-                Dictionary<string, WorldEvent_State> eventDict = (Dictionary<string, WorldEvent_State>)value;
+                var eventDict = (System.Collections.Generic.Dictionary<string, WorldEvent_State>)value;
                 data.eventStates.Clear();
-
-                foreach (KeyValuePair<string, WorldEvent_State> kvp in eventDict)
+                foreach (var kvp in eventDict)
                 {
-                    EventStateSavedEntry entry = new EventStateSavedEntry();
-                    entry.eventID = kvp.Key;
-                    entry.stateData = kvp.Value;
-                    data.eventStates.Add(entry);
+                    data.eventStates.Add(new EventStateSavedEntry { eventID = kvp.Key, stateData = kvp.Value });
                 }
                 break;
             case "discoveredLogs":
-                data.discoveredLogs = (List<Log_Data>)value;
+                data.discoveredLogs = (System.Collections.Generic.List<Log_Data>)value;
                 break;
             case "inspectedObjects":
-                data.inspectedObjects = (List<Log_Data>)value;
+                data.inspectedObjects = (System.Collections.Generic.List<Log_Data>)value;
                 break;
             case "inventory":
-                data.inventory = (List<Item_Data>)value;
+                data.inventory = (System.Collections.Generic.List<Item_Data>)value;
                 break;
             case "availablePoints":
                 data.availablePoints = (int)value;
@@ -72,13 +71,13 @@ public class SaveLoadManager : MonoBehaviour
                 data.totalEarnedPoints = (int)value;
                 break;
             case "discoveredCheckpoints":
-                data.discoveredCheckpoints = (List<DiscoveredCheckpoint>)value;
+                data.discoveredCheckpoints = (System.Collections.Generic.List<DiscoveredCheckpoint>)value;
                 break;
             case "activeCheckpoint":
                 data.activeCheckpoint = (DiscoveredCheckpoint)value;
                 break;
             case "unlockedSkills":
-                data.unlockedSkills = (List<Skill>)value;
+                data.unlockedSkills = (System.Collections.Generic.List<Skill>)value;
                 break;
             case "equipedSkills":
                 data.equipedSkills = (Skill[])value;
@@ -89,36 +88,61 @@ public class SaveLoadManager : MonoBehaviour
             case "checkpoint":
                 data.checkpoint = (Checkpoint)value;
                 break;
+            default:
+                Debug.LogWarning($"SaveLoadManager: campo desconocido '{fieldName}'. No se guardó.");
+                return;
         }
-        string json = JsonUtility.ToJson(data, true);
-        File.WriteAllText(filePath, json);
 
-        Debug.Log("Guardado en" + filePath);
+        WriteFile(JsonUtility.ToJson(data, true));
     }
 
+    // Devuelve null si no hay guardado o si no se pudo leer.
     public SaveData LoadGame()
     {
-        if (File.Exists(filePath))
-        {
-            string json = File.ReadAllText(filePath);
-            SaveData data = JsonUtility.FromJson<SaveData>(json);
+        if (!File.Exists(FilePath)) return null;
 
-            Debug.Log("Juego Cargado");
-            return data;
-        }
-        else
+        return ReadFile();
+    }
+
+    // Para guardar campos sueltos: si no existe archivo, parte de uno vacío.
+    // Devuelve null si el archivo existe pero no se pudo leer (así no se pierde progreso).
+    private static SaveData LoadGameRaw()
+    {
+        if (!File.Exists(FilePath)) return new SaveData();
+
+        return ReadFile();
+    }
+
+    private static SaveData ReadFile()
+    {
+        try
         {
-            Debug.LogWarning("Savegame no encontrado");
+            return JsonUtility.FromJson<SaveData>(File.ReadAllText(FilePath)) ?? new SaveData();
+        }
+        catch (IOException e)
+        {
+            Debug.LogError($"SaveLoadManager: no se pudo leer '{FilePath}': {e.Message}");
             return null;
         }
-    }
-    private SaveData LoadGameRaw()
-    {
-        if (File.Exists(filePath))
+        catch (ArgumentException)
         {
-            string json = File.ReadAllText(filePath);
-            return JsonUtility.FromJson<SaveData>(json);
+            // JSON corrupto: se respalda para no perderlo y se empieza de cero.
+            Debug.LogWarning("SaveLoadManager: guardado corrupto. Se respalda como .corrupt y se empieza de nuevo.");
+            try { File.Copy(FilePath, FilePath + ".corrupt", true); }
+            catch (IOException) { }
+            return new SaveData();
         }
-        return new SaveData();
+    }
+
+    private static void WriteFile(string json)
+    {
+        try
+        {
+            File.WriteAllText(FilePath, json);
+        }
+        catch (IOException e)
+        {
+            Debug.LogError($"SaveLoadManager: no se pudo escribir el guardado: {e.Message}");
+        }
     }
 }

@@ -6,7 +6,7 @@ public class PlayerSpawn_Manager : MonoBehaviour
 {
     public static PlayerSpawn_Manager Instance;
     public PlayerControl CurrentPlayerControl { get; private set; }
-    public static event Action<PlayerControl> OnPlayerSpawned;  
+    public static event Action<PlayerControl> OnPlayerSpawned;
 
     private CharacterInfo currentCharacterInfo;
 
@@ -27,15 +27,23 @@ public class PlayerSpawn_Manager : MonoBehaviour
 
     public void SpawnCharacter(Transform spawnPoint)
     {
-        var charPrefab = currentCharacterInfo.prefab;
-        var playerInstance = Instantiate(charPrefab, spawnPoint.position, Quaternion.identity);
+        if (currentCharacterInfo == null || currentCharacterInfo.prefab == null)
+        {
+            Debug.LogError("[PlayerSpawn] No hay CharacterInfo o prefab asignado.");
+            return;
+        }
 
-        CheatManager.Instance.SetPlayerTarget(playerInstance);
-        RespawnManager.Instance.SetPlayerTarget(playerInstance);
+        if (spawnPoint == null)
+        {
+            Debug.LogError("[PlayerSpawn] El punto de spawn es nulo.");
+            return;
+        }
 
+        var playerInstance = Instantiate(currentCharacterInfo.prefab, spawnPoint.position, Quaternion.identity);
 
-        Player_Manager.Instance.SetPlayer(playerInstance);
-
+        if (CheatManager.Instance != null) CheatManager.Instance.SetPlayerTarget(playerInstance);
+        if (RespawnManager.Instance != null) RespawnManager.Instance.SetPlayerTarget(playerInstance);
+        if (Player_Manager.Instance != null) Player_Manager.Instance.SetPlayer(playerInstance);
 
         var playerControl = playerInstance.GetComponent<PlayerControl>();
 
@@ -50,11 +58,10 @@ public class PlayerSpawn_Manager : MonoBehaviour
         if (GameModeManager.Instance != null)
         {
             GameModeManager.Instance.SetMode(GameMode.Gameplay);
-            Debug.Log("🎮 Cambiado a GameMode.Gameplay - Cursor bloqueado");
         }
         else
         {
-            Debug.LogWarning("⚠️ GameModeManager no encontrado. Inicializando...");
+            Debug.LogWarning("⚠️ GameModeManager no encontrado.");
         }
     }
 }

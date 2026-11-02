@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 
 public class Goblin_Melee : EnemyBase
@@ -63,7 +62,7 @@ public class Goblin_Melee : EnemyBase
 
         if (isDead) return;
         if (isStunned || IsStaggered) return;
-        if (agent.enabled == false) return;
+        if (agent == null || !agent.enabled) return;
 
         UpdateTarget();
         HandleDetection();
@@ -75,11 +74,11 @@ public class Goblin_Melee : EnemyBase
 
         if (agent.velocity.sqrMagnitude >= 0.01f)
         {
-            anim.Play("Walk");
+            PlayLoop("Walk");
         }
         else
         {
-            anim.Play("Idle");
+            PlayLoop("Idle");
         }
     }
 
@@ -113,7 +112,8 @@ public class Goblin_Melee : EnemyBase
 
     private void HandleDetection()
     {
-        if (safeZone == null) return;
+        Transform home = HomePoint;
+        if (home == null) return;
 
         if (!HasValidPlayer())
         {
@@ -123,7 +123,7 @@ public class Goblin_Melee : EnemyBase
             return;
         }
 
-        float playerDistHome = Vector3.Distance(player.transform.position, safeZone.position);
+        float playerDistHome = Vector3.Distance(player.transform.position, home.position);
         float distPlayer = DistanceToPlayer();
 
         if (!hasDetectedPlayer)
@@ -177,7 +177,7 @@ public class Goblin_Melee : EnemyBase
         else if (returningHome)
         {
             agent.isStopped = false;
-            agent.SetDestination(spawnPos.position);
+            if (spawnPos != null) agent.SetDestination(spawnPos.position);
 
             RotateToVelocity();
 
@@ -256,7 +256,7 @@ public class Goblin_Melee : EnemyBase
 
         FaceTargetInstant();
 
-        anim.Play("Attack");
+        PlayAnim("Attack");
 
         yield return new WaitForSeconds(hitTime);
 
@@ -269,7 +269,7 @@ public class Goblin_Melee : EnemyBase
             yield return new WaitForSeconds(remaining);
         }
 
-        anim.Play("Idle");
+        PlayAnim("Idle");
 
         yield return new WaitForSeconds(recoveryTime);
 
@@ -401,10 +401,13 @@ public class Goblin_Melee : EnemyBase
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
 
+        Transform home = HomePoint;
+        if (home == null) return;
+
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(safeZone.position, 1f);
+        Gizmos.DrawWireSphere(home.position, 1f);
 
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(safeZone.position, maxChaseDistance);
+        Gizmos.DrawWireSphere(home.position, maxChaseDistance);
     }
 }

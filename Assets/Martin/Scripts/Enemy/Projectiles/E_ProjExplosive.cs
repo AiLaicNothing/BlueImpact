@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class E_ProjExplosive : MonoBehaviour
@@ -16,6 +16,7 @@ public class E_ProjExplosive : MonoBehaviour
 
     private Rigidbody rb;
     private bool hasExploded;
+    private readonly HashSet<IDamageable> damagedTargets = new HashSet<IDamageable>();
 
     private void Awake()
     {
@@ -36,7 +37,6 @@ public class E_ProjExplosive : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-
         if (hasExploded) return;
 
         if (other.CompareTag("Player") || other.CompareTag("Wall") || other.CompareTag("Ground"))
@@ -53,27 +53,23 @@ public class E_ProjExplosive : MonoBehaviour
 
         Collider[] hits = Physics.OverlapSphere(transform.position, radius, targetLayer);
 
+        damagedTargets.Clear();
+
         foreach (Collider hit in hits)
         {
-            if (hit == null) continue;
-
             IDamageable damageable = hit.GetComponentInParent<IDamageable>();
 
-            if (damageable != null)
-            {
-                DamageInfo info = new DamageInfo
-                {
-                    damage = damage,
-                };
+            // Un objetivo con varios colliders recibe una sola explosión
+            if (damageable == null || !damagedTargets.Add(damageable)) continue;
 
-                damageable.TakeDamage(info);
-            }
+            damageable.TakeDamage(new DamageInfo { damage = damage });
         }
 
         PlayExplosionSfx(transform.position);
 
         Destroy(gameObject);
     }
+
     private void PlayExplosionSfx(Vector3 pos)
     {
         if (explosionSfx == null) return;

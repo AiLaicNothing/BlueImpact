@@ -8,11 +8,11 @@ public class PlayerInputHandler : CharacterInput
     private float attackBufferCounter;
 
     public Vector2 moveInput { get; private set; }
-    public bool hasJumped {  get; private set; }
+    public bool hasJumped { get; private set; }
     public bool hasDashed { get; private set; }
     public bool isAiming { get; private set; }
     public Vector2 lookInput { get; private set; }
-    public Vector2 gamepadLookInput { get; private set; }   // nuevo
+    public Vector2 gamepadLookInput { get; private set; }
     public bool onLockTarget { get; private set; }
     public Vector2 scrollInput { get; private set; }
     public AttackInputType bufferedAttackType { get; private set; }
@@ -22,9 +22,8 @@ public class PlayerInputHandler : CharacterInput
     public bool skillCanceled { get; private set; }
     public int skillPressedIndex { get; private set; } = -1;
 
-    // ✅ AGREGAR ESTO: Acción Pause
     public InputAction pauseAction { get; private set; }
-    public InputAction journalAction {  get; private set; }
+    public InputAction journalAction { get; private set; }
     private InputActionAsset inputActions;
 
     private void Awake()
@@ -52,7 +51,7 @@ public class PlayerInputHandler : CharacterInput
         else
             Debug.LogError("❌ Acción 'Pause' no encontrada");
 
-        journalAction = playerActionMap.FindAction("Journal"); 
+        journalAction = playerActionMap.FindAction("Journal");
 
         if (journalAction != null)
             journalAction.Enable();
@@ -96,7 +95,6 @@ public class PlayerInputHandler : CharacterInput
         if (context.started)
         {
             hasDashed = true;
-            Debug.Log("Has dashed");
         }
     }
 
@@ -108,7 +106,6 @@ public class PlayerInputHandler : CharacterInput
     public void OnLook(InputAction.CallbackContext context)
     {
         lookInput = context.ReadValue<Vector2>();
-        // gamepadLookInput ya no se asigna aquí
     }
 
     public void OnLockTarget(InputAction.CallbackContext context)
@@ -129,7 +126,6 @@ public class PlayerInputHandler : CharacterInput
         if (context.started)
         {
             BufferAttack(AttackInputType.Primary);
-            //attackPressed = true;
         }
     }
 
@@ -151,63 +147,35 @@ public class PlayerInputHandler : CharacterInput
 
     public void OnSkill1(InputAction.CallbackContext context)
     {
-        if (context.started)
-        {
-            Debug.Log("Skill 1");
-            skillPressedIndex = 0;
-            skillCanceled = false;
-        }
-        if (context.canceled)
-        {
-            Debug.Log("Skill Canceled");
-            skillCanceled = true;
-            skillPressedIndex = -1;
-        }
+        HandleSkillInput(context, 0);
     }
 
     public void OnSkill2(InputAction.CallbackContext context)
     {
-        if (context.started)
-        {
-            Debug.Log("Skill 2");
-            skillPressedIndex = 1;
-            skillCanceled = false;
-        }
-        if (context.canceled)
-        {
-            Debug.Log("Skill Canceled");
-            skillCanceled = true;
-            skillPressedIndex = -1;
-        }
+        HandleSkillInput(context, 1);
     }
 
     public void OnSkill3(InputAction.CallbackContext context)
     {
-        if (context.started)
-        {
-            Debug.Log("Skill 3");
-            skillPressedIndex = 2;
-            skillCanceled = false;
-        }
-        if (context.canceled)
-        {
-            Debug.Log("Skill Canceled");
-            skillCanceled = true;
-            skillPressedIndex = -1;
-        }
+        HandleSkillInput(context, 2);
     }
 
     public void OnSkill4(InputAction.CallbackContext context)
     {
+        HandleSkillInput(context, 3);
+    }
+
+    // Antes cada habilidad tenía el mismo bloque copiado con Debug.Log
+    private void HandleSkillInput(InputAction.CallbackContext context, int index)
+    {
         if (context.started)
         {
-            Debug.Log("Skill 4");
-            skillPressedIndex = 3;
+            skillPressedIndex = index;
             skillCanceled = false;
         }
+
         if (context.canceled)
         {
-            Debug.Log("Skill Canceled");
             skillCanceled = true;
             skillPressedIndex = -1;
         }
@@ -227,7 +195,6 @@ public class PlayerInputHandler : CharacterInput
     public void LateUpdate()
     {
         hasJumped = false;
-        //attackPressed = false;
         hasDashed = false;
         skill1Pressed = false;
         onLockTarget = false;
@@ -240,12 +207,12 @@ public class PlayerInputHandler : CharacterInput
         attackBufferCounter = attackBufferTime;
         bufferedAttackType = type;
     }
+
     public void UseAttackBufer()
     {
         attackBufferCounter = 0f;
         bufferedAttackType = AttackInputType.None;
     }
-
 
     public void ClearInputs()
     {
@@ -269,5 +236,4 @@ public class PlayerInputHandler : CharacterInput
 
         onMelee = false;
     }
-
 }

@@ -1,47 +1,81 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Boss_ChimeraGolem : EnemyBase
 {
-    [Header("Heavy Blow")]
+    private enum NormalAttack { None, GolpeCisDesatado, LlamaradaCar, GolpeContraSuelo, CampoMarchito }
+
+    [Header("Detección (misma regla que el Lava Golem)")]
+    [SerializeField] private float detectionRange = 30f;
+    [SerializeField] private float maxChaseDistance = 45f;
+    [SerializeField] private float detectionDelay = 0.25f;
+    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private float targetRayHeight = 1.2f;
+    [SerializeField] private float playerSearchInterval = 0.5f;
+
+    [Header("Ritmo")]
+    [SerializeField] private float pauseBetweenAttacks = 0.75f;
+    [SerializeField] private int specialMinNormals = 3;
+    [SerializeField] private int specialMaxNormals = 5;
+    [SerializeField] private float meleeRange = 4f;   // por debajo: ataques cuerpo a cuerpo
+    [SerializeField] private float midRange = 10f;    // entre meleeRange y midRange: zona o cañón
+
+    [Header("Golpe Cis Desatado (melee)")]
     [SerializeField] private float dashSpeed = 8f;
     [SerializeField] private float stopDistance = 2f;
-    [SerializeField] private float attackDelay = 0.5f;
+    [SerializeField] private float maxDashDistance = 2f;   // el dash nunca pasa de aquí
+    [SerializeField] private float attackDelay = 0.6f;     // aviso: el brazo se enciende antes del golpe
+    [SerializeField] private float secondSwingDelay = 0.8f;
+    [SerializeField] private float cisRecovery = 1.5f;
     [SerializeField] private Vector3 hitBoxHit;
     [SerializeField] private GameObject hitVfx;
+    [SerializeField] private GameObject armTellVfx;
 
-    [Header("Whitered Field")]
+    [Header("Campo Marchito (control de zona)")]
     [SerializeField] private Vector3 fieldOffset;
     [SerializeField] private GameObject withereZone;
+    [SerializeField] private GameObject fieldWarningVfx;
+    [SerializeField] private GameObject fieldVfx; // visual del campo (se escala al radio de la zona)
+    [SerializeField] private float fieldWarnTime = 1.2f;
+    [SerializeField] private float fieldDamagePerTick = 8f;
+    [SerializeField] private float fieldDuration = 4f;
+    [SerializeField] private float fieldTickRate = 0.5f;
+    [SerializeField] private float fieldRecovery = 1.5f;
+    private GameObject activeZone; // solo una zona activa a la vez
 
-    [Header("Uel Flare")]
-    [SerializeField] private float startUpDuration;
-    [SerializeField] private float channelDuration;
-    [SerializeField] private float rainRadius;
+    [Header("Llamarada Uel (especial)")]
+    [SerializeField] private float uelChannelTime = 2f;
+    [SerializeField] private int uelWaves = 3;
     [SerializeField] private int fireballsPerWave = 4;
-    [SerializeField] private float waveInterval = 0.5f;
+    [SerializeField] private float waveInterval = 0.5f;    // entre bolas de una oleada
+    [SerializeField] private float waveGap = 1.5f;         // entre oleadas
+    [SerializeField] private float uelRecovery = 3f;
+    [SerializeField] private float rainRadius = 8f;
     [SerializeField] private float spawnHeight = 18f;
+    [SerializeField] private float fireballDamage = 22f;
     [SerializeField] private GameObject fireballPrefab;
     [SerializeField] private GameObject magicCircleVfx;
-
     [SerializeField] private GameObject warningVfx;
     [SerializeField] private Vector3 offsetWarning;
 
-    [Header("Car Flare")]
-    [SerializeField] private int bulletPerShoot;
-    [SerializeField] private float timeBtwShoot;
+    [Header("Llamarada Car (cañón)")]
+    [SerializeField] private int bulletPerShoot = 3;
+    [SerializeField] private float timeBtwShoot = 0.35f;
+    [SerializeField] private float carTell = 0.6f;
+    [SerializeField] private float carDamage = 15f;
+    [SerializeField] private float carRecovery = 1.5f;
     [SerializeField] private Transform firePoint;
     [SerializeField] private GameObject bulletPrefab;
     [SerializeField] private GameObject shootVfx;
 
-    [Header("Ground Slam")]
-    [SerializeField] private float hitBoxRadius;
+    [Header("Golpe contra el suelo (onda de choque)")]
+    [SerializeField] private float slamTell = 0.8f;
+    [SerializeField] private float hitBoxRadius = 4f;       // radio exterior de la onda
+    [SerializeField] private float shockInnerRadius = 3f;   // dentro: daño completo; entre inner y outer: mitad
+    [SerializeField] private float slamRecovery = 2.5f;
     [SerializeField] private GameObject smokeVfx;
-    [SerializeField] private LayerMask targerLayer;
-
-    private bool isAttacking;
-    private int normalAttackCount;
-    private int nextSpecialThreshold;
+    [SerializeField] private LayerMask targerLayer;         // se mantiene el nombre para no perder la asignación del Inspector
 
     [Header("Locations")]
     [SerializeField] private Transform centerArena;
@@ -50,348 +84,519 @@ public class Boss_ChimeraGolem : EnemyBase
     public GameObject target;
     public bool inCinematic;
 
+    [SerializeField] private bool verboseLogs;
+
+    private Coroutine attackRoutine;
+    private bool isAttacking;
+    private bool hasDetectedPlayer;
+    private float detectionTimer;
+    private float nextPlayerSearchTime;
+    private int normalAttackCount;
+    private int nextSpecialThreshold;
+    private NormalAttack lastNormal = NormalAttack.None;
+
+    private readonly HashSet<IDamageable> damagedTargets = new HashSet<IDamageable>();
+    private readonly Dictionary<IDamageable, float> shockDamage = new Dictionary<IDamageable, float>();
+    private readonly Collider[] overlapBuffer = new Collider[16];
+
+    private void Log(string message)
+    {
+        if (verboseLogs) Debug.Log("[Quimera] " + message);
+    }
+
+    // Aplica daño una sola vez a cada objetivo, aunque tenga varios colliders
+    private void DamageTargets(Collider[] hits, float damage)
+    {
+        damagedTargets.Clear();
+
+        foreach (Collider hit in hits)
+        {
+            IDamageable damageable = hit.GetComponentInParent<IDamageable>();
+
+            if (damageable == null || !damagedTargets.Add(damageable)) continue;
+
+            damageable.TakeDamage(new DamageInfo { damage = damage });
+        }
+    }
+
     protected override void Start()
     {
         base.Start();
-        nextSpecialThreshold = Random.Range(3, 6);
+        nextSpecialThreshold = Random.Range(specialMinNormals, specialMaxNormals + 1);
     }
 
     protected override void Update()
     {
-        if (isDead) return;
+        if (isDead)
+        {
+            CancelAttack();
+            return;
+        }
 
         base.Update();
+
+        UpdateTarget();
+        HandleDetection();
+
+        // Aturdido o tambaleado: se corta el ataque en curso
+        if (isStunned || IsStaggered)
+        {
+            CancelAttack();
+            return;
+        }
 
         HandleAi();
     }
 
+    // ---------- Detección ----------
+
+    private void UpdateTarget()
+    {
+        if (HasValidPlayer()) return;
+        if (Time.time < nextPlayerSearchTime) return;
+
+        nextPlayerSearchTime = Time.time + playerSearchInterval;
+        player = FindFirstObjectByType<PlayerControl>();
+    }
+
+    private bool HasLineOfSight()
+    {
+        if (!HasValidPlayer()) return false;
+
+        Vector3 origin = transform.position + Vector3.up * targetRayHeight;
+        Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
+
+        Vector3 dir = (targetPos - origin).normalized;
+        float rayDistance = Vector3.Distance(origin, targetPos);
+
+        if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
+        {
+            if (hit.transform != player.transform && hit.transform.root != player.transform.root)
+                return false;
+        }
+
+        return true;
+    }
+
+    private void HandleDetection()
+    {
+        if (!HasValidPlayer())
+        {
+            hasDetectedPlayer = false;
+            detectionTimer = 0f;
+            return;
+        }
+
+        if (!hasDetectedPlayer)
+        {
+            if (DistanceToPlayer() <= detectionRange && HasLineOfSight())
+            {
+                detectionTimer += Time.deltaTime;
+
+                if (detectionTimer >= detectionDelay)
+                {
+                    hasDetectedPlayer = true;
+                    Log("Jugador detectado");
+                }
+            }
+            else
+            {
+                detectionTimer = 0f;
+            }
+        }
+        else
+        {
+            Transform home = HomePoint;
+
+            if (home != null && Vector3.Distance(player.transform.position, home.position) > maxChaseDistance)
+            {
+                hasDetectedPlayer = false;
+                detectionTimer = 0f;
+                Log("Jugador perdido");
+            }
+        }
+    }
+
+    // ---------- Selección de ataque ----------
+
     private void HandleAi()
     {
-        if (inCinematic) return;
+        if (inCinematic || isAttacking || !hasDetectedPlayer || !HasValidPlayer()) return;
 
-        if (isAttacking) return;
-
-        StartCoroutine(AttackRoutine());
+        target = player.gameObject;
+        isAttacking = true;
+        attackRoutine = StartCoroutine(AttackRoutine());
     }
 
     private IEnumerator AttackRoutine()
     {
-        anim.Play("Idle");
+        PlayAnim("Idle");
 
-        Debug.Log("Deciding Attack");
-        isAttacking = true;
-
-        // Decide attack
         if (normalAttackCount >= nextSpecialThreshold)
         {
             normalAttackCount = 0;
-            nextSpecialThreshold = Random.Range(3, 6);
+            nextSpecialThreshold = Random.Range(specialMinNormals, specialMaxNormals + 1);
 
+            Log("Especial: Llamarada Uel");
             yield return UelFlare();
         }
         else
         {
-            int attack = Random.Range(0, 4);
+            NormalAttack attack = ChooseNormalAttack();
+            lastNormal = attack;
+            normalAttackCount++;
+
+            Log("Ataque: " + attack);
 
             switch (attack)
             {
-                case 0:
-                    Debug.Log("Deciding HeavyBlow");
-                    yield return HeavyBlow();
-                    break;
-
-                case 1:
-                    Debug.Log("Deciding carflare");
-                    yield return CarFlare();
-                    break;
-
-                case 2:
-                    Debug.Log("GroundSlam");
-                    yield return GroundSlam();
-                    break;
-
-                case 3:
-                    yield return WhitheredField();
-                    break;
+                case NormalAttack.GolpeCisDesatado: yield return GolpeCisDesatado(); break;
+                case NormalAttack.LlamaradaCar:     yield return CarFlare();        break;
+                case NormalAttack.GolpeContraSuelo: yield return GroundSlam();      break;
+                case NormalAttack.CampoMarchito:    yield return WhitheredField();  break;
             }
-
-            normalAttackCount++;
         }
 
-        // Small delay before choosing another attack.
-        yield return new WaitForSeconds(0.75f);
+        yield return new WaitForSeconds(pauseBetweenAttacks);
+
+        EndAttack();
+    }
+
+    // Elige según la distancia, sin zona duplicada y sin repetir el último ataque
+    private NormalAttack ChooseNormalAttack()
+    {
+        float dist = DistanceToPlayer();
+        List<NormalAttack> pool = new List<NormalAttack>(4);
+
+        if (dist <= meleeRange)
+        {
+            pool.Add(NormalAttack.GolpeCisDesatado);
+            pool.Add(NormalAttack.GolpeContraSuelo);
+        }
+        else if (dist <= midRange)
+        {
+            pool.Add(NormalAttack.CampoMarchito);
+            pool.Add(NormalAttack.LlamaradaCar);
+        }
+        else
+        {
+            pool.Add(NormalAttack.LlamaradaCar);
+        }
+
+        if (activeZone != null) pool.Remove(NormalAttack.CampoMarchito);
+        if (pool.Count > 1) pool.Remove(lastNormal);
+        if (pool.Count == 0) return NormalAttack.LlamaradaCar;
+
+        return pool[Random.Range(0, pool.Count)];
+    }
+
+    private void EndAttack()
+    {
+        attackRoutine = null;
+        isAttacking = false;
+    }
+
+    private void CancelAttack()
+    {
+        if (attackRoutine != null)
+        {
+            StopCoroutine(attackRoutine);
+            attackRoutine = null;
+        }
 
         isAttacking = false;
     }
 
-    private IEnumerator HeavyBlow()
+    // ---------- Golpe Cis Desatado ----------
+
+    private IEnumerator GolpeCisDesatado()
     {
-        // Do a melee hit
+        if (!HasValidPlayer()) yield break;
 
-        if (target == null) yield break;
+        // Dash corto: como mucho maxDashDistance, y se detiene antes del jugador
+        Vector3 toPlayer = player.transform.position - transform.position;
+        toPlayer.y = 0f;
+        float dist = toPlayer.magnitude;
+        float dashLength = Mathf.Min(maxDashDistance, dist - stopDistance);
 
-        // Lock the player's position at the start.
-        Vector3 playerPos = target.transform.position;
-        playerPos.y = transform.position.y;
-
-        Vector3 dir = (playerPos - transform.position).normalized;
-
-        // Final destination.
-        Vector3 stopPos = playerPos - dir * stopDistance;
-
-        anim.Play("Dash");
-
-        while (Vector3.Distance(transform.position, stopPos) > 0.05f)
+        if (dashLength > 0.05f)
         {
-            transform.forward = dir;
-            transform.position = Vector3.MoveTowards(transform.position, stopPos, dashSpeed * Time.deltaTime);
+            Vector3 dir = toPlayer / dist;
+            Vector3 dashTarget = transform.position + dir * dashLength;
 
-            yield return null;
+            PlayAnim("Dash");
+
+            while (Vector3.Distance(transform.position, dashTarget) > 0.05f)
+            {
+                transform.forward = dir;
+                transform.position = Vector3.MoveTowards(transform.position, dashTarget, dashSpeed * Time.deltaTime);
+                yield return null;
+            }
         }
 
-        anim.Play("Golpe_Sis");
+        // Aviso: el brazo se enciende antes del golpe
+        PlayAnim("Golpe_Sis");
 
-        // Wind-up before striking.
-        float timer = 0f;
-
-        while (timer < attackDelay)
+        if (armTellVfx != null)
         {
-            timer += Time.deltaTime;
-
-            FaceTarget(6);
-
-            yield return null;
+            GameObject tell = Instantiate(armTellVfx, transform.position, transform.rotation, transform);
+            Destroy(tell, attackDelay);
         }
 
-        // Spawn hit VFX.
-        if (hitVfx != null)
+        yield return WindUpFacing(attackDelay);
+
+        PerformCisSwing();
+
+        // "Desatado": si el jugador sigue frente al boss, hay un segundo golpe
+        if (IsTargetInFront())
         {
-            Instantiate(hitVfx, transform.position + transform.forward * hitBoxHit.z, Quaternion.identity);
+            yield return new WaitForSeconds(secondSwingDelay);
+            PerformCisSwing();
         }
 
-        // Check hit.
+        yield return new WaitForSeconds(cisRecovery);
+    }
+
+    private void PerformCisSwing()
+    {
         Vector3 center = transform.position + transform.forward * hitBoxHit.z;
 
+        if (hitVfx != null) Instantiate(hitVfx, center, Quaternion.identity);
+
         Collider[] hits = Physics.OverlapBox(center, hitBoxHit * 0.5f, transform.rotation, targerLayer);
-
-        foreach (Collider hit in hits)
-        {
-            DamageInfo info = new DamageInfo
-            {
-                damage = stats.damage,
-            };
-
-            hit.GetComponent<PlayerControl>().TakeDamage(info);
-        }
-
-        yield return new WaitForSeconds(2f);
-
-        Debug.Log("End Heavy Blow attack");
+        DamageTargets(hits, stats.damage);
     }
+
+    private bool IsTargetInFront()
+    {
+        if (!HasValidPlayer()) return false;
+
+        Vector3 center = transform.position + transform.forward * hitBoxHit.z;
+        return Vector3.Distance(center, player.transform.position) <= hitBoxHit.z * 0.5f + 0.5f;
+    }
+
+    // ---------- Campo Marchito ----------
 
     private IEnumerator WhitheredField()
     {
-        // Create around the boss a Field that inflict damage to player
+        if (!HasValidPlayer() || withereZone == null) yield break;
 
-        if (target == null) yield break;
+        Vector3 rayOrigin = player.transform.position + Vector3.up * 2f;
 
-        if (withereZone != null)
+        if (!Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 10f, whatIsGround)) yield break;
+
+        Vector3 point = hit.point + fieldOffset;
+
+        // Aviso bajo el jugador: el círculo se ve antes de que aparezca la zona
+        if (fieldWarningVfx != null)
         {
-            Vector3 rayOrigin = target.transform.position + Vector3.up * 2f;
-
-            if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 10f, whatIsGround))
-            {
-                Instantiate(withereZone, hit.point + fieldOffset, Quaternion.identity);
-            }
+            GameObject warn = Instantiate(fieldWarningVfx, point, Quaternion.identity);
+            ScaleToZoneRadius(warn);
+            Destroy(warn, fieldWarnTime);
         }
 
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(fieldWarnTime);
 
-        Debug.Log("End Withered Field attack");
+        activeZone = Instantiate(withereZone, point, Quaternion.identity);
+
+        if (activeZone.TryGetComponent(out WitheredZone zone))
+        {
+            zone.Configure(fieldDamagePerTick, fieldDuration, fieldTickRate);
+        }
+
+        if (fieldVfx != null)
+        {
+            GameObject vfx = Instantiate(fieldVfx, point, Quaternion.identity);
+            ScaleToZoneRadius(vfx);
+            Destroy(vfx, fieldDuration);
+        }
+
+        yield return new WaitForSeconds(fieldRecovery);
     }
+
+    // Escala un quad de VFX (1 unidad = 1 m) para que cubra el diámetro de la zona
+    private void ScaleToZoneRadius(GameObject vfx)
+    {
+        if (vfx == null || withereZone == null) return;
+        if (!withereZone.TryGetComponent(out WitheredZone zone)) return;
+
+        float d = zone.Radius * 2f;
+        vfx.transform.localScale = new Vector3(d, d, 1f);
+    }
+
+    // ---------- Llamarada Uel (especial) ----------
 
     private IEnumerator UelFlare()
     {
-        //While channeling for x secs, make a area where fire fall to the ground like rain
-
         yield return MoveToPoint(centerArena);
 
-        anim.Play("Llamarada_Uel");
+        PlayAnim("Llamarada_Uel");
 
-        yield return new WaitForSeconds(startUpDuration);
-
+        GameObject circle = null;
         if (magicCircleVfx != null)
         {
-            Vector3 circlePos = transform.position + Vector3.up * spawnHeight;
-
-            var vfx = Instantiate(magicCircleVfx, circlePos, Quaternion.identity);
-
-            Destroy(vfx, channelDuration);
+            circle = Instantiate(magicCircleVfx, transform.position + Vector3.up * spawnHeight, Quaternion.identity);
         }
 
-        float timer = 0f;
+        yield return new WaitForSeconds(uelChannelTime);
 
-        while (timer < channelDuration)
+        for (int w = 0; w < uelWaves; w++)
         {
             for (int i = 0; i < fireballsPerWave; i++)
             {
-                Vector2 randomPoint = Random.insideUnitCircle * rainRadius;
-
-                Vector3 spawnPos = transform.position + new Vector3(randomPoint.x, spawnHeight, randomPoint.y);
-
-                if (Physics.Raycast(spawnPos, Vector3.down, out RaycastHit hit, Mathf.Infinity, whatIsGround))
-                {
-                    float distance = Vector3.Distance(spawnPos, hit.point);
-                    float travelTime = distance / 14f;
-
-                    if (warningVfx != null)
-                    {
-                        GameObject warning = Instantiate(warningVfx, hit.point + offsetWarning, Quaternion.identity);
-
-                        Destroy(warning, travelTime);
-                    }
-
-
-                    if (fireballPrefab != null)
-                    {
-                        var prefab = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
-
-                        var proj = prefab.GetComponent<E_Projectile>();
-
-                        proj.InitProj(22f, Vector3.down);
-                    }
-                }
-
-                timer += waveInterval;
-
+                SpawnRainFireball();
                 yield return new WaitForSeconds(waveInterval);
             }
 
-            yield return new WaitForSeconds(2.25f);
+            yield return new WaitForSeconds(waveGap);
+        }
 
-            Debug.Log("Attack Uel Flare end");
+        if (circle != null) Destroy(circle);
+
+        yield return new WaitForSeconds(uelRecovery);
+    }
+
+    private void SpawnRainFireball()
+    {
+        Vector2 randomPoint = Random.insideUnitCircle * rainRadius;
+        Vector3 spawnPos = transform.position + new Vector3(randomPoint.x, spawnHeight, randomPoint.y);
+
+        if (!Physics.Raycast(spawnPos, Vector3.down, out RaycastHit hit, Mathf.Infinity, whatIsGround)) return;
+
+        // El aviso dura lo que tarda la bola en llegar, con la velocidad del prefab
+        float speed = 1f;
+        if (fireballPrefab != null && fireballPrefab.TryGetComponent(out E_Projectile proto))
+        {
+            speed = Mathf.Max(0.01f, proto.Speed);
+        }
+
+        float travelTime = Vector3.Distance(spawnPos, hit.point) / speed;
+
+        if (warningVfx != null)
+        {
+            Destroy(Instantiate(warningVfx, hit.point + offsetWarning, Quaternion.identity), travelTime);
+        }
+
+        if (fireballPrefab != null)
+        {
+            GameObject bolt = Instantiate(fireballPrefab, spawnPos, Quaternion.identity);
+
+            if (bolt.TryGetComponent(out E_Projectile proj))
+            {
+                proj.InitProj(fireballDamage, Vector3.down);
+            }
         }
     }
+
+    // ---------- Llamarada Car (cañón) ----------
 
     private IEnumerator CarFlare()
     {
-        // Shoot toward the player
+        if (corners != null && corners.Length > 0)
+        {
+            Transform spot = corners[Random.Range(0, corners.Length)];
+            yield return MoveToPoint(spot);
+        }
 
-        Transform randomPos = corners[Random.Range(0, corners.Length)];
+        PlayAnim("Llamarada_Car");
 
-        yield return MoveToPoint(randomPos);
-
-        anim.Play("Llamarada_Car");
-
-        yield return new WaitForSeconds(0.6f);
+        yield return new WaitForSeconds(carTell);
 
         for (int i = 0; i < bulletPerShoot; i++)
         {
-            if (target != null)
+            if (!HasValidPlayer() || firePoint == null) break;
+
+            Vector3 dir = (player.transform.position - firePoint.position).normalized;
+            transform.forward = new Vector3(dir.x, 0f, dir.z);
+
+            if (shootVfx != null)
             {
-                Vector3 dir = (target.transform.position - firePoint.position).normalized;
+                Destroy(Instantiate(shootVfx, firePoint.position, Quaternion.identity), 2f);
+            }
 
-                transform.forward = new Vector3(dir.x, 0f, dir.z);
+            if (bulletPrefab != null)
+            {
+                GameObject bullet = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(dir));
 
-                if (shootVfx != null)
+                if (bullet.TryGetComponent(out E_Projectile proj))
                 {
-                    var vfx = Instantiate(shootVfx, firePoint.position, Quaternion.identity);
-                }
-
-                if (bulletPrefab != null)
-                {
-                    var projPrefab = Instantiate(bulletPrefab, firePoint.position, Quaternion.LookRotation(dir));
-                    var  proj = projPrefab.GetComponent<E_Projectile>();
-
-                    proj.InitProj(15f, dir);
-                }
-
-                float timer = 0f;
-
-                while (timer < timeBtwShoot)
-                {
-                    timer += Time.deltaTime;
-
-                    FaceTarget(6);
-
-                    yield return null;
+                    proj.InitProj(carDamage, dir);
                 }
             }
+
+            yield return WindUpFacing(timeBtwShoot);
         }
 
-        yield return new WaitForSeconds(1.5f);
-
-        Debug.Log("End Car Flare attack");
+        yield return new WaitForSeconds(carRecovery);
     }
+
+    // ---------- Golpe contra el suelo ----------
 
     private IEnumerator GroundSlam()
     {
-        // Hit the ground causing a ground explosion(hit)
+        // Sin dash: el golpe cae donde está el boss
+        PlayAnim("Golpe_Suelo");
 
-        if (target == null) yield break;
-
-        // Lock the player's position at the start.
-        Vector3 playerPos = target.transform.position;
-        playerPos.y = transform.position.y;
-
-        Vector3 dir = (playerPos - transform.position).normalized;
-
-        // Final destination.
-        Vector3 stopPos = playerPos - dir * stopDistance;
-
-        while (Vector3.Distance(transform.position, stopPos) > 0.05f)
-        {
-            transform.forward = dir;
-            transform.position = Vector3.MoveTowards(transform.position, stopPos, dashSpeed * Time.deltaTime);
-
-            yield return null;
-        }
-
-        anim.Play("Golpe_Suelo");
-
-        yield return new WaitForSeconds(0.7f);
+        yield return new WaitForSeconds(slamTell);
 
         if (smokeVfx != null)
         {
-            var vfx = Instantiate(smokeVfx, transform.position, Quaternion.identity);
-            Destroy(vfx, 1.5f);
+            Destroy(Instantiate(smokeVfx, transform.position, Quaternion.identity), 1.5f);
         }
 
-        Collider[] hits = Physics.OverlapSphere(transform.position, hitBoxRadius, targerLayer);
+        ShockwaveHit();
 
-        foreach (Collider hit in hits)
-        {
-            DamageInfo info = new DamageInfo
-            {
-                damage = stats.damage * 1.5f
-            };
-
-            hit.gameObject.GetComponent<PlayerControl>().TakeDamage(info);
-        }
-
-        yield return new WaitForSeconds(2.5f);
-
-        Debug.Log("End Ground Slam attack");
+        yield return new WaitForSeconds(slamRecovery);
     }
 
-    private IEnumerator MoveToPoint(Transform target)
+    private void ShockwaveHit()
     {
-        if (target == null) yield break;
+        float fullDamage = stats.damage * 1.5f;
+        int count = Physics.OverlapSphereNonAlloc(transform.position, hitBoxRadius, overlapBuffer, targerLayer);
 
-        anim.Play("Walk_2");
+        shockDamage.Clear();
+
+        for (int i = 0; i < count; i++)
+        {
+            Collider hit = overlapBuffer[i];
+
+            IDamageable damageable = hit.GetComponentInParent<IDamageable>();
+            if (damageable == null) continue;
+
+            float dist = Vector3.Distance(transform.position, hit.ClosestPointOnBounds(transform.position));
+            float dmg = dist <= shockInnerRadius ? fullDamage : fullDamage * 0.5f;
+
+            // Un objetivo con varios colliders recibe solo el daño mayor de la onda
+            if (!shockDamage.TryGetValue(damageable, out float previous) || dmg > previous)
+            {
+                shockDamage[damageable] = dmg;
+            }
+        }
+
+        foreach (KeyValuePair<IDamageable, float> entry in shockDamage)
+        {
+            entry.Key.TakeDamage(new DamageInfo { damage = entry.Value });
+        }
+    }
+
+    // ---------- Utilidades ----------
+
+    private IEnumerator MoveToPoint(Transform point)
+    {
+        if (point == null) yield break;
+
+        PlayAnim("Walk_2");
 
         while (true)
         {
             Vector3 currentPos = transform.position;
-
-            Vector3 targetPos = new Vector3(target.position.x, currentPos.y, target.position.z);
-
+            Vector3 targetPos = new Vector3(point.position.x, currentPos.y, point.position.z);
             Vector3 dir = (targetPos - currentPos).normalized;
 
             if (dir.sqrMagnitude > 0.001f)
             {
                 Quaternion targetRot = Quaternion.LookRotation(dir);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 25f * Time.deltaTime); // Rotation speed
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 25f * Time.deltaTime);
             }
 
             transform.position = Vector3.MoveTowards(currentPos, targetPos, 10f * Time.deltaTime);
@@ -409,11 +614,24 @@ public class Boss_ChimeraGolem : EnemyBase
         }
     }
 
+    // Espera mirando al jugador
+    private IEnumerator WindUpFacing(float seconds)
+    {
+        float t = 0f;
+
+        while (t < seconds)
+        {
+            FaceTarget(6);
+            t += Time.deltaTime;
+            yield return null;
+        }
+    }
+
     private void FaceTarget(float speed)
     {
-        if (target == null) return;
+        if (!HasValidPlayer()) return;
 
-        Vector3 dir = target.transform.position - transform.position;
+        Vector3 dir = player.transform.position - transform.position;
         dir.y = 0f;
 
         if (dir.sqrMagnitude < 0.01f) return;
