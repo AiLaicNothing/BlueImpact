@@ -25273,6 +25273,7 @@ MonoBehaviour:
   moveSpeed: 7
   jumpSpeed: 8
   jumpDuration: 0.2
+  coyoteTime: 0.15
   gravity: 15
   slideGravity: 5
   airControlRate: 5
@@ -25349,9 +25350,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   interactionRadius: 2
+  raycastHeight: 0
   interactableLayer:
     serializedVersion: 2
     m_Bits: 16384
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 7168
 --- !u!114 &7229695871523193325
 MonoBehaviour:
   m_ObjectHideFlags: 0

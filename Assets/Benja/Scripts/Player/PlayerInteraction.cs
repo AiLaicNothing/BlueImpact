@@ -1,13 +1,15 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using static UnityEngine.UI.Image;
 
 public class PlayerInteraction : MonoBehaviour
 {
-    [SerializeField]
-    private float interactionRadius = 2f;
+    [SerializeField] private float interactionRadius = 2f;
+    [SerializeField] private float raycastHeight;
 
-    [SerializeField]
-    private LayerMask interactableLayer;
+    [Header("Layers")]
+    [SerializeField] private LayerMask interactableLayer;
+    [SerializeField] private LayerMask obstacleLayer;
 
     private IInteractable currentInteractable;
 
@@ -32,19 +34,16 @@ public class PlayerInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (interactionLocked)
-            return;
+        if (interactionLocked) return;
 
         FindClosestInteractable();
     }
 
     public void OnInteract(InputAction.CallbackContext context)
     {
-        if (!context.performed)
-            return;
+        if (!context.performed) return;
 
-        if (interactionLocked)
-            return;
+        if (interactionLocked) return;
 
         currentInteractable?.Interact();
     }
@@ -53,27 +52,26 @@ public class PlayerInteraction : MonoBehaviour
     {
         currentInteractable = null;
 
-        Collider[] hits =
-            Physics.OverlapSphere(
-                transform.position,
-                interactionRadius,
-                interactableLayer);
+        Vector3 origin = transform.position + Vector3.up * raycastHeight;
+
+        Collider[] hits =Physics.OverlapSphere(transform.position, interactionRadius, interactableLayer);
 
         float closestDistance = float.MaxValue;
 
         foreach (Collider hit in hits)
         {
-            MonoBehaviour behaviour =
-                hit.GetComponent<MonoBehaviour>();
+            IInteractable interactable = hit.GetComponent<IInteractable>();
 
-            if (behaviour is not IInteractable interactable)
+            if (interactable == null) continue;
+
+            Vector3 targetPosition = hit.ClosestPoint(origin);
+
+            Vector3 direction = targetPosition - origin;
+            float distance = direction.magnitude;
+
+            if (Physics.Raycast(origin, direction.normalized, distance, obstacleLayer, QueryTriggerInteraction.Ignore))
                 continue;
-
-            float distance =
-                Vector3.Distance(
-                    transform.position,
-                    hit.transform.position);
-
+     
             if (distance < closestDistance)
             {
                 closestDistance = distance;
@@ -85,8 +83,7 @@ public class PlayerInteraction : MonoBehaviour
         {
             previousInteractable = currentInteractable;
 
-            InteractionUI.Instance?.SetInteractable(
-                currentInteractable);
+            InteractionUI.Instance?.SetInteractable(currentInteractable);
         }
     }
 
@@ -135,9 +132,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         Gizmos.color = Color.yellow;
 
-        Gizmos.DrawWireSphere(
-            transform.position,
-            interactionRadius);
+        Gizmos.DrawWireSphere(transform.position, interactionRadius);
     }
 #endif
 }
