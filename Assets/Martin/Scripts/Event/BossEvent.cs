@@ -46,6 +46,11 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private GameObject barrier;
 
     [Header("End Event")]
+    // Evento final: cadenas, descenso del cristal y los tres finales.
+    // Si lo dejas vacio, al morir el boss se reproduce la cinematica generica y va al menu.
+    [SerializeField] private BlueImpactEvent blueImpactEvent;
+    [SerializeField] private float pauseAfterBossDeath = 2f;
+    [SerializeField] private bool keepBarrierAfterBoss = true;  // el jugador no debe irse antes de elegir
     [SerializeField] private GameObject secretUI;
     [SerializeField] private GameObject continueUI;
 
@@ -326,12 +331,29 @@ public class BossEvent : MonoBehaviour
         // A partir de aqui ya no se debe poder resetear el evento
         eventComplete = true;
 
-        var ending = Ending_Cinematic.Instance;
-
         if (bossHud != null)
         {
             bossHud.Hide();
         }
+
+        yield return new WaitForSeconds(pauseAfterBossDeath);
+
+        // Camino normal: el evento del Blue Impact toma el control desde aqui
+        if (blueImpactEvent != null)
+        {
+            Debug.Log("[BossEvent] Boss derrotado, pasa al evento del Blue Impact");
+
+            // La barrera se queda puesta: el jugador no debe salir sin elegir un final
+            if (barrier != null) barrier.SetActive(keepBarrierAfterBoss);
+
+            blueImpactEvent.StartSequence(playerControl);
+            yield break;
+        }
+
+        // Respaldo: sin evento final, se usa la cinematica generica y al menu
+        Debug.LogWarning("[BossEvent] blueImpactEvent sin asignar, se usa la cinematica generica");
+
+        var ending = Ending_Cinematic.Instance;
 
         GameModeManager.Instance.SetMode(GameMode.Cutscene);
 
@@ -341,10 +363,19 @@ public class BossEvent : MonoBehaviour
             Debug.Log("[BossEvent] Jugador pausado para el evento de muerte");
         }
 
+        if (ending == null)
+        {
+            SceneLoaderManager.Instance.LoadSceneNormal("menu");
+            yield break;
+        }
+
         Debug.Log("[BossEvent] Mostrando cinematica final");
         ending.ShowCutscene();
 
-        yield return new WaitForSeconds(8.5f);
+        float wait = ending.CurrentClipLength;
+        if (wait <= 0f) wait = 8.5f;
+
+        yield return new WaitForSeconds(wait);
 
         ending.activeVideo(false);
         ending.ContinueVideo(true);

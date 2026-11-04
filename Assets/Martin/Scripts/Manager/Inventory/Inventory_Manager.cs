@@ -62,6 +62,27 @@ public class Inventory_Manager : MonoBehaviour
         SaveInventory();
     }
 
+    // Lo usa el final secreto para saber si el jugador consiguio el objeto.
+    // Compara por referencia (los Item_Data son assets) y, como respaldo, por ID y nombre.
+    public bool HasItem(Item_Data item)
+    {
+        if (item == null) return false;
+
+        if (inventory.Contains(item)) return true;
+
+        for (int i = 0; i < inventory.Count; i++)
+        {
+            Item_Data owned = inventory[i];
+            if (owned == null) continue;
+
+            if (owned.ID != 0 && owned.ID == item.ID) return true;
+
+            if (!string.IsNullOrEmpty(item.itemName) && owned.itemName == item.itemName) return true;
+        }
+
+        return false;
+    }
+
     private void SaveInventory()
     {
         if (SaveLoadManager.Instance != null)
