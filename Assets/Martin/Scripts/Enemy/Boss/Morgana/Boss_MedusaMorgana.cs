@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class Boss_MedusaMorgana : EnemyBase
 {
+    public enum MeteorAreaCenter
+    {
+        Player,   // la lluvia cae alrededor del jugador
+        Boss      // la lluvia cae alrededor de Morgana
+    }
+
     [Header("Info")]
     [SerializeField] private string bossDisplayName = "Medusa Morgana";
 
@@ -25,20 +31,21 @@ public class Boss_MedusaMorgana : EnemyBase
     [Header("Nombres de ataque (los ve el jugador en el HUD)")]
     [SerializeField] private string nameResonancia = "Resonancia";
     [SerializeField] private string namePartTitura = "Part-Titura";
-    [SerializeField] private string nameNova = "Nova";
     [SerializeField] private string nameClimax = "Climax Serpentinus";
-    [SerializeField] private string nameDisonancia = "Disonancia";
+    [SerializeField] private string nameMeteorBeam = "Meteor Beam";
+    [SerializeField] private string nameMeteorShower = "Meteor Shower";
 
     [Header("Recuperacion despues de cada ataque (ventana para pegarle)")]
     [SerializeField] private float recoveryResonancia = 2.5f;
     [SerializeField] private float recoveryPartTitura = 2f;
-    [SerializeField] private float recoveryNova = 3.5f;
     [SerializeField] private float recoveryClimax = 3f;
-    [SerializeField] private float recoveryDisonancia = 3f;
+    [SerializeField] private float recoveryMeteorBeam = 2.5f;
+    [SerializeField] private float recoveryMeteorShower = 2f;
 
     [Header("Animator (datos de los clips, 24 fps)")]
     [SerializeField] private float animFps = 24f;
-    [SerializeField] private int screamFrames = 40;
+    [SerializeField] private string idleStateName = "Iddle";   // nombre del estado de reposo en AMBOS controllers
+    [SerializeField] private int screamFrames = 40;            // Scream de la fase 1 (intro y antes del cambio)
     [SerializeField] private int swordActiveStartFrame = 14;   // frame donde la espada empieza a barrer
     [SerializeField] private int swordActiveEndFrame = 24;     // frame donde termina el barrido
     [SerializeField] private int tailActiveStartFrame = 8;     // frame donde la cola empieza a barrer
@@ -61,7 +68,7 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private Transform tailTipPhaseTwo;
     [SerializeField] private Transform[] laserOriginsPhaseTwo;
 
-    [Header("Laseres (Resonancia / Disonancia)")]
+    [Header("Laseres (Resonancia)")]
     [SerializeField] private Transform[] laserOrigins;         // juntas de las cabezas de serpiente
     [SerializeField] private float laserLength = 25f;
     [SerializeField] private float laserWidth = 0.15f;
@@ -90,18 +97,17 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private float weaponThickness = 0.5f;     // grosor del arma para el barrido
     [SerializeField] private float bodyRadius = 0.4f;          // radio del cuerpo del jugador
 
-    [Header("Nova (Fase 2)")]
-    [SerializeField] private float novaChannelTime = 5f;       // casteo antes del dano
-    [SerializeField] private float novaDamage = 30f;
-    [SerializeField] private float novaSafeAngle = 36f;        // 1/10 del circulo, el hueco seguro
-    [SerializeField] private bool novaSafeTowardPlayer = false; // false = hueco aleatorio, true = hacia el jugador
+    [Header("Climax Serpentinus (Fase 2) - Animacion 'Invocation' 80 frames")]
+    [SerializeField] private int climaxFrames = 80;
+    [SerializeField] private int climaxReleaseFrame = 40;      // frame donde desata la energia: hasta aqui se puede romper el casteo
+    [SerializeField] private GameObject climaxCrystalGlow;     // HIJO del modelo fase 2 (cristal de la espada): brilla durante la invocacion
+    [SerializeField] private float climaxCooldown = 40f;       // segundos minimos entre dos Climax (cuenta desde que empieza)
 
-    [Header("Climax Serpentinus (Fase 2) - Arena")]
+    [Header("Climax Serpentinus - Arena")]
     [SerializeField] private Transform arenaCenter;
     [SerializeField] private float arenaRadius = 15f;
     [SerializeField] private float borderWidth = 2f;
-    [SerializeField] private float climaxChannelTime = 2f;
-    [SerializeField] private float borderWarningTime = 3f;
+    [SerializeField] private float borderWarningTime = 1.25f;  // X: segundos que el borde brilla antes de hacer dano
     [SerializeField] private float climaxDuration = 30f;       // tope maximo: termina antes si limpian las oleadas
     [SerializeField] private float borderTickInterval = 0.5f;
     [SerializeField] private float borderDamagePerSecond = 5f;
@@ -115,27 +121,44 @@ public class Boss_MedusaMorgana : EnemyBase
 
     [Header("Climax Serpentinus - Invocacion simple (solo si no hay WaveManager)")]
     [SerializeField] private GameObject golemPrefab;
-    [SerializeField] private int golemsToSummon = 5;
+    [SerializeField] private int golemsToSummon = 5;           // Y: enemigos que invoca
     [SerializeField] private Transform[] summonPoints;
 
-    [Header("Disonancia (Fase 2)")]
-    [SerializeField] private float disonanciaAimTime = 1.5f;
-    [SerializeField] private float markDuration = 4f;
-    [SerializeField] private float beamDelay = 1f;
-    [SerializeField] private float beamRadius = 1.5f;
-    [SerializeField] private float disonanciaDamage = 60f;
-    [SerializeField] private float disonanciaTrackSpeed = 720f; // laseres que siguen al jugador de forma casi exacta
-    [SerializeField] private GameObject markVfx;
-    [SerializeField] private GameObject beamWarningVfx;
-    [SerializeField] private GameObject beamVfx;
+    [Header("Meteor Beam (Fase 2) - Animacion 'MeteorBeam' 70 frames")]
+    [SerializeField] private int meteorBeamFrames = 70;
+    [SerializeField] private int meteorBeamLockFrame = 18;      // hasta este frame gira hacia el jugador; despues la trayectoria queda fija
+    [SerializeField] private int meteorBeamFireStartFrame = 30; // frame donde sale el rayo (fin del casteo que se puede romper)
+    [SerializeField] private int meteorBeamFireEndFrame = 58;   // frame donde se apaga el rayo
+    [SerializeField] private Transform meteorBeamOrigin;        // HIJO del modelo fase 2 (boca o cristal). Vacio = frente del boss
+    [SerializeField] private float meteorBeamOriginHeight = 1.6f; // solo si no hay meteorBeamOrigin
+    [SerializeField] private float meteorBeamAimTurnSpeed = 180f; // grados/s mientras apunta
+    [SerializeField] private float meteorBeamLength = 25f;
+    [SerializeField] private float meteorBeamWidth = 2f;        // ancho de la franja que hace dano (y del aviso en el suelo)
+    [SerializeField] private float meteorBeamDamagePerTick = 12f;
+    [SerializeField] private float meteorBeamTickInterval = 0.25f;
+    [SerializeField] private float meteorBeamVisualWidth = 1.2f;
+    [SerializeField] private Color meteorBeamColor = new Color(0.35f, 0.75f, 1f, 1f);
+    [SerializeField] private GameObject meteorBeamVfx;          // PREFAB opcional: pivote al inicio, apunta en Z y mide 1 m de largo
+
+    [Header("Meteor Shower (Fase 2) - Animacion 'MeteorShower' 70 frames")]
+    [SerializeField] private int meteorShowerFrames = 70;
+    [SerializeField] private int meteorShowerCastFrame = 30;    // frame donde invoca la lluvia (fin del casteo que se puede romper)
+    [SerializeField] private int meteorCount = 12;
+    [SerializeField] private float meteorSpawnDuration = 3f;    // tiempo en el que se reparten las caidas
+    [SerializeField] private MeteorAreaCenter meteorAreaCenter = MeteorAreaCenter.Player;
+    [SerializeField] private float meteorAreaRadius = 7f;
+    [Range(0f, 1f)]
+    [SerializeField] private float meteorAimAtPlayerChance = 0.35f; // probabilidad de que un meteorito vaya justo donde esta el jugador
+    [SerializeField] private MeteorConfig meteor = new MeteorConfig();
 
     [Header("Cambio de fase (2 modelos)")]
     [SerializeField] private GameObject phaseOneModel;
     [SerializeField] private GameObject phaseTwoModel;
     [SerializeField] private GameObject transformVfx;          // PREFAB
     [SerializeField] private float swapDelay = 0.2f;
+    [SerializeField] private bool screamBeforeSwap = true;     // grito corto de la fase 1 antes de cambiar de modelo
     [SerializeField] private string phaseTwoIntroTrigger = "Scream";
-    [SerializeField] private float phaseTwoIntroDuration = 2f;
+    [SerializeField] private int phaseTwoScreamFrames = 70;    // Scream del modelo fase 2
 
     [Header("Telegrafia y trail")]
     [SerializeField] private BossAttackTelegraph telegraph;
@@ -159,29 +182,44 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private Color gizmoTailColor = Color.cyan;
     [SerializeField] private Color gizmoLaserColor = new Color(0.2f, 1f, 0.3f);
     [SerializeField] private Color gizmoSummonColor = Color.green;
+    [SerializeField] private Color gizmoBeamColor = new Color(0.35f, 0.75f, 1f);
+    [SerializeField] private Color gizmoMeteorColor = new Color(1f, 0.5f, 0.1f);
 
     public event System.Action OnPhaseTwoStarted;
 
     public bool inCinematic;
 
-    private static readonly int HashIsMoving = Animator.StringToHash("IsMoving");
-    private static readonly int HashIncantation = Animator.StringToHash("Incantation");
-    private static readonly int HashAttackSword = Animator.StringToHash("AttackSword");
-    private static readonly int HashAttackTail = Animator.StringToHash("AttackTail");
-    private static readonly int HashScream = Animator.StringToHash("Scream");
-    private static readonly int HashIdleState = Animator.StringToHash("Idle");
+    // Parametros del Animator. Fase 1 y fase 2 tienen controllers distintos: cada llamada
+    // revisa que el parametro exista en el Animator actual, asi no se llena la consola de avisos.
+    private const string ParamIsMoving = "IsMoving";
+    private const string ParamIncantation = "Incantation";
+    private const string ParamAttackSword = "AttackSword";
+    private const string ParamAttackTail = "AttackTail";
+    private const string ParamScream = "Scream";
+    private const string ParamInvocation = "Invocation";
+    private const string ParamMeteorBeam = "MeteorBeam";
+    private const string ParamMeteorShower = "MeteorShower";
 
+    private static readonly string[] AllTriggers =
+    {
+        ParamIncantation, ParamAttackSword, ParamAttackTail, ParamScream,
+        ParamInvocation, ParamMeteorBeam, ParamMeteorShower
+    };
+
+    private const int AttackNone = -1;
     private const int AttackResonancia = 0;
     private const int AttackPartTitura = 1;
-    private const int AttackNova = 2;
-    private const int AttackClimax = 3;
-    private const int AttackDisonancia = 4;
+    private const int AttackClimax = 2;
+    private const int AttackMeteorBeam = 3;
+    private const int AttackMeteorShower = 4;
 
     private bool isAttacking;
     private bool canInterrupt = true;
     private bool inPhaseTwo;
     private bool phaseTwoStarted;
     private float nextAttackTime;
+    private int lastAttack = AttackNone;
+    private float nextClimaxAllowedAt;
 
     private bool castWindowOpen;      // true mientras el casteo actual se puede romper con dano
     private bool castBroken;
@@ -193,7 +231,15 @@ public class Boss_MedusaMorgana : EnemyBase
 
     private readonly List<LineRenderer> lasers = new List<LineRenderer>();
     private readonly List<Vector3> laserDirs = new List<Vector3>();
-    private Vector3 markedPosition;
+
+    private LineRenderer beamLine;
+    private GameObject activeBeamVfx;
+    private Vector3 beamDir = Vector3.forward;
+
+    // Cache de parametros del Animator actual
+    private readonly HashSet<int> animParams = new HashSet<int>();
+    private Animator animParamsOwner;
+    private readonly HashSet<string> warnedParams = new HashSet<string>();
 
     // Estado para el audio: detecta golpes y stagger comparando contra el frame anterior,
     // asi no hay que tocar EnemyBase ni exponer sus campos privados
@@ -203,8 +249,6 @@ public class Boss_MedusaMorgana : EnemyBase
 
     private Coroutine attackRoutine;
     private Coroutine swingRoutine;
-    private Coroutine markRoutine;
-    private GameObject activeMarker;
     private GameObject activeBorderVfx;
     private EnemySpawner summonSpawner;
 
@@ -252,6 +296,7 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (vulnerableVfx != null) vulnerableVfx.SetActive(false);
         if (brokenVfx != null) brokenVfx.SetActive(false);
+        SetCrystalGlow(false);
 
         if (phaseOneModel != null)
         {
@@ -274,6 +319,7 @@ public class Boss_MedusaMorgana : EnemyBase
 
         WarnPhaseTwoSetup();
         WarnClimaxSetup();
+        WarnTimingSetup();
 
         if (bossAudio == null) Debug.LogWarning("[Morgana] Sin BossAudio: el boss va a pelear en silencio");
     }
@@ -304,14 +350,35 @@ public class Boss_MedusaMorgana : EnemyBase
             return;
         }
 
-        if (swordTipPhaseTwo == null) Debug.LogWarning("[Morgana] Falta swordTipPhaseTwo: en fase 2 la onda de espada saldra del hueso congelado del modelo 1");
-        if (tailTipPhaseTwo == null) Debug.LogWarning("[Morgana] Falta tailTipPhaseTwo: en fase 2 la onda de cola saldra del hueso congelado del modelo 1");
-        if (laserOriginsPhaseTwo == null || laserOriginsPhaseTwo.Length == 0) Debug.LogWarning("[Morgana] Falta laserOriginsPhaseTwo: en fase 2 los laseres saldran de las juntas congeladas del modelo 1");
+        if (meteorBeamOrigin == null) Debug.LogWarning("[Morgana] Falta meteorBeamOrigin: el Meteor Beam saldra del frente del boss a " + meteorBeamOriginHeight + " m de altura");
+        if (climaxCrystalGlow == null) Debug.LogWarning("[Morgana] Falta climaxCrystalGlow: el cristal de la espada no brillara durante Climax");
 
-        if (phaseTwoModel.GetComponentInChildren<Animator>(true) == null)
+        Animator phaseTwoAnim = phaseTwoModel.GetComponentInChildren<Animator>(true);
+
+        if (phaseTwoAnim == null)
         {
             Debug.LogWarning("[Morgana] phaseTwoModel no tiene Animator: en fase 2 no se van a reproducir animaciones");
         }
+        else if (phaseTwoAnim.runtimeAnimatorController == null)
+        {
+            Debug.LogWarning("[Morgana] El Animator del modelo fase 2 no tiene controller. Usa Tools > Morgana > 1. Configurar Animator de fase 2");
+        }
+    }
+
+    // Los frames donde ocurre cada golpe tienen que caer dentro de la animacion
+    private void WarnTimingSetup()
+    {
+        if (meteorBeamFireStartFrame >= meteorBeamFireEndFrame)
+            Debug.LogWarning("[Morgana] Meteor Beam: meteorBeamFireStartFrame debe ser menor que meteorBeamFireEndFrame");
+
+        if (meteorBeamFireEndFrame > meteorBeamFrames)
+            Debug.LogWarning("[Morgana] Meteor Beam: el rayo termina despues de la animacion (" + meteorBeamFrames + " frames)");
+
+        if (climaxReleaseFrame > climaxFrames)
+            Debug.LogWarning("[Morgana] Climax: climaxReleaseFrame esta despues del final de la animacion (" + climaxFrames + " frames)");
+
+        if (meteorShowerCastFrame > meteorShowerFrames)
+            Debug.LogWarning("[Morgana] Meteor Shower: meteorShowerCastFrame esta despues del final de la animacion (" + meteorShowerFrames + " frames)");
     }
 
     protected override void Update()
@@ -418,13 +485,14 @@ public class Boss_MedusaMorgana : EnemyBase
     private IEnumerator AttackRoutine()
     {
         canInterrupt = true;
-        if (anim != null) anim.Play("Idle");
+        PlayIdle(0.1f);
 
         int choice = ChooseAttack();
+        lastAttack = choice;
 
-        // Solo Nova y Climax necesitan el centro de la arena. Los demas se lanzan donde este,
+        // Solo Climax necesita el centro de la arena. Los demas se lanzan donde este,
         // asi el jugador no se pasa el combate persiguiendo al boss hasta el centro.
-        if (choice == AttackNova || choice == AttackClimax)
+        if (choice == AttackClimax)
         {
             yield return MoveToCenter();
         }
@@ -443,14 +511,14 @@ public class Boss_MedusaMorgana : EnemyBase
             case AttackPartTitura:
                 yield return PartTitura();
                 break;
-            case AttackNova:
-                yield return Nova();
-                break;
             case AttackClimax:
                 yield return ClimaxSerpentinus();
                 break;
-            case AttackDisonancia:
-                yield return Disonancia();
+            case AttackMeteorBeam:
+                yield return MeteorBeam();
+                break;
+            case AttackMeteorShower:
+                yield return MeteorShower();
                 break;
         }
 
@@ -464,14 +532,27 @@ public class Boss_MedusaMorgana : EnemyBase
             return Random.value < 0.5f ? AttackResonancia : AttackPartTitura;
         }
 
-        return Random.Range(0, 5);
+        // Fase 2: solo los ataques que tienen animacion en el modelo de fase 2.
+        // Climax tiene cooldown propio porque puede durar hasta 30 segundos.
+        List<int> pool = new List<int>(3);
+
+        if (Time.time >= nextClimaxAllowedAt) pool.Add(AttackClimax);
+        pool.Add(AttackMeteorBeam);
+        pool.Add(AttackMeteorShower);
+
+        // No repite el mismo ataque dos veces seguidas
+        if (pool.Count > 1) pool.Remove(lastAttack);
+
+        return pool[Random.Range(0, pool.Count)];
     }
 
     private void EndAttack()
     {
         HideLasers();
+        HideBeam();
         SetMoving(false);
         CloseCastWindow();
+        SetCrystalGlow(false);
 
         // Red de seguridad: al terminar un ataque no debe quedar ningun bucle sonando.
         // Aqui no se pisa el tambaleo, porque un casteo roto pasa por CancelAttack, no por aqui.
@@ -496,32 +577,27 @@ public class Boss_MedusaMorgana : EnemyBase
             swingRoutine = null;
         }
 
-        if (markRoutine != null)
-        {
-            StopCoroutine(markRoutine);
-            markRoutine = null;
-        }
-
         ResetAnimatorTriggers();
         SetMoving(false);
         HideLasers();
+        HideBeam();
         CloseCastWindow();
+        SetCrystalGlow(false);
 
-        // Se cortan los bucles del ataque que se interrumpio: laser, borde, marca.
+        // Se cortan los bucles del ataque que se interrumpio: laser, borde, rayo.
         // El canal del casteo no se toca aqui, porque si se rompio lo usa el tambaleo.
         if (bossAudio != null)
         {
             bossAudio.StopLaser();
             bossAudio.StopArenaBorder();
-            bossAudio.StopMark();
+            bossAudio.StopMeteorBeam();
         }
 
-        if (anim != null) anim.CrossFadeInFixedTime(HashIdleState, 0.1f);
-
-        if (activeMarker != null) Destroy(activeMarker);
+        PlayIdle(0.1f);
 
         // Si se interrumpe Climax a medias, el borde de la arena tiene que irse con el.
         // Los enemigos ya invocados se quedan: el jugador los tiene que limpiar igual.
+        // Los meteoritos que ya estan cayendo tambien siguen: ya estaban en el aire.
         ClearBorderVfx();
 
         if (telegraph != null) telegraph.CancelAll();
@@ -596,10 +672,7 @@ public class Boss_MedusaMorgana : EnemyBase
 
         if (brokenVfx != null) brokenVfx.SetActive(true);
 
-        if (anim != null && !string.IsNullOrEmpty(castBreakTrigger))
-        {
-            anim.SetTrigger(Animator.StringToHash(castBreakTrigger));
-        }
+        if (!string.IsNullOrEmpty(castBreakTrigger)) Trigger(castBreakTrigger);
 
         yield return new WaitForSeconds(castBreakStunDuration);
 
@@ -614,13 +687,14 @@ public class Boss_MedusaMorgana : EnemyBase
         nextAttackTime = Time.time + pauseBetweenAttacks;
     }
 
-    // Ventana visible al terminar un ataque: el boss se queda quieto en Idle
+    // Ventana visible al terminar un ataque: el boss se queda quieto en reposo
     private IEnumerator Recover(float duration)
     {
         SetMoving(false);
         HideLasers();
+        HideBeam();
 
-        if (anim != null) anim.CrossFadeInFixedTime(HashIdleState, 0.15f);
+        PlayIdle(0.15f);
 
         yield return new WaitForSeconds(duration);
     }
@@ -631,7 +705,7 @@ public class Boss_MedusaMorgana : EnemyBase
     public IEnumerator PlayIntro()
     {
         SetMoving(false);
-        Trigger(HashScream);
+        Trigger(ParamScream);
 
         if (bossAudio != null) bossAudio.PlayIntroScream();
 
@@ -670,22 +744,23 @@ public class Boss_MedusaMorgana : EnemyBase
         if (!isDead) SetCinematic(false);
     }
 
-    // Grito de la fase 1, VFX que tapa el cambio, cambio de modelo y entrada de la fase 2
+    // Grito de la fase 1 (opcional), VFX que tapa el cambio, cambio de modelo y Scream de la fase 2 (70 frames)
     public IEnumerator PlayPhaseTwoTransition()
     {
         FaceTargetInstant();
         SetMoving(false);
 
         // Nada del ataque anterior debe seguir sonando durante la cinematica
-        if (bossAudio != null)
-        {
-            bossAudio.StopAllLoops();
-            bossAudio.PlayPhaseScream();
-        }
+        if (bossAudio != null) bossAudio.StopAllLoops();
 
-        Trigger(HashScream);
-        yield return new WaitForSeconds(FramesToSeconds(screamFrames));
-        if (isDead) yield break;
+        if (screamBeforeSwap)
+        {
+            if (bossAudio != null) bossAudio.PlayPhaseScream();
+
+            Trigger(ParamScream);
+            yield return new WaitForSeconds(FramesToSeconds(screamFrames));
+            if (isDead) yield break;
+        }
 
         if (transformVfx != null)
         {
@@ -700,13 +775,11 @@ public class Boss_MedusaMorgana : EnemyBase
 
         SwapToPhaseTwoModel();
 
+        // Un frame para que el Animator del modelo nuevo se inicialice antes del trigger
         yield return null;
         if (isDead) yield break;
 
-        if (anim != null && !string.IsNullOrEmpty(phaseTwoIntroTrigger))
-        {
-            anim.SetTrigger(Animator.StringToHash(phaseTwoIntroTrigger));
-        }
+        if (!string.IsNullOrEmpty(phaseTwoIntroTrigger)) Trigger(phaseTwoIntroTrigger);
 
         if (bossAudio != null)
         {
@@ -715,10 +788,14 @@ public class Boss_MedusaMorgana : EnemyBase
             if (playMusicFromBoss) bossAudio.StartPhaseTwoMusic();
         }
 
-        yield return new WaitForSeconds(phaseTwoIntroDuration);
+        yield return new WaitForSeconds(FramesToSeconds(phaseTwoScreamFrames));
         if (isDead) yield break;
 
         inPhaseTwo = true;
+
+        // El primer Climax no puede salir apenas termina el grito
+        nextClimaxAllowedAt = Time.time + pauseBetweenAttacks;
+
         Debug.Log("[Morgana] Fase 2 activa");
     }
 
@@ -762,7 +839,7 @@ public class Boss_MedusaMorgana : EnemyBase
 
     // ---------- MOVIMIENTO AL CENTRO ----------
 
-    // Vuelve al centro de la arena antes de cada ataque. Durante el ataque no se mueve.
+    // Vuelve al centro de la arena antes de Climax. Durante el ataque no se mueve.
     private IEnumerator MoveToCenter()
     {
         Vector3 target = ArenaCenterPos();
@@ -794,7 +871,7 @@ public class Boss_MedusaMorgana : EnemyBase
         currentAttackName = nameResonancia;
         Debug.Log("[Morgana] Resonancia");
 
-        Trigger(HashIncantation);
+        Trigger(ParamIncantation);
         if (bossAudio != null) bossAudio.PlayIncantation();
 
         // Gesto de espada: lineas finas que muestran hacia donde van los laseres.
@@ -933,7 +1010,7 @@ public class Boss_MedusaMorgana : EnemyBase
 
     private void LaunchSwing(bool isSword)
     {
-        Trigger(isSword ? HashAttackSword : HashAttackTail);
+        Trigger(isSword ? ParamAttackSword : ParamAttackTail);
 
         if (bossAudio != null) bossAudio.PlaySwing(isSword);
 
@@ -1016,91 +1093,41 @@ public class Boss_MedusaMorgana : EnemyBase
             || DistancePointToSegment(chest, a, b) <= weaponThickness + bodyRadius;
     }
 
-    // ---------- NOVA (FASE 2) ----------
-
-    // Casteo de 5 segundos desde el centro. Luego dano en toda la arena excepto el hueco seguro.
-    private IEnumerator Nova()
-    {
-        canInterrupt = true;
-        currentAttackName = nameNova;
-        Debug.Log("[Morgana] Nova");
-
-        Vector3 center = ArenaCenterPos();
-        center.y = transform.position.y;
-
-        Vector3 safeDir = (novaSafeTowardPlayer && HasValidPlayer()) ? FlatDirToPlayer() : RandomFlatDirection();
-        float half = novaSafeAngle * 0.5f;
-
-        FaceTargetInstant();
-        Trigger(HashIncantation);
-
-        if (bossAudio != null) bossAudio.PlayIncantation();
-
-        // Se dibuja la zona que hace dano: el circulo con el hueco seguro abierto
-        if (telegraph != null)
-        {
-            telegraph.StartTelegraph(
-                () => BossAttackTelegraph.Pie(center, safeDir, arenaRadius, half, 360f - novaSafeAngle),
-                novaChannelTime);
-        }
-
-        // Los 5 segundos de canalizacion son la mejor oportunidad del jugador:
-        // si le mete castBreakDamage aqui, la Nova entera se cancela
-        OpenCastWindow(novaChannelTime);
-
-        // Despues de OpenCastWindow: la Nova tiene su propia carga y reemplaza a la generica
-        if (bossAudio != null) bossAudio.StartNovaCharge();
-
-        yield return new WaitForSeconds(novaChannelTime);
-        CloseCastWindow();
-
-        if (telegraph != null) telegraph.OnHit();
-
-        // Corta el bucle de carga y suelta la detonacion
-        if (bossAudio != null) bossAudio.PlayNovaBlast();
-
-        if (HasValidPlayer())
-        {
-            Vector3 playerPos = player.transform.position;
-
-            bool inArena = FlatDistance(playerPos, center) <= arenaRadius;
-            bool inSafe = IsInsideWedge(playerPos, center, safeDir, half);
-
-            if (inArena && !inSafe)
-            {
-                Vector3 hitDir = playerPos - center;
-                hitDir.y = 0f;
-                DamagePlayer(novaDamage, hitDir.normalized);
-
-                if (bossAudio != null) bossAudio.PlayNovaHit(playerPos);
-            }
-        }
-
-        yield return Recover(recoveryNova);
-    }
-
     // ---------- CLIMAX SERPENTINUS (FASE 2) ----------
 
+    // Animacion 'Invocation' (80 frames). El cristal de la espada brilla toda la invocacion.
+    // 0 -> climaxReleaseFrame: canaliza (se puede romper).
+    // climaxReleaseFrame: desata la energia, el borde de la arena se ilumina X segundos (aviso).
+    // Tras el aviso: el borde quema (DoT) e invoca Y enemigos.
     private IEnumerator ClimaxSerpentinus()
     {
         // Interrumpible: si el jugador llena la barra de stagger, el ataque se corta.
         // Si no fuera asi, la barra subiria durante 30 segundos sin que pase nada.
         canInterrupt = true;
         currentAttackName = nameClimax;
+        nextClimaxAllowedAt = Time.time + climaxCooldown;
         Debug.Log("[Morgana] Climax Serpentinus");
 
-        FaceTargetInstant();
-        Trigger(HashIncantation);
+        float attackStart = Time.time;
+        float animEnd = attackStart + FramesToSeconds(climaxFrames);
+        float release = FramesToSeconds(Mathf.Clamp(climaxReleaseFrame, 0, climaxFrames));
 
-        if (bossAudio != null) bossAudio.PlayIncantation();
+        FaceTargetInstant();
+        Trigger(ParamInvocation);
+        SetCrystalGlow(true);
+
+        if (bossAudio != null)
+        {
+            bossAudio.PlayIncantation();
+            bossAudio.PlayCrystalGlow();
+        }
 
         // Durante la canalizacion el jugador puede negar el ataque entero
-        OpenCastWindow(climaxChannelTime);
-        yield return new WaitForSeconds(climaxChannelTime);
+        OpenCastWindow(release);
+        yield return new WaitForSeconds(release);
         CloseCastWindow();
 
-        Trigger(HashScream);
-
+        // Desata la energia alrededor de todo el escenario
         if (bossAudio != null)
         {
             bossAudio.PlayClimaxScream();
@@ -1112,20 +1139,35 @@ public class Boss_MedusaMorgana : EnemyBase
             activeBorderVfx = Instantiate(arenaBorderVfx, ArenaCenterPos(), Quaternion.identity);
         }
 
-        yield return new WaitForSeconds(borderWarningTime);
+        // X segundos de aviso: el borde brilla pero todavia no quema
+        yield return WaitWhileGlowing(borderWarningTime, animEnd);
 
         bool usingWaves = StartClimaxSummon();
 
         if (bossAudio != null) bossAudio.PlayWaveSummon();
 
-        float maxDuration = Mathf.Max(0f, climaxDuration - climaxChannelTime - borderWarningTime);
-        yield return ClimaxActivePhase(maxDuration, usingWaves);
+        float elapsed = Time.time - attackStart;
+        float maxDuration = Mathf.Max(0f, climaxDuration - elapsed);
+        yield return ClimaxActivePhase(maxDuration, usingWaves, animEnd);
 
+        SetCrystalGlow(false);
         ClearBorderVfx();
 
         if (bossAudio != null) bossAudio.StopArenaBorder();
 
         yield return Recover(recoveryClimax);
+    }
+
+    // Espera 'duration' segundos y apaga el cristal cuando termina la animacion
+    private IEnumerator WaitWhileGlowing(float duration, float animEnd)
+    {
+        float end = Time.time + duration;
+
+        while (Time.time < end)
+        {
+            if (Time.time >= animEnd) SetCrystalGlow(false);
+            yield return null;
+        }
     }
 
     // Lanza las oleadas si hay WaveManager. Si no, cae a la invocacion simple de golems.
@@ -1148,13 +1190,15 @@ public class Boss_MedusaMorgana : EnemyBase
 
     // El borde de la arena hace dano mientras dura el ataque.
     // Con oleadas, el ataque termina antes si el jugador las limpia.
-    private IEnumerator ClimaxActivePhase(float maxDuration, bool usingWaves)
+    private IEnumerator ClimaxActivePhase(float maxDuration, bool usingWaves, float animEnd)
     {
         float timer = 0f;
         float nextTickAt = 0f;
 
         while (timer < maxDuration)
         {
+            if (Time.time >= animEnd) SetCrystalGlow(false);
+
             if (usingWaves && climaxEndsWhenWavesCleared && climaxWaves != null && climaxWaves.AllCleared)
             {
                 Debug.Log("[Morgana] Oleadas limpiadas, Climax termina antes de tiempo");
@@ -1193,6 +1237,14 @@ public class Boss_MedusaMorgana : EnemyBase
         activeBorderVfx = null;
     }
 
+    private void SetCrystalGlow(bool on)
+    {
+        if (climaxCrystalGlow != null && climaxCrystalGlow.activeSelf != on)
+        {
+            climaxCrystalGlow.SetActive(on);
+        }
+    }
+
     // Respaldo cuando no hay WaveManager: suelta los golems de una sola tanda
     private void SummonGolems()
     {
@@ -1220,104 +1272,265 @@ public class Boss_MedusaMorgana : EnemyBase
         }
     }
 
-    // ---------- DISONANCIA (FASE 2) ----------
+    // ---------- METEOR BEAM (FASE 2) ----------
 
-    private IEnumerator Disonancia()
+    // Animacion 'MeteorBeam' (70 frames). Grito desgarrador y un rayo en trayectoria fija.
+    // 0 -> lockFrame: gira hacia el jugador. lockFrame -> fireStart: la trayectoria ya no se mueve,
+    // el aviso queda fijo en el suelo y el jugador tiene tiempo de salir. fireStart -> fireEnd: rayo.
+    private IEnumerator MeteorBeam()
     {
-        // Interrumpible, igual que Climax: la barra de stagger tiene que servir para algo
         canInterrupt = true;
-        currentAttackName = nameDisonancia;
-        Debug.Log("[Morgana] Disonancia");
+        currentAttackName = nameMeteorBeam;
+        Debug.Log("[Morgana] Meteor Beam");
 
-        Trigger(HashIncantation);
-        if (bossAudio != null) bossAudio.PlayIncantation();
+        float lockTime = FramesToSeconds(meteorBeamLockFrame);
+        float fireStart = FramesToSeconds(meteorBeamFireStartFrame);
+        float fireEnd = Mathf.Max(fireStart, FramesToSeconds(meteorBeamFireEndFrame));
+        float animLength = FramesToSeconds(meteorBeamFrames);
 
-        // Apunta con laseres finos hacia el jugador. Se puede romper durante el apuntado.
-        OpenCastWindow(disonanciaAimTime);
-        yield return LaserRoutine(disonanciaAimTime, false, LaserCount, disonanciaTrackSpeed);
-        CloseCastWindow();
+        FaceTargetInstant();
+        beamDir = FlatForward();
 
-        if (!HasValidPlayer())
-        {
-            HideLasers();
-            yield break;
-        }
+        Trigger(ParamMeteorBeam);
+        if (bossAudio != null) bossAudio.PlayMeteorBeamScream();
 
-        if (markVfx != null)
-        {
-            activeMarker = Instantiate(markVfx, player.transform.position, Quaternion.identity);
-        }
-
-        markedPosition = player.transform.position;
-
-        if (bossAudio != null) bossAudio.PlayMarkPlaced(markedPosition);
-
-        // El marcador y los laseres siguen al jugador durante la marca
-        markRoutine = StartCoroutine(MarkFollowRoutine(markDuration));
-        yield return LaserRoutine(markDuration, true, LaserCount, disonanciaTrackSpeed);
-
-        if (markRoutine != null)
-        {
-            StopCoroutine(markRoutine);
-            markRoutine = null;
-        }
-
-        if (activeMarker != null) Destroy(activeMarker);
-
-        if (bossAudio != null) bossAudio.StopMark();
-
-        // El haz cae donde estaba el jugador al terminar la marca
-        Vector3 beamPos = markedPosition;
-
+        // La franja del suelo sigue al boss mientras apunta y se congela al fijar la trayectoria
         if (telegraph != null)
         {
-            telegraph.StartTelegraph(() => BossAttackTelegraph.Circle(beamPos, beamRadius), beamDelay);
+            telegraph.StartTelegraph(
+                () => BossAttackTelegraph.Rect(FlatPos(transform.position), beamDir, 0f, meteorBeamWidth, meteorBeamLength),
+                fireStart);
         }
 
-        if (bossAudio != null) bossAudio.PlayBeamWarning(beamPos);
+        OpenCastWindow(fireStart);
 
-        if (beamWarningVfx != null)
-        {
-            GameObject warning = Instantiate(beamWarningVfx, beamPos, Quaternion.identity);
-            Destroy(warning, beamDelay);
-        }
+        // Despues de OpenCastWindow: el rayo tiene su propia carga y reemplaza a la generica
+        if (bossAudio != null) bossAudio.StartMeteorBeamCharge();
 
-        yield return new WaitForSeconds(beamDelay);
-
-        if (beamVfx != null)
-        {
-            GameObject beam = Instantiate(beamVfx, beamPos, Quaternion.identity);
-            Destroy(beam, 0.5f);
-        }
-
-        if (telegraph != null) telegraph.OnHit();
-
-        if (bossAudio != null) bossAudio.PlayBeamImpact(beamPos);
-
-        DamagePlayerWithin(beamPos, beamRadius, disonanciaDamage, Vector3.up);
-
-        yield return Recover(recoveryDisonancia);
-    }
-
-    private IEnumerator MarkFollowRoutine(float duration)
-    {
         float t = 0f;
 
-        while (t < duration)
+        while (t < fireStart)
         {
-            if (HasValidPlayer())
+            if (t < lockTime)
             {
-                markedPosition = player.transform.position;
-            }
-
-            if (activeMarker != null)
-            {
-                activeMarker.transform.position = markedPosition + Vector3.up * 0.1f;
+                FaceTargetAtSpeed(meteorBeamAimTurnSpeed);
+                beamDir = FlatForward();
             }
 
             t += Time.deltaTime;
             yield return null;
         }
+
+        CloseCastWindow();
+
+        if (telegraph != null) telegraph.OnHit();
+        if (bossAudio != null) bossAudio.StartMeteorBeamFire();
+
+        Vector3 groundStart = FlatPos(transform.position);
+        float nextTickAt = 0f;
+
+        while (t < fireEnd)
+        {
+            float length = BeamLengthClipped(groundStart);
+            Vector3 visualStart = BeamOriginPos();
+            Vector3 visualEnd = groundStart + beamDir * length + Vector3.up * 1f;
+
+            DrawBeam(visualStart, visualEnd, length);
+
+            if (Time.time >= nextTickAt && HasValidPlayer() && PlayerInBeam(groundStart, length))
+            {
+                nextTickAt = Time.time + meteorBeamTickInterval;
+                DamagePlayer(meteorBeamDamagePerTick, beamDir);
+
+                if (bossAudio != null) bossAudio.PlayMeteorBeamHit(PlayerChestPos());
+            }
+
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        HideBeam();
+        if (bossAudio != null) bossAudio.StopMeteorBeam();
+
+        // Deja terminar la animacion antes de la ventana de recuperacion
+        if (t < animLength) yield return new WaitForSeconds(animLength - t);
+
+        yield return Recover(recoveryMeteorBeam);
+    }
+
+    private Vector3 BeamOriginPos()
+    {
+        if (meteorBeamOrigin != null) return meteorBeamOrigin.position;
+
+        return transform.position + Vector3.up * meteorBeamOriginHeight + beamDir * 0.5f;
+    }
+
+    // Largo real del rayo: se corta si choca con una pared
+    private float BeamLengthClipped(Vector3 groundStart)
+    {
+        Vector3 rayStart = groundStart + Vector3.up * 1f;
+
+        if (laserObstacles.value != 0 &&
+            Physics.Raycast(rayStart, beamDir, out RaycastHit hit, meteorBeamLength, laserObstacles, QueryTriggerInteraction.Ignore))
+        {
+            return hit.distance;
+        }
+
+        return meteorBeamLength;
+    }
+
+    // La franja de dano va por el suelo, como el aviso: si el jugador la pisa, le pega
+    private bool PlayerInBeam(Vector3 groundStart, float length)
+    {
+        Vector3 p = FlatPos(player.transform.position);
+        Vector3 a = groundStart;
+        Vector3 b = groundStart + beamDir * length;
+
+        // Si salta muy alto por encima del rayo, se salva
+        float height = player.transform.position.y - transform.position.y;
+        if (height > 3f) return false;
+
+        return DistancePointToSegment(p, a, b) <= meteorBeamWidth * 0.5f + bodyRadius;
+    }
+
+    private void DrawBeam(Vector3 start, Vector3 end, float length)
+    {
+        if (meteorBeamVfx != null)
+        {
+            if (activeBeamVfx == null)
+            {
+                activeBeamVfx = Instantiate(meteorBeamVfx, start, Quaternion.identity);
+            }
+
+            Vector3 dir = end - start;
+            activeBeamVfx.transform.position = start;
+            if (dir.sqrMagnitude > 0.0001f) activeBeamVfx.transform.rotation = Quaternion.LookRotation(dir.normalized);
+
+            Vector3 s = activeBeamVfx.transform.localScale;
+            activeBeamVfx.transform.localScale = new Vector3(s.x, s.y, dir.magnitude);
+            return;
+        }
+
+        EnsureBeamLine();
+
+        beamLine.enabled = true;
+        beamLine.SetPosition(0, start);
+        beamLine.SetPosition(1, end);
+        beamLine.startWidth = meteorBeamVisualWidth;
+        beamLine.endWidth = meteorBeamVisualWidth;
+        beamLine.startColor = meteorBeamColor;
+        beamLine.endColor = meteorBeamColor;
+    }
+
+    private void EnsureBeamLine()
+    {
+        if (beamLine != null) return;
+
+        GameObject go = new GameObject("MeteorBeam_Line");
+        go.transform.SetParent(transform, false);
+
+        beamLine = go.AddComponent<LineRenderer>();
+        beamLine.useWorldSpace = true;
+        beamLine.positionCount = 2;
+        beamLine.material = laserMaterial != null ? laserMaterial : new Material(Shader.Find("Sprites/Default"));
+        beamLine.enabled = false;
+    }
+
+    private void HideBeam()
+    {
+        if (beamLine != null) beamLine.enabled = false;
+
+        if (activeBeamVfx != null)
+        {
+            Destroy(activeBeamVfx);
+            activeBeamVfx = null;
+        }
+    }
+
+    // ---------- METEOR SHOWER (FASE 2) ----------
+
+    // Animacion 'MeteorShower' (70 frames). Hasta meteorShowerCastFrame se puede romper el casteo.
+    // Despues invoca la lluvia: cada meteorito marca el suelo, cae y hace dano en area.
+    private IEnumerator MeteorShower()
+    {
+        canInterrupt = true;
+        currentAttackName = nameMeteorShower;
+        Debug.Log("[Morgana] Meteor Shower");
+
+        FaceTargetInstant();
+        Trigger(ParamMeteorShower);
+
+        if (bossAudio != null) bossAudio.PlayMeteorShowerCast();
+
+        float cast = FramesToSeconds(Mathf.Clamp(meteorShowerCastFrame, 0, meteorShowerFrames));
+        float animLength = FramesToSeconds(meteorShowerFrames);
+
+        OpenCastWindow(cast);
+        yield return new WaitForSeconds(cast);
+        CloseCastWindow();
+
+        int count = Mathf.Max(1, meteorCount);
+        float interval = count > 1 ? meteorSpawnDuration / (count - 1) : 0f;
+        float spent = 0f;
+
+        for (int i = 0; i < count; i++)
+        {
+            if (!HasValidPlayer()) break;
+
+            LaunchMeteor(PickMeteorTarget());
+
+            if (i < count - 1 && interval > 0f)
+            {
+                yield return new WaitForSeconds(interval);
+                spent += interval;
+            }
+        }
+
+        // Espera a que caiga el ultimo meteorito y a que termine la animacion
+        float animLeft = Mathf.Max(0f, animLength - cast - spent);
+        float fall = meteor != null ? meteor.fallTime : 0f;
+        yield return new WaitForSeconds(Mathf.Max(fall, animLeft));
+
+        yield return Recover(recoveryMeteorShower);
+    }
+
+    private void LaunchMeteor(Vector3 target)
+    {
+        BossAudio audioRef = bossAudio;
+
+        BossMeteor.Launch(
+            target,
+            meteor,
+            player != null ? player.transform : null,
+            pos => { if (audioRef != null) audioRef.PlayMeteorFall(pos); },
+            pos => { if (audioRef != null) audioRef.PlayMeteorImpact(pos); });
+    }
+
+    private Vector3 PickMeteorTarget()
+    {
+        Vector3 playerPos = player.transform.position;
+
+        if (Random.value < meteorAimAtPlayerChance)
+        {
+            return playerPos;
+        }
+
+        Vector3 center = meteorAreaCenter == MeteorAreaCenter.Player ? playerPos : transform.position;
+        Vector2 r = Random.insideUnitCircle * meteorAreaRadius;
+        Vector3 target = new Vector3(center.x + r.x, playerPos.y, center.z + r.y);
+
+        // No deja caer meteoritos fuera de la arena
+        Vector3 arena = ArenaCenterPos();
+        Vector3 fromArena = FlatPos(target) - FlatPos(arena);
+        float limit = Mathf.Max(0.5f, arenaRadius - 0.5f);
+
+        if (fromArena.magnitude > limit)
+        {
+            Vector3 clamped = FlatPos(arena) + fromArena.normalized * limit;
+            target = new Vector3(clamped.x, playerPos.y, clamped.z);
+        }
+
+        return target;
     }
 
     // ---------- LASERES Y LINEAS ----------
@@ -1411,39 +1624,77 @@ public class Boss_MedusaMorgana : EnemyBase
         damageable.TakeDamage(in info);
     }
 
-    private void DamagePlayerWithin(Vector3 center, float radius, float amount, Vector3 hitDir)
-    {
-        if (!HasValidPlayer()) return;
-
-        if (FlatDistance(player.transform.position, center) <= radius)
-        {
-            DamagePlayer(amount, hitDir);
-        }
-    }
-
     // ---------- ANIMATOR ----------
+
+    // Fase 1 y fase 2 tienen controllers distintos. Solo se mandan parametros que existen
+    // en el Animator actual; si falta uno se avisa una sola vez en consola.
+    private bool HasParam(string paramName)
+    {
+        if (anim == null || anim.runtimeAnimatorController == null) return false;
+
+        if (animParamsOwner != anim || animParams.Count == 0)
+        {
+            animParams.Clear();
+
+            foreach (AnimatorControllerParameter p in anim.parameters)
+            {
+                animParams.Add(p.nameHash);
+            }
+
+            // Si el Animator aun no estaba listo la lista sale vacia: se vuelve a leer la proxima vez
+            animParamsOwner = animParams.Count > 0 ? anim : null;
+        }
+
+        return animParams.Contains(Animator.StringToHash(paramName));
+    }
 
     private void SetMoving(bool value)
     {
-        if (anim != null) anim.SetBool(HashIsMoving, value);
+        if (HasParam(ParamIsMoving)) anim.SetBool(ParamIsMoving, value);
 
         // El bucle de pasos no se reinicia aunque esto se llame en cada frame
         if (bossAudio != null) bossAudio.SetSteps(value);
     }
 
-    private void Trigger(int hash)
+    private void Trigger(string paramName)
     {
-        if (anim != null) anim.SetTrigger(hash);
+        if (anim == null) return;
+
+        if (HasParam(paramName))
+        {
+            anim.SetTrigger(paramName);
+            return;
+        }
+
+        string key = anim.GetInstanceID() + ":" + paramName;
+
+        if (warnedParams.Add(key))
+        {
+            Debug.LogWarning("[Morgana] El Animator '" + anim.name + "' no tiene el trigger '" + paramName + "'. Revisa su controller.");
+        }
     }
 
     private void ResetAnimatorTriggers()
     {
         if (anim == null) return;
 
-        anim.ResetTrigger(HashIncantation);
-        anim.ResetTrigger(HashAttackSword);
-        anim.ResetTrigger(HashAttackTail);
-        anim.ResetTrigger(HashScream);
+        foreach (string trigger in AllTriggers)
+        {
+            if (HasParam(trigger)) anim.ResetTrigger(trigger);
+        }
+    }
+
+    // Los controllers de Morgana llaman 'Iddle' al estado de reposo. Si no existe, no hace nada
+    private void PlayIdle(float fade)
+    {
+        if (anim == null || !anim.isActiveAndEnabled || anim.runtimeAnimatorController == null) return;
+
+        int hash = Animator.StringToHash(idleStateName);
+
+        if (anim.HasState(0, hash))
+        {
+            anim.CrossFadeInFixedTime(hash, fade);
+        }
     }
 
     private float FramesToSeconds(int frames)
@@ -1456,6 +1707,20 @@ public class Boss_MedusaMorgana : EnemyBase
     private Vector3 ArenaCenterPos()
     {
         return arenaCenter != null ? arenaCenter.position : transform.position;
+    }
+
+    private static Vector3 FlatPos(Vector3 p)
+    {
+        p.y = 0f;
+        return p;
+    }
+
+    private Vector3 FlatForward()
+    {
+        Vector3 f = transform.forward;
+        f.y = 0f;
+
+        return f.sqrMagnitude > 0.0001f ? f.normalized : Vector3.forward;
     }
 
     private static float FlatDistance(Vector3 a, Vector3 b)
@@ -1473,27 +1738,6 @@ public class Boss_MedusaMorgana : EnemyBase
         float t = lengthSq > 0.0001f ? Mathf.Clamp01(Vector3.Dot(p - a, ab) / lengthSq) : 0f;
 
         return Vector3.Distance(p, a + ab * t);
-    }
-
-    // Verdadero si el punto esta dentro del sector de 'halfAngle' grados a cada lado de wedgeDir
-    private static bool IsInsideWedge(Vector3 p, Vector3 center, Vector3 wedgeDir, float halfAngle)
-    {
-        Vector3 flat = p - center;
-        flat.y = 0f;
-
-        if (flat.sqrMagnitude < 0.0001f) return true;
-
-        wedgeDir.y = 0f;
-        return Vector3.Angle(wedgeDir, flat) <= halfAngle;
-    }
-
-    private static Vector3 RandomFlatDirection()
-    {
-        Vector2 r = Random.insideUnitCircle;
-        if (r.sqrMagnitude < 0.0001f) r = Vector2.up;
-
-        Vector2 n = r.normalized;
-        return new Vector3(n.x, 0f, n.y);
     }
 
     private Vector3 FlatDirToPlayer()
@@ -1592,9 +1836,20 @@ public class Boss_MedusaMorgana : EnemyBase
         Gizmos.color = gizmoBorderColor;
         Gizmos.DrawWireSphere(center, arenaRadius - borderWidth);
 
-        // Hueco seguro de Nova (vista de referencia, direccion frontal)
-        float half = novaSafeAngle * 0.5f;
-        DrawPolyline(BossAttackTelegraph.Pie(center, transform.forward, arenaRadius, half, 360f - novaSafeAngle), gizmoArenaColor);
+        // Franja del Meteor Beam hacia el frente del boss
+        DrawPolyline(BossAttackTelegraph.Rect(transform.position, transform.forward, 0f, meteorBeamWidth, meteorBeamLength), gizmoBeamColor);
+
+        if (meteorBeamOrigin != null)
+        {
+            Gizmos.color = gizmoBeamColor;
+            Gizmos.DrawSphere(meteorBeamOrigin.position, 0.15f);
+        }
+
+        // Area de la lluvia de meteoritos (vista desde el boss)
+        if (meteorAreaCenter == MeteorAreaCenter.Boss)
+        {
+            DrawPolyline(BossAttackTelegraph.Circle(transform.position, meteorAreaRadius), gizmoMeteorColor);
+        }
 
         // Puntas de arma: las estelas salen de aqui
         if (swordTip != null)

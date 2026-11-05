@@ -62,13 +62,13 @@ public class BossSound
 public class BossAudio : MonoBehaviour
 {
     // Canales de bucle. Cada uno tiene su propio AudioSource, asi dos bucles distintos
-    // pueden sonar a la vez sin cortarse (por ejemplo la marca y los laseres de Disonancia).
+    // pueden sonar a la vez sin cortarse (por ejemplo el borde de la arena y el Meteor Beam).
     public enum Loop
     {
         Cast = 0,    // carga de un casteo, y tambien el tambaleo al romperse
-        Laser = 1,   // laseres de Resonancia y Disonancia
+        Laser = 1,   // laseres de Resonancia
         Arena = 2,   // borde de la arena en Climax
-        Mark = 3,    // marca de Disonancia sobre el jugador
+        Beam = 3,    // rayo del Meteor Beam mientras dispara
         Steps = 4    // pasos mientras camina al centro
     }
 
@@ -154,29 +154,31 @@ public class BossAudio : MonoBehaviour
     [SerializeField] private BossSound tailWave;
     [SerializeField] private BossSound meleeHit;           // conecta el barrido
 
-    // ---------- NOVA ----------
-
-    [Header("Nova")]
-    [SerializeField] private BossSound novaChargeLoop;     // los 5 segundos de canalizacion
-    [SerializeField] private BossSound novaBlast;          // detona
-    [SerializeField] private BossSound novaHit;            // alcanza al jugador
-
     // ---------- CLIMAX ----------
 
     [Header("Climax Serpentinus")]
-    [SerializeField] private BossSound climaxScream;
+    [SerializeField] private BossSound crystalGlow;        // el cristal de la espada se enciende al invocar
+    [SerializeField] private BossSound climaxScream;       // desata la energia sobre el escenario
     [SerializeField] private BossSound arenaBorderStart;   // aparece el borde
     [SerializeField] private BossSound arenaBorderLoop;    // zumbido del borde mientras dura
     [SerializeField] private BossSound borderTick;         // el borde quema al jugador
     [SerializeField] private BossSound waveSummon;         // aparecen las oleadas
 
-    // ---------- DISONANCIA ----------
+    // ---------- METEOR BEAM ----------
 
-    [Header("Disonancia")]
-    [SerializeField] private BossSound markPlaced;         // cae la marca sobre el jugador
-    [SerializeField] private BossSound markLoop;           // mientras la marca sigue encima
-    [SerializeField] private BossSound beamWarning;        // aviso antes del haz
-    [SerializeField] private BossSound beamImpact;         // cae el haz
+    [Header("Meteor Beam")]
+    [SerializeField] private BossSound meteorBeamScream;   // grito desgarrador al empezar
+    [SerializeField] private BossSound meteorBeamCharge;   // bucle mientras apunta (canal Cast)
+    [SerializeField] private BossSound meteorBeamFire;     // golpe seco cuando sale el rayo
+    [SerializeField] private BossSound meteorBeamLoop;     // bucle mientras el rayo dispara
+    [SerializeField] private BossSound meteorBeamHit;      // el rayo quema al jugador
+
+    // ---------- METEOR SHOWER ----------
+
+    [Header("Meteor Shower")]
+    [SerializeField] private BossSound meteorShowerCast;   // voz/hechizo al invocar la lluvia
+    [SerializeField] private BossSound meteorFall;         // silbido de cada meteorito que cae
+    [SerializeField] private BossSound meteorImpact;       // cada meteorito toca el suelo
 
     // ---------- DANO Y MUERTE ----------
 
@@ -491,12 +493,8 @@ public class BossAudio : MonoBehaviour
     public void PlayWaveLaunch(bool isSword) { PlaySfx(isSword ? swordWave : tailWave); }
     public void PlayMeleeHit(Vector3 at) { PlaySfxAt(meleeHit, at); }
 
-    // Nova
-    public void StartNovaCharge() { StartLoop(Loop.Cast, novaChargeLoop); }
-    public void PlayNovaBlast() { StopLoop(Loop.Cast); PlaySfx(novaBlast); }
-    public void PlayNovaHit(Vector3 at) { PlaySfxAt(novaHit, at); }
-
     // Climax
+    public void PlayCrystalGlow() { PlaySfx(crystalGlow); }
     public void PlayClimaxScream() { PlayVoice(climaxScream); }
 
     public void StartArenaBorder()
@@ -509,16 +507,26 @@ public class BossAudio : MonoBehaviour
     public void PlayBorderTick(Vector3 at) { PlaySfxAt(borderTick, at); }
     public void PlayWaveSummon() { PlaySfx(waveSummon); }
 
-    // Disonancia
-    public void PlayMarkPlaced(Vector3 at)
+    // Meteor Beam
+    public void PlayMeteorBeamScream() { PlayVoice(meteorBeamScream); }
+
+    // Reemplaza la carga generica del casteo (mismo canal), igual que hacia la Nova
+    public void StartMeteorBeamCharge() { StartLoop(Loop.Cast, meteorBeamCharge); }
+
+    public void StartMeteorBeamFire()
     {
-        PlaySfxAt(markPlaced, at);
-        StartLoop(Loop.Mark, markLoop);
+        StopLoop(Loop.Cast);
+        PlaySfx(meteorBeamFire);
+        StartLoop(Loop.Beam, meteorBeamLoop);
     }
 
-    public void StopMark() { StopLoop(Loop.Mark); }
-    public void PlayBeamWarning(Vector3 at) { PlaySfxAt(beamWarning, at); }
-    public void PlayBeamImpact(Vector3 at) { PlaySfxAt(beamImpact, at); }
+    public void StopMeteorBeam() { StopLoop(Loop.Beam); }
+    public void PlayMeteorBeamHit(Vector3 at) { PlaySfxAt(meteorBeamHit, at); }
+
+    // Meteor Shower
+    public void PlayMeteorShowerCast() { PlayVoice(meteorShowerCast); }
+    public void PlayMeteorFall(Vector3 at) { PlaySfxAt(meteorFall, at); }
+    public void PlayMeteorImpact(Vector3 at) { PlaySfxAt(meteorImpact, at); }
 
     // Dano, stagger y muerte
     public void PlayHurt() { PlayVoice(hurtVoice); }
@@ -625,18 +633,20 @@ public class BossAudio : MonoBehaviour
         Check(swordWave, "swordWave", missing);
         Check(tailWave, "tailWave", missing);
         Check(meleeHit, "meleeHit", missing);
-        Check(novaChargeLoop, "novaChargeLoop", missing);
-        Check(novaBlast, "novaBlast", missing);
-        Check(novaHit, "novaHit", missing);
+        Check(crystalGlow, "crystalGlow", missing);
         Check(climaxScream, "climaxScream", missing);
         Check(arenaBorderStart, "arenaBorderStart", missing);
         Check(arenaBorderLoop, "arenaBorderLoop", missing);
         Check(borderTick, "borderTick", missing);
         Check(waveSummon, "waveSummon", missing);
-        Check(markPlaced, "markPlaced", missing);
-        Check(markLoop, "markLoop", missing);
-        Check(beamWarning, "beamWarning", missing);
-        Check(beamImpact, "beamImpact", missing);
+        Check(meteorBeamScream, "meteorBeamScream", missing);
+        Check(meteorBeamCharge, "meteorBeamCharge", missing);
+        Check(meteorBeamFire, "meteorBeamFire", missing);
+        Check(meteorBeamLoop, "meteorBeamLoop", missing);
+        Check(meteorBeamHit, "meteorBeamHit", missing);
+        Check(meteorShowerCast, "meteorShowerCast", missing);
+        Check(meteorFall, "meteorFall", missing);
+        Check(meteorImpact, "meteorImpact", missing);
         Check(hurtVoice, "hurtVoice", missing);
         Check(staggerStart, "staggerStart", missing);
         Check(staggerEnd, "staggerEnd", missing);
@@ -658,4 +668,4 @@ public class BossAudio : MonoBehaviour
     {
         if (sound == null || !sound.HasClip) missing.Add(name);
     }
-}
+}
