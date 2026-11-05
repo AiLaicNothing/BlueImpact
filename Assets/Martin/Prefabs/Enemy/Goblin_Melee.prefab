@@ -288,6 +288,7 @@ MonoBehaviour:
   knockDownRecoverDelay: 0.15
   airGravityMultiplier: 0.2
   airHangDuration: 0.75
+  staggeredDamageMultiplier: 1.5
   revengeThreshold: 3
   revengeDecayDelay: 2
   safeZone: {fileID: 0}
@@ -781,13 +782,48 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4c7f97d8654302d4c92368c7aaa40f80, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1424753076393521080}
   m_SourcePrefab: {fileID: 100100000, guid: 4c7f97d8654302d4c92368c7aaa40f80, type: 3}
 --- !u!4 &5164310106646036330 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 4c7f97d8654302d4c92368c7aaa40f80, type: 3}
   m_PrefabInstance: {fileID: 4621231786551531649}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &5539568290733024720 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 4c7f97d8654302d4c92368c7aaa40f80, type: 3}
+  m_PrefabInstance: {fileID: 4621231786551531649}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1424753076393521080
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5539568290733024720}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ff9170c30794624b8da6d9d7efd7d77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimationHelper
+  doHit:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 9046128643789037033}
+        m_TargetAssemblyTypeName: Goblin_Melee, Assembly-CSharp
+        m_MethodName: DoHit
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1001 &5153294686632081458
 PrefabInstance:
   m_ObjectHideFlags: 0

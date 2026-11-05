@@ -24,7 +24,6 @@ public class Undead : EnemyBase
     [Header("Consecutive Cuts")]
     [SerializeField] private float consecutiveCutsChargeTime = 1f; //Duration of charging the attack
     [SerializeField] private float consecutiveCutsDuration = 2.5f; //How long last the attack
-    [SerializeField] private float consecutiveCutsHitInterval = 0.4f; //Every x secs do damage
     [SerializeField] private float consecutiveCutsMoveSpeed = 6f; // how fast it move
     [SerializeField] private float consecutiveCutsCooldown = 8f; // CD for him not spamming it
     [SerializeField] private float specialRecoveryTime;
@@ -338,7 +337,7 @@ public class Undead : EnemyBase
         }
 
         FaceTargetInstant();
-        DoHit();
+        //DoHit();
 
         float remainingTime = attackAnimDuration - hitTime;
         if (remainingTime > 0f)
@@ -375,6 +374,8 @@ public class Undead : EnemyBase
 
         canUseConsecutiveCuts = false;
         isPerformingAction = true;
+
+        PlayAnim("Take 001");
 
         if (agent != null)
         {
@@ -426,7 +427,7 @@ public class Undead : EnemyBase
 
         // Move phase: go straight forward without tracking the player.
         float moveTimer = consecutiveCutsDuration;
-        float hitTimer = 0f;
+        //float hitTimer = 0f;
 
         while (moveTimer > 0f)
         {
@@ -442,12 +443,12 @@ public class Undead : EnemyBase
                 transform.position += consecutiveCutsForward * consecutiveCutsMoveSpeed * Time.deltaTime;
             }
 
-            hitTimer += Time.deltaTime;
-            if (hitTimer >= consecutiveCutsHitInterval)
-            {
-                DoHit();
-                hitTimer = 0f;
-            }
+            //hitTimer += Time.deltaTime;
+            //if (hitTimer >= consecutiveCutsHitInterval)
+            //{
+            //    DoHit();
+            //    hitTimer = 0f;
+            //}
 
             moveTimer -= Time.deltaTime;
             yield return null;
@@ -474,7 +475,7 @@ public class Undead : EnemyBase
         canUseConsecutiveCuts = true;
     }
 
-    private void DoHit()
+    public void DoHit()
     {
         Vector3 attackForward = transform.forward;
         attackForward.y = 0f;

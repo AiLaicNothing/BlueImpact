@@ -261,7 +261,7 @@ public class Goblin_Melee : EnemyBase
         yield return new WaitForSeconds(hitTime);
 
         FaceTargetInstant();
-        DoHit();
+        //DoHit();
 
         float remaining = attackAnimDuration - hitTime;
         if (remaining > 0f)
@@ -288,7 +288,7 @@ public class Goblin_Melee : EnemyBase
         actionTimer = 0f;
     }
 
-    private void DoHit()
+    public void DoHit()
     {
         Vector3 attackForward = GetAttackForward();
         Vector3 center = transform.position + attackForward * hitBoxPos.z + Vector3.up * hitBoxPos.y;
