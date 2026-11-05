@@ -287,6 +287,16 @@ public class BossEvent : MonoBehaviour
         yield return new WaitForSeconds(barrierWait);
     }
 
+    // Destruye a los enemigos que invoco el boss y los meteoritos que siguen cayendo,
+    // y deja las oleadas listas para el proximo intento
+    private void ClearBossLeftovers()
+    {
+        if (climaxWaveManager != null) climaxWaveManager.ClearWaves();
+        if (bossSummonSpawner != null) bossSummonSpawner.DespawnAll();
+
+        BossMeteor.ClearAll();
+    }
+
     public void ResetEvent()
     {
         if (!hasStarted || eventComplete) return;
@@ -312,6 +322,9 @@ public class BossEvent : MonoBehaviour
 
         boss = null;
 
+        // Lo que Morgana dejo en la sala (invocados de Climax, meteoritos) se va con ella
+        ClearBossLeftovers();
+
         if (doorTransform != null && openPos != null)
         {
             doorTransform.position = openPos.position;
@@ -330,6 +343,9 @@ public class BossEvent : MonoBehaviour
     {
         // A partir de aqui ya no se debe poder resetear el evento
         eventComplete = true;
+
+        // Si muere en pleno Climax, sus invocados no deben atacar durante el final
+        ClearBossLeftovers();
 
         if (bossHud != null)
         {
@@ -407,4 +423,4 @@ public class BossEvent : MonoBehaviour
 
         StartBossEvent();
     }
-}
+}

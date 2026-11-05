@@ -324,6 +324,21 @@ public class Boss_MedusaMorgana : EnemyBase
         if (bossAudio == null) Debug.LogWarning("[Morgana] Sin BossAudio: el boss va a pelear en silencio");
     }
 
+    // Al destruirse (reinicio del combate) limpia lo que creo fuera de su jerarquia:
+    // el borde de la arena y el VFX del rayo no son hijos del boss.
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+
+        ClearBorderVfx();
+
+        if (activeBeamVfx != null)
+        {
+            Destroy(activeBeamVfx);
+            activeBeamVfx = null;
+        }
+    }
+
     // Climax es el ataque que invoca enemigos. Sin oleadas ni golemPrefab no invoca nada.
     private void WarnClimaxSetup()
     {

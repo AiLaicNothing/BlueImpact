@@ -35,6 +35,32 @@ public class BossMeteor : MonoBehaviour
 {
     private static Material sharedMaterial;
 
+    // Meteoritos en el aire, para poder borrarlos todos si el combate se reinicia
+    private static readonly System.Collections.Generic.HashSet<BossMeteor> active = new System.Collections.Generic.HashSet<BossMeteor>();
+
+    public static void ClearAll()
+    {
+        foreach (BossMeteor m in new System.Collections.Generic.List<BossMeteor>(active))
+        {
+            if (m != null) Destroy(m.gameObject);
+        }
+
+        active.Clear();
+    }
+
+    private void Awake()
+    {
+        active.Add(this);
+    }
+
+    // Tambien borra el modelo que cae, que vive fuera de este objeto
+    private void OnDestroy()
+    {
+        active.Remove(this);
+
+        if (falling != null) Destroy(falling);
+    }
+
     private MeteorConfig cfg;
     private Transform target;
     private Vector3 groundPoint;

@@ -10,6 +10,9 @@ public class EnemySpawner : MonoBehaviour
 
     private readonly List<EnemyBase> activeEnemies = new();
 
+    // Objeto raiz de cada enemigo creado (el EnemyBase puede estar en un hijo)
+    private readonly List<GameObject> spawnedRoots = new();
+
     public event Action<EnemyBase> OnEnemySpawned;
 
     // Enemigos de este spawner que siguen existiendo (los muertos se destruyen)
@@ -58,7 +61,7 @@ public class EnemySpawner : MonoBehaviour
         entry.hasSpawned = true;
         entry.spawnedEnemy = enemy;
 
-        Track(enemy);
+        Track(enemy, enemyObj);
     }
 
     // Para invocaciones (por ejemplo, los golems del boss): no depende de SpawnEntry
@@ -77,8 +80,36 @@ public class EnemySpawner : MonoBehaviour
 
         enemy.OnSpawn(null, safePoint != null ? safePoint : spawnPoint, false, spawnPoint);
 
-        Track(enemy);
+        Track(enemy, obj);
         return enemy;
+    }
+
+    // Destruye a todos los enemigos que creo este spawner y que siguen vivos.
+    // Lo usa el boss al reiniciarse: los invocados no deben quedarse en la sala.
+    public void DespawnAll()
+    {
+        foreach (GameObject root in spawnedRoots)
+        {
+            if (root != null) Destroy(root);
+        }
+
+        spawnedRoots.Clear();
+        activeEnemies.Clear();
+
+        ResetSpawnState();
+    }
+
+    // Permite volver a crear las entradas aunque sean oneTimeSpawn.
+    // Necesario para invocaciones que se repiten (Climax mas de una vez, o tras morir el jugador).
+    public void ResetSpawnState()
+    {
+        hasSpawnedAlready = false;
+
+        foreach (SpawnEntry entry in spawnEntries)
+        {
+            entry.hasSpawned = false;
+            entry.spawnedEnemy = null;
+        }
     }
 
     public void Respawn(int index)
@@ -102,9 +133,13 @@ public class EnemySpawner : MonoBehaviour
         return enemyHolders != null ? enemyHolders.transform : transform;
     }
 
-    private void Track(EnemyBase enemy)
+    private void Track(EnemyBase enemy, GameObject root)
     {
         activeEnemies.Add(enemy);
+
+        spawnedRoots.RemoveAll(r => r == null);
+        spawnedRoots.Add(root);
+
         OnEnemySpawned?.Invoke(enemy);
     }
-}
+}

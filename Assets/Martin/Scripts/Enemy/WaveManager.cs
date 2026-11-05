@@ -57,6 +57,36 @@ public class WaveManager : MonoBehaviour
         IsRunning = false;
         hasStarted = false;
         CurrentWave = -1;
+
+        // Sin esto, las entradas oneTimeSpawn no vuelven a salir en el segundo Climax
+        // y la oleada se daria por limpiada al instante
+        foreach (EnemyWave wave in waves)
+        {
+            foreach (EnemySpawner spawner in wave.spawners)
+            {
+                if (spawner != null) spawner.ResetSpawnState();
+            }
+        }
+    }
+
+    // Corta las oleadas y destruye a todos los enemigos que crearon.
+    // Lo usa BossEvent cuando el jugador muere o el boss es derrotado.
+    public void ClearWaves()
+    {
+        ResetWaves();
+
+        HashSet<EnemySpawner> done = new HashSet<EnemySpawner>();
+
+        foreach (EnemyWave wave in waves)
+        {
+            foreach (EnemySpawner spawner in wave.spawners)
+            {
+                // El mismo spawner puede estar repetido en la lista de una oleada
+                if (spawner != null && done.Add(spawner)) spawner.DespawnAll();
+            }
+        }
+
+        Debug.Log("[Oleadas] Oleadas limpiadas: enemigos invocados destruidos");
     }
 
     private IEnumerator WaveLoop()
@@ -103,4 +133,4 @@ public class WaveManager : MonoBehaviour
 
         return true;
     }
-}
+}
