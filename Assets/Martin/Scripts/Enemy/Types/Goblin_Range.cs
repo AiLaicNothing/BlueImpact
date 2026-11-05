@@ -409,7 +409,7 @@ public class Goblin_Range : EnemyBase
             yield return null;
         }
 
-        Shoot();
+        //Shoot();
 
         float remainingTime = attackAnimDuration - hitTime;
         if (remainingTime > 0f)
@@ -441,12 +441,8 @@ public class Goblin_Range : EnemyBase
 
     }
 
-    private void Shoot()
+    public void Shoot()
     {
-        if (!HasValidPlayer() || projectilePrefab == null || firePoint == null) return;
-
-        if (!HasLineOfSightToPlayer()) return;
-
         Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
         Vector3 dir = (targetPos - firePoint.position).normalized;
 
