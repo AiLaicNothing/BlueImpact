@@ -4,612 +4,551 @@ using UnityEngine.AI;
 
 public class Undead : EnemyBase
 {
-    [Header("Targeting")]
-    [SerializeField] private float attackRange = 2.5f;
-    [SerializeField] private LayerMask obstacleLayer;
-    [SerializeField] private float targetRayHeight = 1.2f;
-    [SerializeField] private bool instantDetection;
-
-    [Header("Rotation")]
-    [SerializeField] private float facingAngleThreshold = 15f;
-    [SerializeField] private float turnSpeed = 15f;
-
-    [Header("Hit")]
-    [SerializeField] private Vector3 hitBoxSize = new Vector3(1f, 1f, 1f);
-    [SerializeField] private Vector3 hitBoxPos = new Vector3(0f, 0f, 1f);
-    [SerializeField] private float hitTime = 0.35f;
-    [SerializeField] private float attackAnimDuration = 0.8f;
-    [SerializeField] private float recoveryTime = 0.2f;
-
-    [Header("Consecutive Cuts")]
-    [SerializeField] private float consecutiveCutsChargeTime = 1f; //Duration of charging the attack
-    [SerializeField] private float consecutiveCutsDuration = 2.5f; //How long last the attack
-    [SerializeField] private float consecutiveCutsMoveSpeed = 6f; // how fast it move
-    [SerializeField] private float consecutiveCutsCooldown = 8f; // CD for him not spamming it
-    [SerializeField] private float specialRecoveryTime;
-    [Range(0f, 1f)]
-    [SerializeField] private float consecutiveCutsHpThreshold = 0.75f;
-    [Range(0f, 1f)]
-    [SerializeField] private float consecutiveCutsChance = 0.3f;
-    [SerializeField] private GameObject consecutiveCutsSFX;
-    private Vector3 consecutiveCutsForward;
+    private enum State { Idle, Patrol, Chase, ReturnHome, BasicAttack, ConsecutiveCuts }
 
     [Header("Detection")]
-    [SerializeField] private float detectionRange = 8f;
-    [SerializeField] private float maxChaseDistance = 15f;
-    [SerializeField] private float detectionDelay = 0.25f;
+    [SerializeField] private bool instantDetection;
+    [SerializeField, Min(0.1f)] private float detectionRange = 8f;
+    [SerializeField, Min(0.1f)] private float maxChaseDistance = 15f;
+    [SerializeField, Min(0f)] private float detectionDelay = 0.25f;
+    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private float targetRayHeight = 1.2f;
 
-    [Header("Patrol")]
-    [SerializeField] private float stopDistance = 0.5f;
+    [Header("Movement")]
+    [SerializeField, Min(0.1f)] private float attackRange = 2.5f;
+    [SerializeField, Min(0.1f)] private float arrivalDistance = 0.5f;
+    [SerializeField, Min(0.05f)] private float repathInterval = 0.25f;
+    [SerializeField, Min(0f)] private float turnSpeed = 15f; // Original Slerp-style responsiveness
+    [SerializeField, Range(0f, 180f)] private float facingAngle = 15f;
 
-    [Header("Temp")]
-    [SerializeField] private GameObject hitBoxPrefab;
+    [Header("Basic Attack")]
+    [SerializeField, Min(0f)] private float attackCooldown = 0.8f;
+    [SerializeField, Min(0f)] private float basicRecovery = 0.2f;
+    [SerializeField, Range(0f, 0.25f)] private float exitBlend = 0.08f;
+    [Tooltip("Only a fallback if an Animator state is missing or never finishes.")]
+    [SerializeField, Min(0.25f)] private float animationSafetyTimeout = 5f;
 
-    private bool hasDetectedPlayer;
-    private bool isFollowingPlayer;
-    private bool isPerformingAction;
-    private bool returningHome;
-    private bool canUseConsecutiveCuts = true;
+    [Header("Consecutive Cuts")]
+    [SerializeField, Min(0.1f)] private float cutsMoveSpeed = 6f;
+    [SerializeField, Min(0f)] private float cutsCooldown = 8f;
+    [SerializeField, Min(0f)] private float cutsRecovery = 0.3f;
+    [SerializeField, Range(0f, 1f)] private float cutsHpThreshold = 0.75f;
+    [SerializeField, Range(0f, 1f)] private float cutsChance = 0.3f;
+    [Tooltip("Optional effect played when Consecutive Cuts starts.")]
+    [SerializeField] private GameObject cutsChargeVfx; // Name kept for existing prefab references.
 
+    [Header("Cuts Wall Check")]
+    [Tooltip("Put walls/solid obstacles here, but NOT the enemy or ground layers.")]
+    [SerializeField, Min(0.05f)] private float wallCheckRadius = 0.35f;
+    [SerializeField, Min(0f)] private float wallCheckHeight = 1f;
+    [SerializeField, Min(0f)] private float wallExtraDistance = 0.12f;
+
+    [Header("Hitbox")]
+    [SerializeField] private Vector3 hitBoxSize = new Vector3(1f, 1f, 1f);
+    [SerializeField] private Vector3 hitBoxOffset = new Vector3(0f, 1f, 1f);
+    [SerializeField] private LayerMask hitLayers = ~0;
+    [Tooltip("Prevents accidental duplicate special-hit events very close together.")]
+    [SerializeField, Min(0f)] private float minCutsHitInterval = 0.08f;
+
+    [Header("Runtime (read only)")]
+    [SerializeField] private State state;
+
+    private const string CutsAnimationState = "Take 001";
+    private static readonly int AttackHash = Animator.StringToHash("Attack");
+    private readonly Collider[] hitBuffer = new Collider[24];
+
+    private Vector3 spawnPosition;
+    private Vector3 desiredFacing;
+    private Vector3 cutsDirection;
+    private Coroutine actionRoutine;
     private float detectionTimer;
-    private int patrolIndex = 0;
-    private int patrolDir = 1;
+    private float nextRepathTime;
+    private float nextAttackTime;
+    private float nextCutsTime;
+    private float lastCutsHitTime;
+    private int lastCutsHitFrame;
+    private int patrolIndex;
+    private int patrolDirection = 1;
+    private bool basicHitUsed;
+    private bool cutsMoving;
+    private bool animationWasFound;
 
-    private float actionTimer;
-
-   // private Animator anim;
-
-    private Coroutine attackRoutine;
-    private Coroutine consecutiveCutsRoutine;
+    private bool IsAttacking => state == State.BasicAttack || state == State.ConsecutiveCuts;
+    private Vector3 Home => HomePoint != null ? HomePoint.position :
+        (Application.isPlaying ? spawnPosition : transform.position);
 
     protected override void Awake()
     {
         base.Awake();
-        anim = GetComponentInChildren<Animator>();
+        spawnPosition = transform.position;
+        desiredFacing = Flat(transform.forward);
+        rotateToMovement = false; // EnemyBase handles translation; this class handles facing.
 
-        if (agent != null)
+        // EnemyBase adds FreezeRotationX/Z but does not clear an existing Y lock.
+        // This enemy needs free Y rotation to turn with its dynamic Rigidbody.
+        if (rb != null)
         {
-            agent.updateRotation = false;
-            agent.speed = 4.5f;
-            agent.stoppingDistance = 0.25f;
-            agent.autoBraking = true;
+            rb.constraints = (rb.constraints |
+                RigidbodyConstraints.FreezeRotationX |
+                RigidbodyConstraints.FreezeRotationZ) &
+                ~RigidbodyConstraints.FreezeRotationY;
         }
+
+        if (anim != null && anim.applyRootMotion)
+        {
+            Debug.LogWarning($"[Undead] {name}: Disable Apply Root Motion on the Animator. " +
+                "This enemy uses Rigidbody movement and rotation.", this);
+        }
+    }
+
+    protected override void Start()
+    {
+        base.Start();
+        state = HasPatrol() ? State.Patrol : State.Idle;
     }
 
     protected override void Update()
     {
+        base.Update();
         if (isDead) return;
 
-        base.Update();
-
-        if (isStunned || IsStaggered) return;
-        if (agent == null || !agent.enabled) return;
-
-        UpdateTarget();
-        HandleDetection();
-
-        if (isPerformingAction) return;
-
-        HandleActions();
-        HandleMovement();
-
-        if (agent.velocity.sqrMagnitude >= 0.01f)
+        if (isStunned || isStaggered)
         {
-            PlayLoop("Walk");
-        }
-        else
-        {
-            PlayLoop("Idle");
-        }
-    }
-
-    // =========================================================
-    // TARGETING
-    // =========================================================
-
-    private void UpdateTarget()
-    {
-        if (!HasValidPlayer())
-        {
-            //player = FindFirstObjectByType<PlayerControl>();
-        }
-    }
-
-    private bool HasLineOfSightToPlayer()
-    {
-        if (!HasValidPlayer()) return false;
-
-        Vector3 origin = transform.position + Vector3.up * targetRayHeight;
-        Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
-
-        Vector3 dir = (targetPos - origin).normalized;
-
-        float rayDistance = Vector3.Distance(origin, targetPos);
-
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
-        {
-            if (hit.transform != player.transform && hit.transform.root != player.transform.root) return false;
-        }
-
-        return true;
-    }
-
-    // =========================================================
-    // DETECTION
-    // =========================================================
-
-    private void HandleDetection()
-    {
-        Transform home = HomePoint;
-        if (home == null)
-            return;
-
-        if (instantDetection)
-        {
-            hasDetectedPlayer = true;
-            isFollowingPlayer = true;
+            CancelAttack(true);
             return;
         }
 
-        if (!HasValidPlayer())
+        DetectPlayer();
+        if (IsAttacking) return;
+
+        if (isInReaction || agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
+        if (state == State.Chase) ChasePlayer();
+        else UpdatePassiveMovement();
+
+        if (!IsAttacking) UpdateLocomotionAnimation();
+    }
+
+    protected override void FixedUpdate()
+    {
+        // During cuts, suppress EnemyBase's navigation braking so the dynamic
+        // Rigidbody can move at the configured attack speed.
+        if (state == State.ConsecutiveCuts && cutsMoving && rb != null &&
+            !isDead && !isStunned && !isStaggered && !isInReaction)
+        {
+            MoveCutsInPhysics();
+            return;
+        }
+
+        base.FixedUpdate();
+        if (rb == null || isDead || isStunned || isStaggered || isInReaction) return;
+        Vector3 dir = Flat(desiredFacing);
+        if (dir.sqrMagnitude < 0.001f) return;
+        // Preserve the original script's Slerp turn-speed behavior.
+        // Previously turnSpeed = 15 meant a quick blend, NOT 15 degrees/second.
+        rb.MoveRotation(Quaternion.Slerp(
+            rb.rotation,
+            Quaternion.LookRotation(dir),
+            Mathf.Clamp01(turnSpeed * Time.fixedDeltaTime)));
+    }
+
+    protected override void OnDisable()
+    {
+        CancelAttack(false);
+        base.OnDisable();
+    }
+
+    protected override void Die()
+    {
+        CancelAttack(false);
+        base.Die();
+    }
+
+    // -------------------------------------------------------------
+    // Detection and ordinary movement
+    // -------------------------------------------------------------
+
+    private void DetectPlayer()
+    {
+        if (!HasValidPlayer() || Flat(player.transform.position - Home).sqrMagnitude >
+            maxChaseDistance * maxChaseDistance)
         {
             detectionTimer = 0f;
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
+            if (IsAttacking) CancelAttack(false);
+            if (state == State.Chase) state = State.ReturnHome;
             return;
         }
 
-        float distHome = Vector3.Distance(transform.position, home.position);
-        float distPlayer = DistanceToPlayer();
+        if (state == State.Chase || IsAttacking) return;
 
-        if (!hasDetectedPlayer)
+        if (instantDetection ||
+            (Flat(player.transform.position - transform.position).sqrMagnitude <=
+                detectionRange * detectionRange && CanSeePlayer()))
         {
-            if (distPlayer <= detectionRange && HasLineOfSightToPlayer())
-            {
-                detectionTimer += Time.deltaTime;
-
-                if (detectionTimer >= detectionDelay)
-                {
-                    hasDetectedPlayer = true;
-                    isFollowingPlayer = true;
-                }
-            }
-            else
+            detectionTimer += Time.deltaTime;
+            if (instantDetection || detectionTimer >= detectionDelay)
             {
                 detectionTimer = 0f;
+                state = State.Chase;
             }
         }
-        else
-        {
-            if (distHome > maxChaseDistance)
-            {
-                hasDetectedPlayer = false;
-                isFollowingPlayer = false;
-                returningHome = true; // Antes nunca se activaba: el enemigo se quedaba parado al perder al jugador
-                detectionTimer = 0f;
-            }
-        }
+        else detectionTimer = 0f;
     }
 
-    // =========================================================
-    // MOVEMENT
-    // =========================================================
-
-    private void HandleMovement()
+    private bool CanSeePlayer()
     {
-        if (isFollowingPlayer && HasValidPlayer())
-        {
-            float distance = DistanceToPlayer();
-
-            if (distance > attackRange)
-            {
-                agent.isStopped = false;
-                agent.SetDestination(player.transform.position);
-                RotateToVelocity();
-                //anim.Play("Walk");
-            }
-            else
-            {
-                agent.isStopped = true;
-                agent.ResetPath();
-                RotateToPlayer();
-            }
-        }
-        else if (returningHome)
-        {
-            agent.isStopped = false;
-            if (spawnPos != null) agent.SetDestination(spawnPos.position);
-
-            RotateToVelocity();
-            //anim.Play("Walk");
-
-            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
-            {
-                returningHome = false;
-                agent.ResetPath();
-                //anim.Play("Idle");
-            }
-        }
-        else if (hasPatrol)
-        {
-            agent.isStopped = false;
-            HandlePatrol();
-            RotateToVelocity();
-            //anim.Play("Walk");
-        }
-        else
-        {
-            agent.ResetPath();
-            //anim.Play("Idle");
-        }
+        if (!HasValidPlayer()) return false;
+        Vector3 a = transform.position + Vector3.up * targetRayHeight;
+        Vector3 b = player.transform.position + Vector3.up * targetRayHeight;
+        return !Physics.Linecast(a, b, obstacleLayer, QueryTriggerInteraction.Ignore);
     }
 
-    private void HandlePatrol()
+    private void ChasePlayer()
     {
-        if (patrolZones == null || patrolZones.Length == 0)
+        Vector3 toPlayer = Flat(player.transform.position - transform.position);
+        bool inRange = toPlayer.sqrMagnitude <= attackRange * attackRange && CanSeePlayer();
+
+        if (!inRange)
+        {
+            MoveTo(player.transform.position);
+            FaceMovement();
             return;
+        }
 
-        Transform posDesired = patrolZones[patrolIndex];
-        agent.SetDestination(posDesired.position);
+        StopMoving();
+        SetFacing(toPlayer);
+        if (Time.time < nextAttackTime || !IsFacingPlayer()) return;
 
-        float dist = Vector3.Distance(transform.position, posDesired.position);
+        bool special = stats != null && stats.maxHp > 0f &&
+            CurrentHp / stats.maxHp <= cutsHpThreshold &&
+            Time.time >= nextCutsTime && Random.value < cutsChance;
 
-        if (dist <= stopDistance)
+        StartAttack(special);
+    }
+
+    private bool HasPatrol() => hasPatrol && patrolZones != null && patrolZones.Length > 0;
+
+    private void UpdatePassiveMovement()
+    {
+        if (state == State.ReturnHome)
         {
-            patrolIndex += patrolDir;
+            if (Flat(Home - transform.position).sqrMagnitude > arrivalDistance * arrivalDistance)
+            {
+                MoveTo(Home);
+                FaceMovement();
+                return;
+            }
+            state = HasPatrol() ? State.Patrol : State.Idle;
+        }
 
+        if (state != State.Patrol || !HasPatrol())
+        {
+            state = State.Idle;
+            StopMoving();
+            return;
+        }
+
+        patrolIndex = Mathf.Clamp(patrolIndex, 0, patrolZones.Length - 1);
+        Transform point = patrolZones[patrolIndex];
+        if (point == null) { StopMoving(); return; }
+
+        if (Flat(point.position - transform.position).sqrMagnitude <= arrivalDistance * arrivalDistance)
+        {
+            if (patrolZones.Length == 1) { StopMoving(); return; }
+            patrolIndex += patrolDirection;
             if (patrolIndex >= patrolZones.Length)
             {
                 patrolIndex = patrolZones.Length - 2;
-                patrolDir = -1;
+                patrolDirection = -1;
             }
             else if (patrolIndex < 0)
             {
                 patrolIndex = 1;
-                patrolDir = 1;
+                patrolDirection = 1;
             }
+            point = patrolZones[patrolIndex];
+            if (point == null) { StopMoving(); return; }
+        }
+
+        MoveTo(point.position);
+        FaceMovement();
+    }
+
+    private void MoveTo(Vector3 destination)
+    {
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        agent.isStopped = false;
+        if (Time.time < nextRepathTime || agent.pathPending) return;
+        if (!agent.hasPath || (agent.destination - destination).sqrMagnitude > 0.25f)
+        {
+            agent.SetDestination(destination);
+            nextRepathTime = Time.time + repathInterval;
         }
     }
 
-    // =========================================================
-    // ATTACK
-    // =========================================================
-
-    private void HandleActions()
+    private void StopMoving()
     {
-        if (isPerformingAction || !hasDetectedPlayer || !HasValidPlayer()) return;
-
-        actionTimer += Time.deltaTime;
-
-        float distance = DistanceToPlayer();
-        float hpPercent = stats.maxHp > 0f ? CurrentHp / stats.maxHp : 1f;
-
-        if (actionTimer >= 0.8f)
-        {
-            if (hpPercent <= consecutiveCutsHpThreshold && canUseConsecutiveCuts)
-            {
-                if (Random.value <= consecutiveCutsChance && consecutiveCutsRoutine == null)
-                {
-
-                    consecutiveCutsRoutine = StartCoroutine(PerformConsecutiveCuts());
-                    return;
-                }
-            }
-
-            if (distance <= attackRange && HasLineOfSightToPlayer() && IsFacingTarget() && attackRoutine == null)
-            {
-                attackRoutine = StartCoroutine(PerformAttack());
-            }
-        }
-    }
-
-    private IEnumerator PerformAttack()
-    {
-        if (!HasValidPlayer())
-        {
-            attackRoutine = null;
-            yield break;
-        }
-
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
         agent.isStopped = true;
-        agent.ResetPath();
-        isPerformingAction = true;
+        if (agent.hasPath) agent.ResetPath();
+    }
 
-        PlayAnim("Attack");
+    // -------------------------------------------------------------
+    // Attacks: one coroutine, two animation-driven patterns
+    // -------------------------------------------------------------
 
-        FaceTargetInstant();
+    private void StartAttack(bool special)
+    {
+        if (anim == null || stats == null || !HasValidPlayer()) return;
 
-        float elapsed = 0f;
+        StopMoving();
+        basicHitUsed = false;
+        lastCutsHitFrame = -1;
+        lastCutsHitTime = -999f;
+        SetFacing(player.transform.position - transform.position);
 
-        while (elapsed < hitTime)
+        state = special ? State.ConsecutiveCuts : State.BasicAttack;
+        if (special) nextCutsTime = Time.time + cutsCooldown;
+        actionRoutine = StartCoroutine(PerformAttack(special));
+    }
+
+    private IEnumerator PerformAttack(bool special)
+    {
+        if (special)
         {
-            if (!HasValidPlayer())
-            {
-                isPerformingAction = false;
-                attackRoutine = null;
-                if (agent != null) agent.isStopped = false;
-                yield break;
-            }
+            // "Take 001" is the ONLY special attack animation.
+            // Lock the forward direction once, then move for the entire clip.
+            if (cutsChargeVfx != null)
+                Destroy(Instantiate(cutsChargeVfx, transform.position, Quaternion.identity), 3f);
 
-            FaceTargetInstant();
+            cutsDirection = Flat(player.transform.position - transform.position);
+            if (cutsDirection.sqrMagnitude < 0.001f) cutsDirection = Flat(transform.forward);
+            cutsDirection = cutsDirection.sqrMagnitude > 0.001f ? cutsDirection.normalized : Vector3.forward;
+            SetFacing(cutsDirection);
+
+            PlayStateFromStart(CutsAnimationState);
+            cutsMoving = true;
+            yield return WaitForAnimation(Animator.StringToHash(CutsAnimationState), State.ConsecutiveCuts, false);
+            StopCutsMovement();
+            if (state != State.ConsecutiveCuts || !CanContinueAttack()) yield break;
+        }
+        else
+        {
+            PlayStateFromStart("Attack");
+            yield return WaitForAnimation(AttackHash, State.BasicAttack, true);
+            if (state != State.BasicAttack || !CanContinueAttack()) yield break;
+        }
+
+        if (anim != null && anim.isActiveAndEnabled)
+            anim.CrossFadeInFixedTime("Idle", exitBlend, 0, 0f);
+        yield return new WaitForSeconds(Mathf.Max(exitBlend,
+            special ? cutsRecovery : basicRecovery));
+
+        if (IsAttacking && !isDead) EndAction();
+    }
+
+    private bool CanContinueAttack() => !isDead && !isStunned && !isStaggered &&
+                                        HasValidPlayer();
+
+    private void PlayStateFromStart(string name)
+    {
+        if (anim == null || string.IsNullOrEmpty(name)) return;
+        PlayAnim(name);
+        // Force a restart at normalized time zero, even if the same state was active.
+        anim.Play(Animator.StringToHash(name), 0, 0f);
+    }
+
+    private IEnumerator WaitForAnimation(int hash, State expected, bool blendBeforeEnd)
+    {
+        animationWasFound = false;
+        float elapsed = 0f;
+        yield return null;
+        while (state == expected && CanContinueAttack() && elapsed < animationSafetyTimeout)
+        {
+            AnimatorStateInfo clip = anim.GetCurrentAnimatorStateInfo(0);
+            if (clip.shortNameHash == hash)
+            {
+                animationWasFound = true;
+                float remaining = Mathf.Max(0f, 1f - clip.normalizedTime) *
+                    clip.length / Mathf.Max(0.01f, Mathf.Abs(anim.speed));
+                if (clip.normalizedTime >= 1f || (blendBeforeEnd && remaining <= exitBlend))
+                    yield break;
+            }
+            else if (animationWasFound) yield break;
+            else if (elapsed >= 0.35f) break; // Missing state: fail fast, not after the full timeout.
+
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        FaceTargetInstant();
-        //DoHit();
-
-        float remainingTime = attackAnimDuration - hitTime;
-        if (remainingTime > 0f)
-        {
-            yield return new WaitForSeconds(remainingTime);
-        }
-
-        yield return new WaitForSeconds(recoveryTime);
-
-        if (!HasValidPlayer())
-        {
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
-        }
-
-        isPerformingAction = false;
-        attackRoutine = null;
-
-        if (agent != null)
-        {
-            agent.isStopped = false;
-        }
-
-        actionTimer = 0f;
+        if (!animationWasFound && state == expected && anim != null)
+            Debug.LogWarning($"[Undead] {name}: Animator state '{(expected == State.ConsecutiveCuts ? CutsAnimationState : "Attack")}' was not found on layer 0.", this);
     }
 
-    private IEnumerator PerformConsecutiveCuts()
+    private void EndAction()
     {
-        if (!HasValidPlayer())
-        {
-            consecutiveCutsRoutine = null;
-            yield break;
-        }
-
-        canUseConsecutiveCuts = false;
-        isPerformingAction = true;
-
-        PlayAnim("Take 001");
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
-        if (consecutiveCutsSFX != null)
-        {
-            var sfxInstance = Instantiate(consecutiveCutsSFX, transform.position, Quaternion.identity);
-            Destroy(sfxInstance, 3f); // Evita acumular SFX que nunca se destruyen
-        }
-
-        // Charge phase: stand still, face the player.
-        float chargeTimer = consecutiveCutsChargeTime;
-
-        while (chargeTimer > 0f)
-        {
-            if (!HasValidPlayer())
-            {
-                isPerformingAction = false;
-                consecutiveCutsRoutine = null;
-
-                if (agent != null) agent.isStopped = false;
-
-                StartCoroutine(ConsecutiveCutsCooldownRoutine());
-                yield break;
-            }
-
-            FaceTargetInstant();
-            chargeTimer -= Time.deltaTime;
-            yield return null;
-        }
-
-        // Lock direction once, right before the dash.
-        consecutiveCutsForward = GetAttackForward();
-        consecutiveCutsForward.y = 0f;
-
-        if (consecutiveCutsForward.sqrMagnitude < 0.0001f)
-        {
-            consecutiveCutsForward = transform.forward;
-            consecutiveCutsForward.y = 0f;
-        }
-
-        consecutiveCutsForward.Normalize();
-
-        // Optional: keep the enemy facing the locked direction once.
-        transform.rotation = Quaternion.LookRotation(consecutiveCutsForward);
-
-        // Move phase: go straight forward without tracking the player.
-        float moveTimer = consecutiveCutsDuration;
-        //float hitTimer = 0f;
-
-        while (moveTimer > 0f)
-        {
-            if (!HasValidPlayer())
-                break;
-
-            if (agent != null)
-            {
-                agent.Move(consecutiveCutsForward * consecutiveCutsMoveSpeed * Time.deltaTime);
-            }
-            else
-            {
-                transform.position += consecutiveCutsForward * consecutiveCutsMoveSpeed * Time.deltaTime;
-            }
-
-            //hitTimer += Time.deltaTime;
-            //if (hitTimer >= consecutiveCutsHitInterval)
-            //{
-            //    DoHit();
-            //    hitTimer = 0f;
-            //}
-
-            moveTimer -= Time.deltaTime;
-            yield return null;
-        }
-
-        yield return new WaitForSeconds(specialRecoveryTime);
-
-        isPerformingAction = false;
-        consecutiveCutsRoutine = null;
-
-        if (agent != null)
-        {
-            agent.isStopped = false;
-        }
-
-        StartCoroutine(ConsecutiveCutsCooldownRoutine());
-
-        actionTimer = 0f;
+        StopCutsMovement();
+        nextAttackTime = Time.time + attackCooldown;
+        actionRoutine = null;
+        if (IsAttacking) state = HasValidPlayer() ? State.Chase : State.ReturnHome;
     }
 
-    private IEnumerator ConsecutiveCutsCooldownRoutine()
+    private void CancelAttack(bool blendToIdle)
     {
-        yield return new WaitForSeconds(consecutiveCutsCooldown);
-        canUseConsecutiveCuts = true;
+        if (!IsAttacking) return;
+        if (actionRoutine != null) StopCoroutine(actionRoutine);
+        EndAction();
+        if (blendToIdle && anim != null && !isDead && anim.isActiveAndEnabled)
+            anim.CrossFadeInFixedTime("Idle", exitBlend, 0, 0f);
     }
+
+    // -------------------------------------------------------------
+    // Forward cuts: physics-controlled movement + wall checks
+    // -------------------------------------------------------------
+
+    private void MoveCutsInPhysics()
+    {
+        float travel = cutsMoveSpeed * Time.fixedDeltaTime + wallExtraDistance;
+        Vector3 origin = rb.position + Vector3.up * wallCheckHeight;
+
+        // SphereCast detects a wall before we reach it; CheckSphere covers the
+        // case where the cast begins touching/intersecting wall geometry.
+        bool wall = Physics.SphereCast(origin, wallCheckRadius, cutsDirection,
+                        out _, travel, obstacleLayer, QueryTriggerInteraction.Ignore) ||
+                    Physics.CheckSphere(origin + cutsDirection * travel,
+                        wallCheckRadius, obstacleLayer, QueryTriggerInteraction.Ignore);
+
+        // Also avoid leaving walkable NavMesh, such as running off a ledge.
+        bool navBlocked = agent == null || !agent.enabled || !agent.isOnNavMesh ||
+            NavMesh.Raycast(agent.nextPosition,
+                agent.nextPosition + cutsDirection * travel, out _, agent.areaMask);
+
+        if (wall || navBlocked)
+        {
+            StopCutsMovement(); // The cuts ANIMATION continues, movement stops.
+            return;
+        }
+
+        rb.MoveRotation(Quaternion.LookRotation(cutsDirection));
+        Vector3 velocity = Flat(rb.linearVelocity);
+        rb.AddForce(cutsDirection * cutsMoveSpeed - velocity,
+            ForceMode.VelocityChange);
+    }
+
+    private void StopCutsMovement()
+    {
+        cutsMoving = false;
+        if (rb == null) return;
+        Vector3 v = rb.linearVelocity;
+        rb.linearVelocity = new Vector3(0f, v.y, 0f);
+    }
+
+    // -------------------------------------------------------------
+    // Animation Event: one hit for Basic, one per event during Cuts
+    // -------------------------------------------------------------
 
     public void DoHit()
     {
-        Vector3 attackForward = transform.forward;
-        attackForward.y = 0f;
-
-        if (attackForward.sqrMagnitude < 0.0001f) attackForward = Vector3.forward;
-
-        attackForward.Normalize();
-
-        Vector3 center = transform.position + attackForward * hitBoxPos.z + Vector3.up * hitBoxPos.y;
-
-        Quaternion rot = Quaternion.LookRotation(attackForward, Vector3.up);
-
-        Collider[] hits = Physics.OverlapBox(center, hitBoxSize * 0.5f, rot);
-
-        ShowHitbox(center, hitBoxSize, rot);
-
-        foreach (var hit in hits)
+        if (isDead || isStunned || isStaggered || stats == null || !HasValidPlayer()) return;
+        if (state == State.BasicAttack)
         {
-            if (!hit.CompareTag("Player")) continue;
+            if (basicHitUsed) return;
+            basicHitUsed = true;
+        }
+        else if (state == State.ConsecutiveCuts)
+        {
+            if (lastCutsHitFrame == Time.frameCount ||
+                Time.time - lastCutsHitTime < minCutsHitInterval) return;
+            lastCutsHitFrame = Time.frameCount;
+            lastCutsHitTime = Time.time;
+        }
+        else return;
 
-            IDamageable damageable = hit.GetComponentInParent<IDamageable>();
+        // Prevent overlap-box hits through walls or from duplicate player colliders.
+        if (!CanSeePlayer()) return;
+        Vector3 direction = state == State.ConsecutiveCuts ? cutsDirection : Flat(transform.forward);
+        if (direction.sqrMagnitude < 0.001f) direction = Vector3.forward;
+        direction.Normalize();
 
-            if (damageable == null) continue;
+        Quaternion rotation = Quaternion.LookRotation(direction);
+        Vector3 center = transform.position + rotation * hitBoxOffset;
+        int count = Physics.OverlapBoxNonAlloc(center, hitBoxSize * 0.5f,
+            hitBuffer, rotation, hitLayers, QueryTriggerInteraction.Collide);
 
-            DamageInfo info = new DamageInfo
-            {
-                damage = stats.damage,
-            };
-
-            damageable.TakeDamage(in info);
+        for (int i = 0; i < count; i++)
+        {
+            Collider hit = hitBuffer[i];
+            if (hit == null || hit.GetComponentInParent<PlayerControl>() != player) continue;
+            IDamageable target = hit.GetComponentInParent<IDamageable>();
+            if (target == null) continue;
+            DamageInfo info = new DamageInfo { damage = stats.damage, hitDirection = direction };
+            target.TakeDamage(in info);
+            break;
         }
     }
 
-    // =========================================================
-    // ROTATION
-    // =========================================================
+    // -------------------------------------------------------------
+    // Rotation, animation and gizmos
+    // -------------------------------------------------------------
 
-    private void RotateToVelocity()
+    private void FaceMovement()
     {
-        if (isPerformingAction) return;
+        // Prefer the actual navigation direction while walking around obstacles.
+        Vector3 direction = agent != null && agent.enabled && agent.isOnNavMesh
+            ? Flat(agent.desiredVelocity)
+            : Vector3.zero;
 
-        Vector3 vel = agent.velocity;
-        vel.y = 0f;
+        // An agent may have no desired velocity while a path is pending or
+        // while stationary. During a chase, keep turning toward the player.
+        if (direction.sqrMagnitude < 0.001f && state == State.Chase && HasValidPlayer())
+            direction = Flat(player.transform.position - transform.position);
 
-        if (vel.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(vel.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
+        SetFacing(direction);
     }
 
-    private void RotateToPlayer()
+    private void SetFacing(Vector3 direction)
     {
-        if (isPerformingAction) return;
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(dir.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
+        direction = Flat(direction);
+        if (direction.sqrMagnitude > 0.001f) desiredFacing = direction.normalized;
     }
 
-    private void FaceTargetInstant()
+    private bool IsFacingPlayer()
     {
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        transform.rotation = Quaternion.LookRotation(dir.normalized);
+        Vector3 toward = Flat(player.transform.position - transform.position);
+        return toward.sqrMagnitude < 0.001f ||
+            Vector3.Angle(Flat(transform.forward), toward) <= facingAngle;
     }
 
-    private bool IsFacingTarget()
+    private void UpdateLocomotionAnimation()
     {
-        if (!HasValidPlayer()) return false;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return false;
-
-        float angle = Vector3.Angle(transform.forward, dir.normalized);
-        return angle <= facingAngleThreshold;
+        if (anim == null) return;
+        bool walking = agent != null && !agent.isStopped && rb != null &&
+            Flat(rb.linearVelocity).sqrMagnitude > 0.09f;
+        string stateName = walking ? "Walk" : "Idle";
+        if (anim.GetCurrentAnimatorStateInfo(0).IsName(stateName) ||
+            (anim.IsInTransition(0) && anim.GetNextAnimatorStateInfo(0).IsName(stateName)))
+            return;
+        anim.CrossFadeInFixedTime(stateName, 0.12f, 0, 0f);
     }
 
-    private Vector3 GetAttackForward()
-    {
-        if (HasValidPlayer())
-        {
-            Vector3 dir = player.transform.position - transform.position;
-            dir.y = 0f;
+    private static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
 
-            if (dir.sqrMagnitude > 0.01f) return dir.normalized;
-        }
-
-        Vector3 fallback = transform.forward;
-        fallback.y = 0f;
-
-        if (fallback.sqrMagnitude < 0.01f) fallback = Vector3.forward;
-
-        return fallback.normalized;
-    }
-
-    // =========================================================
-    // TEMP VISUAL
-    // =========================================================
-
-    public void ShowHitbox(Vector3 center, Vector3 size, Quaternion rot)
-    {
-        if (hitBoxPrefab == null) return;
-
-        GameObject box = Instantiate(hitBoxPrefab, center, rot);
-        box.transform.localScale = size;
-        Destroy(box, 0.2f);
-    }
-
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         if (!debug) return;
-
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
-
-        Transform home = HomePoint;
-        if (home == null) return;
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(home.position, 1f);
-
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(home.position, maxChaseDistance);
+        Gizmos.DrawWireSphere(Home, maxChaseDistance);
+        Vector3 f = Flat(transform.forward);
+        if (f.sqrMagnitude < 0.001f) f = Vector3.forward;
+        Quaternion rotation = Quaternion.LookRotation(f.normalized);
+        Matrix4x4 old = Gizmos.matrix;
+        Gizmos.matrix = Matrix4x4.TRS(transform.position + rotation * hitBoxOffset,
+            rotation, Vector3.one);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(Vector3.zero, hitBoxSize);
+        Gizmos.matrix = old;
     }
 }
+

@@ -4,911 +4,617 @@ using UnityEngine.AI;
 
 public class FlyingGolem : EnemyBase
 {
-    [Header("Targeting")]
+    private enum AIState { Idle, Patrol, Chase, Attack, ReturnHome }
+    private enum FlightState { Hover, Falling, Recovering }
+    private enum AttackType { None, MagicBullet, Bomb }
+
+    [Header("Detection / Combat")]
+    [SerializeField] private float detectionRange = 18f;
+    [SerializeField] private float detectionDelay = 0.2f;
+    [SerializeField] private float maxChaseDistance = 28f;
+    [SerializeField] private bool instantDetection;
     [SerializeField] private float attackRange = 7f;
-    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private float facingAngle = 15f;
     [SerializeField] private float targetRayHeight = 1.2f;
+    [SerializeField] private LayerMask obstacleLayer;
 
-    [Header("Rotation")]
-    [SerializeField] private float facingAngleThreshold = 15f;
-    [SerializeField] private float turnSpeed = 15f;
+    [Header("Navigation / Turning")]
+    [SerializeField] private float moveSpeed = 4.5f;
+    [SerializeField] private float acceleration = 40f;
+    [SerializeField] private float stoppingDistance = 0.75f;
+    [SerializeField] private float turnSpeed = 15f; // Slerp responsiveness, NOT degrees per second.
+    [SerializeField] private float destinationRefresh = 0.2f;
+    [SerializeField] private float patrolStopDistance = 1.5f;
 
-    [Header("Hover Visual")]
+    [Header("Hover / Colliders")]
     [SerializeField] private Transform visualRoot;
     [SerializeField] private float hoverHeight = 4f;
     [SerializeField] private float hoverBobAmplitude = 0.2f;
     [SerializeField] private float hoverBobSpeed = 2f;
     [SerializeField] private float hoverSmooth = 8f;
-
-    [Header("Movement")]
-    [SerializeField] private float hoverMoveSpeed = 4.5f;
-    [SerializeField] private float hoverStopDistance = 0.75f;
-    [SerializeField] private float hoverAcceleration = 40f;
-
-    [Header("Collider Sync")]
+    [Tooltip("Only root-mounted colliders are offset. Child colliders follow their Transform.")]
     [SerializeField] private CapsuleCollider bodyCapsule;
     [SerializeField] private BoxCollider bodyBox;
 
-    [Header("Attack")]
-    [Range(0f, 1f)]
-    [SerializeField] private float firstAttackChance = 0.6f;
-    [SerializeField] private float hitTime = 0.4f;
-    [SerializeField] private float attackAnimDuration = 1.2f;
-    [SerializeField] private float recoveryTime = 0.5f;
+    [Header("Attack Selection / Timing")]
+    [Range(0f, 1f)][SerializeField] private float magicVolleyChance = 0.6f;
+    [SerializeField] private string magicVolleyState = "Bomb";  // Original first attack clip.
+    [SerializeField] private string bombState = "Attack 0";    // Original second attack clip.
+    [SerializeField] private float attackCooldown = 1f;
+    [SerializeField] private float attackRecovery = 0.5f;
+    [SerializeField] private float attackExitBlend = 0.08f;
+    [SerializeField] private float attackSafetyTimeout = 4f;
 
-    [Header("Attack 1")]
+    [Header("Attack 1 - Magic Volley")]
     [SerializeField] private GameObject magicCircleVfx;
-    [SerializeField] private Vector3 circleOffset;
+    [SerializeField] private Vector3 circleOffset = new Vector3(1f, 0f, 0.5f);
     [SerializeField] private GameObject magicBulletPrefab;
-    [SerializeField] private int bulletAmmount = 3;
-    [SerializeField] private float timeBtwShoot = 0.2f;
+    [Min(1)][SerializeField] private int bulletAmount = 3;
+    [Min(0f)][SerializeField] private float timeBetweenShots = 0.2f;
 
-    [Header("Attack 2")]
+    [Header("Attack 2 - Bomb")]
     [SerializeField] private GameObject chargeVfx;
-    [SerializeField] private Vector3 bombPosOffset;
+    [SerializeField] private Vector3 bombPositionOffset;
     [SerializeField] private GameObject bombPrefab;
-    [SerializeField] private float chargeTime = 1f;
+    [SerializeField] private float bombSpeed = 12f;
 
-    [Header("Detection")]
-    [SerializeField] private float detectionRange = 18f;
-    [SerializeField] private float maxChaseDistance = 28f;
-    [SerializeField] private float detectionDelay = 0.2f;
-    [SerializeField] private bool instantDetection;
-
-    [Header("Patrol")]
-    [SerializeField] private float stopDistance = 1.5f;
-
-    [Header("Fall / Recover")]
-    [SerializeField] private float minFallTimeBeforeRecovery = 0.35f;
-    [SerializeField] private float groundedRecoveryDelay = 0.15f;
+    [Header("Fall / Hover Recovery")]
     [SerializeField] private float fallForce = 8f;
+    [SerializeField] private float minimumFallTime = 0.35f;
+    [SerializeField] private float landedHoldTime = 0.15f;
     [SerializeField] private float maxFallTime = 3f;
-    [SerializeField] private float recoverDuration = 0.25f;
+    [SerializeField] private float riseDuration = 0.35f;
+    [SerializeField] private float recoveryNavMeshRadius = 7f;
 
-    [SerializeField] private GameObject father;
-
-    private bool isPerformingAction;
-    private bool hasDetectedPlayer;
-    private bool isFollowingPlayer;
-    private bool returningHome;
-
-    private bool isFalling;
-    private bool isRecovering;
-
-    private float detectionTimer;
-    private float fallStartedAt;
-    private float groundedTimer;
-    private float hoverTimer;
-
-    private int patrolIndex = 0;
-    private int patrolDir = 1;
-
+    private AIState aiState;
+    private FlightState flightState;
+    private AttackType currentAttack;
     private Coroutine attackRoutine;
-    private Coroutine recoverRoutine;
+    private Coroutine volleyRoutine;
+    private Coroutine riseRoutine;
 
-    private Vector3 visualBaseLocalPos;
-    private Vector3 capsuleBaseCenter;
-    private Vector3 boxBaseCenter;
-    private bool hasCapsule;
-    private bool hasBox;
+    private Vector3 originalVisualPosition;
+    private Vector3 originalCapsuleCenter;
+    private Vector3 originalBoxCenter;
+    private Vector3 desiredFacing;
+    private Vector3 homePosition;
+    private Vector3 leftCirclePosition;
+    private Vector3 rightCirclePosition;
+    private float hoverClock;
+    private float detectionTimer;
+    private float nextDestinationTime;
+    private float nextAttackTime;
+    private float fallStartTime;
+    private float groundedTime;
+    private int patrolIndex;
+    private int patrolDirection = 1;
+    private bool hasTarget;
+    private bool circleSpawned;
+    private bool bombThrown;
+    private bool chargeVfxSpawned;
+    private bool volleyStarted;
+    private bool endAttackRequested;
 
     protected override void Awake()
     {
+        // This is a flying-looking enemy with a ground-level NavMesh root.
+        // The dynamic Rigidbody remains in control of its movement at all times.
+        isGroundEnemy = false;
+        rotateToMovement = false; // This subclass handles facing itself.
         base.Awake();
+
+        homePosition = transform.position;
+        desiredFacing = transform.forward;
+        if (visualRoot != null) originalVisualPosition = visualRoot.localPosition;
+        if (bodyCapsule == null) bodyCapsule = GetComponent<CapsuleCollider>();
+        if (bodyBox == null) bodyBox = GetComponent<BoxCollider>();
+        if (bodyCapsule != null) originalCapsuleCenter = bodyCapsule.center;
+        if (bodyBox != null) originalBoxCenter = bodyBox.center;
 
         if (agent != null)
         {
-            agent.enabled = true;
-            agent.updatePosition = true;
+            agent.updatePosition = false; // Never compete with the dynamic Rigidbody.
             agent.updateRotation = false;
-            agent.baseOffset = 0f;
-            agent.speed = hoverMoveSpeed;
-            agent.acceleration = hoverAcceleration;
-            agent.stoppingDistance = hoverStopDistance;
-            agent.autoBraking = true;
+            agent.speed = moveSpeed;
+            agent.acceleration = acceleration;
+            agent.stoppingDistance = stoppingDistance;
         }
 
-        if (visualRoot != null)
-        {
-            visualBaseLocalPos = visualRoot.localPosition;
-        }
-
-        if (bodyCapsule == null) bodyCapsule = GetComponent<CapsuleCollider>();
-        if (bodyBox == null) bodyBox = GetComponent<BoxCollider>();
-
-        if (bodyCapsule != null)
-        {
-            hasCapsule = true;
-            capsuleBaseCenter = bodyCapsule.center;
-        }
-
-        if (bodyBox != null)
-        {
-            hasBox = true;
-            boxBaseCenter = bodyBox.center;
-        }
-
-        if (rb != null)
-        {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-        }
+        EnterHoverPhysics();
     }
 
     protected override void Start()
     {
         base.Start();
-        EnterHoverMode();
-    }
-
-    protected override void Die()
-    {
-        if (isDead) return;
-
-        isDead = true;
-        StopEnemyRoutines();
-
-        if (agent != null)
+        if (rb != null && NavMesh.SamplePosition(rb.position, out NavMeshHit hit, 8f,
+                agent != null ? agent.areaMask : NavMesh.AllAreas))
         {
-            agent.isStopped = true;
-            agent.enabled = false;
+            // The root follows the ground NavMesh. Only the mesh/collider floats.
+            rb.position = hit.position;
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+                agent.Warp(hit.position);
         }
-
-        // Si no se asignó "father", destruye el propio enemigo para que no quede un zombi
-        Destroy(father != null ? father : gameObject);
+        if (visualRoot == null)
+            Debug.LogWarning($"[FlyingGolem] {name} needs a Visual Root for hovering.", this);
+        else
+        {
+            visualRoot.localPosition = originalVisualPosition + Vector3.up * hoverHeight;
+            UpdateHoverVisual();
+        }
     }
 
     protected override void Update()
     {
+        base.Update();
         if (isDead) return;
 
-        base.Update();
+        UpdateHoverVisual();
+        if (isStaggered && !immuneToMovement && flightState == FlightState.Hover)
+            EnterFallMode();
 
-        //SyncAgentSettings();
-        UpdateTarget();
-        HandleDetection();
-
-        if (isStaggered)
+        if (flightState == FlightState.Falling)
         {
-            if (!isFalling) EnterFallMode();
+            CheckFallRecovery();
             return;
         }
+        if (flightState == FlightState.Recovering) return;
 
-        if (isFalling)
+        if (isStunned || isInReaction)
         {
-            HandleFallRecovery();
+            if (aiState == AIState.Attack) CancelAttack();
             return;
         }
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
 
-        if (isStunned)
-            return;
+        DetectPlayer();
+        if (aiState == AIState.Attack) return;
 
-        HandleActions();
+        if (hasTarget) UpdateCombat();
+        else UpdatePatrolOrReturn();
 
-        if (isPerformingAction)
-        {
-            //UpdateHoverVisual();
-            return;
-        }
-
-        HandleMovement();
-        //UpdateHoverVisual();
-
-        if (anim == null || agent == null) return;
-
-        anim.Play(agent.velocity.sqrMagnitude >= 0.01f ? "Patrol" : "Idle");
+        UpdateLocomotionAnimation();
     }
 
-    // =========================================================
-    // TARGETING
-    // =========================================================
+    protected override void FixedUpdate()
+    {
+        base.FixedUpdate();
+        if (isDead || rb == null) return;
+        // Do not counteract player launch/knockdown forces during an active reaction.
+        if (flightState == FlightState.Falling && !isInReaction && fallForce > 0f)
+            rb.AddForce(Vector3.down * fallForce, ForceMode.Acceleration);
+        if (flightState != FlightState.Hover || isStunned || isInReaction || isStaggered) return;
 
-    private void UpdateTarget()
+        Vector3 horizontal = Flat(desiredFacing);
+        if (horizontal.sqrMagnitude < 0.001f) return;
+        Quaternion target = Quaternion.LookRotation(horizontal.normalized);
+        rb.MoveRotation(Quaternion.Slerp(rb.rotation, target,
+            Mathf.Clamp01(turnSpeed * Time.fixedDeltaTime)));
+    }
+
+    protected override void TriggerStagger()
+    {
+        if (isStaggered) return;
+        CancelAttack();
+        base.TriggerStagger();
+        if (!immuneToMovement) EnterFallMode();
+    }
+
+    protected override void EnableAgentIfNeeded()
+    {
+        // EnemyBase should reconnect only after the visual/body have risen to hover height.
+        if (flightState != FlightState.Hover) return;
+        base.EnableAgentIfNeeded();
+    }
+
+    // --------------------------------------------------------
+    // Detection, pursuit, patrol
+    // --------------------------------------------------------
+    private void DetectPlayer()
     {
         if (!HasValidPlayer())
         {
-            //player = FindFirstObjectByType<PlayerControl>();
-        }
-    }
-
-    private bool HasLineOfSightToPlayer()
-    {
-        if (!HasValidPlayer()) return false;
-
-        Vector3 origin = transform.position + Vector3.up * targetRayHeight;
-        Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
-        Vector3 dir = (targetPos - origin).normalized;
-        float rayDistance = Vector3.Distance(origin, targetPos);
-
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
-        {
-            if (hit.transform != player.transform &&
-                hit.transform.root != player.transform.root)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    // =========================================================
-    // DETECTION
-    // =========================================================
-
-    private void HandleDetection()
-    {
-        if (safeZone != null)
-        {
-            float distHome = HorizontalDistance(transform.position, safeZone.position);
-
-            if (hasDetectedPlayer && distHome > maxChaseDistance)
-            {
-                hasDetectedPlayer = false;
-                isFollowingPlayer = false;
-                detectionTimer = 0f;
-                return;
-            }
-        }
-
-        if (instantDetection)
-        {
-            hasDetectedPlayer = true;
-            isFollowingPlayer = true;
-            return;
-        }
-
-        if (!HasValidPlayer())
-        {
+            hasTarget = false;
             detectionTimer = 0f;
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
             return;
         }
 
-        float distPlayer = HorizontalDistance(transform.position, player.transform.position);
-
-        if (!hasDetectedPlayer)
+        Vector3 home = HomePoint != null ? HomePoint.position : homePosition;
+        if (HorizontalDistance(transform.position, home) > maxChaseDistance)
         {
-            if (distPlayer <= detectionRange && HasLineOfSightToPlayer())
-            {
-                detectionTimer += Time.deltaTime;
-
-                if (detectionTimer >= detectionDelay)
-                {
-                    hasDetectedPlayer = true;
-                    isFollowingPlayer = true;
-                }
-            }
-            else
-            {
-                detectionTimer = 0f;
-            }
-        }
-    }
-
-    // =========================================================
-    // MOVEMENT
-    // =========================================================
-
-    private void SyncAgentSettings()
-    {
-        if (agent == null || !agent.enabled)
+            hasTarget = false;
+            detectionTimer = 0f;
+            aiState = AIState.ReturnHome;
             return;
+        }
 
-        agent.updateRotation = false;
-        agent.baseOffset = 0f;
-        agent.speed = hoverMoveSpeed;
-        agent.acceleration = hoverAcceleration;
-        agent.stoppingDistance = hoverStopDistance;
+        if (hasTarget) return;
+        bool visible = HorizontalDistance(transform.position, player.transform.position)
+            <= detectionRange && ClearShot();
+        detectionTimer = visible ? detectionTimer + Time.deltaTime : 0f;
+        if (instantDetection || detectionTimer >= detectionDelay)
+        {
+            hasTarget = true;
+            aiState = AIState.Chase;
+        }
     }
 
-    private void HandleMovement()
+    private void UpdateCombat()
     {
-        if (isFollowingPlayer && HasValidPlayer())
-        {
-            float distance = DistanceToPlayer();
+        Vector3 toPlayer = Flat(player.transform.position - transform.position);
+        if (toPlayer.sqrMagnitude > 0.01f) desiredFacing = toPlayer.normalized;
 
-            if (distance > attackRange)
-            {
-                agent.isStopped = false;
-                agent.SetDestination(player.transform.position);
-                RotateToVelocity();
-            }
-            else
-            {
-                agent.isStopped = true;
-                agent.ResetPath();
-                RotateToTarget();
-            }
+        if (toPlayer.sqrMagnitude > attackRange * attackRange || !ClearShot())
+        {
+            ResumeNavigation(player.transform.position);
+            if (agent.desiredVelocity.sqrMagnitude > 0.01f)
+                desiredFacing = Flat(agent.desiredVelocity).normalized;
+            aiState = AIState.Chase;
+            return;
         }
-        else if (returningHome)
+
+        StopNavigation();
+        aiState = AIState.Chase;
+        if (Time.time >= nextAttackTime &&
+            Vector3.Angle(Flat(transform.forward), toPlayer) <= facingAngle)
+            BeginAttack();
+    }
+
+    private void UpdatePatrolOrReturn()
+    {
+        Vector3 home = HomePoint != null ? HomePoint.position : homePosition;
+        if (aiState == AIState.ReturnHome)
         {
-            agent.isStopped = false;
-            agent.SetDestination(spawnPos.position);
-
-            RotateToVelocity();
-
-            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
-            {
-                returningHome = false;
-                agent.ResetPath();
-            }
+            ResumeNavigation(home);
+            if (HorizontalDistance(transform.position, home) <= patrolStopDistance)
+                aiState = AIState.Idle;
         }
-        else if (hasPatrol)
+        else if (hasPatrol && patrolZones != null && patrolZones.Length > 0)
         {
-            agent.isStopped = false;
-            HandlePatrol();
-            RotateToVelocity();
+            aiState = AIState.Patrol;
+            Transform point = patrolZones[patrolIndex];
+            if (point == null) { patrolIndex = 0; StopNavigation(); return; }
+            ResumeNavigation(point.position);
+            if (HorizontalDistance(transform.position, point.position) <= patrolStopDistance
+                && patrolZones.Length > 1)
+            {
+                patrolIndex += patrolDirection;
+                if (patrolIndex >= patrolZones.Length)
+                { patrolIndex = patrolZones.Length - 2; patrolDirection = -1; }
+                else if (patrolIndex < 0)
+                { patrolIndex = 1; patrolDirection = 1; }
+            }
         }
         else
         {
-            agent.ResetPath();
+            aiState = AIState.Idle;
+            StopNavigation();
         }
+
+        if (agent != null && !agent.isStopped && agent.desiredVelocity.sqrMagnitude > 0.01f)
+            desiredFacing = Flat(agent.desiredVelocity).normalized;
     }
 
-    private void HandlePatrol()
+    private void ResumeNavigation(Vector3 destination)
     {
-        if (patrolZones == null || patrolZones.Length == 0)
-            return;
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        agent.isStopped = false;
+        if (Time.time < nextDestinationTime) return;
+        nextDestinationTime = Time.time + destinationRefresh;
+        agent.SetDestination(destination);
+    }
 
-        Transform posDesired = patrolZones[patrolIndex];
-        if (posDesired == null)
-            return;
+    private void StopNavigation()
+    {
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        agent.isStopped = true;
+        if (agent.hasPath) agent.ResetPath();
+    }
 
-        agent.SetDestination(posDesired.position);
+    private bool ClearShot()
+    {
+        if (!HasValidPlayer()) return false;
+        Vector3 start = (visualRoot != null ? visualRoot.position : transform.position)
+            + Vector3.up * targetRayHeight;
+        Vector3 end = player.transform.position + Vector3.up * targetRayHeight;
+        // obstacleLayer should contain environment only, not enemy/player layers.
+        return !Physics.Linecast(start, end, obstacleLayer, QueryTriggerInteraction.Ignore);
+    }
 
-        float dist = HorizontalDistance(transform.position, posDesired.position);
+    private void UpdateLocomotionAnimation()
+    {
+        if (anim == null) return;
+        bool moving = agent != null && !agent.isStopped && rb != null &&
+            Flat(rb.linearVelocity).sqrMagnitude > 0.09f;
+        string clip = moving ? "Patrol" : "Idle";
+        if (anim.GetCurrentAnimatorStateInfo(0).IsName(clip) ||
+            (anim.IsInTransition(0) && anim.GetNextAnimatorStateInfo(0).IsName(clip))) return;
+        anim.CrossFadeInFixedTime(clip, 0.12f, 0, 0f);
+    }
 
-        if (dist <= stopDistance)
+    // --------------------------------------------------------
+    // Attack: only the animation events create projectiles.
+    // --------------------------------------------------------
+    private void BeginAttack()
+    {
+        if (anim == null || stats == null) return;
+        aiState = AIState.Attack;
+        StopNavigation();
+        currentAttack = Random.value < magicVolleyChance
+            ? AttackType.MagicBullet : AttackType.Bomb;
+        circleSpawned = bombThrown = volleyStarted = endAttackRequested = chargeVfxSpawned = false;
+        attackRoutine = StartCoroutine(PerformAttack());
+    }
+
+    private IEnumerator PerformAttack()
+    {
+        string stateName = currentAttack == AttackType.MagicBullet
+            ? magicVolleyState : bombState;
+        int hash = Animator.StringToHash(stateName);
+        if (!anim.HasState(0, hash))
         {
-            patrolIndex += patrolDir;
-
-            if (patrolIndex >= patrolZones.Length)
-            {
-                patrolIndex = patrolZones.Length - 2;
-                patrolDir = -1;
-            }
-            else if (patrolIndex < 0)
-            {
-                patrolIndex = 1;
-                patrolDir = 1;
-            }
+            Debug.LogError($"[FlyingGolem] Animator state '{stateName}' not found on layer 0.", this);
+            attackRoutine = null;
+            FinishAttack();
+            yield break;
         }
+        PlayAnim(stateName);
+        anim.Play(hash, 0, 0f); // Force restart, including consecutive attacks of same kind.
+        yield return null;
+
+        bool entered = false;
+        float elapsed = 0f;
+        while (aiState == AIState.Attack && !endAttackRequested &&
+            !isStunned && !isStaggered && !isDead)
+        {
+            AnimatorStateInfo info = anim.GetCurrentAnimatorStateInfo(0);
+            if (info.shortNameHash == hash)
+            {
+                entered = true;
+                float remaining = Mathf.Max(0f, 1f - info.normalizedTime) *
+                    info.length / Mathf.Max(0.01f, Mathf.Abs(anim.speed));
+                if (remaining <= attackExitBlend) break;
+            }
+            else if (entered) break;
+
+            elapsed += Time.deltaTime;
+            if (elapsed >= attackSafetyTimeout) break;
+            yield return null;
+        }
+
+        if (aiState != AIState.Attack || isDead || isStunned || isStaggered) yield break;
+        if (anim.GetCurrentAnimatorStateInfo(0).shortNameHash == hash)
+            anim.CrossFadeInFixedTime("Idle", attackExitBlend, 0, 0f);
+
+        // Allow the volley started by its animation event to finish its bursts.
+        float extraWait = 0f;
+        while (volleyRoutine != null && extraWait < 2f)
+        {
+            extraWait += Time.deltaTime;
+            yield return null;
+        }
+        yield return new WaitForSeconds(Mathf.Max(attackRecovery, attackExitBlend));
+        if (aiState != AIState.Attack || isDead || isStunned || isStaggered) yield break;
+
+        attackRoutine = null;
+        FinishAttack();
+    }
+
+    private void FinishAttack()
+    {
+        currentAttack = AttackType.None;
+        aiState = AIState.Chase;
+        nextAttackTime = Time.time + attackCooldown;
+    }
+
+    private void CancelAttack()
+    {
+        if (attackRoutine != null) StopCoroutine(attackRoutine);
+        if (volleyRoutine != null) StopCoroutine(volleyRoutine);
+        attackRoutine = volleyRoutine = null;
+        if (aiState != AIState.Attack) return;
+        nextAttackTime = Time.time + attackCooldown;
+        currentAttack = AttackType.None;
+        aiState = AIState.Chase;
+        if (anim != null && !isDead)
+            anim.CrossFadeInFixedTime("Idle", 0.12f, 0, 0f);
+    }
+
+    /// <summary>Animation Event on the 'Bomb' (magic volley) animation.</summary>
+    public void SpawnMagicCircles()
+    {
+        if (!EventAllowed(AttackType.MagicBullet) || circleSpawned) return;
+        circleSpawned = true;
+        Vector3 origin = (visualRoot != null ? visualRoot.position : transform.position) +
+            transform.forward * circleOffset.z + Vector3.up * circleOffset.y;
+        Vector3 right = transform.right * Mathf.Abs(circleOffset.x);
+        leftCirclePosition = origin - right;
+        rightCirclePosition = origin + right;
+        SpawnVfx(magicCircleVfx, leftCirclePosition);
+        SpawnVfx(magicCircleVfx, rightCirclePosition);
+    }
+
+    /// <summary>Animation Event on the 'Bomb' (magic volley) animation.</summary>
+    public void FireMagicBullet()
+    {
+        if (!EventAllowed(AttackType.MagicBullet) || volleyStarted) return;
+        volleyStarted = true;
+        if (!circleSpawned) SpawnMagicCircles();
+        volleyRoutine = StartCoroutine(MagicBulletRoutine());
+    }
+
+    private IEnumerator MagicBulletRoutine()
+    {
+        // Yield once so the caller can store the Coroutine handle before completion.
+        yield return null;
+        for (int i = 0; i < bulletAmount; i++)
+        {   
+            if (!EventAllowed(AttackType.MagicBullet)) break;
+            SpawnBullet(leftCirclePosition);
+            SpawnBullet(rightCirclePosition);
+            if (i + 1 < bulletAmount)
+                yield return new WaitForSeconds(timeBetweenShots);
+        }
+        volleyRoutine = null;
+    }
+
+    /// <summary>Optional Animation Event on 'Attack 0' to play charge VFX.</summary>
+    public void SpawnChargeVfx()
+    {
+        if (!EventAllowed(AttackType.Bomb) || chargeVfxSpawned) return;
+        chargeVfxSpawned = true;
+        SpawnVfx(chargeVfx, transform.TransformPoint(bombPositionOffset));
+    }
+
+    /// <summary>Animation Event on 'Attack 0' at the moment the bomb is released.</summary>
+    public void ThrowBomb()
+    {
+        if (!EventAllowed(AttackType.Bomb) || bombThrown || bombPrefab == null) return;
+        bombThrown = true;
+        Vector3 origin = transform.TransformPoint(bombPositionOffset);
+        Vector3 direction = GetAimDirection(origin);
+        GameObject bomb = Instantiate(bombPrefab, origin, Quaternion.LookRotation(direction));
+
+        // E_Projectile controls its own projectile motion; other bombs use a Rigidbody.
+        if (bomb.TryGetComponent(out E_Projectile projectile))
+            projectile.InitProj(stats.damage, direction);
+        else if (bomb.TryGetComponent(out Rigidbody bombBody))
+            bombBody.linearVelocity = direction * bombSpeed;
+    }
+
+    /// <summary>Optional Animation Event near the end of either attack.</summary>
+    public void EndAttack()
+    {
+        if (aiState == AIState.Attack) endAttackRequested = true;
+    }
+
+    private bool EventAllowed(AttackType type) =>
+        aiState == AIState.Attack && currentAttack == type &&
+        !isDead && !isStunned && !isStaggered && HasValidPlayer();
+
+    private void SpawnBullet(Vector3 origin)
+    {
+        if (magicBulletPrefab == null) return;
+        Vector3 direction = GetAimDirection(origin);
+        GameObject bullet = Instantiate(magicBulletPrefab, origin, Quaternion.LookRotation(direction));
+        if (bullet.TryGetComponent(out E_Projectile projectile))
+            projectile.InitProj(stats.damage, direction);
+    }
+
+    private Vector3 GetAimDirection(Vector3 origin)
+    {
+        Vector3 direction = HasValidPlayer()
+            ? player.transform.position + Vector3.up * targetRayHeight - origin
+            : transform.forward;
+        return direction.sqrMagnitude > 0.0001f ? direction.normalized : transform.forward;
+    }
+
+    private void SpawnVfx(GameObject prefab, Vector3 position)
+    {
+        if (prefab == null) return;
+        GameObject effect = Instantiate(prefab, position, transform.rotation);
+        Destroy(effect, 5f);
+    }
+
+    // --------------------------------------------------------
+    // Hover and fall: dynamic body throughout; no agent-driven Transform.
+    // --------------------------------------------------------
+    private void EnterHoverPhysics()
+    {
+        flightState = FlightState.Hover;
+        if (rb == null) return;
+        rb.isKinematic = false;
+        rb.useGravity = false;
+        rb.constraints = (rb.constraints |
+            RigidbodyConstraints.FreezePositionY |
+            RigidbodyConstraints.FreezeRotationX |
+            RigidbodyConstraints.FreezeRotationZ) &
+            ~RigidbodyConstraints.FreezeRotationY;
     }
 
     private void UpdateHoverVisual()
     {
         if (visualRoot == null) return;
-
-        hoverTimer += Time.deltaTime;
-
-        float bob = Mathf.Sin(hoverTimer * hoverBobSpeed) * hoverBobAmplitude;
+        if (flightState == FlightState.Hover) hoverClock += Time.deltaTime;
+        float bob = flightState == FlightState.Hover
+            ? Mathf.Sin(hoverClock * hoverBobSpeed) * hoverBobAmplitude : 0f;
         float offsetY = hoverHeight + bob;
+        Vector3 target = originalVisualPosition + Vector3.up * offsetY;
+        visualRoot.localPosition = Vector3.Lerp(visualRoot.localPosition, target,
+            1f - Mathf.Exp(-hoverSmooth * Time.deltaTime));
 
-        Vector3 targetVisualPos = visualBaseLocalPos + Vector3.up * offsetY;
-        visualRoot.localPosition = Vector3.Lerp(visualRoot.localPosition, targetVisualPos, Time.deltaTime * hoverSmooth);
-
-        SyncColliderToVisual(offsetY);
+        // If a collider is mounted on the root, move its center with the model.
+        // Child colliders should NOT be offset again.
+        if (bodyCapsule != null && bodyCapsule.transform == transform)
+            bodyCapsule.center = originalCapsuleCenter + Vector3.up *
+                (visualRoot.localPosition.y - originalVisualPosition.y);
+        if (bodyBox != null && bodyBox.transform == transform)
+            bodyBox.center = originalBoxCenter + Vector3.up *
+                (visualRoot.localPosition.y - originalVisualPosition.y);
     }
-
-    private void SyncColliderToVisual(float hoverOffsetY)
-    {
-        if (hasCapsule && bodyCapsule != null)
-        {
-            bodyCapsule.center = capsuleBaseCenter + Vector3.up * hoverOffsetY;
-        }
-
-        if (hasBox && bodyBox != null)
-        {
-            bodyBox.center = boxBaseCenter + Vector3.up * hoverOffsetY;
-        }
-    }
-
-    // =========================================================
-    // ATTACK
-    // =========================================================
-
-    private void HandleActions()
-    {
-        if (isPerformingAction || !hasDetectedPlayer || !HasValidPlayer())
-            return;
-
-        float distance = HorizontalDistance(transform.position, player.transform.position);
-
-        if (distance <= attackRange &&
-            HasLineOfSightToPlayer() &&
-            IsFacingTarget() &&
-            attackRoutine == null)
-        {
-            isPerformingAction = true;
-            attackRoutine = StartCoroutine(PerformAttack());
-        }
-    }
-
-    private IEnumerator PerformAttack()
-    {
-        if (!HasValidPlayer())
-        {
-            isPerformingAction = false;
-            attackRoutine = null;
-            yield break;
-        }
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
-        FaceTargetInstant();
-
-        float elapsed = 0f;
-
-        while (elapsed < hitTime)
-        {
-            if (!HasValidPlayer() || isFalling || isStaggered)
-            {
-                isPerformingAction = false;
-                attackRoutine = null;
-                if (agent != null) agent.isStopped = false;
-                yield break;
-            }
-
-            FaceTargetInstant();
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-
-        FaceTargetInstant();
-
-        if (ChooseAttackIndex() == 0)
-        {
-            yield return StartCoroutine(PerformAttackOne());
-        }
-        else
-        {
-            yield return StartCoroutine(PerformAttackTwo());
-        }
-
-        float remainingTime = attackAnimDuration - hitTime;
-
-        if (remainingTime > 0f) yield return new WaitForSeconds(remainingTime);
-
-        yield return new WaitForSeconds(recoveryTime);
-
-        if (!HasValidPlayer())
-        {
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
-        }
-
-        isPerformingAction = false;
-        attackRoutine = null;
-
-        if (agent != null) agent.isStopped = false;
-    }
-
-    private int ChooseAttackIndex()
-    {
-        return Random.value <= firstAttackChance ? 0 : 1;
-    }
-
-    private IEnumerator PerformAttackOne()
-    {
-        if (!HasValidPlayer()) yield break;
-
-        anim.Play("Bomb");
-
-        Vector3 targetDir = GetFlatTargetDirection();
-        Vector3 right = transform.right;
-        right.y = 0f;
-        right.Normalize();
-
-        float sideOffset = Mathf.Abs(circleOffset.x);
-        Vector3 centerBase = transform.position + Vector3.up * circleOffset.y + transform.forward * circleOffset.z;
-
-        Vector3 leftCirclePos = centerBase - right * sideOffset;
-        Vector3 rightCirclePos = centerBase + right * sideOffset;
-
-        Quaternion leftRot = GetLookRotationToTarget(leftCirclePos);
-        Quaternion rightRot = GetLookRotationToTarget(rightCirclePos);
-
-        SpawnVfx(magicCircleVfx, leftCirclePos, leftRot);
-        SpawnVfx(magicCircleVfx, rightCirclePos, rightRot);
-
-        yield return new WaitForSeconds(0.15f);
-
-        for (int i = 0; i < bulletAmmount; i++)
-        {
-            if (!HasValidPlayer()) yield break;
-
-            Vector3 leftBulletDir = (player.transform.position - leftCirclePos).normalized;
-            Vector3 rightBulletDir = (player.transform.position - rightCirclePos).normalized;
-
-            if (leftBulletDir.sqrMagnitude < 0.0001f) leftBulletDir = targetDir;
-            if (rightBulletDir.sqrMagnitude < 0.0001f) rightBulletDir = targetDir;
-
-            GameObject leftBullet = Instantiate(magicBulletPrefab, leftCirclePos, Quaternion.LookRotation(leftBulletDir));
-            GameObject rightBullet = Instantiate(magicBulletPrefab, rightCirclePos, Quaternion.LookRotation(rightBulletDir));
-
-            var leftProj = leftBullet.GetComponent<E_Projectile>();
-            if (leftProj != null)
-            {
-                leftProj.InitProj(stats.damage, leftBulletDir);
-            }
-
-            var rightProj = rightBullet.GetComponent<E_Projectile>();
-            if (rightProj != null)
-            {
-                rightProj.InitProj(stats.damage, rightBulletDir);
-            }
-
-            yield return new WaitForSeconds(timeBtwShoot);
-        }
-
-        yield return new WaitForSeconds(0.2f);
-    }
-
-    private IEnumerator PerformAttackTwo()
-    {
-        if (!HasValidPlayer()) yield break;
-
-        anim.Play("Attack 0");
-
-        Vector3 targetDir = GetFlatTargetDirection();
-        Vector3 spawnPos = transform.TransformPoint(bombPosOffset);
-
-        SpawnVfx(chargeVfx, spawnPos, Quaternion.LookRotation(targetDir));
-
-        yield return new WaitForSeconds(chargeTime);
-
-        if (!HasValidPlayer()) yield break;
-
-        Vector3 bombDir = (player.transform.position - spawnPos).normalized;
-        bombDir.y = 0f;
-
-        if (bombDir.sqrMagnitude < 0.0001f)
-            bombDir = targetDir;
-
-        GameObject bomb = Instantiate(bombPrefab, spawnPos, Quaternion.LookRotation(bombDir));
-
-        Rigidbody bombRb = bomb.GetComponent<Rigidbody>();
-        if (bombRb != null)
-        {
-            bombRb.linearVelocity = bombDir * stats.damage;
-        }
-
-        yield return new WaitForSeconds(0.2f);
-    }
-
-    // =========================================================
-    // FALL / RECOVER
-    // =========================================================
 
     private void EnterFallMode()
     {
-        isFalling = true;
-        isRecovering = false;
-        fallStartedAt = Time.time;
-        groundedTimer = 0f;
-
-        if (recoverRoutine != null)
-        {
-            StopCoroutine(recoverRoutine);
-            recoverRoutine = null;
-        }
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-            agent.updatePosition = false;
-            agent.updateRotation = false;
-        }
-
+        if (flightState != FlightState.Hover) return;
+        flightState = FlightState.Falling;
+        CancelAttack();
+        fallStartTime = Time.time;
+        groundedTime = 0f;
         if (rb != null)
         {
-            rb.isKinematic = false;
+            rb.constraints &= ~RigidbodyConstraints.FreezePositionY;
             rb.useGravity = true;
-            rb.WakeUp();
-
-            Vector3 vel = rb.linearVelocity;
-            vel.x = 0f;
-            vel.z = 0f;
-            vel.y = 0f;
-            rb.linearVelocity = vel;
-
-            rb.AddForce(Vector3.down * fallForce, ForceMode.Impulse);
-        }
-
-        isPerformingAction = false;
-
-        if (attackRoutine != null)
-        {
-            StopCoroutine(attackRoutine);
-            attackRoutine = null;
+            // Gravity starts the fall; do not cancel a possible launcher hit.
         }
     }
 
-    private void HandleFallRecovery()
+    private void CheckFallRecovery()
     {
-        if (Time.time - fallStartedAt < minFallTimeBeforeRecovery) return;
-
-        if (Time.time - fallStartedAt > maxFallTime)
-        {
-            StartRecovery();
+        if (isStaggered || isStunned || isInReaction || isAirHung) return;
+        if (Time.time - fallStartTime < minimumFallTime) return;
+        groundedTime = isGrounded ? groundedTime + Time.deltaTime : 0f;
+        bool landed = groundedTime >= landedHoldTime;
+        bool timedOut = Time.time - fallStartTime >= maxFallTime;
+        if (!landed && !timedOut) return;
+        // If we cannot find a NavMesh point, remain fallen and retry later.
+        if (!NavMesh.SamplePosition(rb.position, out NavMeshHit navHit,
+            recoveryNavMeshRadius, agent != null ? agent.areaMask : NavMesh.AllAreas))
             return;
-        }
+        if (riseRoutine == null) riseRoutine = StartCoroutine(RiseToHover(navHit.position));
+    }
 
-        if (!isGrounded)
+    private IEnumerator RiseToHover(Vector3 to)
+    {
+        flightState = FlightState.Recovering;
+        rb.useGravity = false;
+        rb.linearVelocity = Vector3.zero;
+        Vector3 from = rb.position;
+        float elapsed = 0f;
+        while (elapsed < riseDuration && !isDead)
         {
-            groundedTimer = 0f;
-            return;
+            elapsed += Time.fixedDeltaTime;
+            rb.MovePosition(Vector3.Lerp(from, to,
+                Mathf.Clamp01(elapsed / Mathf.Max(0.01f, riseDuration))));
+            yield return new WaitForFixedUpdate();
         }
-
-        groundedTimer += Time.deltaTime;
-
-        if (groundedTimer >= groundedRecoveryDelay)
-        {
-            StartRecovery();
-        }
+        if (isDead) yield break;
+        rb.MovePosition(to);
+        rb.linearVelocity = Vector3.zero;
+        EnterHoverPhysics();
+        riseRoutine = null;
+        EnableAgentIfNeeded();
+        aiState = hasTarget ? AIState.Chase : AIState.ReturnHome;
     }
 
-    private void StartRecovery()
-    {
-        if (isRecovering) return;
+    private static Vector3 Flat(Vector3 value) { value.y = 0f; return value; }
+    private static float HorizontalDistance(Vector3 a, Vector3 b) =>
+        Flat(a - b).magnitude;
 
-        if (recoverRoutine != null)
-            StopCoroutine(recoverRoutine);
-
-        recoverRoutine = StartCoroutine(RecoverToHover());
-    }
-
-    private IEnumerator RecoverToHover()
-    {
-        isRecovering = true;
-
-        Vector3 startPos = transform.position;
-        Vector3 targetPos = GetHoverSnapPosition(startPos);
-
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.useGravity = false;
-            rb.isKinematic = true;
-        }
-
-        if (agent != null)
-        {
-            agent.updatePosition = false;
-            agent.updateRotation = false;
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
-        float t = 0f;
-
-        while (t < 1f)
-        {
-            t += Time.deltaTime / Mathf.Max(0.01f, recoverDuration);
-            transform.position = Vector3.Lerp(startPos, targetPos, t);
-            yield return null;
-        }
-
-        transform.position = targetPos;
-        hoverTimer = 0f;
-
-        if (agent != null)
-        {
-            agent.Warp(targetPos);
-            agent.nextPosition = targetPos;
-            agent.updatePosition = true;
-            agent.updateRotation = false;
-            agent.isStopped = false;
-            agent.ResetPath();
-        }
-
-        if (visualRoot != null)
-            visualRoot.localPosition = visualBaseLocalPos + Vector3.up * hoverHeight;
-
-        //SyncColliderToVisual(hoverHeight);
-
-        isFalling = false;
-        isRecovering = false;
-        groundedTimer = 0f;
-
-        recoverRoutine = null;
-    }
-
-    private void EnterHoverMode()
-    {
-        isFalling = false;
-        isRecovering = false;
-        groundedTimer = 0f;
-        hoverTimer = 0f;
-
-        if (rb != null)
-        {
-            rb.isKinematic = true;
-            rb.useGravity = false;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-
-        if (agent != null)
-        {
-            agent.enabled = true;
-            agent.baseOffset = 0f;
-            agent.updatePosition = true;
-            agent.updateRotation = false;
-            agent.isStopped = false;
-            agent.speed = hoverMoveSpeed;
-            agent.acceleration = hoverAcceleration;
-            agent.stoppingDistance = hoverStopDistance;
-        }
-
-        Vector3 snappedPos = GetHoverSnapPosition(transform.position);
-        transform.position = snappedPos;
-
-        if (agent != null) agent.Warp(snappedPos);
-
-        if (visualRoot != null)
-            visualRoot.localPosition = visualBaseLocalPos + Vector3.up * hoverHeight;
-
-        //SyncColliderToVisual(hoverHeight);
-    }
-
-    private Vector3 GetHoverSnapPosition(Vector3 sourcePosition)
-    {
-        Vector3 samplePoint = sourcePosition + Vector3.up * 10f;
-
-        if (NavMesh.SamplePosition(samplePoint, out NavMeshHit hit, 30f, NavMesh.AllAreas))
-        {
-            return new Vector3(sourcePosition.x, hit.position.y, sourcePosition.z);
-        }
-
-        return sourcePosition;
-    }
-
-    // =========================================================
-    // ROTATION
-    // =========================================================
-
-    private void RotateToVelocity()
-    {
-        if (isFalling || isRecovering || isPerformingAction) return;
-        if (agent == null) return;
-
-        Vector3 vel = agent.velocity;
-        vel.y = 0f;
-
-        if (vel.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(vel.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
-    }
-
-    private void RotateToTarget()
-    {
-        if (isFalling || isRecovering || isPerformingAction) return;
-        if (!HasValidPlayer()) return;
-        if (!HasLineOfSightToPlayer()) return;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(dir.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
-    }
-
-    private void FaceTargetInstant()
-    {
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        transform.rotation = Quaternion.LookRotation(dir.normalized);
-    }
-
-    private bool IsFacingTarget()
-    {
-        if (!HasValidPlayer()) return false;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return false;
-
-        float angle = Vector3.Angle(transform.forward, dir.normalized);
-        return angle <= facingAngleThreshold;
-    }
-
-    // =========================================================
-    // LOS / HELPERS
-    // =========================================================
-
-    private bool HasLineOfSight(PlayerController target)
-    {
-        if (target == null) return false;
-
-        Vector3 origin = transform.position + Vector3.up * targetRayHeight;
-        Vector3 targetPos = target.transform.position + Vector3.up * targetRayHeight;
-        Vector3 dir = (targetPos - origin).normalized;
-        float rayDistance = Vector3.Distance(origin, targetPos);
-
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
-        {
-            if (hit.transform != target.transform &&
-                hit.transform.root != target.transform.root)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private float HorizontalDistance(Vector3 a, Vector3 b)
-    {
-        a.y = 0f;
-        b.y = 0f;
-        return Vector3.Distance(a, b);
-    }
-
-    private Vector3 GetFlatTargetDirection()
-    {
-        if (!HasValidPlayer()) return transform.forward;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.0001f)
-            return transform.forward;
-
-        return dir.normalized;
-    }
-
-    private Quaternion GetLookRotationToTarget(Vector3 fromPosition)
-    {
-        if (!HasValidPlayer()) return transform.rotation;
-
-        Vector3 dir = player.transform.position - fromPosition;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.0001f)
-            dir = transform.forward;
-
-        return Quaternion.LookRotation(dir.normalized);
-    }
-
-    private void SpawnVfx(GameObject prefab, Vector3 position, Quaternion rotation)
-    {
-        if (prefab == null) return;
-
-        GameObject obj = Instantiate(prefab, position, rotation);
-        Destroy(obj, 5f);
-    }
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         if (!debug) return;
-
-        Gizmos.color = Color.red;
+        Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
-
-        if (safeZone == null) return;
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(safeZone.position, 1f);
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(safeZone.position, maxChaseDistance);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
     }
-
 }

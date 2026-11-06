@@ -66,7 +66,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 112
+  m_Constraints: 80
   m_CollisionDetection: 0
 --- !u!136 &2199258661415980862
 CapsuleCollider:
@@ -104,11 +104,34 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Undead
   stats: {fileID: 11400000, guid: 9b5ad587d00027349b24fc4bbf09c5fb, type: 2}
-  weight: 50
-  pushResistance: 1
-  launchResistance: 0.9
-  knockDownResistance: 1
   immuneToMovement: 0
+  enableNormalHitRecoil: 1
+  normalHitPushForce: 1.5
+  normalHitPushDuration: 0.18
+  groundPushBraking: 12
+  maxPlayerBodyPushSpeed: 0.18
+  standingBrake: 16
+  navigationAcceleration: 28
+  rotateToMovement: 1
+  navMeshReconnectRadius: 1.2
+  airRecoverDelay: 0.05
+  knockDownRecoverDelay: 0.15
+  maxAirReactionTime: 5
+  minimumAttackPushDuration: 0.2
+  airGravityMultiplier: 0.2
+  airHangDuration: 0.75
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 1024
+  groundCheck: {fileID: 8821764683529369014}
+  isGroundEnemy: 1
+  groundCheckDistance: 0.2
+  staggeredDamageMultiplier: 1.5
+  safeZone: {fileID: 0}
+  patrolZones:
+  - {fileID: 0}
+  - {fileID: 0}
+  hasPatrol: 1
   vfxHit: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
   hitVfxOffset: {x: 0, y: 0.6, z: 0}
   hitVfxDuration: 0.5
@@ -118,28 +141,6 @@ MonoBehaviour:
   audio_Source: {fileID: 9066763141916838494}
   onHit: {fileID: 0}
   onStagger: {fileID: 8300000, guid: 6c4f01641b5a5ec4e9a7c9c6f377f0cf, type: 3}
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 1024
-  groundCheck: {fileID: 8821764683529369014}
-  isGroundEnemy: 1
-  groundCheckDistance: 0.2
-  airRecoverDelay: 0.05
-  knockDownRecoverDelay: 0.15
-  airGravityMultiplier: 0.2
-  airHangDuration: 0.75
-  staggeredDamageMultiplier: 1.5
-  revengeThreshold: 3
-  revengeDecayDelay: 2
-  safeZone: {fileID: 0}
-  patrolZones:
-  - {fileID: 0}
-  - {fileID: 0}
-  hasPatrol: 1
-  debug: 1
-  currentHp: 0
-  currentStaggerBuild: 0
-  revengeMeter: 0
   durationDissolve: 1.5
   dieMaterial: {fileID: 2100000, guid: 7c6cdeb6b05ecfe4189ec916b9198b95, type: 2}
   EdgeColor: {r: 0.43927342, g: 1.7479424, b: 0.61376274, a: 1}
@@ -148,33 +149,42 @@ MonoBehaviour:
   mainTexSpeed: {x: 1, y: 0}
   distorsionIntensity: 0.01
   distorsionSpeed: {x: 0, y: -1}
-  attackRange: 2.5
+  debug: 1
+  currentHp: 0
+  currentStaggerBuild: 0
+  instantDetection: 0
+  detectionRange: 25
+  maxChaseDistance: 45
+  detectionDelay: 0.25
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
   targetRayHeight: 1.2
-  instantDetection: 0
-  facingAngleThreshold: 15
+  attackRange: 2.5
+  arrivalDistance: 0.5
+  repathInterval: 0.25
   turnSpeed: 15
+  facingAngle: 15
+  attackCooldown: 0.8
+  basicRecovery: 0.2
+  exitBlend: 0.08
+  animationSafetyTimeout: 5
+  cutsMoveSpeed: 6
+  cutsCooldown: 8
+  cutsRecovery: 0.3
+  cutsHpThreshold: 0.75
+  cutsChance: 0.3
+  cutsChargeVfx: {fileID: 0}
+  wallCheckRadius: 0.35
+  wallCheckHeight: 1
+  wallExtraDistance: 0.12
   hitBoxSize: {x: 2, y: 2, z: 2.5}
-  hitBoxPos: {x: 0, y: 0, z: 1.5}
-  hitTime: 0.95
-  attackAnimDuration: 1.2
-  recoveryTime: 0.2
-  consecutiveCutsChargeTime: 0.5
-  consecutiveCutsDuration: 1.5
-  consecutiveCutsHitInterval: 0.4
-  consecutiveCutsMoveSpeed: 5
-  consecutiveCutsCooldown: 8
-  specialRecoveryTime: 0
-  consecutiveCutsHpThreshold: 0.8
-  consecutiveCutsChance: 0.75
-  consecutiveCutsSFX: {fileID: 0}
-  detectionRange: 25
-  maxChaseDistance: 45
-  detectionDelay: 0.25
-  stopDistance: 0.5
-  hitBoxPrefab: {fileID: 65547742025389114, guid: b60a9548e8b1aba4497aeaf2c3ebe7a9, type: 3}
+  hitBoxOffset: {x: 0, y: 1, z: 1}
+  hitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  minCutsHitInterval: 0.08
+  state: 0
 --- !u!195 &5645680525476756212
 NavMeshAgent:
   m_ObjectHideFlags: 0

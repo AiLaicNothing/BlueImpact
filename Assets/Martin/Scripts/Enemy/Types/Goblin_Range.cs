@@ -4,524 +4,478 @@ using UnityEngine.AI;
 
 public class Goblin_Range : EnemyBase
 {
-    [Header("Core")]
+    private enum State { Idle, Patrol, Approach, Hold, Attack, Retreat, ReturnHome }
+
+    [Header("Attack")]
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private Transform firePoint;
-    [SerializeField] private float moveSpeed = 4.5f;
-    [SerializeField] private float attackRange = 8f;
-
-    [Header("Escape / Reposition")]
-    [SerializeField] private float escapeRange = 3f;
-    [SerializeField] private float repositionRange = 6f;
-    [SerializeField] private int tryReposition = 8;
-    [SerializeField] private LayerMask obstacleLayer;
-    [SerializeField] private float repathDelay = 0.25f;
-
-    [Header("Targeting")]
-    [SerializeField] private float targetRayHeight = 1.2f;
-    [SerializeField] private float attackBuffer = 0.75f;
-    [SerializeField] private bool instantDetection;
-
-    [Header("Rotation")]
-    [SerializeField] private float turnSpeed = 12f;
-
-    [Header("OnHitData")]
-    [SerializeField] private float hitTime = 0.35f;
-    [SerializeField] private float attackAnimDuration = 0.8f;
-    [SerializeField] private float recoveryTime = 0.2f;
+    [SerializeField, Min(0.1f)] private float attackRange = 8f;
+    [SerializeField, Min(0f)] private float attackCooldown = 0.8f;
+    [SerializeField, Min(0f)] private float attackRecovery = 0.2f;
+    [SerializeField, Range(0.01f, 0.25f)] private float attackExitBlend = 0.08f;
+    [SerializeField, Min(0.5f)] private float attackSafetyTimeout = 3f;
+    [SerializeField, Range(1f, 90f)] private float attackFacingAngle = 20f;
 
     [Header("Detection")]
-    [SerializeField] private float detectionRange = 8f;
-    [SerializeField] private float maxChaseDistance = 15f;
-    [SerializeField] private float detectionDelay = 0.25f;
+    [SerializeField, Min(0.1f)] private float detectionRange = 10f;
+    [SerializeField, Min(0.1f)] private float maxChaseDistance = 15f;
+    [SerializeField, Min(0f)] private float detectionDelay = 0.25f;
+    [SerializeField] private bool instantDetection;
+    [SerializeField] private LayerMask obstacleLayer;
+    [SerializeField] private float targetRayHeight = 1.2f;
 
-    [Header("Patrol")]
-    [SerializeField] private float stopDistance = 0.5f;
+    [Header("Movement")]
+    [SerializeField, Min(0.1f)] private float moveSpeed = 4.5f;
+    [SerializeField, Min(0.1f)] private float preferredAttackDistance = 7f;
+    [SerializeField, Min(1f)] private float turnSpeed = 540f;
+    [SerializeField, Min(0.05f)] private float repathInterval = 0.25f;
+    [SerializeField, Min(0.1f)] private float arrivalDistance = 0.6f;
 
-    private bool hasDetectedPlayer;
-    private bool isFollowingPlayer;
-    private bool returningHome;
-    private bool isPerformingAction;
-    private bool isEscaping;
-    private bool isRepositioning;
-    private bool hasMoveDestination;
+    [Header("Retreat")]
+    [SerializeField, Min(0.1f)] private float retreatTriggerDistance = 3f;
+    [SerializeField, Min(0f)] private float retreatPreparation = 0.3f;
+    [SerializeField, Min(0.05f)] private float minRetreatDuration = 0.65f;
+    [SerializeField, Min(0.05f)] private float maxRetreatDuration = 1.35f;
+    [SerializeField, Min(0f)] private float retreatCooldown = 2.5f;
+    [SerializeField, Min(0.5f)] private float retreatTravelDistance = 4f;
+    [SerializeField, Min(0.5f)] private float retreatSafeDistance = 5f;
 
-    private Vector3 currentMoveDestination;
+    [Header("Runtime (for debugging)")]
+    [SerializeField] private State state;
+    [SerializeField] private bool detectedPlayer;
+
+    private static readonly int AttackHash = Animator.StringToHash("Attack");
+    private static readonly float[] RetreatAngles = { 0f, 40f, -40f, 80f, -80f, 130f, -130f };
+
+    private Vector3 startPosition;
+    private Vector3 facingDirection;
+    private Vector3 retreatDestination;
     private float detectionTimer;
+    [SerializeField] private float closeTimer;
+    private float nextAttackTime;
+    private float nextRetreatTime;
+    private float retreatStartTime;
+    private float retreatEndTime;
     private float nextRepathTime;
-
-    private int patrolIndex = 0;
-    private int patrolDir = 1;
-
-    private float actionTimer;
-
+    private int patrolIndex;
+    private int patrolDirection = 1;
+    private bool shotThisAttack;
     private Coroutine attackRoutine;
 
     protected override void Awake()
     {
         base.Awake();
+        startPosition = transform.position;
+        facingDirection = transform.forward;
 
+        // EnemyBase moves the dynamic Rigidbody using agent.desiredVelocity.
+        rotateToMovement = false; // This subclass handles facing.
         if (agent != null)
         {
+            agent.updatePosition = false;
             agent.updateRotation = false;
             agent.speed = moveSpeed;
-            agent.stoppingDistance = 0.25f;
-            agent.autoBraking = true;
+            agent.stoppingDistance = 0.15f;
         }
+    }
+
+    protected override void Start()
+    {
+        base.Start();
+        state = hasPatrol && patrolZones != null && patrolZones.Length > 0
+            ? State.Patrol : State.Idle;
+    }
+
+    protected override void OnDisable()
+    {
+        CancelAttack(false);
+        base.OnDisable();
+    }
+
+    protected override void Die()
+    {
+        CancelAttack(false);
+        base.Die();
     }
 
     protected override void Update()
     {
         base.Update();
-
         if (isDead) return;
-        if (isStunned || IsStaggered) return;
-        if (agent == null || !agent.enabled) return;
 
-        UpdateTarget();
-        HandleDetection();
-        HandleActions();
-
-        if (isPerformingAction) return;
-
-        HandleMovement();
-
-        if (agent.velocity.sqrMagnitude >= 0.01f)
+        if (isStunned || isStaggered)
         {
-            PlayLoop("Walk");
-        }
-        else
-        {
-            PlayLoop("Idle");
-        }
-    }
-
-    // ==================================================
-    // TARGETING
-    // ==================================================
-
-    private void UpdateTarget()
-    {
-        if (!HasValidPlayer())
-        {
-            //player = FindFirstObjectByType<PlayerControl>();
-        }
-    }
-
-    private bool HasLineOfSightToPlayer()
-    {
-        if (!HasValidPlayer()) return false;
-
-        Vector3 origin = firePoint != null? firePoint.position : transform.position + Vector3.up * targetRayHeight;
-
-        Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
-        Vector3 dir = (targetPos - origin).normalized;
-        float rayDistance = Vector3.Distance(origin, targetPos);
-
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
-        {
-            if (hit.transform != player.transform &&
-                hit.transform.root != player.transform.root)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    // ==================================================
-    // DETECTION
-    // ==================================================
-
-    private void HandleDetection()
-    {
-        Transform home = HomePoint;
-        if (home == null) return;
-
-        if (instantDetection)
-        {
-            hasDetectedPlayer = true;
-            isFollowingPlayer = true;
+            CancelAttack(true);
             return;
         }
 
-        if (!HasValidPlayer())
+        DetectPlayer();
+        TrackRetreatPressure(); // Also counts during attacks and normal recoil.
+
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh || isInReaction)
+            return;
+
+        if (!detectedPlayer)
         {
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
+            if (state == State.Attack) CancelAttack(true);
+            if (state != State.Idle && state != State.Patrol && state != State.ReturnHome)
+                state = State.ReturnHome;
+            UpdatePassiveMovement();
+        }
+        else if (state == State.Attack)
+        {
+            if (!shotThisAttack) FacePlayer();
+        }
+        else if (state == State.Retreat)
+        {
+            UpdateRetreat();
+        }
+        else
+        {
+            UpdateCombat();
+        }
+
+        if (state != State.Attack)
+            UpdateLocomotionAnimation();
+    }
+
+    protected override void FixedUpdate()
+    {
+        base.FixedUpdate();
+        if (rb == null || isDead || isStunned || isStaggered || isInReaction) return;
+
+        Vector3 direction = Flat(facingDirection);
+        if (direction.sqrMagnitude < 0.001f) return;
+        Quaternion target = Quaternion.LookRotation(direction);
+        rb.MoveRotation(Quaternion.RotateTowards(
+            rb.rotation, target, turnSpeed * Time.fixedDeltaTime));
+    }
+
+    private void OnValidate()
+    {
+        maxRetreatDuration = Mathf.Max(minRetreatDuration, maxRetreatDuration);
+        preferredAttackDistance = Mathf.Min(preferredAttackDistance, attackRange);
+        retreatSafeDistance = Mathf.Max(retreatSafeDistance, retreatTriggerDistance + 0.1f);
+    }
+
+    // Detection is limited by the home leash, even when instantDetection is on.
+    private Vector3 Home => HomePoint != null ? HomePoint.position : startPosition;
+
+    private void DetectPlayer()
+    {
+        if (!HasValidPlayer() || FlatDistance(player.transform.position, Home) > maxChaseDistance)
+        {
+            detectedPlayer = false;
             detectionTimer = 0f;
             return;
         }
 
-        float playerDistHome = Vector3.Distance(player.transform.position, home.position);
-        float distPlayer = DistanceToPlayer();
-
-        if (!hasDetectedPlayer)
+        if (detectedPlayer) return;
+        if (instantDetection ||
+            (FlatDistance(transform.position, player.transform.position) <= detectionRange && ClearShot()))
         {
-            if (distPlayer <= detectionRange && HasLineOfSightToPlayer())
-            {
-                detectionTimer += Time.deltaTime;
-
-                if (detectionTimer >= detectionDelay)
-                {
-                    hasDetectedPlayer = true;
-                    isFollowingPlayer = true;
-                }
-            }
-            else
-            {
-                detectionTimer = 0f;
-            }
+            detectionTimer += Time.deltaTime;
+            if (instantDetection || detectionTimer >= detectionDelay)
+                detectedPlayer = true;
         }
-        else
-        {
-            if (playerDistHome > maxChaseDistance)
-            {
-                hasDetectedPlayer = false;
-                isFollowingPlayer = false;
-                returningHome = true;
-                detectionTimer = 0f;
-                isEscaping = false;
-                isRepositioning = false;
-                hasMoveDestination = false;
-            }
-        }
+        else detectionTimer = 0f;
     }
 
-    // ==================================================
-    // MOVEMENT
-    // ==================================================
-
-    private void HandleMovement()
+    private bool ClearShot()
     {
-        if (isFollowingPlayer && HasValidPlayer())
+        if (!HasValidPlayer()) return false;
+        Vector3 origin = firePoint != null ? firePoint.position : transform.position + Vector3.up * targetRayHeight;
+        Vector3 direction = player.transform.position + Vector3.up * targetRayHeight - origin;
+        float distance = direction.magnitude;
+        if (distance < 0.01f) return true;
+        if (Physics.Raycast(origin, direction / distance, out RaycastHit hit,
+                distance, obstacleLayer, QueryTriggerInteraction.Ignore))
+            return hit.collider.GetComponentInParent<PlayerControl>() != null;
+        return true;
+    }
+
+    private void TrackRetreatPressure()
+    {
+        if (detectedPlayer && state != State.Retreat && HasValidPlayer() &&
+            Time.time >= nextRetreatTime &&
+            FlatDistance(transform.position, player.transform.position) <= retreatTriggerDistance)
+            closeTimer += Time.deltaTime;
+        else
+            closeTimer = 0f;
+    }
+
+    private void UpdateCombat()
+    {
+        float distance = FlatDistance(transform.position, player.transform.position);
+
+        if (Time.time >= nextRetreatTime && closeTimer >= retreatPreparation &&
+            distance <= retreatTriggerDistance && StartRetreat())
+            return;
+
+        // No separate Reposition state: approaching uses NavMesh to navigate
+        // around obstacles until the goblin has a clear shot.
+        if (distance > attackRange ||
+            (state == State.Approach && distance > preferredAttackDistance) ||
+            !ClearShot())
         {
-            float distance = DistanceToPlayer();
-
-            if (distance < escapeRange)
-            {
-                if (!isEscaping || !hasMoveDestination || Time.time >= nextRepathTime)
-                {
-                    StartEscape();
-                }
-
-                agent.isStopped = false;
-                agent.SetDestination(currentMoveDestination);
-                RotateAwayFromTarget();
-                return;
-            }
-
-            if (distance > attackRange + attackBuffer)
-            {
-                isEscaping = false;
-                isRepositioning = false;
-                hasMoveDestination = false;
-
-                agent.isStopped = false;
-                agent.SetDestination(player.transform.position);
-                RotateToTargetSmooth();
-                return;
-            }
-
-            if (!HasLineOfSightToPlayer())
-            {
-                if (!isRepositioning || !hasMoveDestination || Time.time >= nextRepathTime)
-                {
-                    StartReposition();
-                }
-
-                agent.isStopped = false;
-                agent.SetDestination(currentMoveDestination);
-                RotateToTargetSmooth();
-                return;
-            }
-
-            agent.isStopped = true;
-            agent.ResetPath();
-            RotateToTargetSmooth();
+            state = State.Approach;
+            MoveTo(player.transform.position);
+            FaceMovement();
             return;
         }
-        else if (returningHome)
+
+        state = State.Hold;
+        StopMoving();
+        FacePlayer();
+        if (Time.time >= nextAttackTime && IsFacingPlayer())
+            StartAttack();
+    }
+
+    private bool StartRetreat()
+    {
+        closeTimer = 0f;
+        if (!FindRetreatDestination(out retreatDestination))
         {
-            agent.isStopped = false;
-            if (spawnPos != null) agent.SetDestination(spawnPos.position);
-            RotateToVelocity();
+            nextRetreatTime = Time.time + 0.5f; // Retry later; never get stuck retreating.
+            return false;
+        }
 
+        float duration = Random.Range(minRetreatDuration, maxRetreatDuration);
+        retreatStartTime = Time.time;
+        retreatEndTime = Time.time + duration;
+        state = State.Retreat;
+        MoveTo(retreatDestination);
+        FaceMovement();
+        return true;
+    }
 
-            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
+    private void UpdateRetreat()
+    {
+        float distance = FlatDistance(transform.position, player.transform.position);
+        bool minimumElapsed = Time.time - retreatStartTime >= minRetreatDuration;
+        bool arrived = FlatDistance(transform.position, retreatDestination) <= arrivalDistance;
+
+        if (Time.time >= retreatEndTime ||
+            (minimumElapsed && (arrived || distance >= retreatSafeDistance)))
+        {
+            state = State.Hold;
+            nextRetreatTime = Time.time + retreatCooldown;
+            StopMoving();
+            return;
+        }
+
+        MoveTo(retreatDestination);
+        FaceMovement();
+    }
+
+    // Only searches when a retreat starts; no repeated pathfinding every frame.
+    private bool FindRetreatDestination(out Vector3 bestDestination)
+    {
+        bestDestination = transform.position;
+        if (agent == null || !agent.isOnNavMesh || !HasValidPlayer()) return false;
+
+        if (!NavMesh.SamplePosition(agent.nextPosition, out NavMeshHit start,
+                1.5f, agent.areaMask)) return false;
+
+        Vector3 away = Flat(transform.position - player.transform.position).normalized;
+        if (away.sqrMagnitude < 0.01f) away = Flat(transform.forward).normalized;
+        float currentDistance = FlatDistance(transform.position, player.transform.position);
+        float bestGain = 0.3f;
+        NavMeshPath path = new NavMeshPath();
+
+        foreach (float angle in RetreatAngles)
+        {
+            Vector3 direction = Quaternion.Euler(0f, angle, 0f) * away;
+            Vector3 requested = transform.position + direction * retreatTravelDistance;
+            if (!NavMesh.SamplePosition(requested, out NavMeshHit target,
+                    1.5f, agent.areaMask)) continue;
+
+            float gain = FlatDistance(target.position, player.transform.position) - currentDistance;
+            if (gain <= bestGain) continue;
+            if (!NavMesh.CalculatePath(start.position, target.position, agent.areaMask, path) ||
+                path.status != NavMeshPathStatus.PathComplete) continue;
+
+            bestGain = gain;
+            bestDestination = target.position;
+        }
+        return bestGain > 0.3f;
+    }
+
+    private void UpdatePassiveMovement()
+    {
+        if (state == State.ReturnHome)
+        {
+            if (FlatDistance(transform.position, Home) > arrivalDistance)
             {
-                returningHome = false;
-                agent.ResetPath();
+                MoveTo(Home);
+                FaceMovement();
+                return;
             }
+            state = hasPatrol && patrolZones != null && patrolZones.Length > 0
+                ? State.Patrol : State.Idle;
         }
-        else if (hasPatrol)
+
+        if (!hasPatrol || patrolZones == null || patrolZones.Length == 0)
         {
-            agent.isStopped = false;
-            HandlePatrol();
+            state = State.Idle;
+            StopMoving();
+            return;
         }
-        else
+
+        state = State.Patrol;
+        patrolIndex = Mathf.Clamp(patrolIndex, 0, patrolZones.Length - 1);
+        Transform point = patrolZones[patrolIndex];
+        if (point == null) return;
+        MoveTo(point.position);
+        FaceMovement();
+        if (FlatDistance(transform.position, point.position) <= arrivalDistance && patrolZones.Length > 1)
         {
-            agent.ResetPath();
+            patrolIndex += patrolDirection;
+            if (patrolIndex >= patrolZones.Length) { patrolIndex = patrolZones.Length - 2; patrolDirection = -1; }
+            else if (patrolIndex < 0) { patrolIndex = 1; patrolDirection = 1; }
         }
     }
 
-    private void StartEscape()
+    private void MoveTo(Vector3 destination)
     {
-        if (!HasValidPlayer()) return;
-
-        Vector3 targetPos = player.transform.position;
-        Vector3 awayDir = (transform.position - targetPos).normalized;
-
-        Vector3 desired = transform.position + awayDir * (escapeRange + repositionRange);
-
-        if (NavMesh.SamplePosition(desired, out NavMeshHit hit, repositionRange, NavMesh.AllAreas))
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        agent.isStopped = false;
+        if (Time.time < nextRepathTime) return;
+        if (!agent.hasPath || (agent.destination - destination).sqrMagnitude > 0.25f)
         {
-            currentMoveDestination = hit.position;
-        }
-        else
-        {
-            currentMoveDestination = desired;
-        }
-
-        hasMoveDestination = true;
-        isEscaping = true;
-        isRepositioning = false;
-        nextRepathTime = Time.time + repathDelay;
-    }
-
-    private void StartReposition()
-    {
-        if (!HasValidPlayer()) return;
-
-        Vector3 center = player.transform.position;
-        currentMoveDestination = FindValidPosAround(center, repositionRange);
-
-        hasMoveDestination = true;
-        isRepositioning = true;
-        isEscaping = false;
-        nextRepathTime = Time.time + repathDelay;
-    }
-
-    private Vector3 FindValidPosAround(Vector3 center, float radius)
-    {
-        Vector3 bestPos = transform.position;
-        float bestScore = Mathf.Infinity;
-
-        for (int i = 0; i < tryReposition; i++)
-        {
-            Vector2 rand = Random.insideUnitCircle.normalized;
-            Vector3 candidate = center + new Vector3(rand.x, 0f, rand.y) * radius;
-
-            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2f, NavMesh.AllAreas))
-            {
-                float dist = Mathf.Abs(Vector3.Distance(hit.position, center) - radius);
-
-                if (dist < bestScore)
-                {
-                    bestScore = dist;
-                    bestPos = hit.position;
-                }
-            }
-        }
-
-        return bestPos;
-    }
-
-    private void HandlePatrol()
-    {
-        if (patrolZones == null || patrolZones.Length == 0) return;
-
-        Transform posDesired = patrolZones[patrolIndex];
-        agent.SetDestination(posDesired.position);
-
-        float dist = Vector3.Distance(transform.position, posDesired.position);
-
-        if (dist <= stopDistance)
-        {
-            patrolIndex += patrolDir;
-
-            if (patrolIndex >= patrolZones.Length)
-            {
-                patrolIndex = patrolZones.Length - 2;
-                patrolDir = -1;
-            }
-            else if (patrolIndex < 0)
-            {
-                patrolIndex = 1;
-                patrolDir = 1;
-            }
+            agent.SetDestination(destination);
+            nextRepathTime = Time.time + repathInterval;
         }
     }
 
-    // ==================================================
-    // ATTACK
-    // ==================================================
-
-    private void HandleActions()
+    private void StopMoving()
     {
-        if (isPerformingAction || !hasDetectedPlayer || !HasValidPlayer()) return;
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        agent.isStopped = true;
+        if (agent.hasPath) agent.ResetPath();
+    }
 
-        actionTimer += Time.deltaTime;
-        float distance = DistanceToPlayer();
-
-        if (actionTimer >= 0.5)
-        {
-            if (distance <= attackRange && HasLineOfSightToPlayer() && !isEscaping && !isRepositioning && attackRoutine == null)
-            {
-                attackRoutine = StartCoroutine(PerformAttack());
-            }
-        }
+    private void StartAttack()
+    {
+        if (anim == null || stats == null || projectilePrefab == null || firePoint == null)
+            return;
+        state = State.Attack;
+        shotThisAttack = false;
+        StopMoving();
+        attackRoutine = StartCoroutine(PerformAttack());
     }
 
     private IEnumerator PerformAttack()
     {
-        if (!HasValidPlayer())
-        {
-            attackRoutine = null;
-            yield break;
-        }
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
+        // PlayAnim manages EnemyBase's animation hash. Explicitly restart at 0
+        // so this also works with older versions of EnemyBase.PlayAnim().
         PlayAnim("Attack");
-
-        isPerformingAction = true;
+        anim.Play(AttackHash, 0, 0f);
+        yield return null;
 
         float elapsed = 0f;
-
-        while (elapsed < hitTime)
+        bool enteredAttack = false;
+        while (state == State.Attack && !isDead && !isStunned && !isStaggered)
         {
-            if (!HasValidPlayer() || isEscaping || isRepositioning)
+            AnimatorStateInfo current = anim.GetCurrentAnimatorStateInfo(0);
+            if (current.shortNameHash == AttackHash)
             {
-                isPerformingAction = false;
-                attackRoutine = null;
-                if (agent != null) agent.isStopped = false;
-                yield break;
+                enteredAttack = true;
+                float remaining = Mathf.Max(0f, 1f - current.normalizedTime) *
+                    current.length / Mathf.Max(0.01f, Mathf.Abs(anim.speed));
+                if (remaining <= attackExitBlend) break;
             }
+            else if (enteredAttack) break;
 
-            RotateToTargetSmooth();
             elapsed += Time.deltaTime;
+            if (elapsed >= attackSafetyTimeout) break; // Missing state/animation protection.
+            if (!shotThisAttack) FacePlayer();
             yield return null;
         }
 
-        //Shoot();
+        if (state != State.Attack || isDead || isStunned || isStaggered) yield break;
+        if (!shotThisAttack)
+            Debug.LogWarning($"[Goblin_Range] {name}: Attack finished without Shoot Animation Event.", this);
+        if (anim.GetCurrentAnimatorStateInfo(0).shortNameHash == AttackHash)
+            anim.CrossFadeInFixedTime("Idle", attackExitBlend, 0, 0f);
 
-        float remainingTime = attackAnimDuration - hitTime;
-        if (remainingTime > 0f)
-        {
-            yield return new WaitForSeconds(remainingTime);
-        }
+        yield return new WaitForSeconds(Mathf.Max(attackRecovery, attackExitBlend));
+        if (state != State.Attack || isDead || isStunned || isStaggered) yield break;
 
-        PlayAnim("Idle");
-
-        yield return new WaitForSeconds(recoveryTime);
-
-        isEscaping = false;
-        isRepositioning = false;
-        hasMoveDestination = false;
-
-        if (!HasValidPlayer())
-        {
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
-        }
-
-        isPerformingAction = false;
+        nextAttackTime = Time.time + attackCooldown;
         attackRoutine = null;
-
-        if (agent != null)
-        {
-            agent.isStopped = false;
-        }
-
+        state = State.Hold;
     }
 
+    // Called by the Attack clip's Animation Event (via the child Animator relay).
     public void Shoot()
     {
-        Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
-        Vector3 dir = (targetPos - firePoint.position).normalized;
+        if (state != State.Attack || shotThisAttack || isDead || isStunned ||
+            isStaggered || !HasValidPlayer()) return;
 
-        if (dir.sqrMagnitude < 0.0001f)
-        {
-            dir = transform.forward;
-        }
+        shotThisAttack = true;
+        if (projectilePrefab == null || firePoint == null || stats == null) return;
 
-        GameObject proj = Instantiate(projectilePrefab, firePoint.position, Quaternion.LookRotation(dir));
+        Vector3 direction = player.transform.position + Vector3.up * targetRayHeight - firePoint.position;
+        if (direction.sqrMagnitude < 0.001f) direction = transform.forward;
+        direction.Normalize();
 
-        var projectile = proj.GetComponent<E_Projectile>();
-
-        if (projectile != null)
-        {
-            projectile.InitProj(stats.damage, dir);
-        }
-
-        actionTimer = 0f;
-
+        GameObject instance = Instantiate(projectilePrefab, firePoint.position,
+            Quaternion.LookRotation(direction));
+        if (instance.TryGetComponent(out E_Projectile projectile))
+            projectile.InitProj(stats.damage, direction);
     }
 
-    // ==================================================
-    // ROTATION
-    // ==================================================
-
-    private void RotateToTargetSmooth()
+    private void CancelAttack(bool blendToIdle)
     {
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
-
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, turnSpeed * 60f * Time.deltaTime);
+        if (attackRoutine != null) StopCoroutine(attackRoutine);
+        attackRoutine = null;
+        if (state != State.Attack) return;
+        nextAttackTime = Time.time + attackCooldown;
+        state = State.Hold;
+        if (blendToIdle && anim != null && !isDead)
+            anim.CrossFadeInFixedTime("Idle", attackExitBlend, 0, 0f);
     }
 
-    private void RotateAwayFromTarget()
+    private void FacePlayer()
     {
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = transform.position - player.transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        Quaternion targetRot = Quaternion.LookRotation(dir.normalized);
-
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, turnSpeed * 60f * Time.deltaTime);
+        if (HasValidPlayer()) SetFacing(player.transform.position - transform.position);
     }
 
-    private void RotateToVelocity()
+    private void FaceMovement()
     {
-        Vector3 vel = agent.velocity;
-        vel.y = 0f;
-
-        if (vel.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(vel.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
+        if (agent != null && agent.desiredVelocity.sqrMagnitude > 0.01f)
+            SetFacing(agent.desiredVelocity);
     }
 
-    private void OnDrawGizmos()
+    private void SetFacing(Vector3 direction)
     {
-        if (!debug) return;
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-
-        Transform home = HomePoint;
-        if (home == null) return;
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(home.position, 1f);
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(home.position, maxChaseDistance);
+        direction = Flat(direction);
+        if (direction.sqrMagnitude > 0.001f)
+            facingDirection = direction.normalized;
     }
+
+    private bool IsFacingPlayer()
+    {
+        Vector3 toPlayer = Flat(player.transform.position - transform.position);
+        return toPlayer.sqrMagnitude < 0.001f ||
+            Vector3.Angle(Flat(transform.forward), toPlayer) <= attackFacingAngle;
+    }
+
+    private void UpdateLocomotionAnimation()
+    {
+        if (anim == null) return;
+        Vector3 horizontal = rb != null ? Flat(rb.linearVelocity) : Vector3.zero;
+        string animation = agent != null && !agent.isStopped && horizontal.sqrMagnitude > 0.09f
+            ? "Walk" : "Idle";
+        if (anim.GetCurrentAnimatorStateInfo(0).IsName(animation) ||
+            (anim.IsInTransition(0) && anim.GetNextAnimatorStateInfo(0).IsName(animation))) return;
+        anim.CrossFadeInFixedTime(animation, 0.12f, 0, 0f);
+    }
+
+    private static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
+    private static float FlatDistance(Vector3 a, Vector3 b) { return Flat(a - b).magnitude; }
 }
+
+
 

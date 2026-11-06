@@ -5,409 +5,411 @@ using UnityEngine;
 
 public class Goblin_Melee : EnemyBase
 {
-    [Header("Targeting")]
-    [SerializeField] private float attackRange = 2.5f;
+    private enum State { Idle, Patrol, Chase, Attack, ReturnHome }
+
+    [Header("Detection")]
+    [SerializeField, Min(0.1f)] private float detectionRange = 8f;
+    [SerializeField, Min(0.1f)] private float maxChaseDistance = 15f;
+    [SerializeField, Min(0f)] private float detectionDelay = 0.25f;
     [SerializeField] private LayerMask obstacleLayer;
     [SerializeField] private float targetRayHeight = 1.2f;
 
-    [Header("Rotation")]
-    [SerializeField] private float facingAngleThreshold = 15f;
-    [SerializeField] private float turnSpeed = 15f;
+    [Header("Movement")]
+    [SerializeField, Min(0.1f)] private float attackRange = 2f;
+    [SerializeField, Min(0.1f)] private float arrivalDistance = 0.5f;
+    [SerializeField, Min(0.05f)] private float repathInterval = 0.25f;
+    [SerializeField, Min(0f)] private float turnSpeed = 540f;
+    [SerializeField, Range(0f, 180f)] private float attackFacingAngle = 15f;
 
-    [Header("Hit")]
+    [Header("Attack")]
+    [SerializeField, Min(0f)] private float attackCooldown = 0.8f;
+    [SerializeField, Min(0f)] private float attackRecovery = 0.2f;
+    [SerializeField, Range(0f, 0.3f)] private float attackExitBlend = 0.08f;
+    [Tooltip("Fallback only; actual duration comes from the Attack state.")]
+    [SerializeField, Min(0.25f)] private float attackSafetyTimeout = 3f;
     [SerializeField] private Vector3 hitBoxSize = new Vector3(1f, 1f, 1f);
-    [SerializeField] private Vector3 hitBoxPos = new Vector3(0f, 0f, 1f);
-    [SerializeField] private float hitTime = 0.35f;
-    [SerializeField] private float attackAnimDuration = 0.8f;
-    [SerializeField] private float recoveryTime = 0.2f;
+    [SerializeField] private Vector3 hitBoxPos = new Vector3(0f, 1f, 1f);
+    [SerializeField] private LayerMask hitLayers = ~0;
 
-    [Header("Detection")]
-    [SerializeField] private float detectionRange = 8f;
-    [SerializeField] private float maxChaseDistance = 15f;
-    [SerializeField] private float detectionDelay = 0.25f;
+    [Header("Runtime (read only)")]
+    [SerializeField] private State state;
 
-    [Header("Patrol")]
-    [SerializeField] private float stopDistance = 0.5f;
+    private static readonly int AttackHash = Animator.StringToHash("Attack");
+    private readonly Collider[] hitBuffer = new Collider[24];
 
-    [Header("Debug")]
-    [SerializeField] private GameObject hitBoxPrefab;
-
-    private bool hasDetectedPlayer;
-    private bool isFollowingPlayer;
-    private bool returningHome;
-    private bool isPerformingAction;
+    private Vector3 initialPosition;
+    private Vector3 desiredFacing;
+    private Vector3 attackFacing;
     private float detectionTimer;
-
-    private float actionTimer;
-
+    private float nextAttackTime;
+    private float nextRepathTime;
     private int patrolIndex;
-    private int patrolDir = 1;
+    private int patrolDirection = 1;
+    private bool hitUsed;
+    private bool hitEventReceived;
+    private bool endAttackRequested;
+    private Coroutine attackRoutine;
 
-   // private Animator anim;
+    private Vector3 Home => HomePoint != null ? HomePoint.position :
+        (Application.isPlaying ? initialPosition : transform.position);
 
     protected override void Awake()
     {
         base.Awake();
-        anim = GetComponentInChildren<Animator>();
+        initialPosition = transform.position;
+        desiredFacing = Flat(transform.forward);
+        rotateToMovement = false; // EnemyBase drives velocity, this script faces targets.
+    }
 
-        if (agent != null)
-        {
-            agent.updateRotation = false;
-        }
+    protected override void Start()
+    {
+        base.Start();
+        state = hasPatrol && patrolZones != null && patrolZones.Length > 0
+            ? State.Patrol : State.Idle;
     }
 
     protected override void Update()
     {
         base.Update();
-
         if (isDead) return;
-        if (isStunned || IsStaggered) return;
-        if (agent == null || !agent.enabled) return;
 
-        UpdateTarget();
-        HandleDetection();
-        HandleActions();
-
-        if (isPerformingAction) return;
-
-        HandleMovement();
-
-        if (agent.velocity.sqrMagnitude >= 0.01f)
+        // Full stagger/stun cancels attacks; a brief normal hit recoil does not.
+        if (isStunned || isStaggered)
         {
-            PlayLoop("Walk");
-        }
-        else
-        {
-            PlayLoop("Idle");
-        }
-    }
-
-    private void UpdateTarget()
-    {
-        if (!HasValidPlayer())
-        {
-            //player = FindFirstObjectByType<PlayerControl>();
-        }
-    }
-    private bool HasLineOfSight()
-    {
-        if (!HasValidPlayer()) return false;
-
-        Vector3 origin = transform.position + Vector3.up * targetRayHeight;
-        Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
-
-        Vector3 dir = (targetPos - origin).normalized;
-        float rayDistance = Vector3.Distance(origin, targetPos);
-
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
-        {
-            if (hit.transform != player.transform && hit.transform.root != player.transform.root)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private void HandleDetection()
-    {
-        Transform home = HomePoint;
-        if (home == null) return;
-
-        if (!HasValidPlayer())
-        {
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
-            detectionTimer = 0f;
+            CancelAttack(true);
             return;
         }
 
-        float playerDistHome = Vector3.Distance(player.transform.position, home.position);
-        float distPlayer = DistanceToPlayer();
+        DetectPlayer();
+        if (state == State.Attack) return;
+        if (isInReaction || agent == null || !agent.enabled || !agent.isOnNavMesh)
+            return;
 
-        if (!hasDetectedPlayer)
-        {
-            if (distPlayer <= detectionRange && HasLineOfSight())
-            {
-                detectionTimer += Time.deltaTime;
+        if (state == State.Chase) UpdateChase();
+        else UpdatePassiveMovement();
 
-                if (detectionTimer >= detectionDelay)
-                {
-                    hasDetectedPlayer = true;
-                    isFollowingPlayer = true;
-                }
-            }
-            else
-            {
-                detectionTimer = 0f;
-            }
-        }
-        else
-        {
-            if (playerDistHome > maxChaseDistance)
-            {
-                hasDetectedPlayer = false;
-                isFollowingPlayer = false;
-                returningHome = true;
-                detectionTimer = 0f;
-            }
-        }
+        if (state != State.Attack) UpdateLocomotionAnimation();
     }
 
-    private void HandleMovement()
+    protected override void FixedUpdate()
     {
-        if (isFollowingPlayer && HasValidPlayer())
-        {
-            float distance = DistanceToPlayer();
+        base.FixedUpdate();
+        if (rb == null || isDead || isStunned || isStaggered || isInReaction) return;
 
-            if (distance > attackRange)
-            {
-                agent.isStopped = false;
-                agent.SetDestination(player.transform.position);
-                RotateToVelocity();
-            }
-            else
-            {
-                agent.isStopped = true;
-                agent.ResetPath();
-                RotateToTarget();
-            }
-        }
-        else if (returningHome)
-        {
-            agent.isStopped = false;
-            if (spawnPos != null) agent.SetDestination(spawnPos.position);
-
-            RotateToVelocity();
-
-            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
-            {
-                returningHome = false;
-                agent.ResetPath();
-            }
-        }
-        else if (hasPatrol)
-        {
-            agent.isStopped = false;
-            HandlePatrol();
-            RotateToVelocity();
-        }
-        else
-        {
-            agent.ResetPath();
-        }
+        Vector3 forward = Flat(desiredFacing);
+        if (forward.sqrMagnitude < 0.001f) return;
+        Quaternion target = Quaternion.LookRotation(forward.normalized);
+        rb.MoveRotation(Quaternion.RotateTowards(
+            rb.rotation, target, turnSpeed * Time.fixedDeltaTime));
     }
 
-    private void HandlePatrol()
+    protected override void OnDisable()
     {
-        if (patrolZones == null || patrolZones.Length == 0) return;
+        CancelAttack(false);
+        base.OnDisable();
+    }
 
-        Transform posDesired = patrolZones[patrolIndex];
+    protected override void Die()
+    {
+        CancelAttack(false);
+        base.Die();
+    }
 
-        agent.SetDestination(posDesired.position);
+    // ----------------------------------------------------------
+    // Detection + chase
+    // ----------------------------------------------------------
 
-        float dist = Vector3.Distance(transform.position, posDesired.position);
-
-        if (dist <= stopDistance)
+    private void DetectPlayer()
+    {
+        if (!HasValidPlayer() ||
+            Flat(player.transform.position - Home).sqrMagnitude > maxChaseDistance * maxChaseDistance)
         {
-            patrolIndex += patrolDir;
+            detectionTimer = 0f;
+            if (state == State.Attack) CancelAttack(true);
+            if (state == State.Chase) state = State.ReturnHome;
+            return;
+        }
 
+        if (state == State.Chase || state == State.Attack) return;
+
+        if (Flat(player.transform.position - transform.position).sqrMagnitude <=
+                detectionRange * detectionRange && CanSeePlayer())
+        {
+            detectionTimer += Time.deltaTime;
+            if (detectionTimer >= detectionDelay)
+            {
+                detectionTimer = 0f;
+                state = State.Chase;
+            }
+        }
+        else detectionTimer = 0f;
+    }
+
+    private bool CanSeePlayer()
+    {
+        if (!HasValidPlayer()) return false;
+        Vector3 origin = transform.position + Vector3.up * targetRayHeight;
+        Vector3 target = player.transform.position + Vector3.up * targetRayHeight;
+        return !Physics.Linecast(origin, target, obstacleLayer, QueryTriggerInteraction.Ignore);
+    }
+
+    private void UpdateChase()
+    {
+        if (!HasValidPlayer()) { state = State.ReturnHome; return; }
+
+        Vector3 toPlayer = Flat(player.transform.position - transform.position);
+        bool canAttack = toPlayer.sqrMagnitude <= attackRange * attackRange && CanSeePlayer();
+
+        if (!canAttack)
+        {
+            MoveTo(player.transform.position);
+            FaceMovement();
+            return;
+        }
+
+        StopMoving();
+        SetFacing(toPlayer);
+        if (Time.time >= nextAttackTime && IsFacingPlayer()) StartAttack();
+    }
+
+    // ----------------------------------------------------------
+    // Return home / optional patrol
+    // ----------------------------------------------------------
+
+    private void UpdatePassiveMovement()
+    {
+        if (state == State.ReturnHome)
+        {
+            if (Flat(Home - transform.position).sqrMagnitude > arrivalDistance * arrivalDistance)
+            {
+                MoveTo(Home);
+                FaceMovement();
+                return;
+            }
+            state = hasPatrol && patrolZones != null && patrolZones.Length > 0
+                ? State.Patrol : State.Idle;
+        }
+
+        if (state != State.Patrol || patrolZones == null || patrolZones.Length == 0)
+        {
+            state = State.Idle;
+            StopMoving();
+            return;
+        }
+
+        patrolIndex = Mathf.Clamp(patrolIndex, 0, patrolZones.Length - 1);
+        Transform point = patrolZones[patrolIndex];
+        if (point == null) { StopMoving(); return; }
+
+        if (Flat(point.position - transform.position).sqrMagnitude <= arrivalDistance * arrivalDistance)
+        {
+            if (patrolZones.Length == 1) { StopMoving(); return; }
+
+            patrolIndex += patrolDirection;
             if (patrolIndex >= patrolZones.Length)
             {
                 patrolIndex = patrolZones.Length - 2;
-                patrolDir = -1;
+                patrolDirection = -1;
             }
             else if (patrolIndex < 0)
             {
                 patrolIndex = 1;
-                patrolDir = 1;
+                patrolDirection = 1;
             }
+            point = patrolZones[patrolIndex];
+            if (point == null) { StopMoving(); return; }
+        }
+
+        MoveTo(point.position);
+        FaceMovement();
+    }
+
+    private void MoveTo(Vector3 destination)
+    {
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        agent.isStopped = false;
+        if (Time.time < nextRepathTime || agent.pathPending) return;
+        if (!agent.hasPath || (agent.destination - destination).sqrMagnitude > 0.25f)
+        {
+            agent.SetDestination(destination);
+            nextRepathTime = Time.time + repathInterval;
         }
     }
 
-    private void HandleActions()
+    private void StopMoving()
     {
-        if (isPerformingAction || !hasDetectedPlayer) return;
-        if (!HasValidPlayer()) return;
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        agent.isStopped = true;
+        if (agent.hasPath) agent.ResetPath();
+    }
 
-        float distance = DistanceToPlayer();
+    // ----------------------------------------------------------
+    // Attack (Animation Event is responsible for the actual hit)
+    // ----------------------------------------------------------
 
-        actionTimer += Time.deltaTime;
+    private void StartAttack()
+    {
+        if (anim == null || stats == null || !HasValidPlayer()) return;
+        state = State.Attack;
+        hitUsed = false;
+        hitEventReceived = false;
+        endAttackRequested = false;
+        StopMoving();
 
-        if (distance <= attackRange && IsFacingTarget())
-        {
-            if (actionTimer >= 0.8f)
-            {
-                StartCoroutine(PerformAttack());
-            }
-        }
+        attackFacing = Flat(player.transform.position - transform.position);
+        if (attackFacing.sqrMagnitude < 0.001f) attackFacing = Flat(transform.forward);
+        if (attackFacing.sqrMagnitude < 0.001f) attackFacing = Vector3.forward;
+        attackFacing.Normalize();
+        SetFacing(attackFacing); // Do not track the player through the attack.
+        attackRoutine = StartCoroutine(PerformAttack());
     }
 
     private IEnumerator PerformAttack()
     {
-        isPerformingAction = true;
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
-        FaceTargetInstant();
-
         PlayAnim("Attack");
+        // EnemyBase's older PlayAnim() may not restart the same state at frame 0.
+        anim.Play(AttackHash, 0, 0f);
+        yield return null;
 
-        yield return new WaitForSeconds(hitTime);
-
-        FaceTargetInstant();
-        //DoHit();
-
-        float remaining = attackAnimDuration - hitTime;
-        if (remaining > 0f)
+        float elapsed = 0f;
+        bool enteredAttack = false;
+        while (state == State.Attack && !endAttackRequested &&
+               !isDead && !isStunned && !isStaggered)
         {
-            yield return new WaitForSeconds(remaining);
+            AnimatorStateInfo current = anim.GetCurrentAnimatorStateInfo(0);
+            if (current.shortNameHash == AttackHash)
+            {
+                enteredAttack = true;
+                float secondsLeft = Mathf.Max(0f, 1f - current.normalizedTime) *
+                    current.length / Mathf.Max(0.01f, Mathf.Abs(anim.speed));
+                if (secondsLeft <= attackExitBlend) break;
+            }
+            else if (enteredAttack) break;
+
+            elapsed += Time.deltaTime;
+            if (elapsed >= attackSafetyTimeout) break;
+            yield return null;
         }
 
-        PlayAnim("Idle");
+        if (state != State.Attack || isDead || isStunned || isStaggered) yield break;
 
-        yield return new WaitForSeconds(recoveryTime);
+        if (!hitEventReceived)
+            Debug.LogWarning($"[Goblin_Melee] {name}: Attack finished without the DoHit Animation Event.", this);
 
-        if (!HasValidPlayer())
-        {
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
-        }
+        if (anim.GetCurrentAnimatorStateInfo(0).shortNameHash == AttackHash)
+            anim.CrossFadeInFixedTime("Idle", attackExitBlend, 0, 0f);
 
-        if (agent != null)
-        {
-            agent.isStopped = false;
-        }
+        yield return new WaitForSeconds(Mathf.Max(attackRecovery, attackExitBlend));
+        if (state != State.Attack || isDead || isStunned || isStaggered) yield break;
 
-        isPerformingAction = false;
-        actionTimer = 0f;
+        nextAttackTime = Time.time + attackCooldown;
+        attackRoutine = null;
+        state = State.Chase;
     }
 
+    /// <summary>Required DoHit event at the contact frame of the non-looping Attack clip.</summary>
     public void DoHit()
     {
-        Vector3 attackForward = GetAttackForward();
-        Vector3 center = transform.position + attackForward * hitBoxPos.z + Vector3.up * hitBoxPos.y;
-        Quaternion rot = Quaternion.LookRotation(attackForward);
+        if (state != State.Attack || isDead || isStunned || isStaggered) return;
+        hitEventReceived = true;
+        if (hitUsed) return;
+        hitUsed = true; // Exactly one hit attempt per attack, even with duplicate events.
+        if (!HasValidPlayer() || stats == null || !CanSeePlayer()) return;
 
-        Collider[] hits = Physics.OverlapBox(center, hitBoxSize * 0.5f, rot);
+        Quaternion rotation = Quaternion.LookRotation(attackFacing);
+        Vector3 center = transform.position + rotation * hitBoxPos;
+        int count = Physics.OverlapBoxNonAlloc(center, hitBoxSize * 0.5f,
+            hitBuffer, rotation, hitLayers, QueryTriggerInteraction.Collide);
 
-        ShowHitbox(center, hitBoxSize, rot);
-
-        foreach (var hit in hits)
+        for (int i = 0; i < count; i++)
         {
-            if (!hit.CompareTag("Player")) continue;
-
+            Collider hit = hitBuffer[i];
+            if (hit == null || hit.GetComponentInParent<PlayerControl>() != player) continue;
             IDamageable damageable = hit.GetComponentInParent<IDamageable>();
+            if (damageable == null) continue;
 
-            if (damageable != null)
+            DamageInfo info = new DamageInfo
             {
-
-                DamageInfo info = new DamageInfo
-                {
-                    damage = stats.damage,
-                    hitDirection = transform.forward,
-                };
-
-                damageable.TakeDamage(in info);
-            }
+                damage = stats.damage,
+                hitDirection = attackFacing
+            };
+            damageable.TakeDamage(in info);
+            break;
         }
     }
 
-    private void RotateToVelocity()
+    /// <summary>Optional Animation Event near the end of Attack.</summary>
+    public void EndAttack()
     {
-        Vector3 vel = agent.velocity;
-        vel.y = 0f;
-
-        if (vel.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(vel.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
+        if (state == State.Attack) endAttackRequested = true;
     }
 
-    private void RotateToTarget()
+    private void CancelAttack(bool blendToIdle)
     {
-        if (!HasValidPlayer()) return;
+        if (attackRoutine != null) StopCoroutine(attackRoutine);
+        attackRoutine = null;
+        if (state != State.Attack) return;
 
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(dir.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
+        nextAttackTime = Time.time + attackCooldown;
+        hitUsed = true;
+        state = State.Chase;
+        if (blendToIdle && anim != null && !isDead)
+            anim.CrossFadeInFixedTime("Idle", attackExitBlend, 0, 0f);
     }
 
-    private void FaceTargetInstant()
+    // ----------------------------------------------------------
+    // Facing + visuals
+    // ----------------------------------------------------------
+
+    private void FaceMovement()
     {
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        transform.rotation = Quaternion.LookRotation(dir.normalized);
+        if (agent != null) SetFacing(agent.desiredVelocity);
     }
 
-    private bool IsFacingTarget()
+    private void SetFacing(Vector3 direction)
     {
-        if (!HasValidPlayer()) return false;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return false;
-
-        float angle = Vector3.Angle(transform.forward, dir.normalized);
-        return angle <= facingAngleThreshold;
+        direction = Flat(direction);
+        if (direction.sqrMagnitude > 0.001f) desiredFacing = direction.normalized;
     }
 
-    private Vector3 GetAttackForward()
+    private bool IsFacingPlayer()
     {
-        if (HasValidPlayer())
-        {
-            Vector3 dir = player.transform.position - transform.position;
-            dir.y = 0f;
-
-            if (dir.sqrMagnitude > 0.01f) return dir.normalized;
-        }
-
-        Vector3 fallback = transform.forward;
-        fallback.y = 0f;
-
-        if (fallback.sqrMagnitude < 0.01f) fallback = Vector3.forward;
-
-        return fallback.normalized;
+        Vector3 direction = Flat(player.transform.position - transform.position);
+        return direction.sqrMagnitude < 0.001f ||
+            Vector3.Angle(Flat(transform.forward), direction) <= attackFacingAngle;
     }
 
-    public void ShowHitbox(Vector3 center, Vector3 size, Quaternion rot)
+    private void UpdateLocomotionAnimation()
     {
-        if (hitBoxPrefab == null || !debug) return;
-
-        GameObject box = Instantiate(hitBoxPrefab, center, rot);
-        box.transform.localScale = size;
-        Destroy(box, 0.2f);
+        if (anim == null) return;
+        bool moving = agent != null && !agent.isStopped && rb != null &&
+            Flat(rb.linearVelocity).sqrMagnitude > 0.09f;
+        string desired = moving ? "Walk" : "Idle";
+        if (anim.GetCurrentAnimatorStateInfo(0).IsName(desired) ||
+            (anim.IsInTransition(0) && anim.GetNextAnimatorStateInfo(0).IsName(desired)))
+            return;
+        anim.CrossFadeInFixedTime(desired, 0.12f, 0, 0f);
     }
 
-    private void OnDrawGizmos()
+    private static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
+
+    private void OnDrawGizmosSelected()
     {
         if (!debug) return;
-
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, detectionRange);
-
-        Transform home = HomePoint;
-        if (home == null) return;
-
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(home.position, 1f);
-
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireSphere(home.position, maxChaseDistance);
+        Gizmos.DrawWireSphere(Home, maxChaseDistance);
+
+        Vector3 forward = Flat(transform.forward);
+        if (forward.sqrMagnitude < 0.001f) forward = Vector3.forward;
+        Quaternion rotation = Quaternion.LookRotation(forward.normalized);
+        Matrix4x4 previous = Gizmos.matrix;
+        Gizmos.matrix = Matrix4x4.TRS(transform.position + rotation * hitBoxPos,
+            rotation, Vector3.one);
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(Vector3.zero, hitBoxSize);
+        Gizmos.matrix = previous;
     }
 }
+

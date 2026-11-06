@@ -327,11 +327,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Goblin_Range
   stats: {fileID: 11400000, guid: c15c61a31e86a844885e0e74af1df999, type: 2}
-  weight: 50
-  pushResistance: 1
-  launchResistance: 1
-  knockDownResistance: 1
   immuneToMovement: 0
+  enableNormalHitRecoil: 1
+  normalHitPushForce: 1.5
+  normalHitPushDuration: 0.16
+  groundPushBraking: 12
+  maxPlayerBodyPushSpeed: 0.18
+  standingBrake: 16
+  navigationAcceleration: 28
+  rotateToMovement: 1
+  navMeshReconnectRadius: 1.2
+  airRecoverDelay: 0.05
+  knockDownRecoverDelay: 0.15
+  maxAirReactionTime: 5
+  minimumAttackPushDuration: 0.2
+  airGravityMultiplier: 0.7
+  airHangDuration: 0.75
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 1024
+  groundCheck: {fileID: 6563744431833367621}
+  isGroundEnemy: 1
+  groundCheckDistance: 0.2
+  staggeredDamageMultiplier: 1.5
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
   vfxHit: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
   hitVfxOffset: {x: 0, y: 0.2, z: 0}
   hitVfxDuration: 0.5
@@ -341,26 +362,6 @@ MonoBehaviour:
   audio_Source: {fileID: 920630283698138325}
   onHit: {fileID: 0}
   onStagger: {fileID: 8300000, guid: 6c4f01641b5a5ec4e9a7c9c6f377f0cf, type: 3}
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 1024
-  groundCheck: {fileID: 6563744431833367621}
-  isGroundEnemy: 1
-  groundCheckDistance: 0.2
-  airRecoverDelay: 0.05
-  knockDownRecoverDelay: 0.15
-  airGravityMultiplier: 0.7
-  airHangDuration: 0.75
-  staggeredDamageMultiplier: 1.5
-  revengeThreshold: 3
-  revengeDecayDelay: 2
-  safeZone: {fileID: 0}
-  patrolZones: []
-  hasPatrol: 0
-  debug: 1
-  currentHp: 0
-  currentStaggerBuild: 0
-  revengeMeter: 0
   durationDissolve: 1.5
   dieMaterial: {fileID: 2100000, guid: 7c6cdeb6b05ecfe4189ec916b9198b95, type: 2}
   EdgeColor: {r: 0.4369856, g: 1.0706031, b: 1.7479424, a: 1}
@@ -369,28 +370,56 @@ MonoBehaviour:
   mainTexSpeed: {x: 1, y: 0}
   distorsionIntensity: 0.01
   distorsionSpeed: {x: 0, y: -1}
+  debug: 1
+  currentHp: 0
+  currentStaggerBuild: 0
   projectilePrefab: {fileID: 8499267714821707363, guid: 71e2044fa01baca4cbfcc18c220214e7, type: 3}
   firePoint: {fileID: 4844473000609523393}
-  moveSpeed: 4.5
   attackRange: 8
-  escapeRange: 3
-  repositionRange: 6
-  tryReposition: 8
+  targetRayHeight: 0
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
-  repathDelay: 0.25
-  targetRayHeight: 0
-  attackBuffer: -2.5
-  instantDetection: 0
-  turnSpeed: 12
-  hitTime: 0.45
-  attackAnimDuration: 1.2
-  recoveryTime: 0.5
+  moveSpeed: 4.5
+  destinationRefreshInterval: 0.2
+  destinationChangeThreshold: 0.5
+  destinationArrivalDistance: 0.65
+  patrolStopDistance: 0.5
+  approachEnterDistance: 8
+  approachExitDistance: 7
+  retreatTriggerDistance: 3
+  retreatSafeDistance: 5
+  retreatPreparationTime: 0.3
+  minRetreatDuration: 0.65
+  maxRetreatDuration: 1.35
+  retreatCooldown: 2.5
+  retreatTravelDistance: 4
+  retreatCandidateAttempts: 6
+  repositionRadius: 6
+  repositionCandidateAttempts: 8
+  minRepositionDuration: 0.4
+  maxRepositionDuration: 2.2
+  repositionCooldown: 1
   detectionRange: 32
   maxChaseDistance: 35
   detectionDelay: 0.25
-  stopDistance: 0.5
+  lineOfSightRefreshInterval: 0.12
+  instantDetection: 0
+  attackCooldown: 0.8
+  recoveryTime: 0.5
+  attackExitBlendTime: 0.08
+  attackEntryTimeout: 0.35
+  attackAnimationTimeout: 3
+  attackFacingAngle: 15
+  turnSpeedDegrees: 540
+  locomotionBlendTime: 0.12
+  walkingSpeedThreshold: 0.25
+  logStateChanges: 0
+  logAttackEvents: 0
+  showRanges: 1
+  currentState: 0
+  hasDetectedPlayer: 0
+  selectedRetreatDuration: 0
 --- !u!195 &7623889144146140120
 NavMeshAgent:
   m_ObjectHideFlags: 0
