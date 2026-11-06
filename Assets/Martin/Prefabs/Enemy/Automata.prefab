@@ -105,11 +105,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Automata
   stats: {fileID: 11400000, guid: 445aff2f373d51b4191277aa04af364b, type: 2}
-  weight: 50
-  pushResistance: 1
-  launchResistance: 1
-  knockDownResistance: 1
   immuneToMovement: 0
+  enableNormalHitRecoil: 1
+  normalHitPushForce: 1.5
+  normalHitPushDuration: 0.18
+  groundPushBraking: 12
+  maxPlayerBodyPushSpeed: 0.18
+  standingBrake: 16
+  navigationAcceleration: 28
+  rotateToMovement: 1
+  navMeshReconnectRadius: 1.2
+  airRecoverDelay: 0.05
+  knockDownRecoverDelay: 0.15
+  maxAirReactionTime: 5
+  minimumAttackPushDuration: 0.2
+  airGravityMultiplier: 0.7
+  airHangDuration: 0.75
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 1024
+  groundCheck: {fileID: 3503286114898033924}
+  isGroundEnemy: 1
+  groundCheckDistance: 0.2
+  staggeredDamageMultiplier: 1.5
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
   vfxHit: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
   hitVfxOffset: {x: 0, y: 0.6, z: 0}
   hitVfxDuration: 0.5
@@ -119,25 +140,6 @@ MonoBehaviour:
   audio_Source: {fileID: 3135439586624262725}
   onHit: {fileID: 0}
   onStagger: {fileID: 8300000, guid: 6c4f01641b5a5ec4e9a7c9c6f377f0cf, type: 3}
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 1024
-  groundCheck: {fileID: 3503286114898033924}
-  isGroundEnemy: 1
-  groundCheckDistance: 0.2
-  airRecoverDelay: 0.05
-  knockDownRecoverDelay: 0.15
-  airGravityMultiplier: 0.7
-  airHangDuration: 0.75
-  revengeThreshold: 3
-  revengeDecayDelay: 2
-  safeZone: {fileID: 0}
-  patrolZones: []
-  hasPatrol: 0
-  debug: 1
-  currentHp: 0
-  currentStaggerBuild: 0
-  revengeMeter: 0
   durationDissolve: 1.5
   dieMaterial: {fileID: 2100000, guid: 7c6cdeb6b05ecfe4189ec916b9198b95, type: 2}
   EdgeColor: {r: 0.4369856, g: 1.0706031, b: 1.7479424, a: 1}
@@ -146,29 +148,48 @@ MonoBehaviour:
   mainTexSpeed: {x: 1, y: 0}
   distorsionIntensity: 0.01
   distorsionSpeed: {x: 0, y: -1}
+  debug: 1
+  currentHp: 0
+  currentStaggerBuild: 0
   projectilePrefab: {fileID: 8499267714821707363, guid: 71e2044fa01baca4cbfcc18c220214e7, type: 3}
   firePoint: {fileID: 6754386472286928512}
-  moveSpeed: 4.5
   attackRange: 8
   facingAngleThreshold: 25
-  turnSpeed: 0
-  ammountPerAttack1: 4
-  timeBtwShoot: 0.25
-  dashForce: 15
-  dashDistance: 8
-  ammountPerAttack2: 5
-  attack2ConeAngle: 60
-  stunProj: {fileID: 0}
-  targetRayHeight: 1.2
-  attackBuffer: 0.75
-  instantDetection: 0
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
+  targetRayHeight: 1.2
+  burstChance: 0.6
+  attackCooldown: 0.8
+  recoveryTime: 0.2
+  exitBlend: 0.08
+  animationSafetyTimeout: 4
+  burstCount: 4
+  burstInterval: 0.25
+  dashSpeed: 15
+  dashMaxDistance: 8
+  dashStopDistance: 2
+  spreadCount: 5
+  spreadConeAngle: 60
+  dashBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  dashCastRadius: 0.35
+  dashCastHeight: 1
+  dashWallPadding: 0.12
+  dashEdgeLookahead: 0.35
+  dashGroundProbeHeight: 1
+  dashGroundProbeDepth: 2
+  dashMaxGroundHeightDelta: 0.5
+  instantDetection: 0
   detectionRange: 27.5
   maxChaseDistance: 50
   detectionDelay: 0.25
-  stopDistance: 0.5
+  patrolArrivalDistance: 0.6
+  moveSpeed: 4.5
+  turnSpeed: 0
+  repathInterval: 0.2
+  state: 0
 --- !u!195 &1046320319683683077
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -985,10 +1006,31 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4760236537953277199, guid: a721abba58cb3d74ea2161720b13ccaa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7721061455057164863}
   m_SourcePrefab: {fileID: 100100000, guid: a721abba58cb3d74ea2161720b13ccaa, type: 3}
 --- !u!4 &6600318152315300212 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8192119539405610191, guid: a721abba58cb3d74ea2161720b13ccaa, type: 3}
   m_PrefabInstance: {fileID: 3038042104017073595}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &7504838504763121844 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4760236537953277199, guid: a721abba58cb3d74ea2161720b13ccaa, type: 3}
+  m_PrefabInstance: {fileID: 3038042104017073595}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7721061455057164863
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7504838504763121844}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afa7cea30261fab4888599c77b99e929, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AutomataAnimationEvents
+  automata: {fileID: 8736429359931728875}
