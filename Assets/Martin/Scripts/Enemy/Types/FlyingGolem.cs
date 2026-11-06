@@ -419,7 +419,6 @@ public class FlyingGolem : EnemyBase
             anim.CrossFadeInFixedTime("Idle", 0.12f, 0, 0f);
     }
 
-    /// <summary>Animation Event on the 'Bomb' (magic volley) animation.</summary>
     public void SpawnMagicCircles()
     {
         if (!EventAllowed(AttackType.MagicBullet) || circleSpawned) return;
@@ -433,7 +432,6 @@ public class FlyingGolem : EnemyBase
         SpawnVfx(magicCircleVfx, rightCirclePosition);
     }
 
-    /// <summary>Animation Event on the 'Bomb' (magic volley) animation.</summary>
     public void FireMagicBullet()
     {
         if (!EventAllowed(AttackType.MagicBullet) || volleyStarted) return;
@@ -457,7 +455,6 @@ public class FlyingGolem : EnemyBase
         volleyRoutine = null;
     }
 
-    /// <summary>Optional Animation Event on 'Attack 0' to play charge VFX.</summary>
     public void SpawnChargeVfx()
     {
         if (!EventAllowed(AttackType.Bomb) || chargeVfxSpawned) return;
@@ -465,7 +462,6 @@ public class FlyingGolem : EnemyBase
         SpawnVfx(chargeVfx, transform.TransformPoint(bombPositionOffset));
     }
 
-    /// <summary>Animation Event on 'Attack 0' at the moment the bomb is released.</summary>
     public void ThrowBomb()
     {
         if (!EventAllowed(AttackType.Bomb) || bombThrown || bombPrefab == null) return;
