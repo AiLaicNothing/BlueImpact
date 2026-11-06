@@ -9,53 +9,47 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [Header("Stats")]
     [SerializeField] protected EnemyStats stats;
 
-    [Header("Reaction Tuning")]
-    [SerializeField] protected float weight = 100f; // the lower the higher force
-    [SerializeField] protected float pushResistance = 1f; // the higher the lower force
-    [SerializeField] protected float launchResistance = 1f;
-    [SerializeField] protected float knockDownResistance = 1f;
-
-    [Header("Reaction")]
+    [Header("Normal Hits - Enemy Defined")]
+    [Tooltip("Prevents all hit-related movement in both normal and staggered states. Damage and stagger still work.")]
     [SerializeField] protected bool immuneToMovement;
+    [Tooltip("If disabled, normal hits will not push the enemy. Staggered attack reactions are unaffected.")]
+    [SerializeField] protected bool enableNormalHitRecoil = true;
+    [Min(0f)][SerializeField] protected float normalHitPushForce = 1.5f;
+    [Min(0.01f)][SerializeField] protected float normalHitPushDuration = 0.18f;
+    [Min(0f)][SerializeField] protected float groundPushBraking = 12f;
 
-    [Header("VFX")]
-    [SerializeField] private GameObject vfxHit;
-    [SerializeField] private Vector3 hitVfxOffset = new Vector3(0f, 1.2f, 0f);
-    [SerializeField] private float hitVfxDuration = 1.5f;
+    [Header("Player Body Collision")]
+    [Tooltip("Maximum extra horizontal speed from physically bumping this enemy. Attack reactions are exempt.")]
+    [Min(0f)][SerializeField] protected float maxPlayerBodyPushSpeed = 0.18f;
+    [Tooltip("Braking for an enemy that is standing still or staggered.")]
+    [Min(0f)][SerializeField] protected float standingBrake = 16f;
 
-    [Header("StaggerVfx")]
-    [SerializeField] private GameObject staggerVfx;
-    [SerializeField] private Vector3 staggerVfxOffset = new Vector3(0f, 1.2f, 0f);
-    [SerializeField] private float staggerVfxDuration = 1.5f;
+    [Header("Rigidbody Navigation")]
+    [Tooltip("Acceleration of the Rigidbody while following the NavMeshAgent's desired movement.")]
+    [Min(0f)][SerializeField] protected float navigationAcceleration = 28f;
+    [SerializeField] protected bool rotateToMovement = true;
+    [Min(0.1f)][SerializeField] protected float navMeshReconnectRadius = 1.2f;
 
-    [Header("Sfx")]
-    [SerializeField] private AudioSource audio_Source;
-    [SerializeField] private AudioClip onHit;
-    [SerializeField] private AudioClip onStagger;
+    [Header("Reaction Recovery")]
+    [Min(0f)][SerializeField] protected float airRecoverDelay = 0.05f;
+    [Min(0f)][SerializeField] protected float knockDownRecoverDelay = 0.15f;
+    [Min(0.1f)][SerializeField] protected float maxAirReactionTime = 5f;
+    [Min(0.01f)][SerializeField] protected float minimumAttackPushDuration = 0.2f;
+
+    [Header("Air Juggling")]
+    [Range(0f, 1f)][SerializeField] protected float airGravityMultiplier = 0.7f;
+    [Min(0f)][SerializeField] protected float airHangDuration = 0.75f;
+    protected float airHangRemaining;
+    protected bool isAirHung;
 
     [Header("Ground")]
     [SerializeField] protected LayerMask whatIsGround;
     [SerializeField] protected Transform groundCheck;
     [SerializeField] protected bool isGroundEnemy = true;
-    [SerializeField] protected float groundCheckDistance = 0.2f;
+    [Min(0f)][SerializeField] protected float groundCheckDistance = 0.2f;
 
-    [Header("Recovery")]
-    [SerializeField] protected float airRecoverDelay = 0.05f;
-    [SerializeField] protected float knockDownRecoverDelay = 0.15f;
-
-    [Header("Air Hang")]
-    [SerializeField] protected float airGravityMultiplier = 0.7f;
-    private float originalDrag;
-    [SerializeField] protected float airHangDuration = 0.75f;
-    protected float airHangRemaining;
-    protected bool isAirHung;
-
-    [Header("Stagger Tuning")]
-    [SerializeField] protected float staggeredDamageMultiplier = 1.5f; // dano extra mientras esta staggered
-
-    [Header("Revenge")]
-    [SerializeField] protected int revengeThreshold = 3;
-    [SerializeField] protected float revengeDecayDelay = 2f;
+    [Header("Stagger")]
+    [Min(1f)][SerializeField] protected float staggeredDamageMultiplier = 1.5f;
 
     [Header("Patrol")]
     [SerializeField] protected Transform safeZone;
@@ -63,38 +57,88 @@ public class EnemyBase : MonoBehaviour, IDamageable
     [SerializeField] protected bool hasPatrol;
     protected Transform spawnPos;
 
+    [Header("Hit VFX")]
+    [SerializeField] private GameObject vfxHit;
+    [SerializeField] private Vector3 hitVfxOffset = new Vector3(0f, 1.2f, 0f);
+    [SerializeField] private float hitVfxDuration = 1.5f;
+
+    [Header("Stagger VFX")]
+    [SerializeField] private GameObject staggerVfx;
+    [SerializeField] private Vector3 staggerVfxOffset = new Vector3(0f, 1.2f, 0f);
+    [SerializeField] private float staggerVfxDuration = 1.5f;
+
+    [Header("SFX")]
+    [SerializeField] private AudioSource audio_Source;
+    [SerializeField] private AudioClip onHit;
+    [SerializeField] private AudioClip onStagger;
+
+    [Header("Death Dissolve")]
+    [Min(0.01f)][SerializeField] private float durationDissolve = 1.5f;
+    [SerializeField] private Material dieMaterial;
+    [ColorUsage(true, true)]
+    [SerializeField]
+    private Color EdgeColor = new Color(0.1875f * 2.33059f, 0.45937f * 2.33059f, 0.75f * 2.33059f, 1f);
+
+    [Header("Broken Material")]
+    [SerializeField] private Material brokenMat;
+    [ColorUsage(true, true)]
+    [SerializeField] private Color brokenColor = new Color(0.33f, 0.75f, 0.414f, 1f);
+    [SerializeField] private Vector2 mainTexSpeed = new Vector2(1f, 0f);
+    [SerializeField] private float distorsionIntensity = 0.01f;
+    [SerializeField] private Vector2 distorsionSpeed = new Vector2(0f, -1f);
+
     [Header("Debug")]
     [SerializeField] protected bool debug = true;
 
-    [Header("Components")]
+    // ================================================================
+    // REFERENCES AND RUNTIME STATE
+    // ================================================================
+
     protected Rigidbody rb;
     protected Animator anim;
     protected NavMeshAgent agent;
     protected E_BarHolder_UI barUI;
     protected E_HealthBar healthUI;
     protected E_StaggerBar staggerUI;
+    protected PlayerControl player;
 
-    [Header("Runtime State")]
+    [Header("Runtime (Read Only)")]
     [SerializeField] protected float currentHp;
     [SerializeField] protected float currentStaggerBuild;
-    [SerializeField] protected float revengeMeter;
-    protected PlayerControl player;
 
     protected bool isStunned;
     protected bool isStaggered;
-    protected bool isRevengeMode;
     protected bool isGrounded;
     protected bool isDead;
     protected bool isInReaction;
     protected bool isInStaggerCooldown;
+    protected EnemyReactionType currentReaction = EnemyReactionType.None;
 
     protected Coroutine stunCoroutine;
     protected Coroutine staggerCoroutine;
     protected Coroutine reactionCoroutine;
     protected Coroutine airHangCoroutine;
-    protected Coroutine revengeDecayCoroutine;
 
-    protected EnemyReactionType currentReaction = EnemyReactionType.None;
+    private float staggerRemaining;
+    private float playerContactUntil;
+    private bool agentDisabledByReaction;
+    private bool hadDestination;
+    private bool agentWasStopped;
+    private Vector3 previousDestination;
+    private int currentAnimHash;
+    private Renderer[] allRenderers;
+
+    private readonly List<Material> clonMaterials = new List<Material>();
+    private readonly Dictionary<Renderer, Material> brokenClonMats = new Dictionary<Renderer, Material>();
+    private readonly Dictionary<Renderer, Material[]> originalBrokenMaterials = new Dictionary<Renderer, Material[]>();
+
+    private static readonly int DissolveProgressHash = Shader.PropertyToID("_DisolveProgress");
+    private static readonly int EdgeColorHash = Shader.PropertyToID("_EdgeColor");
+    private static readonly int MainTexHash = Shader.PropertyToID("_MainTex");
+    private static readonly int ColorHash = Shader.PropertyToID("_Color");
+    private static readonly int MainTexSpeedHash = Shader.PropertyToID("_MainTexSpeed");
+    private static readonly int DistorsionIntensityHash = Shader.PropertyToID("_DistorsionIntensity");
+    private static readonly int SpeedHash = Shader.PropertyToID("_Speed");
 
     public float CurrentHp => currentHp;
     public bool IsStunned => isStunned;
@@ -102,29 +146,51 @@ public class EnemyBase : MonoBehaviour, IDamageable
     public bool IsDead => isDead;
     public bool IsGrounded => isGrounded;
 
-    [Header("Dead Effect")]
-    [SerializeField] float durationDissolve = 1.5f;
-    static readonly int DissolveProgressHash = Shader.PropertyToID("_DisolveProgress");
-    static readonly int EdgeColorHash = Shader.PropertyToID("_EdgeColor");
-    static readonly int MainTexHash = Shader.PropertyToID("_MainTex");
-    [SerializeField] Material dieMaterial;
-    [ColorUsage(true, true)]
-    [SerializeField] Color EdgeColor = new Color(0.1875f * 2.33059f, 0.45937f * 2.33059f, 0.75f * 2.33059f, 1f);
-    private List<Material> clonMaterials = new List<Material>();
-    private Renderer[] allRenderers;
+    protected Transform HomePoint => safeZone != null ? safeZone : spawnPos;
 
-    [Header("Broken Effect")]
-    [SerializeField] Material brokenMat;
-    [ColorUsage(true, true)]
-    [SerializeField] Color brokenColor = new Color(0.33f, 0.75f, 0.414f, 1f);
-    [SerializeField] Vector2 mainTexSpeed = new Vector2(1, 0);
-    [SerializeField] float distorsionIntensity = 0.01f;
-    [SerializeField] Vector2 distorsionSpeed = new Vector2(0, -1);
-    static readonly int ColorHash = Shader.PropertyToID("_Color");
-    static readonly int MainTexSpeedHash = Shader.PropertyToID("_MainTexSpeed");
-    static readonly int DistorsionIntensityHash = Shader.PropertyToID("_DistorsionIntensity");
-    static readonly int SpeedHash = Shader.PropertyToID("_Speed");
-    private Dictionary<Renderer, Material> brokenClonMats = new Dictionary<Renderer, Material>();
+    // Bosses can override this so their stagger period cannot be refreshed.
+    protected virtual bool CanExtendStagger => true;
+
+    // ================================================================
+    // UNITY LIFECYCLE
+    // ================================================================
+
+    protected virtual void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        anim = GetComponentInChildren<Animator>();
+        agent = GetComponentInParent<NavMeshAgent>();
+
+        barUI = GetComponentInChildren<E_BarHolder_UI>();
+        healthUI = GetComponentInChildren<E_HealthBar>();
+        staggerUI = GetComponentInChildren<E_StaggerBar>();
+        allRenderers = GetComponentsInChildren<Renderer>(true);
+
+        if (stats != null) currentHp = stats.maxHp;
+        else Debug.LogError($"[EnemyBase] {name} has no EnemyStats.", this);
+
+        if (rb == null)
+        {
+            Debug.LogError($"[EnemyBase] {name} needs a Rigidbody.", this);
+        }
+        else
+        {
+            // The body remains dynamic in navigation AND combat.
+            rb.isKinematic = false;
+            rb.useGravity = isGroundEnemy;
+            rb.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        }
+
+        if (agent != null)
+        {
+            // Keep only one movement authority: the dynamic Rigidbody.
+            agent.updatePosition = false;
+            agent.updateRotation = false;
+
+            if (rb != null && agent.transform != rb.transform)
+                Debug.LogWarning($"[EnemyBase] {name}: Rigidbody and NavMeshAgent should be on the same root object for this movement setup.", this);
+        }
+    }
 
     protected virtual void OnEnable()
     {
@@ -138,45 +204,12 @@ public class EnemyBase : MonoBehaviour, IDamageable
         TauntEnemies.OnTauntSpawned -= OnPlayerSpawned;
     }
 
-    public void OnPlayerSpawned(PlayerControl spawnedPlayer)
-    {
-        if (spawnedPlayer == null) return;
-        player = spawnedPlayer;
-    }
-
-    protected virtual void Awake()
-    {
-        rb = GetComponent<Rigidbody>();
-        anim = GetComponentInChildren<Animator>();
-        agent = GetComponentInParent<NavMeshAgent>();
-
-        barUI = GetComponentInChildren<E_BarHolder_UI>();
-        healthUI = GetComponentInChildren<E_HealthBar>();
-        staggerUI = GetComponentInChildren<E_StaggerBar>();
-        allRenderers = GetComponentsInChildren<Renderer>(true);
-
-        if (stats != null)
-        {
-            currentHp = stats.maxHp;
-        }
-        else
-        {
-            Debug.LogError($"[EnemyBase] '{name}' no tiene EnemyStats asignado. No recibirá daño.", this);
-        }
-
-        if (rb != null)
-        {
-            rb.useGravity = true;
-        }
-    }
-
     protected virtual void Start()
     {
-        if (player == null)
-        {
-            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            if (playerObj != null) playerObj.TryGetComponent(out player);
-        }
+        if (player != null) return;
+
+        GameObject found = GameObject.FindGameObjectWithTag("Player");
+        if (found != null) found.TryGetComponent(out player);
     }
 
     protected virtual void Update()
@@ -184,6 +217,45 @@ public class EnemyBase : MonoBehaviour, IDamageable
         if (isDead) return;
 
         CheckGround();
+
+        // Sync the NavMesh simulation to physics, never the reverse.
+        if (agent != null && agent.enabled && agent.isOnNavMesh && rb != null) agent.nextPosition = rb.position;
+
+        if (isGrounded || !isGroundEnemy) EnableAgentIfNeeded();
+    }
+
+    protected virtual void FixedUpdate()
+    {
+        if (isDead || rb == null) return;
+
+        // Air juggling affects gravity only while the enemy is falling.
+        if (isAirHung && rb.linearVelocity.y < 0f)
+            rb.AddForce(-Physics.gravity * (1f - airGravityMultiplier), ForceMode.Acceleration);
+
+        if (isInReaction)
+        {
+            // Only a horizontal push is damped; launch/fall gravity stays natural.
+            if (currentReaction == EnemyReactionType.Push && isGrounded)
+                BrakeHorizontalMovement(groundPushBraking);
+
+            return;
+        }
+
+        if (isGroundEnemy && !isGrounded) return;
+
+        if (isStunned || isStaggered)
+        {
+            BrakeHorizontalMovement(standingBrake);
+            LimitPlayerBodyPush(Vector3.zero);
+            return;
+        }
+
+        DriveRigidbodyFromNavMesh();
+    }
+
+    public void OnPlayerSpawned(PlayerControl spawnedPlayer)
+    {
+        if (spawnedPlayer != null) player = spawnedPlayer;
     }
 
     protected bool HasValidPlayer()
@@ -193,48 +265,122 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected float DistanceToPlayer()
     {
-        if (!HasValidPlayer()) return float.MaxValue;
-
-        return Vector3.Distance(transform.position, player.transform.position);
+        return HasValidPlayer()? Vector3.Distance(transform.position, player.transform.position) : float.MaxValue;
     }
 
-    // Punto de "casa" del enemigo: la zona segura si existe, si no el punto de spawn
-    protected Transform HomePoint => safeZone != null ? safeZone : spawnPos;
+    // ================================================================
+    // RIGIDBODY NAVIGATION + PLAYER COLLISION RESISTANCE
+    // ================================================================
 
-    // Animaciones de un solo uso (ataques, reacciones): siempre reinician el estado
-    private int currentAnimHash;
+    private void DriveRigidbodyFromNavMesh()
+    {
+        Vector3 desired = Vector3.zero;
+
+        if (agent != null && agent.enabled && agent.isOnNavMesh && !agent.isStopped)
+        {
+            desired = agent.desiredVelocity;
+            desired.y = 0f;
+            desired = Vector3.ClampMagnitude(desired, agent.speed);
+        }
+
+        Vector3 velocity = rb.linearVelocity;
+        Vector3 horizontal = new Vector3(velocity.x, 0f, velocity.z);
+
+        // Accelerate towards navigation velocity instead of teleporting or
+        // setting transform.position (which would fight collision physics).
+        Vector3 delta = desired - horizontal;
+        delta = Vector3.ClampMagnitude(delta, navigationAcceleration * Time.fixedDeltaTime);
+        rb.AddForce(delta, ForceMode.VelocityChange);
+
+        LimitPlayerBodyPush(desired);
+
+        if (rotateToMovement && desired.sqrMagnitude > 0.01f && agent != null)
+        {
+            Quaternion target = Quaternion.LookRotation(desired.normalized, Vector3.up);
+            rb.MoveRotation(Quaternion.RotateTowards(
+                rb.rotation, target, agent.angularSpeed * Time.fixedDeltaTime));
+        }
+    }
+
+    private void BrakeHorizontalMovement(float strength)
+    {
+        if (strength <= 0f) return;
+
+        Vector3 velocity = rb.linearVelocity;
+        Vector3 horizontal = new Vector3(velocity.x, 0f, velocity.z);
+        rb.AddForce(-horizontal * strength, ForceMode.Acceleration);
+    }
+
+    // A grounded character can brush against the enemy, but not shove it
+    // across the level. The limit applies ONLY to physical player contacts,
+    // NOT to damage-based push/launch/knockdown reactions.
+    private void LimitPlayerBodyPush(Vector3 expectedNavigationVelocity)
+    {
+        if (Time.time > playerContactUntil || isInReaction || (isGroundEnemy && !isGrounded)) return;
+
+        Vector3 velocity = rb.linearVelocity;
+        Vector3 actualHorizontal = new Vector3(velocity.x, 0f, velocity.z);
+        Vector3 extraVelocity = actualHorizontal - expectedNavigationVelocity;
+        float cap = immuneToMovement ? 0f : maxPlayerBodyPushSpeed;
+
+        if (extraVelocity.sqrMagnitude <= cap * cap) return;
+
+        Vector3 result = expectedNavigationVelocity + Vector3.ClampMagnitude(extraVelocity, cap);
+        rb.linearVelocity = new Vector3(result.x, velocity.y, result.z);
+    }
+
+    protected virtual void OnCollisionEnter(Collision collision)
+    {
+        RegisterPlayerBodyContact(collision);
+    }
+
+    protected virtual void OnCollisionStay(Collision collision)
+    {
+        RegisterPlayerBodyContact(collision);
+    }
+
+    private void RegisterPlayerBodyContact(Collision collision)
+    {
+        if (collision.collider.GetComponentInParent<PlayerControl>() != null)
+            playerContactUntil = Time.time + Time.fixedDeltaTime * 2f;
+    }
+
+    // ================================================================
+    // ANIMATION HELPERS
+    // ================================================================
 
     protected void PlayAnim(string state)
     {
         if (anim == null) return;
-
         currentAnimHash = Animator.StringToHash(state);
         anim.Play(currentAnimHash);
     }
 
-    // Locomocion (Idle/Walk) llamada cada frame: solo cambia si el estado es distinto.
-    // Llamar anim.Play cada frame reinicia la animacion y se queda en el primer frame.
     protected void PlayLoop(string state)
     {
         if (anim == null) return;
-
         int hash = Animator.StringToHash(state);
         if (hash == currentAnimHash) return;
-
         currentAnimHash = hash;
         anim.Play(hash);
     }
+
+    // ================================================================
+    // DAMAGE: NORMAL RECOIL OR STAGGERED ATTACK REACTION
+    // ================================================================
 
     public void TakeDamage(in DamageInfo info)
     {
         if (isDead || stats == null) return;
 
         ShowHitVfx();
+        if (audio_Source != null && onHit != null) audio_Source.PlayOneShot(onHit);
 
-        if (audio_Source != null) audio_Source.PlayOneShot(onHit);
+        float damage = isStaggered ? info.damage * staggeredDamageMultiplier : info.damage;
+        currentHp -= damage;
 
-        float totalDamage = IsStaggered ? info.damage * staggeredDamageMultiplier : info.damage;
-        currentHp -= totalDamage;
+        if (barUI != null) barUI.Show();
+        if (healthUI != null) healthUI.UpdateHealthBar(currentHp, stats.maxHp);
 
         if (currentHp <= 0f)
         {
@@ -242,233 +388,38 @@ public class EnemyBase : MonoBehaviour, IDamageable
             return;
         }
 
-        HandleRevenge();
+        // Returns true if already staggered OR this hit just triggered stagger.
+        bool canUseAttackForces = HandleStagger(info);
 
-        bool canReact = HandleStagger(info);
-
-        if (canReact)
+        if (!immuneToMovement)
         {
-            HandleReaction(info);
+            if (canUseAttackForces) HandleReaction(info);        // Staggered: attack-defined push, launch or knockdown.
+            else if (enableNormalHitRecoil) ApplyNormalHitRecoil(info);  // Normal: optional enemy-defined small push.
         }
 
-        if (info.stunDuration > 0f)
-        {
-            ApplyStun(info.stunDuration);
-        }
-
-        if (healthUI != null) healthUI.UpdateHealthBar(currentHp, stats.maxHp);
-        if (staggerUI != null) staggerUI.UpdateStaggerhBar(currentStaggerBuild, stats.staggerThreshold);
-        if (barUI != null) barUI.Show();
+        // Attack stunDuration is deliberately NOT applied to the normal state.
+        // During stagger, StaggerRoutine already controls the stunned state.
+        if (staggerUI != null && stats.hasStagger) staggerUI.UpdateStaggerhBar(currentStaggerBuild, stats.staggerThreshold);
     }
 
-    protected virtual void HandleRevenge()
+    protected virtual void ApplyNormalHitRecoil(DamageInfo info)
     {
-        if (isStaggered) return;
+        if (immuneToMovement || !enableNormalHitRecoil) return;
 
-        revengeMeter += 1f;
-
-        if (revengeDecayCoroutine != null)
-        {
-            StopCoroutine(revengeDecayCoroutine);
-        }
-
-        revengeDecayCoroutine = StartCoroutine(RevengeDecayRoutine());
-
-        if (!isRevengeMode && revengeMeter >= revengeThreshold)
-        {
-            EnterRevengeMode();
-        }
+        StartReaction(EnemyReactionType.Push, info.hitDirection, info);
     }
 
-    protected virtual IEnumerator RevengeDecayRoutine()
-    {
-        yield return new WaitForSeconds(revengeDecayDelay);
-        revengeMeter = 0f;
-        revengeDecayCoroutine = null;
-    }
-
-    protected virtual void EnterRevengeMode()
-    {
-        isRevengeMode = true;
-    }
-
-    // Los enemigos normales dejan que el jugador alargue el stagger con un combo.
-    // Un boss lo sobrescribe en false para que recupere su turno (ver Boss_MedusaMorgana).
-    protected virtual bool CanExtendStagger => true;
-
-    protected virtual bool HandleStagger(DamageInfo info)
-    {
-        if (stats == null || !stats.hasStagger) return false;
-
-        if (isInStaggerCooldown) return isStaggered;
-
-        if (isStaggered)
-        {
-            // Si no se puede extender, el dano entra igual pero la duracion no se reinicia
-            if (CanExtendStagger) ExtendStagger();
-
-            return true;
-        }
-
-        currentStaggerBuild += info.staggerBuild;
-
-        if (currentStaggerBuild >= stats.staggerThreshold)
-        {
-            if (audio_Source != null) audio_Source.PlayOneShot(onStagger);
-            ShowStaggerVfx();
-            TriggerStagger();
-            return true;
-        }
-
-        return false;
-    }
-
-    protected virtual void TriggerStagger()
-    {
-        if (isStaggered) return;
-
-        if (staggerCoroutine != null)
-        {
-            StopCoroutine(staggerCoroutine);
-        }
-
-        AddBrokenMaterial();
-
-        staggerCoroutine = StartCoroutine(StaggerRoutine());
-    }
-
-    protected virtual void ExtendStagger()
-    {
-        if (staggerCoroutine != null)
-        {
-            StopCoroutine(staggerCoroutine);
-        }
-
-        staggerCoroutine = StartCoroutine(StaggerRoutine());
-    }
-
-    protected virtual IEnumerator StaggerRoutine()
-    {
-        isStaggered = true;
-        isStunned = true;
-        yield return new WaitForSeconds(stats.staggerDuration);
-
-        isStaggered = false;
-        RemoveBrokenMaterial();
-        if (stunCoroutine == null)
-        {
-            isStunned = false;
-        }
-
-        isInStaggerCooldown = true;
-
-        yield return new WaitForSeconds(stats.timeResetStagger);
-
-        currentStaggerBuild = 0f;
-        isInStaggerCooldown = false;
-        staggerCoroutine = null;
-    }
-
-    void AddBrokenMaterial()
-    {
-        if (brokenMat == null) return;
-
-        foreach (Renderer renderer in allRenderers)
-        {
-            if (renderer == null) continue;
-
-            Material[] originalMats = renderer.sharedMaterials;
-            Material[] newMaterials = new Material[originalMats.Length + 1];
-            for (int i = 0; i < originalMats.Length; i++)
-            {
-                newMaterials[i] = originalMats[i];
-            }
-
-            Material brokenClon = new Material(brokenMat);
-            if (brokenClon.HasProperty(ColorHash)) brokenClon.SetColor(ColorHash, brokenColor);
-            if (brokenClon.HasProperty(MainTexSpeedHash)) brokenClon.SetVector(MainTexSpeedHash, mainTexSpeed);
-            if (brokenClon.HasProperty(DistorsionIntensityHash)) brokenClon.SetFloat(DistorsionIntensityHash, distorsionIntensity);
-            if (brokenClon.HasProperty(SpeedHash)) brokenClon.SetVector(SpeedHash, distorsionSpeed);
-
-            newMaterials[newMaterials.Length - 1] = brokenClon;
-
-            // Si ya existía un clon de este renderer, se reemplaza para no dejarlo huérfano
-            if (brokenClonMats.TryGetValue(renderer, out Material previous) && previous != null)
-            {
-                Destroy(previous);
-            }
-            brokenClonMats[renderer] = brokenClon;
-
-            renderer.materials = newMaterials;
-        }
-    }
-
-    void RemoveBrokenMaterial()
-    {
-        foreach (Renderer renderer in allRenderers)
-        {
-            if (renderer == null) continue;
-
-            Material[] originalMats = renderer.sharedMaterials;
-            if (originalMats.Length <= 1) continue;
-
-            Material[] newMaterials = new Material[originalMats.Length - 1];
-            for (int i = 0; i < newMaterials.Length; i++)
-            {
-                newMaterials[i] = originalMats[i];
-            }
-
-            renderer.materials = newMaterials;
-        }
-
-        foreach (KeyValuePair<Renderer, Material> par in brokenClonMats)
-        {
-            if (par.Value != null) Destroy(par.Value);
-        }
-        brokenClonMats.Clear();
-    }
-
-    protected virtual void ApplyStun(float duration)
-    {
-        if (isStaggered) return;
-
-        if (stunCoroutine != null)
-        {
-            StopCoroutine(stunCoroutine);
-            stunCoroutine = null;
-        }
-
-        stunCoroutine = StartCoroutine(StunRoutine(duration));
-    }
-
-    protected virtual IEnumerator StunRoutine(float duration)
-    {
-        isStunned = true;
-
-        yield return new WaitForSeconds(duration);
-
-        stunCoroutine = null;
-
-        if (!isStaggered)
-        {
-            isStunned = false;
-        }
-    }
+    // ================================================================
+    // ATTACK REACTIONS
+    // ================================================================
 
     protected virtual void HandleReaction(DamageInfo info)
     {
-        if (immuneToMovement) return;
+        if (immuneToMovement || rb == null) return;
 
-        // Always allow air extension
-        if (info.keepInAir)
-        {
-            SustainAir(info.airHangDuration);
-
-            if (!IsGrounded)
-            {
-                AirJuggle(info.airLiftForce);
-            }
-        }
+        if (info.throwType == ThrowType.Knockdown) StopAirHang();
+        else if (info.keepInAir && (!isGrounded || info.throwType == ThrowType.Airbone))
+            SustainAir(info.airHangDuration > 0f ? info.airHangDuration : airHangDuration);
 
         switch (info.throwType)
         {
@@ -483,152 +434,165 @@ public class EnemyBase : MonoBehaviour, IDamageable
             case ThrowType.Knockdown:
                 StartReaction(EnemyReactionType.KnockDown, info.hitDirection, info);
                 break;
+
+            default:
+                if (!isGrounded && info.keepInAir)
+                {
+                    // A follow-up hit refreshes the juggle without a new throw.
+                    if (reactionCoroutine == null) StartReaction(EnemyReactionType.Launch, info.hitDirection, info);
+                    else AirJuggle(info.airLiftForce);
+                }
+                else
+                {
+                    // No special throw: a modest push is still visible.
+                    StartReaction(EnemyReactionType.Push, info.hitDirection, info);
+                }
+                break;
         }
     }
 
     protected virtual void StartReaction(EnemyReactionType type, Vector3 hitDirection, DamageInfo info)
     {
-        if (reactionCoroutine != null)
-        {
-            StopCoroutine(reactionCoroutine);
-        }
+        if (isDead || immuneToMovement || rb == null) return;
+
+        // New hits can smoothly redirect the old reaction without waiting.
+        if (reactionCoroutine != null) StopCoroutine(reactionCoroutine);
 
         reactionCoroutine = StartCoroutine(ReactionRoutine(type, hitDirection, info));
     }
 
-    protected virtual IEnumerator ReactionRoutine(EnemyReactionType reactionType, Vector3 hitDirection, DamageInfo info)
+    protected virtual IEnumerator ReactionRoutine(
+        EnemyReactionType reactionType, Vector3 hitDirection, DamageInfo info)
     {
-        if (rb == null)
-        {
-            reactionCoroutine = null;
-            yield break;
-        }
-
         isInReaction = true;
+        currentReaction = reactionType;
 
-        DisableAgent();
-
-        switch (reactionType)
-        {
-            case EnemyReactionType.Push:
-                ApplyPush(hitDirection, info.pushForce);
-                break;
-
-            case EnemyReactionType.Launch:
-                ApplyLaunch(hitDirection, info.airLiftForce);
-                break;
-
-            case EnemyReactionType.KnockDown:
-                ApplyKnockDown(hitDirection, info.knockDownForce, info.knockDownForwardScale);
-                break;
-        }
+        // In the normal state, pause navigation but keep its current path.
+        // In the staggered state, the agent is disabled until recovery.
+        if (isStaggered) DisableAgent();
 
         switch (reactionType)
         {
             case EnemyReactionType.Push:
-                yield return new WaitForSeconds(info.stunDuration);
-                break;
+                {
+                    bool weakRecoil = !isStaggered;
+                    float force = weakRecoil ? normalHitPushForce :
+                        (info.pushForce > 0f ? info.pushForce : normalHitPushForce);
+
+                    if (weakRecoil)
+                    {
+                        // Normal attacks give a consistent short recoil, regardless
+                        // of the enemy's current walking/navigation velocity.
+                        Vector3 v = rb.linearVelocity;
+                        rb.linearVelocity = new Vector3(0f, v.y, 0f);
+                    }
+
+                    ApplyPush(hitDirection, force);
+
+                    float duration = weakRecoil
+                        ? normalHitPushDuration
+                        : Mathf.Max(minimumAttackPushDuration, info.stunDuration);
+
+                    yield return new WaitForSeconds(duration);
+                    break;
+                }
 
             case EnemyReactionType.Launch:
-                // Los bucles salen también si el enemigo muere, para no quedar colgados
-                while (!isDead && rb.linearVelocity.y > 0.05f)
                 {
-                    yield return null;
-                }
+                    if (!isGrounded && info.keepInAir)
+                        AirJuggle(info.airLiftForce);
+                    else
+                        ApplyLaunch(hitDirection, info.airLiftForce);
 
-                while (!isDead && isAirHung)
-                {
-                    yield return null;
+                    // Allow physics to register the upward movement before
+                    // checking grounded state.
+                    yield return new WaitForFixedUpdate();
+                    yield return WaitForLanding();
+                    if (!isDead && airRecoverDelay > 0f)
+                        yield return new WaitForSeconds(airRecoverDelay);
+                    break;
                 }
-
-                while (!isDead && !isGrounded)
-                {
-                    yield return null;
-                }
-
-                yield return new WaitForSeconds(airRecoverDelay);
-                break;
 
             case EnemyReactionType.KnockDown:
-                while (!isDead && !isGrounded)
                 {
-                    yield return null;
+                    ApplyKnockDown(hitDirection, info.knockDownForce, info.knockDownForwardScale);
+                    yield return new WaitForFixedUpdate();
+                    yield return WaitForLanding();
+                    if (!isDead && knockDownRecoverDelay > 0f)
+                        yield return new WaitForSeconds(knockDownRecoverDelay);
+                    break;
                 }
-
-                yield return new WaitForSeconds(knockDownRecoverDelay);
-                break;
-        }
-
-        if (rb != null && !isDead)
-        {
-            rb.linearVelocity = Vector3.zero;
         }
 
         isInReaction = false;
+        currentReaction = EnemyReactionType.None;
         reactionCoroutine = null;
+
+        // This method refuses to resume the NavMesh while still staggered.
+        EnableAgentIfNeeded();
+    }
+
+    private IEnumerator WaitForLanding()
+    {
+        float elapsed = 0f;
+        bool leftGround = !isGrounded;
+
+        while (!isDead && elapsed < maxAirReactionTime)
+        {
+            if (!isGrounded) leftGround = true;
+            if (leftGround && isGrounded && !isAirHung) break;
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
     }
 
     protected virtual void ApplyPush(Vector3 hitDirection, float pushForce)
     {
-        if (rb == null) return;
-
-        Vector3 dir = GetHorizontalDirection(hitDirection);
-        Vector3 force = dir * (pushForce * GetPushScale());
-        force.y = 0f;
-
-        rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
-        rb.AddForce(force, ForceMode.VelocityChange);
+        if (rb == null || pushForce <= 0f) return;
+        rb.AddForce(GetHorizontalDirection(hitDirection) * pushForce,
+            ForceMode.VelocityChange);
     }
 
     protected virtual void ApplyLaunch(Vector3 hitDirection, float liftForce)
     {
-        if (rb == null) return;
+        if (rb == null || liftForce <= 0f) return;
 
-        float scaledLift = liftForce * GetLaunchScale();
+        Vector3 velocity = rb.linearVelocity;
+        if (velocity.y < 0f)
+        {
+            velocity.y = 0f;
+            rb.linearVelocity = velocity;
+        }
 
-        rb.linearVelocity = Vector3.zero;
-        rb.AddForce(Vector3.up * scaledLift, ForceMode.VelocityChange);
+        rb.AddForce(Vector3.up * liftForce, ForceMode.VelocityChange);
     }
 
-    protected virtual void ApplyKnockDown(Vector3 hitDirection, float knockDownForce, float forwardScale)
+    protected virtual void ApplyKnockDown(
+        Vector3 hitDirection, float knockDownForce, float forwardScale)
     {
-        if (rb == null) return;
+        if (rb == null || knockDownForce <= 0f) return;
 
-        float scaledForce = knockDownForce * GetKnockDownScale();
-        Vector3 dir = GetHorizontalDirection(hitDirection);
+        Vector3 velocityChange = Vector3.down * knockDownForce;
+        velocityChange += GetHorizontalDirection(hitDirection) * (knockDownForce * forwardScale);
 
-        rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(0f, rb.linearVelocity.y), rb.linearVelocity.z);
-
-        Vector3 downwardForce = Vector3.down * scaledForce;
-        Vector3 forwardSlam = dir * (scaledForce * forwardScale);
-
-        rb.AddForce(downwardForce, ForceMode.VelocityChange);
-        rb.AddForce(forwardSlam, ForceMode.VelocityChange);
+        rb.AddForce(velocityChange, ForceMode.VelocityChange);
     }
 
     protected virtual void SustainAir(float hangTime)
     {
-        if (rb == null) return;
+        if (rb == null || hangTime <= 0f) return;
 
-        airHangRemaining += hangTime;
-
-        if (airHangCoroutine == null)
-        {
-            airHangCoroutine = StartCoroutine(AirHangRoutine());
-        }
+        airHangRemaining = Mathf.Max(airHangRemaining, hangTime);
+        if (airHangCoroutine == null) airHangCoroutine = StartCoroutine(AirHangRoutine());
     }
 
     protected virtual IEnumerator AirHangRoutine()
     {
         isAirHung = true;
-
-        while (airHangRemaining > 0f && !isDead)
+        while (!isDead && airHangRemaining > 0f)
         {
             airHangRemaining -= Time.deltaTime;
-
-            if (rb.linearVelocity.y < 0f)
-                rb.AddForce(Vector3.up * Physics.gravity.magnitude * (1f - airGravityMultiplier), ForceMode.Acceleration);
-
             yield return null;
         }
 
@@ -637,92 +601,185 @@ public class EnemyBase : MonoBehaviour, IDamageable
         airHangCoroutine = null;
     }
 
+    private void StopAirHang()
+    {
+        if (airHangCoroutine != null) StopCoroutine(airHangCoroutine);
+        airHangCoroutine = null;
+        airHangRemaining = 0f;
+        isAirHung = false;
+    }
+
     protected virtual void AirJuggle(float lift)
     {
-        if (rb == null) return;
+        if (rb == null || lift <= 0f) return;
 
-        Vector3 vel = rb.linearVelocity;
-        vel.y = Mathf.Max(vel.y, 0f);
-        rb.linearVelocity = vel;
-
+        Vector3 velocity = rb.linearVelocity;
+        velocity.y = Mathf.Max(velocity.y, 0f);
+        rb.linearVelocity = velocity;
         rb.AddForce(Vector3.up * lift, ForceMode.VelocityChange);
     }
 
-    // Helpers de escala: el peso reduce el empuje, las resistencias lo reducen por tipo de reaccion
-    protected float GetWeightFactor()
-    {
-        return Mathf.Max(0.1f, weight / 100f);
-    }
-
-    protected virtual float GetPushScale()
-    {
-        return 1f / (pushResistance * GetWeightFactor());
-    }
-
-    protected virtual float GetLaunchScale()
-    {
-        return 1f / (launchResistance * GetWeightFactor());
-    }
-
-    protected virtual float GetKnockDownScale()
-    {
-        return 1f / (knockDownResistance * GetWeightFactor());
-    }
-
-    // Direccion horizontal del golpe; si es casi cero, usa el frente del enemigo
     protected Vector3 GetHorizontalDirection(Vector3 hitDirection)
     {
-        Vector3 dir = hitDirection;
-        dir.y = 0f;
+        Vector3 direction = hitDirection;
+        direction.y = 0f;
 
-        if (dir.sqrMagnitude < 0.0001f)
+        if (direction.sqrMagnitude < 0.0001f && HasValidPlayer())
         {
-            dir = transform.forward;
+            direction = transform.position - player.transform.position;
+            direction.y = 0f;
         }
 
-        return dir.normalized;
+        if (direction.sqrMagnitude < 0.0001f) direction = transform.forward;
+
+        return direction.normalized;
     }
+
+    // ================================================================
+    // GROUND DETECTION AND NAVMESH RECONNECTION
+    // ================================================================
 
     protected virtual void CheckGround()
     {
         if (groundCheck == null) return;
 
-        if (isAirHung)
-        {
-            isGrounded = false;
-            return;
-        }
-
-        isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckDistance, whatIsGround);
-
-        if (!isGrounded) return;
-
-        if (agent != null && !IsStaggered && !agent.enabled) EnableAgentIfNeeded();
+        isGrounded = Physics.Raycast(groundCheck.position, Vector3.down, groundCheckDistance, whatIsGround, QueryTriggerInteraction.Ignore);
     }
 
     protected virtual void DisableAgent()
     {
-        if (agent == null) return;
+        if (agent == null || !agent.enabled) return;
 
-        if (agent.enabled)
+        if (agent.isOnNavMesh)
         {
-            agent.ResetPath();
-            agent.enabled = false;
+            hadDestination = agent.hasPath;
+            if (hadDestination) previousDestination = agent.destination;
+            agentWasStopped = agent.isStopped;
         }
+        else
+        {
+            hadDestination = false;
+            agentWasStopped = false;
+        }
+
+        agent.enabled = false;
+        agentDisabledByReaction = true;
     }
 
     protected virtual void EnableAgentIfNeeded()
     {
-        if (agent == null) return;
-        if (agent.enabled) return;
+        if (agent == null || !agentDisabledByReaction) return;
+        if (isDead || isInReaction || isStunned || isStaggered || isAirHung ||
+            (isGroundEnemy && !isGrounded))
+            return;
 
-        if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 1.5f, NavMesh.AllAreas))
-        {
-            transform.position = hit.position;
-            agent.enabled = true;
-            agent.Warp(hit.position);
-        }
+        if (!NavMesh.SamplePosition(rb.position, out NavMeshHit hit,
+                navMeshReconnectRadius, agent.areaMask))
+            return;
+
+        agent.enabled = true;
+        agent.updatePosition = false;
+        agent.updateRotation = false;
+        agent.Warp(hit.position);
+        agentDisabledByReaction = false;
+
+        if (hadDestination && agent.isOnNavMesh) agent.SetDestination(previousDestination);
+
+        agent.isStopped = agentWasStopped;
+        hadDestination = false;
     }
+
+    // ================================================================
+    // STUN + STAGGER
+    // ================================================================
+
+    protected virtual void ApplyStun(float duration)
+    {
+        if (isStaggered || duration <= 0f) return;
+
+        if (stunCoroutine != null) StopCoroutine(stunCoroutine);
+        stunCoroutine = StartCoroutine(StunRoutine(duration));
+    }
+
+    protected virtual IEnumerator StunRoutine(float duration)
+    {
+        isStunned = true;
+        DisableAgent();
+        yield return new WaitForSeconds(duration);
+
+        stunCoroutine = null;
+        if (!isStaggered) isStunned = false;
+        EnableAgentIfNeeded();
+    }
+
+    protected virtual bool HandleStagger(DamageInfo info)
+    {
+        if (stats == null || !stats.hasStagger) return false;
+        if (isInStaggerCooldown) return isStaggered;
+
+        if (isStaggered)
+        {
+            if (CanExtendStagger) ExtendStagger();
+            return true;
+        }
+
+        currentStaggerBuild += info.staggerBuild;
+        if (currentStaggerBuild < stats.staggerThreshold) return false;
+
+        if (audio_Source != null && onStagger != null) audio_Source.PlayOneShot(onStagger);
+
+        ShowStaggerVfx();
+        TriggerStagger();
+        return true;
+    }
+
+    protected virtual void TriggerStagger()
+    {
+        if (isStaggered) return;
+
+        isStaggered = true;
+        isStunned = true;
+        staggerRemaining = stats.staggerDuration;
+
+        DisableAgent();
+        AddBrokenMaterial();
+
+        if (staggerCoroutine != null) StopCoroutine(staggerCoroutine);
+        staggerCoroutine = StartCoroutine(StaggerRoutine());
+    }
+
+    protected virtual void ExtendStagger()
+    {
+        staggerRemaining = Mathf.Max(staggerRemaining, stats.staggerDuration);
+    }
+
+    protected virtual IEnumerator StaggerRoutine()
+    {
+        while (!isDead && staggerRemaining > 0f)
+        {
+            staggerRemaining -= Time.deltaTime;
+            yield return null;
+        }
+
+        isStaggered = false;
+        RemoveBrokenMaterial();
+        if (stunCoroutine == null) isStunned = false;
+
+        isInStaggerCooldown = true;
+        EnableAgentIfNeeded();
+
+        yield return new WaitForSeconds(stats.timeResetStagger);
+
+        currentStaggerBuild = 0f;
+        isInStaggerCooldown = false;
+        staggerCoroutine = null;
+
+        if (staggerUI != null) staggerUI.UpdateStaggerhBar(currentStaggerBuild, stats.staggerThreshold);
+    }
+
+    // ================================================================
+    // VFX AND MATERIALS
+    // ================================================================
 
     protected virtual void ShowHitVfx()
     {
@@ -738,36 +795,68 @@ public class EnemyBase : MonoBehaviour, IDamageable
     {
         if (prefab == null) return;
 
-        GameObject vfx = Instantiate(prefab, transform.position + offset, transform.rotation);
+        GameObject effect = Instantiate(prefab, transform.position + offset, transform.rotation);
+        if (duration > 0f) Destroy(effect, duration);
+    }
 
-        if (duration > 0f)
+    private void AddBrokenMaterial()
+    {
+        if (brokenMat == null || originalBrokenMaterials.Count > 0) return;
+
+        foreach (Renderer renderer in allRenderers)
         {
-            Destroy(vfx, duration);
+            if (renderer == null) continue;
+
+            Material[] original = renderer.sharedMaterials;
+            originalBrokenMaterials[renderer] = original;
+
+            Material[] withBroken = new Material[original.Length + 1];
+            Array.Copy(original, withBroken, original.Length);
+
+            Material clone = new Material(brokenMat);
+            if (clone.HasProperty(ColorHash)) clone.SetColor(ColorHash, brokenColor);
+            if (clone.HasProperty(MainTexSpeedHash)) clone.SetVector(MainTexSpeedHash, mainTexSpeed);
+            if (clone.HasProperty(DistorsionIntensityHash))
+                clone.SetFloat(DistorsionIntensityHash, distorsionIntensity);
+            if (clone.HasProperty(SpeedHash)) clone.SetVector(SpeedHash, distorsionSpeed);
+
+            withBroken[withBroken.Length - 1] = clone;
+            brokenClonMats[renderer] = clone;
+            renderer.sharedMaterials = withBroken;
         }
     }
+
+    private void RemoveBrokenMaterial()
+    {
+        foreach (KeyValuePair<Renderer, Material[]> pair in originalBrokenMaterials)
+        {
+            if (pair.Key != null) pair.Key.sharedMaterials = pair.Value;
+        }
+        originalBrokenMaterials.Clear();
+
+        foreach (Material material in brokenClonMats.Values)
+        {
+            if (material != null) Destroy(material);
+        }
+        brokenClonMats.Clear();
+    }
+
+    // ================================================================
+    // DEATH
+    // ================================================================
 
     protected virtual void Die()
     {
         if (isDead) return;
-
         isDead = true;
 
-        // Antes de la disolucion: detener todo lo que siga corriendo (stagger, stun, reacciones)
         StopEnemyRoutines();
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-            agent.enabled = false;
-        }
-
+        DisableAgent();
         DisablePhysicsOnDeath();
         StartDeadEffect();
     }
 
-    // Detiene todas las corrutinas de combate y limpia su estado.
-    // Las subclases que sobrescriben Die() deben llamarlo.
+    // Subclasses overriding Die() should use base.Die().
     protected void StopEnemyRoutines()
     {
         StopAllCoroutines();
@@ -776,38 +865,36 @@ public class EnemyBase : MonoBehaviour, IDamageable
         staggerCoroutine = null;
         reactionCoroutine = null;
         airHangCoroutine = null;
-        revengeDecayCoroutine = null;
 
         isStunned = false;
         isInReaction = false;
         isAirHung = false;
         airHangRemaining = 0f;
+        currentReaction = EnemyReactionType.None;
     }
 
-    // Un enemigo muerto no debe recibir colisiones ni ser empujado
     private void DisablePhysicsOnDeath()
     {
         if (rb != null)
         {
             rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
             rb.isKinematic = true;
+            rb.useGravity = false;
         }
 
-        foreach (Collider col in GetComponentsInChildren<Collider>())
-        {
-            col.enabled = false;
-        }
+        foreach (Collider collider in GetComponentsInChildren<Collider>())
+            collider.enabled = false;
     }
 
-    void StartDeadEffect()
+    private void StartDeadEffect()
     {
-        if (isStaggered) RemoveBrokenMaterial();
-
+        if (brokenClonMats.Count > 0) RemoveBrokenMaterial();
         ChangeMaterials();
         StartCoroutine(DieEffect());
     }
 
-    void ChangeMaterials()
+    private void ChangeMaterials()
     {
         if (dieMaterial == null) return;
 
@@ -815,52 +902,44 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             if (renderer == null) continue;
 
-            Material[] originalMats = renderer.sharedMaterials;
-            Material[] newMaterials = new Material[originalMats.Length];
+            Material[] original = renderer.sharedMaterials;
+            Material[] dissolve = new Material[original.Length];
 
-            for (int i = 0; i < originalMats.Length; i++)
+            for (int i = 0; i < original.Length; i++)
             {
-                Material originalMat = originalMats[i];
+                Material clone = new Material(dieMaterial);
+                if (clone.HasProperty(DissolveProgressHash)) clone.SetFloat(DissolveProgressHash, 0f);
 
-                Material clonMat = new Material(dieMaterial);
-                clonMat.SetFloat(DissolveProgressHash, 0f);
+                if (clone.HasProperty(EdgeColorHash)) clone.SetColor(EdgeColorHash, EdgeColor);
 
-                if (clonMat.HasProperty(EdgeColorHash))
+                if (original[i] != null && original[i].HasProperty(MainTexHash) &&
+                    clone.HasProperty(MainTexHash))
                 {
-                    clonMat.SetColor(EdgeColorHash, EdgeColor);
+                    Texture texture = original[i].GetTexture(MainTexHash);
+                    if (texture != null) clone.SetTexture(MainTexHash, texture);
                 }
 
-                if (originalMat != null && originalMat.HasProperty(MainTexHash))
-                {
-                    Texture originalTex = originalMat.GetTexture(MainTexHash);
-                    if (originalTex != null && clonMat.HasProperty(MainTexHash))
-                    {
-                        clonMat.SetTexture(MainTexHash, originalTex);
-                    }
-                }
-
-                newMaterials[i] = clonMat;
-                clonMaterials.Add(clonMat);
+                dissolve[i] = clone;
+                clonMaterials.Add(clone);
             }
 
-            renderer.materials = newMaterials;
+            renderer.sharedMaterials = dissolve;
         }
     }
 
-    IEnumerator DieEffect()
+    private IEnumerator DieEffect()
     {
-        float timePassed = 0f;
-        while (timePassed < durationDissolve)
-        {
-            timePassed += Time.deltaTime;
-            float progress = Mathf.Clamp01(timePassed / durationDissolve);
+        float elapsed = 0f;
 
-            foreach (Material mat in clonMaterials)
+        while (elapsed < durationDissolve)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / durationDissolve);
+
+            foreach (Material material in clonMaterials)
             {
-                if (mat != null)
-                {
-                    mat.SetFloat(DissolveProgressHash, progress);
-                }
+                if (material != null && material.HasProperty(DissolveProgressHash))
+                    material.SetFloat(DissolveProgressHash, progress);
             }
 
             yield return null;
@@ -871,21 +950,23 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     private void OnDestroy()
     {
-        if (clonMaterials != null)
+        foreach (Material material in clonMaterials)
         {
-            foreach (Material mat in clonMaterials)
-            {
-                if (mat != null) Destroy(mat);
-            }
-            clonMaterials.Clear();
+            if (material != null) Destroy(material);
         }
+        clonMaterials.Clear();
 
-        foreach (KeyValuePair<Renderer, Material> par in brokenClonMats)
+        foreach (Material material in brokenClonMats.Values)
         {
-            if (par.Value != null) Destroy(par.Value);
+            if (material != null) Destroy(material);
         }
         brokenClonMats.Clear();
+        originalBrokenMaterials.Clear();
     }
+
+    // ================================================================
+    // SPAWN CONFIGURATION
+    // ================================================================
 
     public void OnSpawn(Transform[] PatrolPoints, Transform safePoint, bool hasPatrol, Transform spawnPos)
     {
@@ -895,3 +976,4 @@ public class EnemyBase : MonoBehaviour, IDamageable
         this.spawnPos = spawnPos;
     }
 }
+
