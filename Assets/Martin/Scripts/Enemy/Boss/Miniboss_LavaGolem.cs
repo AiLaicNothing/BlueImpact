@@ -159,6 +159,7 @@ public class Miniboss_LavaGolem : EnemyBase
         agent.speed = chaseSpeed;
         agent.acceleration = baseAcceleration;
         agent.stoppingDistance = stopDistance;
+
         StopAgent();
     }
 

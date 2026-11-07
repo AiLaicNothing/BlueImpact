@@ -433,7 +433,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 1
+  m_UseGravity: 0
   m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 80
@@ -474,11 +474,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Boss_ChimeraGolem
   stats: {fileID: 11400000, guid: ad65e29be745b4a409ea4564ef747375, type: 2}
-  weight: 100
-  pushResistance: 1
-  launchResistance: 1
-  knockDownResistance: 1
   immuneToMovement: 1
+  enableNormalHitRecoil: 0
+  normalHitPushForce: 1.5
+  normalHitPushDuration: 0.18
+  groundPushBraking: 12
+  maxPlayerBodyPushSpeed: 0.18
+  standingBrake: 16
+  navigationAcceleration: 28
+  rotateToMovement: 1
+  navMeshReconnectRadius: 1.2
+  airRecoverDelay: 0.05
+  knockDownRecoverDelay: 0.15
+  maxAirReactionTime: 5
+  minimumAttackPushDuration: 0.2
+  airGravityMultiplier: 0.7
+  airHangDuration: 0.75
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 1024
+  groundCheck: {fileID: 6107374306239597843}
+  isGroundEnemy: 1
+  groundCheckDistance: 0.2
+  staggeredDamageMultiplier: 1.5
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
   vfxHit: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
   hitVfxOffset: {x: 0, y: 1.2, z: 0}
   hitVfxDuration: 1.5
@@ -488,26 +509,6 @@ MonoBehaviour:
   audio_Source: {fileID: 7621353640778431575}
   onHit: {fileID: 0}
   onStagger: {fileID: 8300000, guid: 6c4f01641b5a5ec4e9a7c9c6f377f0cf, type: 3}
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 1024
-  groundCheck: {fileID: 6107374306239597843}
-  isGroundEnemy: 1
-  groundCheckDistance: 0.2
-  airRecoverDelay: 0.05
-  knockDownRecoverDelay: 0.15
-  airGravityMultiplier: 0.7
-  airHangDuration: 0.75
-  staggeredDamageMultiplier: 1.5
-  revengeThreshold: 3
-  revengeDecayDelay: 2
-  safeZone: {fileID: 0}
-  patrolZones: []
-  hasPatrol: 0
-  debug: 1
-  currentHp: 0
-  currentStaggerBuild: 0
-  revengeMeter: 0
   durationDissolve: 1.5
   dieMaterial: {fileID: 2100000, guid: 7c6cdeb6b05ecfe4189ec916b9198b95, type: 2}
   EdgeColor: {r: 0.4369856, g: 1.0706031, b: 1.7479424, a: 1}
@@ -516,6 +517,9 @@ MonoBehaviour:
   mainTexSpeed: {x: 1, y: 0}
   distorsionIntensity: 0.01
   distorsionSpeed: {x: 0, y: -1}
+  debug: 1
+  currentHp: 0
+  currentStaggerBuild: 0
   detectionRange: 30
   maxChaseDistance: 45
   detectionDelay: 0.25
