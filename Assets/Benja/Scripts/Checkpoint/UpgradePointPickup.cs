@@ -28,7 +28,7 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
     [SerializeField] private float fadeOutDuration = 2f;
     [SerializeField] private TrailRenderer pickupVfx;
     [SerializeField] private bool showPopup = true;
-    private PlayerControl currentPlayer;
+    [SerializeField] private PlayerControl currentPlayer;
 
     private bool consumed;
 
@@ -96,6 +96,8 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
 
         // Feedback.
         PlayPickupSound();
+
+        TryFindPlayer();
         SpawnVfx();
         ShowPopupFeedback();
 
@@ -167,7 +169,6 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
             yield return null;
         }
 
-        pickupVfx.enabled = false;
     }
     private void ShowPopupFeedback()
     {
