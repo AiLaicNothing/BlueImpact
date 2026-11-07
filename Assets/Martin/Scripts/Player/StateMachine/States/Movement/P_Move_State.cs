@@ -49,6 +49,15 @@ public class P_Move_State : PlayerState
             player.ChangeState(player.jump_State);
             return;
         }
+        if (player.lockOnTarget.isTargeting)
+        {
+            //Debug.Log("LockON Anim");
+            player.Anim.SetBool("LockOn", true);
+        }
+        else
+        {
+            player.Anim.SetBool("LockOn", false);
+        }
     }
 
     public override void OnExit()
