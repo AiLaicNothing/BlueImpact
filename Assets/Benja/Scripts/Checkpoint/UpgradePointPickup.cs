@@ -1,5 +1,6 @@
 using UnityEngine;
-
+using System.Collections;
+using System.Collections.Generic;
 /// <summary>
 /// Objeto interactuable de un solo uso que otorga puntos de mejora al player
 /// y luego desaparece. NO cuenta como checkpoint (no se registra en
@@ -24,8 +25,10 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
 
     [Header("Feedback")]
     [SerializeField] private GameObject model;
-    [SerializeField] private GameObject pickupVfx;
+    [SerializeField] private float fadeOutDuration = 2f;
+    [SerializeField] private TrailRenderer pickupVfx;
     [SerializeField] private bool showPopup = true;
+    private PlayerControl currentPlayer;
 
     private bool consumed;
 
@@ -38,9 +41,23 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
             consumed = true;
             Destroy(model);
         }
+        TryFindPlayer();
     }
 
-    public void Interact()
+    private void TryFindPlayer()
+    {
+        if (currentPlayer == null)
+        {
+            if (Player_Manager.Instance == null) return;
+
+            GameObject playerObject = Player_Manager.Instance.GetPlayer();
+
+            if (playerObject == null) return;
+
+            currentPlayer = playerObject.GetComponent<PlayerControl>();
+        }
+    }
+        public void Interact()
     {
         if (consumed) return;
 
@@ -127,11 +144,31 @@ public class UpgradePointPickup : MonoBehaviour, IInteractable
     {
         if (pickupVfx == null) return;
 
-        GameObject vfx = Instantiate(pickupVfx, transform.position,Quaternion.identity);
-
-        Destroy(vfx, 3f);
+        //GameObject vfx = Instantiate(pickupVfx, transform.position,Quaternion.identity);
+        //Destroy(vfx, 3f);
+        StartCoroutine(FadeOutCoroutine());
     }
+    private IEnumerator FadeOutCoroutine()
+    {
+        float elapsed = 0f;
 
+
+        float duration = Mathf.Max(0.01f, fadeOutDuration);
+        pickupVfx.enabled = true;
+
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+
+            pickupVfx.gameObject.transform.position = currentPlayer.Model.position;
+
+
+            yield return null;
+        }
+
+        pickupVfx.enabled = false;
+    }
     private void ShowPopupFeedback()
     {
         if (!showPopup || PopupUI.Instance == null) return;
