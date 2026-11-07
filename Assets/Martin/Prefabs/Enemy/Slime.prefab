@@ -520,7 +520,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 112
+  m_Constraints: 80
   m_CollisionDetection: 0
 --- !u!136 &2566983402602992255
 CapsuleCollider:
@@ -674,11 +674,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Slime
   stats: {fileID: 11400000, guid: 15d3896d0c2a8aa44a95abce3f6f032d, type: 2}
-  weight: 100
-  pushResistance: 1
-  launchResistance: 1
-  knockDownResistance: 1
   immuneToMovement: 0
+  enableNormalHitRecoil: 1
+  normalHitPushForce: 1.5
+  normalHitPushDuration: 0.18
+  groundPushBraking: 12
+  maxPlayerBodyPushSpeed: 0.18
+  standingBrake: 16
+  navigationAcceleration: 28
+  rotateToMovement: 1
+  navMeshReconnectRadius: 1.2
+  airRecoverDelay: 0.05
+  knockDownRecoverDelay: 0.15
+  maxAirReactionTime: 5
+  minimumAttackPushDuration: 0.2
+  airGravityMultiplier: 0.7
+  airHangDuration: 0.75
+  whatIsGround:
+    serializedVersion: 2
+    m_Bits: 1024
+  groundCheck: {fileID: 8851159224374116819}
+  isGroundEnemy: 1
+  groundCheckDistance: 0.2
+  staggeredDamageMultiplier: 1.5
+  safeZone: {fileID: 0}
+  patrolZones: []
+  hasPatrol: 0
   vfxHit: {fileID: 1035977224672214417, guid: 057aa477789506a44bd206e9c5acad19, type: 3}
   hitVfxOffset: {x: 0, y: 1.2, z: 0}
   hitVfxDuration: 1.5
@@ -688,25 +709,6 @@ MonoBehaviour:
   audio_Source: {fileID: 0}
   onHit: {fileID: 0}
   onStagger: {fileID: 0}
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 1024
-  groundCheck: {fileID: 8851159224374116819}
-  isGroundEnemy: 1
-  groundCheckDistance: 0.2
-  airRecoverDelay: 0.05
-  knockDownRecoverDelay: 0.15
-  airGravityMultiplier: 0.7
-  airHangDuration: 0.75
-  revengeThreshold: 3
-  revengeDecayDelay: 2
-  safeZone: {fileID: 0}
-  patrolZones: []
-  hasPatrol: 0
-  debug: 1
-  currentHp: 0
-  currentStaggerBuild: 0
-  revengeMeter: 0
   durationDissolve: 1.5
   dieMaterial: {fileID: 2100000, guid: 7c6cdeb6b05ecfe4189ec916b9198b95, type: 2}
   EdgeColor: {r: 1.7479424, g: 0.6365729, b: 0.43927342, a: 1}
@@ -715,6 +717,9 @@ MonoBehaviour:
   mainTexSpeed: {x: 1, y: 0}
   distorsionIntensity: 0.01
   distorsionSpeed: {x: 0, y: -1}
+  debug: 1
+  currentHp: 0
+  currentStaggerBuild: 0
   attackRange: 2.5
   obstacleLayer:
     serializedVersion: 2
@@ -731,6 +736,7 @@ MonoBehaviour:
   retreatDistance: 5
   retreatSpeed: 7
   recoveryDuration: 1.5
+  chaseSpeed: 4.5
   detectionRange: 8
   maxChaseDistance: 15
   detectionDelay: 0.25

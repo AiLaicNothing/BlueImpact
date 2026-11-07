@@ -289,7 +289,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 112
+  m_Constraints: 80
   m_CollisionDetection: 0
 --- !u!136 &7316318657260027567
 CapsuleCollider:
@@ -376,50 +376,34 @@ MonoBehaviour:
   projectilePrefab: {fileID: 8499267714821707363, guid: 71e2044fa01baca4cbfcc18c220214e7, type: 3}
   firePoint: {fileID: 4844473000609523393}
   attackRange: 8
-  targetRayHeight: 0
+  attackCooldown: 0.8
+  attackRecovery: 0.2
+  attackExitBlend: 0.08
+  attackSafetyTimeout: 3
+  attackFacingAngle: 15
+  detectionRange: 32
+  maxChaseDistance: 35
+  detectionDelay: 0.25
+  instantDetection: 0
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
+  targetRayHeight: 0
   moveSpeed: 4.5
-  destinationRefreshInterval: 0.2
-  destinationChangeThreshold: 0.5
-  destinationArrivalDistance: 0.65
-  patrolStopDistance: 0.5
-  approachEnterDistance: 8
-  approachExitDistance: 7
+  preferredAttackDistance: 7
+  turnSpeed: 540
+  repathInterval: 0.25
+  arrivalDistance: 0.6
   retreatTriggerDistance: 3
-  retreatSafeDistance: 5
-  retreatPreparationTime: 0.3
+  retreatPreparation: 0.3
   minRetreatDuration: 0.65
   maxRetreatDuration: 1.35
   retreatCooldown: 2.5
   retreatTravelDistance: 4
-  retreatCandidateAttempts: 6
-  repositionRadius: 6
-  repositionCandidateAttempts: 8
-  minRepositionDuration: 0.4
-  maxRepositionDuration: 2.2
-  repositionCooldown: 1
-  detectionRange: 32
-  maxChaseDistance: 35
-  detectionDelay: 0.25
-  lineOfSightRefreshInterval: 0.12
-  instantDetection: 0
-  attackCooldown: 0.8
-  recoveryTime: 0.5
-  attackExitBlendTime: 0.08
-  attackEntryTimeout: 0.35
-  attackAnimationTimeout: 3
-  attackFacingAngle: 15
-  turnSpeedDegrees: 540
-  locomotionBlendTime: 0.12
-  walkingSpeedThreshold: 0.25
-  logStateChanges: 0
-  logAttackEvents: 0
-  showRanges: 1
-  currentState: 0
-  hasDetectedPlayer: 0
-  selectedRetreatDuration: 0
+  retreatSafeDistance: 5
+  state: 0
+  detectedPlayer: 0
+  closeTimer: 0
 --- !u!195 &7623889144146140120
 NavMeshAgent:
   m_ObjectHideFlags: 0
