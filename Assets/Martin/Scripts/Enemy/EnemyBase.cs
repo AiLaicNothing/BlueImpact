@@ -173,13 +173,6 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             Debug.LogError($"[EnemyBase] {name} needs a Rigidbody.", this);
         }
-        else
-        {
-            // The body remains dynamic in navigation AND combat.
-            rb.isKinematic = false;
-            rb.useGravity = isGroundEnemy;
-            rb.constraints |= RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-        }
 
         if (agent != null)
         {

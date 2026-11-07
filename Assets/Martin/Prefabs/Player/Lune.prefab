@@ -305,38 +305,6 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 8328033608135414242}
         m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
-        m_MethodName: OnSkill3
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 191ef5cd-b173-40eb-b111-29cb22ddc2d5
-    m_ActionName: 'Player/Skill3[/Keyboard/3]'
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 8328033608135414242}
-        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
-        m_MethodName: OnSkill4
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 530285e3-5a88-4fef-a691-58d63c67ed7a
-    m_ActionName: 'Player/Skill4[/Keyboard/4]'
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 8328033608135414242}
-        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
         m_MethodName: OnLockTarget
         m_Mode: 0
         m_Arguments:
@@ -365,6 +333,14 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: e077e93b-eae1-4c67-926a-9c5ce2bf0927
     m_ActionName: 'Player/Pause[/Keyboard/escape,/DualShock4GamepadHID/start]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: d02b62ec-a5f2-4337-a5cf-050fc4a27253
+    m_ActionName: 'Player/Journal[/Keyboard/tab]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: a2d8f27a-4904-4c0c-8c0b-251c1a07f4fb
+    m_ActionName: 'Player/ScrollTarget[/Mouse/scroll]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: Player
@@ -416,16 +392,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edcd9569de8c54d4ab5ad2c43a137885, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  movementSpeed: 6
-  jumpForce: 8
-  moveMultiplier: 1
-  whatIsGround:
-    serializedVersion: 2
-    m_Bits: 1024
-  GroundCheck: {fileID: 4870610992770596936}
-  groundCheckRange: 0.15
-  baseGravity: -9.81
-  fallGravityMultiplier: 2.5
+  moveSpeed: 7
+  jumpSpeed: 10
+  jumpDuration: 0.2
+  coyoteTime: 0.15
+  gravity: 10
+  slideGravity: 5
+  airControlRate: 2
+  airFriction: 0.5
+  groundFriction: 100
+  camTransform: {fileID: 0}
+  slopeLimit: 80
+  useLocalMomentum: 0
   dashDistance: 6.8
   dashDuration: 0.36
   dashCost: 20
@@ -446,7 +424,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  playerInput: {fileID: 3680218208860738297}
   audioLoopSource: {fileID: 7755962749448472070}
   walk: {fileID: 8300000, guid: 506d883ea716b084598f4e95b2cde35e, type: 3}
   dash: {fileID: 8300000, guid: d85170ea40d4188428b8b35aeb2db31c, type: 3}
@@ -460,7 +437,6 @@ MonoBehaviour:
   showDebug: 0
   hitboxPrefab: {fileID: 65547742025389114, guid: b60a9548e8b1aba4497aeaf2c3ebe7a9, type: 3}
   hasUsedAirAttack: 0
-  hasUsedDash: 0
   isPerformingAct: 0
   blockVelocity: 0
   lockOnTarget: {fileID: 0}
@@ -477,19 +453,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LockOnTarget
   mainCamera: {fileID: 0}
-  cameraRig: {fileID: 1005427704291705290}
-  orbitalFollow: {fileID: 2157764920331437879}
+  cameraController: {fileID: 0}
   input: {fileID: 8328033608135414242}
-  inputProvider: {fileID: 4171898914765419617}
+  modelRoot: {fileID: 0}
+  modelRotation: {fileID: 0}
   aimIcon: {fileID: 0}
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
   enemyTag: Enemy
   targetLockOffset: {x: 0, y: 0}
+  targetAimHeight: 1.2
   minDistance: 0.2
   maxDistance: 15
-  lockSpeed: 3
+  lostTargetGraceTime: 0.5
+  releaseDistanceBuffer: 2
+  cameraLockSpeed: 360
+  modelLockSpeed: 500
+  debugLockOn: 0
 --- !u!114 &5897453960812039193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -503,9 +484,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   interactionRadius: 2
+  raycastHeight: 0
   interactableLayer:
     serializedVersion: 2
     m_Bits: 16384
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!82 &7755962749448472070
 AudioSource:
   m_ObjectHideFlags: 0
@@ -6375,7 +6360,7 @@ MonoBehaviour:
   m_EndBones:
   - {fileID: 3653543295226310178}
   m_Material: {fileID: 0}
-  m_StartDepth: 1
+  m_StartDepth: 0
   m_SiblingConstraints: 0
   m_ClosedSiblings: 0
   m_SiblingRotationConstraints: 1

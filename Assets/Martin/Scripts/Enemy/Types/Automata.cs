@@ -5,148 +5,210 @@ using UnityEngine.Serialization;
 
 public class Automata : EnemyBase
 {
-    private enum State { Idle, Patrol, Chase, ReturnHome, Burst, DashSpread }
+    private enum Attack { None, Burst, Dash, Spread }
+    private enum AttackTestMode { Random, BurstOnly, DashOnly }
 
-    [Header("Projectile / Targeting")]
+    [Header("Detection")]
+    [SerializeField, Min(0.5f)] private float detectionRange = 11f;
+    [SerializeField, Min(0f)] private float detectionDelay = 0.4f;
+    [SerializeField] private bool instantDetection = false;
+    [SerializeField, Min(1f)] private float maxChaseDistance = 25f;
+    [Tooltip("Environment only. Leave empty to test detection without line-of-sight blockers.")]
+    [SerializeField] private LayerMask sightBlockingLayers;
+
+    [Header("Chase")]
+    [SerializeField, Min(0.5f)] private float attackRange = 8f;
+    [SerializeField, Min(0.05f)] private float repathInterval = 0.2f;
+    [SerializeField, Min(0.1f)] private float turnSpeed = 15f;
+    [SerializeField, Range(1f, 180f)] private float facingTolerance = 20f;
+
+    [Header("Attack Selection")]
+    [SerializeField, Range(0f, 1f)] private float burstChance = 0.6f;
+    [SerializeField] private AttackTestMode attackTestMode = AttackTestMode.Random;
+    [SerializeField, Min(0f)] private float attackCooldown = 0.9f;
+    [SerializeField, Min(0f)] private float attackRecovery = 0.25f;
+    [SerializeField, Min(0.5f)] private float animationTimeout = 5f;
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private Transform firePoint;
-    [SerializeField, Min(0.1f)] private float attackRange = 8f;
-    [SerializeField, Range(1f, 90f)] private float facingAngleThreshold = 20f;
-    [SerializeField] private LayerMask obstacleLayer;
-    [SerializeField] private float targetRayHeight = 1.2f;
+    [SerializeField] private float aimHeight = 1.2f;
 
-    [Header("Attack Selection / Timing")]
-    [SerializeField, Range(0f, 1f)] private float burstChance = 0.6f;
-    [SerializeField, Min(0f)] private float attackCooldown = 0.8f;
-    [SerializeField, Min(0f)] private float recoveryTime = 0.2f;
-    [SerializeField, Range(0f, 0.25f)] private float exitBlend = 0.08f;
-    [SerializeField, Min(0.5f)] private float animationSafetyTimeout = 4f;
-
-    [Header("Attack 1 - Disparo_1 (Stationary Burst)")]
+    [Header("Attack 1")]
     [SerializeField, Min(1)] private int burstCount = 3;
-    [SerializeField, Min(0.01f)] private float burstInterval = 0.12f;
+    [SerializeField, Min(0.01f)] private float burstInterval = 0.14f;
 
-    [Header("Attack 2 - Dash -> Disparo_3 (Spread)")]
+    [Header("Attack 2")]
+    [Tooltip("Maximum dash speed. Actual movement follows the Dash animation timeline.")]
     [SerializeField, Min(0.1f)] private float dashSpeed = 10f;
+    [Tooltip("Normalized Dash animation time at which travel should finish. Match the Dash -> Disparo_3 transition Exit Time.")]
+    [SerializeField, Range(0.5f, 1f)] private float dashMotionEndNormalized = 0.95f;
     [SerializeField, Min(0.1f)] private float dashMaxDistance = 4f;
-
-    [Tooltip("Minimum distance between the enemy root and player root after a dash. Increase for large colliders.")]
     [SerializeField, Min(0.1f)] private float dashStopDistance = 2f;
     [SerializeField, Min(1)] private int spreadCount = 5;
-    [Tooltip("Total horizontal cone angle (degrees), not the half-angle.")]
-    [SerializeField, Range(0f, 180f)] private float spreadConeAngle = 35f;
+    [SerializeField, Range(0f, 180f)] private float spreadAngle = 40f;
 
     [Header("Dash Safety")]
-    [Tooltip("Walls/solid props, but NOT floor, player or this enemy.")]
-    [SerializeField] private LayerMask dashBlockingLayers;
-    [SerializeField, Min(0.05f)] private float dashCastRadius = 0.35f;
-    [SerializeField, Min(0.1f)] private float dashCastHeight = 1f;
-    [SerializeField, Min(0f)] private float dashWallPadding = 0.12f;
-    [SerializeField, Min(0.05f)] private float dashEdgeLookahead = 0.35f;
-    [SerializeField, Min(0.1f)] private float dashGroundProbeHeight = 1f;
-    [SerializeField, Min(0.1f)] private float dashGroundProbeDepth = 2f;
-    [SerializeField, Min(0f)] private float dashMaxGroundHeightDelta = 0.5f;
+    [SerializeField, Min(0.05f)] private float edgeMargin = 0.3f;
+    [Tooltip("Optional solid walls not baked into NavMesh. Exclude player, floor and Automata.")]
+    [SerializeField] private LayerMask wallLayers;
+    [SerializeField, Min(0.05f)] private float wallRadius = 0.35f;
+    [SerializeField, Min(0.1f)] private float wallHeight = 1f;
+    [SerializeField] private bool logDash;
+    [SerializeField] private float lastSafeDash;
+    [SerializeField] private string lastDashStatus;
+    [Header("Runtime Detection")]
+    [SerializeField] private bool detectedPlayer;
+    [SerializeField] private float detectionTimer;
 
-    [Header("Detection / Patrol")]
-    [SerializeField] private bool instantDetection;
-    [SerializeField, Min(0.1f)] private float detectionRange = 9f;
-    [SerializeField, Min(0.1f)] private float maxChaseDistance = 15f;
-    [SerializeField, Min(0f)] private float detectionDelay = 0.25f;
-    [SerializeField, Min(0.1f)] private float patrolArrivalDistance = 0.6f;
-
-    [Header("Navigation / Facing")]
-    [SerializeField, Min(0.1f)] private float moveSpeed = 4.5f;
-    [Tooltip("Slerp responsiveness. A value near 12 matches the old Automata turning style.")]
-    [SerializeField, Min(0.1f)] private float turnSpeed = 12f;
-    [SerializeField, Min(0.05f)] private float repathInterval = 0.2f;
-
-    [Header("Runtime (Debug)")]
-    [SerializeField] private State state;
-
-    private const string BurstAnimation = "Disparo_1";
-    private const string DashAnimation = "Dash";
-    private const string SpreadAnimation = "Disparo_3";
-
-    private Vector3 homePosition;
-    private Vector3 desiredFacing;
+    private Vector3 spawnPosition;
+    private Attack attack;
+    private Vector3 facing;
     private Vector3 dashDirection;
-    private Vector3 dashStartPosition;
-    private Vector3 lastDestination;
-    private float detectionTimer;
+    private Vector3 dashOrigin;
+    private float safeDashLength;
+    private float nextPathTime;
     private float nextAttackTime;
-    private float nextRepathTime;
-    private int patrolIndex;
-    private int patrolDirection = 1;
-    private bool detectedPlayer;
-    private bool dashMoving;
-    private bool burstEventUsed;
-    private bool spreadEventUsed;
-    private Coroutine attackRoutine;
+    private bool dashActive;
+    private bool usedBurstEvent;
+    private bool usedSpreadEvent;
+    private Coroutine actionRoutine;
     private Coroutine burstRoutine;
 
-    private bool IsAttacking => state == State.Burst || state == State.DashSpread;
-    private Vector3 Home => HomePoint != null ? HomePoint.position : homePosition;
+    private bool Busy => attack != Attack.None;
+    private bool CanFight => !isDead && !isStunned && !isStaggered &&
+                             !isInReaction && HasValidPlayer();
 
     protected override void Awake()
     {
-        base.Awake();
-        homePosition = transform.position;
-        desiredFacing = Flat(transform.forward);
         rotateToMovement = false;
-
+        base.Awake(); // This script turns even when agent is stopped.
+        spawnPosition = transform.position;
+        facing = Flat(transform.forward).normalized;
         if (agent != null)
         {
             agent.updatePosition = false;
             agent.updateRotation = false;
-            agent.speed = moveSpeed;
-            agent.stoppingDistance = 0.2f;
         }
-    }
-
-    protected override void Start()
-    {
-        base.Start();
-        state = HasPatrol() ? State.Patrol : State.Idle;
     }
 
     protected override void Update()
     {
         base.Update();
         if (isDead) return;
-        if (isStunned || isStaggered)
+
+        if (!HasValidPlayer())
+        {
+            detectedPlayer = false;
+            detectionTimer = 0f;
+            CancelAttack();
+            StopNavigation();
+            return;
+        }
+
+        if (isStunned || isStaggered || isInReaction)
         {
             CancelAttack();
             return;
         }
 
-        DetectPlayer();
-        if (IsAttacking) return;
-        if (isInReaction || agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+        UpdateDetection();
 
-        if (detectedPlayer) UpdateChase();
-        else UpdatePassiveMovement();
+        if (!detectedPlayer)
+        {
+            CancelAttack();
+            StopNavigation();
+            PlayLoop("Idle");
+            return;
+        }
 
-        if (!IsAttacking) UpdateLocomotionAnimation();
+        if (Busy)
+        {
+            if (attack == Attack.Burst || attack == Attack.Spread)
+                Face(player.transform.position - transform.position);
+            return;
+        }
+
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
+        Vector3 toPlayer = Flat(player.transform.position - transform.position);
+        float distance = toPlayer.magnitude;
+
+        if (distance > attackRange)
+        {
+            agent.isStopped = false;
+
+            if (!agent.hasPath || Time.time >= nextPathTime)
+            {
+                agent.SetDestination(player.transform.position);
+                nextPathTime = Time.time + repathInterval;
+            }
+            Face(agent.desiredVelocity.sqrMagnitude > 0.01f? agent.desiredVelocity : toPlayer);
+            PlayLoop("Walk");
+            return;
+        }
+
+        StopNavigation();
+        Face(toPlayer);
+        PlayLoop("Idle");
+
+        if (Time.time >= nextAttackTime &&
+            Vector3.Angle(Flat(transform.forward), toPlayer) <= facingTolerance)
+            BeginAttack();
+    }
+
+    private void UpdateDetection()
+    {
+        if (detectedPlayer)
+        {
+            if (Flat(player.transform.position - spawnPosition).sqrMagnitude > maxChaseDistance * maxChaseDistance)
+            {
+                detectedPlayer = false;
+                detectionTimer = 0f;
+            }
+            return;
+        }
+
+        Vector3 toPlayer = Flat(player.transform.position - transform.position);
+
+        if (toPlayer.sqrMagnitude > detectionRange * detectionRange)
+        {
+            detectionTimer = 0f;
+            return;
+        }
+
+        Vector3 eyes = transform.position + Vector3.up * aimHeight;
+
+        Vector3 target = player.transform.position + Vector3.up * aimHeight;
+
+        if (sightBlockingLayers.value != 0 &&
+            Physics.Linecast(eyes, target, sightBlockingLayers, QueryTriggerInteraction.Ignore))
+        {
+            detectionTimer = 0f;
+            return;
+        }
+
+        detectionTimer += Time.deltaTime;
+
+        if (instantDetection || detectionTimer >= detectionDelay)
+        {
+            detectedPlayer = true;
+            detectionTimer = 0f;
+        }
     }
 
     protected override void FixedUpdate()
     {
-        if (dashMoving && CanAct() && !isInReaction && (!isGroundEnemy || isGrounded) &&
-            agent != null && agent.enabled && agent.isOnNavMesh)
+        if (dashActive && CanFight)
         {
-            MoveDash();
+            DashStep();
+            Turn(dashDirection);
             return;
         }
+        if (dashActive) StopDash();
 
         base.FixedUpdate();
-        if (rb == null || isDead || isStunned || isStaggered || isInReaction) return;
 
-        Vector3 direction = Flat(desiredFacing);
-
-        if (direction.sqrMagnitude < 0.001f) return;
-
-        rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(direction),
-            Mathf.Clamp01(turnSpeed * Time.fixedDeltaTime)));
+        if (!isDead && !isStunned && !isStaggered && !isInReaction)
+            Turn(facing);
     }
 
     protected override void OnDisable()
@@ -160,392 +222,332 @@ public class Automata : EnemyBase
         CancelAttack();
         base.Die();
     }
-    // Detection, chase, patrol
-    private void DetectPlayer()
-    {
-        bool valid = HasValidPlayer() &&
-            Flat(player.transform.position - Home).sqrMagnitude <= maxChaseDistance * maxChaseDistance;
-
-        if (!valid)
-        {
-            detectionTimer = 0f;
-            detectedPlayer = false;
-            if (IsAttacking) CancelAttack();
-            if (state == State.Chase) state = State.ReturnHome;
-            return;
-        }
-
-        if (detectedPlayer) return;
-        bool inSight = Flat(player.transform.position - transform.position).sqrMagnitude <=
-            detectionRange * detectionRange && HasLineOfSight();
-
-        if (instantDetection || inSight)
-        {
-            detectionTimer += Time.deltaTime;
-            if (instantDetection || detectionTimer >= detectionDelay)
-            {
-                detectedPlayer = true;
-                state = State.Chase;
-                detectionTimer = 0f;
-            }
-        }
-        else detectionTimer = 0f;
-    }
-
-    private bool HasLineOfSight()
-    {
-        if (!HasValidPlayer()) return false;
-        Vector3 origin = firePoint != null ? firePoint.position : transform.position + Vector3.up * targetRayHeight;
-        Vector3 target = player.transform.position + Vector3.up * targetRayHeight;
-        return !Physics.Linecast(origin, target, obstacleLayer, QueryTriggerInteraction.Ignore);
-    }
-
-    private void UpdateChase()
-    {
-        state = State.Chase;
-        Vector3 toward = Flat(player.transform.position - transform.position);
-        bool canShoot = toward.sqrMagnitude <= attackRange * attackRange && HasLineOfSight();
-
-        if (!canShoot)
-        {
-            MoveTo(player.transform.position);
-            SetFacing(agent.desiredVelocity);
-            return;
-        }
-
-        StopNavigation();
-        SetFacing(toward);
-        if (Time.time < nextAttackTime || !IsFacingPlayer()) return;
-
-        bool canDash = toward.magnitude > dashStopDistance + 0.5f;
-        StartAttack(!canDash || Random.value < burstChance);
-    }
-
-    private void UpdatePassiveMovement()
-    {
-        if (state == State.ReturnHome)
-        {
-            if (Flat(Home - transform.position).sqrMagnitude >
-                patrolArrivalDistance * patrolArrivalDistance)
-            {
-                MoveTo(Home);
-                SetFacing(agent.desiredVelocity);
-                return;
-            }
-            state = HasPatrol() ? State.Patrol : State.Idle;
-        }
-
-        if (HasPatrol())
-        {
-            state = State.Patrol;
-            patrolIndex = Mathf.Clamp(patrolIndex, 0, patrolZones.Length - 1);
-            Transform waypoint = patrolZones[patrolIndex];
-
-            if (waypoint == null) { StopNavigation(); return; }
-
-            if (Flat(waypoint.position - transform.position).sqrMagnitude <=
-                patrolArrivalDistance * patrolArrivalDistance)
-            {
-                if (patrolZones.Length > 1)
-                {
-                    patrolIndex += patrolDirection;
-                    if (patrolIndex >= patrolZones.Length) { patrolIndex = patrolZones.Length - 2; patrolDirection = -1; }
-                    else if (patrolIndex < 0) { patrolIndex = 1; patrolDirection = 1; }
-                }
-                waypoint = patrolZones[patrolIndex];
-            }
-            if (waypoint != null)
-            {
-                MoveTo(waypoint.position);
-                SetFacing(agent.desiredVelocity);
-            }
-        }
-        else { state = State.Idle; StopNavigation(); }
-    }
-
-    private bool HasPatrol() => hasPatrol && patrolZones != null && patrolZones.Length > 0;
-
-    private void MoveTo(Vector3 destination)
-    {
-        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
-
-        if (agent.isStopped) agent.isStopped = false;
-
-        if (!agent.hasPath || Time.time >= nextRepathTime ||
-            Flat(destination - lastDestination).sqrMagnitude > 0.5f * 0.5f)
-        {
-            agent.SetDestination(destination);
-            lastDestination = destination;
-            nextRepathTime = Time.time + repathInterval;
-        }
-    }
 
     private void StopNavigation()
     {
         if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
-
         agent.isStopped = true;
-
         if (agent.hasPath) agent.ResetPath();
     }
-    // Attack sequencing: clip timings, not hardcoded delays
-    private void StartAttack(bool burst)
+
+    private void BeginAttack()
     {
-        if (!CanAct() || anim == null || projectilePrefab == null || stats == null) return;
+        if (anim == null || rb == null || stats == null || projectilePrefab == null) return;
 
-        if (!burst && rb == null) burst = true;
+        bool useDash = attackTestMode == AttackTestMode.DashOnly ||
+            (attackTestMode == AttackTestMode.Random && Random.value >= burstChance);
 
-        state = burst ? State.Burst : State.DashSpread;
-        burstEventUsed = false;
-        spreadEventUsed = false;
+        lastSafeDash = 0f;
+        if (useDash)
+        {
+            dashDirection = Flat(player.transform.position - rb.position).normalized;
+            float room = Flat(player.transform.position - rb.position).magnitude - dashStopDistance;
+            safeDashLength = FindSafeDashDistance(dashDirection, Mathf.Min(dashMaxDistance, room));
+            lastSafeDash = safeDashLength;
+
+            // Random mode can switch to Burst. Debug mode NEVER silently changes the attack.
+            if (safeDashLength < 0.2f && attackTestMode != AttackTestMode.DashOnly)
+            {
+                SetDashStatus($"Dash unavailable ({safeDashLength:F2} m); using Burst");
+                useDash = false;
+            }
+            else if (safeDashLength < 0.2f) SetDashStatus($"Dash Only: animation will play, but travel is blocked ({safeDashLength:F2} m)");
+            else SetDashStatus($"Dash selected, safe travel = {safeDashLength:F2} m");
+        }
+        else if (logDash) Debug.Log($"[Automata] {name}: Burst selected (mode {attackTestMode}, chance {burstChance:F2})", this);
+
         StopNavigation();
-        SetFacing(player.transform.position - transform.position);
-        attackRoutine = StartCoroutine(PerformAttack(burst));
+        usedBurstEvent = usedSpreadEvent = false;
+        attack = useDash ? Attack.Dash : Attack.Burst;
+        actionRoutine = StartCoroutine(AttackSequence(useDash));
     }
 
-    private IEnumerator PerformAttack(bool burst)
+    private void SetDashStatus(string status)
     {
-        if (burst)
+        lastDashStatus = status;
+        if (logDash) Debug.Log($"[Automata] {name}: {status}", this);
+    }
+
+    private IEnumerator AttackSequence(bool useDash)
+    {
+        if (!useDash)
         {
-            PlayState(BurstAnimation);
-            yield return WaitForAnimation(BurstAnimation, State.Burst, true);
-            if (!CanAct() || state != State.Burst) yield break;
+            PlayAnim("Disparo_1");
+            yield return WaitForClip("Disparo_1");
+            while (burstRoutine != null && CanFight) yield return null;
         }
         else
         {
-            dashDirection = Flat(player.transform.position - transform.position).normalized;
-            if (dashDirection.sqrMagnitude < 0.001f) dashDirection = Flat(transform.forward).normalized;
+            dashOrigin = rb.position;
+            PlayAnim("Dash");
+            dashActive = true;
 
-            if (dashDirection.sqrMagnitude < 0.001f) dashDirection = Vector3.forward;
+            yield return WaitForDashToSpread();
+            StopDash();
+            if (!CanFight || attack != Attack.Dash) yield break;
 
-            SetFacing(dashDirection);
-            dashStartPosition = rb.position;
-            PlayState(DashAnimation);
-            dashMoving = true;
+            attack = Attack.Spread;
+            Face(player.transform.position - transform.position);
 
-            yield return WaitForAnimation(DashAnimation, State.DashSpread, false);
-            StopDashMovement();
+            bool alreadyEnteringSpread =
+                anim.GetCurrentAnimatorStateInfo(0).IsName("Disparo_3") ||
+                (anim.IsInTransition(0) &&
+                 anim.GetNextAnimatorStateInfo(0).IsName("Disparo_3"));
 
-            if (!CanAct() || state != State.DashSpread) yield break;
+            if (!alreadyEnteringSpread)
+                anim.CrossFadeInFixedTime("Disparo_3", 0.12f, 0, 0f);
 
-            SetFacing(player.transform.position - transform.position);
-            anim.CrossFadeInFixedTime(SpreadAnimation, 0.06f, 0, 0f);
-            yield return WaitForAnimation(SpreadAnimation, State.DashSpread, true);
-
-            if (!CanAct() || state != State.DashSpread) yield break;
+            yield return WaitForClip("Disparo_3");
         }
 
-        if (anim != null && anim.isActiveAndEnabled) anim.CrossFadeInFixedTime("Idle", exitBlend, 0, 0f);
+        if (!CanFight || !Busy) yield break;
 
-        if (burst) while (burstRoutine != null && CanAct() && state == State.Burst) yield return null;
+        PlayAnim("Idle");
 
-        if (recoveryTime > 0f) yield return new WaitForSeconds(recoveryTime);
+        if (attackRecovery > 0f) yield return new WaitForSeconds(attackRecovery);
 
         FinishAttack();
     }
-
-    private void PlayState(string stateName)
+    private IEnumerator WaitForDashToSpread()
     {
-        PlayAnim(stateName);
-        anim.Play(Animator.StringToHash(stateName), 0, 0f);
-    }
-
-    private IEnumerator WaitForAnimation(string stateName, State expectedState, bool blendBeforeEnd)
-    {
-        int hash = Animator.StringToHash(stateName);
-        bool entered = false;
+        yield return null;
         float elapsed = 0f;
+        bool enteredDash = false;
 
-        yield return null; 
-
-        while (state == expectedState && CanAct() && elapsed < animationSafetyTimeout)
+        while (CanFight && attack == Attack.Dash && elapsed < animationTimeout)
         {
-            AnimatorStateInfo info = anim.GetCurrentAnimatorStateInfo(0);
-            if (info.shortNameHash == hash)
-            {
-                entered = true;
-                float length = info.length / Mathf.Max(0.01f, Mathf.Abs(anim.speed));
-                float timeRemaining = Mathf.Max(0f, 1f - info.normalizedTime) * length;
+            AnimatorStateInfo current = anim.GetCurrentAnimatorStateInfo(0);
+            bool enteringSpread = anim.IsInTransition(0) &&
+                anim.GetNextAnimatorStateInfo(0).IsName("Disparo_3");
 
-                if (info.normalizedTime >= 1f || (blendBeforeEnd && timeRemaining <= exitBlend))
-                    yield break;
+            if (enteringSpread || current.IsName("Disparo_3"))
+                yield break;
+
+            if (current.IsName("Dash"))
+            {
+                enteredDash = true;
+                if (current.normalizedTime >= 1f)
+                    yield break; // Fallback if no transition is configured.
             }
-            else if (entered) yield break;
-            else if (elapsed > 0.4f) break;
+            else if (enteredDash)
+                yield break;
 
             elapsed += Time.deltaTime;
             yield return null;
         }
-
-        if (!entered && anim != null && isActiveAndEnabled)
-            Debug.LogWarning($"[Automata] Animator state '{stateName}' was not found on layer 0.", this);
     }
 
-    private bool CanAct() => !isDead && !isStunned && !isStaggered && HasValidPlayer();
+    private IEnumerator WaitForClip(string state)
+    {
+        yield return null;
+        float timer = 0f;
+        bool entered = false;
+        while (CanFight && Busy && timer < animationTimeout)
+        {
+            AnimatorStateInfo info = anim.GetCurrentAnimatorStateInfo(0);
+            if (info.IsName(state))
+            {
+                entered = true;
+                if (info.normalizedTime >= 1f) yield break;
+            }
+            else if (entered) yield break;
+            timer += Time.deltaTime;
+            yield return null;
+        }
+        if (!entered && !isDead)
+            Debug.LogWarning($"[Automata] Animator state '{state}' did not start.", this);
+    }
 
     private void FinishAttack()
     {
-        StopDashMovement();
-        if (burstRoutine != null) { StopCoroutine(burstRoutine); burstRoutine = null; }
-
-        attackRoutine = null;
+        StopDash();
+        if (burstRoutine != null) StopCoroutine(burstRoutine);
+        burstRoutine = actionRoutine = null;
+        attack = Attack.None;
         nextAttackTime = Time.time + attackCooldown;
-
-        if (IsAttacking) state = HasValidPlayer() ? State.Chase : State.ReturnHome;
     }
 
     private void CancelAttack()
     {
-        if (!IsAttacking) return;
-
-        if (attackRoutine != null) StopCoroutine(attackRoutine);
-
+        if (!Busy) return;
+        if (actionRoutine != null) StopCoroutine(actionRoutine);
         FinishAttack();
     }
-    // Animation Events (on the Animator GameObject or via relay)
-    /// <summary>ONE event on Disparo_1; fires the configured burst over time.</summary>
+
     public void ShootBurst()
     {
-        if (state != State.Burst || burstEventUsed || !CanAct() || projectilePrefab == null) return;
-
-        burstEventUsed = true;
+        if (attack != Attack.Burst || usedBurstEvent || !CanFight) return;
+        usedBurstEvent = true;
         burstRoutine = StartCoroutine(BurstShots());
     }
 
     private IEnumerator BurstShots()
     {
-        int count = Mathf.Max(1, burstCount);
-        for (int i = 0; i < count && state == State.Burst && CanAct(); i++)
+        yield return null; 
+        for (int i = 0; i < burstCount && attack == Attack.Burst && CanFight; i++)
         {
-            FireProjectile(AimAtPlayer());
-            if (i + 1 < count) yield return new WaitForSeconds(Mathf.Max(0.01f, burstInterval));
-            else yield return null; 
+            Fire(Aim());
+            if (i + 1 < burstCount) yield return new WaitForSeconds(burstInterval);
         }
         burstRoutine = null;
     }
+
     public void ShootSpread()
     {
-        if (state != State.DashSpread || dashMoving || spreadEventUsed ||
-            !CanAct() || projectilePrefab == null) return;
-        spreadEventUsed = true;
-        Vector3 forward = AimAtPlayer();
-        int count = Mathf.Max(1, spreadCount);
-
-        for (int i = 0; i < count; i++)
+        if (attack != Attack.Spread || usedSpreadEvent || !CanFight) return;
+        usedSpreadEvent = true;
+        Vector3 forward = Aim();
+        for (int i = 0; i < spreadCount; i++)
         {
-            float t = count == 1 ? 0f : i / (count - 1f) - 0.5f;
-            Vector3 direction = Quaternion.AngleAxis(t * spreadConeAngle, Vector3.up) * forward;
-            FireProjectile(direction);
+            float t = spreadCount == 1 ? 0f : (float)i / (spreadCount - 1) - 0.5f;
+            Fire(Quaternion.AngleAxis(t * spreadAngle, Vector3.up) * forward);
         }
     }
 
-    private Vector3 AimAtPlayer()
+    private Vector3 Aim()
     {
         Vector3 origin = firePoint != null ? firePoint.position : transform.position;
-        Vector3 target = player.transform.position + Vector3.up * targetRayHeight;
-        Vector3 direction = target - origin;
-        return direction.sqrMagnitude > 0.001f ? direction.normalized : transform.forward;
+        Vector3 to = player.transform.position + Vector3.up * aimHeight - origin;
+        return to.sqrMagnitude > 0.0001f ? to.normalized : transform.forward;
     }
 
-    private void FireProjectile(Vector3 direction)
+    private void Fire(Vector3 direction)
     {
-        if (projectilePrefab == null || stats == null) return;
-
-        Vector3 position = firePoint != null ? firePoint.position : transform.position;
-
-        if (direction.sqrMagnitude < 0.001f) direction = transform.forward;
-
+        Vector3 origin = firePoint != null ? firePoint.position : transform.position;
         direction.Normalize();
-        GameObject projectileObject = Instantiate(projectilePrefab, position, Quaternion.LookRotation(direction));
-        E_Projectile projectile = projectileObject.GetComponent<E_Projectile>();
-
-        if (projectile != null) projectile.InitProj(stats.damage, direction);
-    }
-    private void MoveDash()
-    {
-        if (rb == null || !HasValidPlayer()) { StopDashMovement(); return; }
-
-        float moved = Mathf.Max(0f, Vector3.Dot(Flat(rb.position - dashStartPosition), dashDirection));
-        float roomToPlayer = Flat(player.transform.position - rb.position).magnitude - dashStopDistance;
-        float allowedStep = Mathf.Min(dashSpeed * Time.fixedDeltaTime, dashMaxDistance - moved, roomToPlayer);
-
-        if (allowedStep <= 0.005f || !HasSafeDashGround(allowedStep) || DashWallAhead(allowedStep))
-        { StopDashMovement(); return; }
-
-        rb.MoveRotation(Quaternion.LookRotation(dashDirection));
-        Vector3 currentHorizontal = Flat(rb.linearVelocity);
-        Vector3 desiredHorizontal = dashDirection * (allowedStep / Time.fixedDeltaTime);
-        rb.AddForce(desiredHorizontal - currentHorizontal, ForceMode.VelocityChange);
+        GameObject shot = Instantiate(projectilePrefab, origin, Quaternion.LookRotation(direction));
+        if (shot.TryGetComponent(out E_Projectile proj)) proj.InitProj(stats.damage, direction);
     }
 
-    private bool HasSafeDashGround(float step)
+    // NavMesh is the authoritative ledge/floor check. No whatIsGround dependency.
+    private float FindSafeDashDistance(Vector3 direction, float request)
     {
-        Vector3 future = rb.position + dashDirection * (step + dashEdgeLookahead);
+        if (request <= 0f || direction.sqrMagnitude < 0.01f ||
+            agent == null || !agent.enabled || !agent.isOnNavMesh) return 0f;
 
-        if (agent == null || !agent.enabled || !agent.isOnNavMesh ||
-            NavMesh.Raycast(rb.position, future, out _, agent.areaMask)) return false;
 
-        if (!NavMesh.SamplePosition(future, out NavMeshHit point, 0.45f, agent.areaMask) ||
-            Flat(point.position - future).magnitude > 0.35f ||
-            Mathf.Abs(point.position.y - rb.position.y) > dashMaxGroundHeightDelta)
-            return false;
+        Vector3 start = agent.nextPosition;
+        float safe = request;
 
-        Vector3 origin = future + Vector3.up * dashGroundProbeHeight;
+        if (NavMesh.Raycast(start, start + direction * (request + edgeMargin), out NavMeshHit edge, agent.areaMask))
+        {
+            float edgeDistance = Mathf.Max(0f, Vector3.Dot(Flat(edge.position - start), direction));
+            safe = Mathf.Min(safe, edgeDistance - edgeMargin);
+        }
 
-        if (!Physics.Raycast(origin, Vector3.down, out RaycastHit ground,
-                dashGroundProbeHeight + dashGroundProbeDepth, whatIsGround,
-                QueryTriggerInteraction.Ignore)) return false;
-        return Mathf.Abs(ground.point.y - rb.position.y) <= dashMaxGroundHeightDelta;
+        if (wallLayers.value != 0 && safe > 0f &&
+            Physics.SphereCast(rb.position + Vector3.up * wallHeight,wallRadius, direction, out RaycastHit wall,
+                safe + edgeMargin, wallLayers, QueryTriggerInteraction.Ignore))
+        {
+            safe = Mathf.Min(safe, wall.distance - edgeMargin);
+        }
+        return Mathf.Max(0f, safe);
     }
 
-    private bool DashWallAhead(float step)
+    private void DashStep()
     {
-        Vector3 origin = rb.position + Vector3.up * dashCastHeight;
-        return Physics.SphereCast(origin, dashCastRadius, dashDirection, out _,
-                   step + dashWallPadding, dashBlockingLayers, QueryTriggerInteraction.Ignore) ||
-               Physics.CheckSphere(origin + dashDirection * (step + dashWallPadding),
-                   dashCastRadius, dashBlockingLayers, QueryTriggerInteraction.Ignore);
-    }
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh || anim == null)
+        {
+            EndDashEarly("Dash stopped: navigation/Animator unavailable");
+            return;
+        }
 
-    private void StopDashMovement()
-    {
-        if (!dashMoving) return;
+        if (anim.IsInTransition(0) &&
+            anim.GetNextAnimatorStateInfo(0).IsName("Disparo_3"))
+        {
+            StopDash();
+            return;
+        }
 
-        dashMoving = false;
+        AnimatorStateInfo dashState = anim.GetCurrentAnimatorStateInfo(0);
+        if (!dashState.IsName("Dash"))
+        {
+            Vector3 v = rb.linearVelocity;
+            rb.linearVelocity = new Vector3(0f, v.y, 0f);
+            return;
+        }
 
-        if (rb == null || isInReaction) return;
+        float traveled = Mathf.Max(0f,
+            Vector3.Dot(Flat(rb.position - dashOrigin), dashDirection));
+        float remaining = safeDashLength - traveled;
+        float space = Flat(player.transform.position - rb.position).magnitude -
+                      dashStopDistance;
+
+        if (space <= 0.01f)
+        {
+            EndDashEarly("Dash ended: reached player stop distance");
+            return;
+        }
+        if (remaining <= 0.01f)
+        {
+            StopDash(); 
+            return;
+        }
+
+        float progress = Mathf.Clamp01(
+            dashState.normalizedTime / Mathf.Max(0.01f, dashMotionEndNormalized));
+        float desiredDistance = safeDashLength * progress;
+        float catchUp = Mathf.Max(0f, desiredDistance - traveled);
+        float step = Mathf.Min(catchUp, dashSpeed * Time.fixedDeltaTime,
+                               remaining, space);
+
+        if (step <= 0.0001f)
+        {
+            Vector3 v = rb.linearVelocity;
+            rb.linearVelocity = new Vector3(0f, v.y, 0f);
+            return;
+        }
+
+        if (NavMesh.Raycast(agent.nextPosition, agent.nextPosition + dashDirection * (step + edgeMargin),
+                out _, agent.areaMask) ||
+            (wallLayers.value != 0 && Physics.SphereCast(
+                rb.position + Vector3.up * wallHeight, wallRadius,
+                dashDirection, out _, step + 0.02f,
+                wallLayers, QueryTriggerInteraction.Ignore)))
+        {
+            EndDashEarly("Dash ended: NavMesh boundary or wall");
+            return;
+        }
 
         Vector3 velocity = rb.linearVelocity;
-        rb.linearVelocity = new Vector3(0f, velocity.y, 0f);
+        float speed = step / Time.fixedDeltaTime;
+        rb.linearVelocity = new Vector3(
+            dashDirection.x * speed, velocity.y, dashDirection.z * speed);
     }
 
-    private void SetFacing(Vector3 dir)
+    private void EndDashEarly(string reason)
     {
-        dir = Flat(dir);
-
-        if (dir.sqrMagnitude > 0.001f) desiredFacing = dir.normalized;
+        SetDashStatus(reason);
+        StopDash();
+        if (CanFight && attack == Attack.Dash && anim != null && !anim.IsInTransition(0))
+            anim.CrossFadeInFixedTime("Disparo_3", 0.12f, 0, 0f);
     }
 
-    private bool IsFacingPlayer()
+    private void StopDash()
     {
-        Vector3 toPlayer = Flat(player.transform.position - transform.position);
-        return toPlayer.sqrMagnitude < 0.001f || 
-            Vector3.Angle(Flat(transform.forward), toPlayer) <= facingAngleThreshold;
+        if (!dashActive) return;
+
+        dashActive = false;
+        if (rb == null || isInReaction || isStunned || isStaggered) return;
+
+        Vector3 v = rb.linearVelocity;
+        rb.linearVelocity = new Vector3(0f, v.y, 0f);
     }
 
-    private void UpdateLocomotionAnimation()
+    private void Face(Vector3 direction)
     {
-        if (anim == null || !anim.isActiveAndEnabled) return;
+        direction = Flat(direction);
 
-        bool walking = agent != null && !agent.isStopped && rb != null &&
-            Flat(rb.linearVelocity).sqrMagnitude > 0.09f;
-        string clipName = walking ? "Walk" : "Idle";
-
-        if (anim.GetCurrentAnimatorStateInfo(0).IsName(clipName) ||
-            (anim.IsInTransition(0) && anim.GetNextAnimatorStateInfo(0).IsName(clipName))) return;
-        anim.CrossFadeInFixedTime(clipName, 0.12f, 0, 0f);
+        if (direction.sqrMagnitude > 0.001f) facing = direction.normalized;
     }
 
-    private static Vector3 Flat(Vector3 vector) { vector.y = 0f; return vector; }
+    private void Turn(Vector3 direction)
+    {
+        if (rb == null || direction.sqrMagnitude < 0.001f) return;
 
+        float t = 1f - Mathf.Exp(-turnSpeed * Time.fixedDeltaTime);
+        rb.MoveRotation(Quaternion.Slerp(rb.rotation, Quaternion.LookRotation(direction), t));
+    }
+
+    private static Vector3 Flat(Vector3 v) { v.y = 0f; return v; }
 }

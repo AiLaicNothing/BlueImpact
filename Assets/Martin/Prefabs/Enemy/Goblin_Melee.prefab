@@ -223,7 +223,7 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 0
+  m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
@@ -313,26 +313,25 @@ MonoBehaviour:
   detectionRange: 30
   maxChaseDistance: 35
   detectionDelay: 0.25
-  detectionCheckInterval: 0.12
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
   targetRayHeight: 1.2
-  stopDistance: 0.5
-  repathDistance: 0.4
-  facingAngleThreshold: 15
-  turnSpeedDegrees: 540
   attackRange: 2.5
+  arrivalDistance: 0.5
+  repathInterval: 0.25
+  turnSpeed: 540
+  attackFacingAngle: 15
   attackCooldown: 0.8
-  recoveryTime: 0.6
-  attackAnimationTimeout: 1
+  attackRecovery: 0.2
+  attackExitBlend: 0.08
+  attackSafetyTimeout: 3
   hitBoxSize: {x: 1, y: 1, z: 1}
   hitBoxPos: {x: 0, y: 0, z: 1}
   hitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  hitBoxPrefab: {fileID: 65547742025389114, guid: b60a9548e8b1aba4497aeaf2c3ebe7a9, type: 3}
-  hitBoxDebugDuration: 0.15
+  state: 0
 --- !u!195 &7549215209311878705
 NavMeshAgent:
   m_ObjectHideFlags: 0
