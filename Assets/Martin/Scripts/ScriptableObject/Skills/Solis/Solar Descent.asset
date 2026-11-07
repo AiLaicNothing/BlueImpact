@@ -20,7 +20,7 @@ MonoBehaviour:
   cost: 40
   castTime: 0.1
   cooldown: 5
-  actionTime: 0.3
+  actionTime: 0.4
   haveProjection: 0
   longCasting: 0
   castAnimation: Jump
@@ -40,14 +40,14 @@ MonoBehaviour:
     pushForce: 8
     knockDownForce: 10
     knockDownForwardScale: 0.15
-  jumpHeight: 30
-  downForce: {x: 0, y: -30, z: 1}
-  chargeTime: 1
+  jumpHeight: 50
+  downForce: {x: 0, y: -80, z: 0.6}
+  chargeTime: 0.3
   debug: 0
   impactRadius: 10
   vfxFire: {fileID: 0}
   groundShockwavePrefab: {fileID: 2423280987001069193, guid: 4505f273d6b42474db87594357702641, type: 3}
-  castSecondAnimation: Fuego Mortal
+  castSecondAnimation: DescensoSolar
   enemyLayer:
     serializedVersion: 2
     m_Bits: 256
