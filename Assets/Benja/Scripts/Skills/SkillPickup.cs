@@ -25,7 +25,7 @@ public class SkillPickup : MonoBehaviour, IInteractable
 
     [Header("Fade Out")]
     [SerializeField] private float fadeOutDuration = 2f;
-
+    [SerializeField] TrailRenderer vfx;
     private bool pickedUp;
     private bool characterConfigured;
 
@@ -306,6 +306,7 @@ public class SkillPickup : MonoBehaviour, IInteractable
         float initialVolume = audioSource != null ? audioSource.volume : 1f;
 
         float duration = Mathf.Max(0.01f, fadeOutDuration);
+        vfx.enabled = true;
 
         // Prevent another interaction during the fade.
         if (colliders != null)
@@ -320,6 +321,7 @@ public class SkillPickup : MonoBehaviour, IInteractable
         {
             elapsed += Time.deltaTime;
 
+            vfx.gameObject.transform.position = currentPlayer.Model.position;
             float t = Mathf.Clamp01(elapsed / duration);
 
             // Fade audio.
