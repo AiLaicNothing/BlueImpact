@@ -67,7 +67,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 80
+  m_Constraints: 112
   m_CollisionDetection: 0
 --- !u!136 &7849738784648594215
 CapsuleCollider:
@@ -151,45 +151,44 @@ MonoBehaviour:
   debug: 1
   currentHp: 0
   currentStaggerBuild: 0
+  detectionRange: 11
+  detectionDelay: 0.4
+  instantDetection: 0
+  maxChaseDistance: 25
+  sightBlockingLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  attackRange: 8
+  repathInterval: 0.2
+  turnSpeed: 15
+  facingTolerance: 20
+  burstChance: 0.62
+  attackTestMode: 0
+  attackCooldown: 0.8
+  attackRecovery: 0.25
+  animationTimeout: 5
   projectilePrefab: {fileID: 8499267714821707363, guid: 71e2044fa01baca4cbfcc18c220214e7, type: 3}
   firePoint: {fileID: 6754386472286928512}
-  attackRange: 8
-  facingAngleThreshold: 25
-  obstacleLayer:
-    serializedVersion: 2
-    m_Bits: 7168
-  targetRayHeight: 1.2
-  burstChance: 0.6
-  attackCooldown: 0.8
-  recoveryTime: 0.2
-  exitBlend: 0.08
-  animationSafetyTimeout: 4
+  aimHeight: 1.2
   burstCount: 4
   burstInterval: 0.25
   dashSpeed: 15
+  dashMotionEndNormalized: 0.95
   dashMaxDistance: 8
   dashStopDistance: 2
   spreadCount: 5
-  spreadConeAngle: 60
-  dashBlockingLayers:
+  spreadAngle: 40
+  edgeMargin: 0.3
+  wallLayers:
     serializedVersion: 2
-    m_Bits: 0
-  dashCastRadius: 0.35
-  dashCastHeight: 1
-  dashWallPadding: 0.12
-  dashEdgeLookahead: 0.35
-  dashGroundProbeHeight: 1
-  dashGroundProbeDepth: 2
-  dashMaxGroundHeightDelta: 0.5
-  instantDetection: 0
-  detectionRange: 27.5
-  maxChaseDistance: 50
-  detectionDelay: 0.25
-  patrolArrivalDistance: 0.6
-  moveSpeed: 4.5
-  turnSpeed: 0
-  repathInterval: 0.2
-  state: 0
+    m_Bits: 6144
+  wallRadius: 0.35
+  wallHeight: 1
+  logDash: 0
+  lastSafeDash: 0
+  lastDashStatus: 
+  detectedPlayer: 0
+  detectionTimer: 0
 --- !u!195 &1046320319683683077
 NavMeshAgent:
   m_ObjectHideFlags: 0
