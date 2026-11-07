@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: blue petrified magma stone
+  m_Name: pared con cristal 4
   m_Shader: {fileID: 4800000, guid: be891319084e9d147b09d89e80ce60e0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -16,7 +16,9 @@ Material:
   - _IS_CLIPPING_OFF
   - _IS_OUTLINE_CLIPPING_NO
   - _OUTLINE_NML
-  m_InvalidKeywords: []
+  m_InvalidKeywords:
+  - _METALLICSPECGLOSSMAP
+  - _NORMALMAP
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -31,11 +33,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _1st_ShadeMap:
-        m_Texture: {fileID: 2800000, guid: dc2120bd76e18b44480e6805c8adba7b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8033e02b51b6ae14782fb0a0f2fd421a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _2nd_ShadeMap:
-        m_Texture: {fileID: 2800000, guid: dc2120bd76e18b44480e6805c8adba7b, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _AngelRing_Sampler:
@@ -55,7 +57,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: dc2120bd76e18b44480e6805c8adba7b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8033e02b51b6ae14782fb0a0f2fd421a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BentNormalMap:
@@ -63,7 +65,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 73be8eb006ff3dc4299ac7863dfd5001, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ClippingMask:
@@ -123,8 +125,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: dc2120bd76e18b44480e6805c8adba7b, type: 3}
-        m_Scale: {x: 2, y: 2}
+        m_Texture: {fileID: 2800000, guid: 8033e02b51b6ae14782fb0a0f2fd421a, type: 3}
+        m_Scale: {x: 0.6, y: 0.4}
         m_Offset: {x: 0, y: 0}
     - _MaskMap:
         m_Texture: {fileID: 0}
@@ -135,12 +137,12 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 91b2294caeb590a4c9d023f7ac626de8, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: e41fde3e347cc4e4a9cf58b27f3ba001, type: 3}
-        m_Scale: {x: 2, y: 2}
+        m_Texture: {fileID: 2800000, guid: 2f5edc8d64a173e4382a17f7910eb899, type: 3}
+        m_Scale: {x: 0.6, y: 0.4}
         m_Offset: {x: 0, y: 0}
     - _NormalMapForMatCap:
         m_Texture: {fileID: 0}
@@ -233,11 +235,11 @@ Material:
     m_Ints:
     - _ToonMaterialVersion: 0
     m_Floats:
-    - _1st2nd_Shades_Feather: 0.0001
-    - _1st_ShadeColor_Feather: 0.558
-    - _1st_ShadeColor_Step: 0.573
-    - _2nd_ShadeColor_Feather: 0.0001
-    - _2nd_ShadeColor_Step: 0.538
+    - _1st2nd_Shades_Feather: 0.493
+    - _1st_ShadeColor_Feather: 0.273
+    - _1st_ShadeColor_Step: 0.68
+    - _2nd_ShadeColor_Feather: 0.493
+    - _2nd_ShadeColor_Step: 0.213
     - _AORemapMax: 1
     - _AORemapMin: 0
     - _ARSampler_AlphaOn: 0
@@ -266,8 +268,8 @@ Material:
     - _AutoRenderQueue: 1
     - _BaseColorOverridden: 0
     - _BaseColorVisible: 1
-    - _BaseColor_Step: 0.573
-    - _BaseShade_Feather: 0.558
+    - _BaseColor_Step: 0.68
+    - _BaseShade_Feather: 0.273
     - _Base_Speed: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
@@ -353,7 +355,7 @@ Material:
     - _Is_LightColor_Outline: 1
     - _Is_LightColor_RimLight: 1
     - _Is_NormalMapForMatCap: 0
-    - _Is_NormalMapToBase: 0
+    - _Is_NormalMapToBase: 1
     - _Is_NormalMapToHighColor: 0
     - _Is_NormalMapToRimLight: 0
     - _Is_Ortho: 0
@@ -403,7 +405,7 @@ Material:
     - _SecondShadeOverridden: 0
     - _SecondShadeVisible: 1
     - _Set_SystemShadowsToBase: 1
-    - _ShadeColor_Step: 0.538
+    - _ShadeColor_Step: 0.213
     - _Smoothness: 0.5
     - _SmoothnessRemapMax: 1
     - _SmoothnessRemapMin: 0
@@ -449,7 +451,7 @@ Material:
     - _Tweak_SystemShadowsLevel: 0
     - _Tweak_transparency: 0
     - _UVDetail: 0
-    - _Unlit_Intensity: 2.95
+    - _Unlit_Intensity: 1
     - _UseShadowThreshold: 0
     - _Use_1stAs2nd: 0
     - _Use_BaseAs1st: 0
@@ -465,7 +467,7 @@ Material:
     - _simpleUI: 0
     - _utsTechnique: 0
     m_Colors:
-    - _1st_ShadeColor: {r: 0.036731932, g: 0.06610557, b: 0.2905661, a: 1}
+    - _1st_ShadeColor: {r: 0.33979967, g: 0.07450981, b: 0.42745098, a: 1}
     - _2nd_ShadeColor: {r: 0, g: 0, b: 0, a: 1}
     - _AngelRingMaskColor: {r: 0, g: 1, b: 0, a: 1}
     - _AngelRing_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -501,7 +503,7 @@ Material:
     - emissive: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &739101647535125227
+--- !u!114 &5796649606449580826
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
