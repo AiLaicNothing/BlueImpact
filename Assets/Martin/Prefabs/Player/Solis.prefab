@@ -20421,38 +20421,6 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 6855885166615657495}
         m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
-        m_MethodName: OnSkill3
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 191ef5cd-b173-40eb-b111-29cb22ddc2d5
-    m_ActionName: 'Player/Skill3[/Keyboard/3]'
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6855885166615657495}
-        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
-        m_MethodName: OnSkill4
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-    m_ActionId: 530285e3-5a88-4fef-a691-58d63c67ed7a
-    m_ActionName: 'Player/Skill4[/Keyboard/4]'
-  - m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 6855885166615657495}
-        m_TargetAssemblyTypeName: PlayerInputHandler, Assembly-CSharp
         m_MethodName: OnLockTarget
         m_Mode: 0
         m_Arguments:
@@ -20481,6 +20449,14 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: e077e93b-eae1-4c67-926a-9c5ce2bf0927
     m_ActionName: 'Player/Pause[/Keyboard/escape,/DualShock4GamepadHID/start]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: d02b62ec-a5f2-4337-a5cf-050fc4a27253
+    m_ActionName: 'Player/Journal[/Keyboard/tab]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: a2d8f27a-4904-4c0c-8c0b-251c1a07f4fb
+    m_ActionName: 'Player/ScrollTarget[/Mouse/scroll]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: Keyboard&Mouse
   m_DefaultActionMap: Player
@@ -20535,6 +20511,7 @@ MonoBehaviour:
   moveSpeed: 6
   jumpSpeed: 6.5
   jumpDuration: 0.2
+  coyoteTime: 0.15
   gravity: 10
   slideGravity: 5
   airControlRate: 2
@@ -20547,6 +20524,7 @@ MonoBehaviour:
   dashDuration: 0.36
   dashCost: 20
   canDash: 0
+  dust: {fileID: 3094855624190052080, guid: 599ee8266d1042a4d99140990e13221c, type: 3}
   rotSpeed: 10
   playerModel: {fileID: 7907219430774423904}
   normalCombo: {fileID: 11400000, guid: 5410044dba8a5d44eb46f85f2268bb18, type: 2}
@@ -20592,19 +20570,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LockOnTarget
   mainCamera: {fileID: 0}
-  cameraRig: {fileID: 2680798955826533983}
-  orbitalFollow: {fileID: 7560659605750283324}
+  cameraController: {fileID: 0}
   input: {fileID: 6855885166615657495}
-  inputProvider: {fileID: 3947670542337584405}
+  modelRoot: {fileID: 0}
+  modelRotation: {fileID: 0}
   aimIcon: {fileID: 0}
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 7168
   enemyTag: Enemy
   targetLockOffset: {x: 0, y: 0}
+  targetAimHeight: 1.2
   minDistance: 0.2
   maxDistance: 15
-  lockSpeed: 3
+  lostTargetGraceTime: 0.5
+  releaseDistanceBuffer: 2
+  cameraLockSpeed: 360
+  modelLockSpeed: 500
+  debugLockOn: 0
 --- !u!114 &3918977527686612573
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20618,9 +20601,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   interactionRadius: 2
+  raycastHeight: 0
   interactableLayer:
     serializedVersion: 2
     m_Bits: 16384
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!82 &6708805054098267598
 AudioSource:
   m_ObjectHideFlags: 0

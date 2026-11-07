@@ -71,6 +71,7 @@ public class PlayerControl : Controller, IDamageable
     [SerializeField] private float dashDuration = 0.3f;
     [SerializeField] private float dashCost = 20f;
     public bool canDash;
+    [SerializeField] GameObject dust;
 
     [Header("Rotation")]
     [SerializeField] private float rotSpeed = 10f;
@@ -517,6 +518,8 @@ public class PlayerControl : Controller, IDamageable
             if (mover.IsGrounded() && !_isSliding)
             {
                 OnGroundContactRegained();
+                GameObject vfx = Instantiate(dust,new Vector3(Model.position.x, Model.position.y - 1f, Model.position.z) , Model.rotation);
+                Destroy(vfx, 3);
                 hasUsedAirAttack = false;
                 PlayAudio(land, sfxVolume);
                 return ControllerState.Grounded;
@@ -1403,7 +1406,6 @@ public class PlayerControl : Controller, IDamageable
     {
         //If local momentum is used, transform momentum into world coordinates first;
         if (useLocalMomentum) momentum = tr.localToWorldMatrix * momentum;
-
         Vector3 _velocity = GetMovementVelocity();
 
         //Check if the controller has both momentum and a current movement velocity;
@@ -1431,6 +1433,7 @@ public class PlayerControl : Controller, IDamageable
         momentum += _velocity;
 
         if (useLocalMomentum) momentum = tr.worldToLocalMatrix * momentum;
+        
     }
 
     private void OnGroundContactRegained()
