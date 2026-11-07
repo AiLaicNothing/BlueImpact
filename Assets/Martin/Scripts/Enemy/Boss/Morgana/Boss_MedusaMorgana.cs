@@ -138,7 +138,17 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private float meteorBeamTickInterval = 0.25f;
     [SerializeField] private float meteorBeamVisualWidth = 1.2f;
     [SerializeField] private Color meteorBeamColor = new Color(0.35f, 0.75f, 1f, 1f);
-    [SerializeField] private GameObject meteorBeamVfx;          // PREFAB opcional: pivote al inicio, apunta en Z y mide 1 m de largo
+    [SerializeField] private GameObject meteorBeamVfx;          // PREFAB. Con ParticleSystem (kamehameha): emite por +Z del objeto.
+                                                                // Si es una malla: pivote al inicio, apuntando en Z y de 1 m de largo
+    [Tooltip("Grosor del rayo: multiplica el tamano de cada particula, y con el el ancho del trail. 1 = como viene el prefab.")]
+    [SerializeField] private float meteorBeamVfxScale = 1f;
+    [Tooltip("Segundos que tarda la punta del rayo en llegar al final. De aqui salen la velocidad y la vida de las particulas.")]
+    [SerializeField] private float meteorBeamVfxExtendTime = 0.2f;
+    [Tooltip("Cuantas particulas con trail hay a la vez a lo largo del rayo. Mas = mas continuo y mas brillante.")]
+    [SerializeField] private float meteorBeamVfxDensity = 10f;
+    [Tooltip("Correccion por si el prefab no emite por su eje +Z (azul).")]
+    [SerializeField] private Vector3 meteorBeamVfxRotationOffset = Vector3.zero;
+    [SerializeField] private bool meteorBeamVfxFollowOrigin = true; // el emisor sigue a meteorBeamOrigin mientras dispara
 
     [Header("Meteor Shower (Fase 2) - Animacion 'MeteorShower' 70 frames")]
     [SerializeField] private int meteorShowerFrames = 70;
@@ -234,6 +244,10 @@ public class Boss_MedusaMorgana : EnemyBase
 
     private LineRenderer beamLine;
     private GameObject activeBeamVfx;
+    private ParticleSystem[] beamParticles;
+    private float[] beamBaseSize;   // tamano y velocidad con que viene cada sistema del prefab
+    private float[] beamBaseSpeed;
+    private float beamParticleLength = -1f;
     private Vector3 beamDir = Vector3.forward;
 
     // Cache de parametros del Animator actual
@@ -322,6 +336,7 @@ public class Boss_MedusaMorgana : EnemyBase
         WarnTimingSetup();
 
         if (bossAudio == null) Debug.LogWarning("[Morgana] Sin BossAudio: el boss va a pelear en silencio");
+        else bossAudio.ReportMissingSounds();
     }
 
     // Al destruirse (reinicio del combate) limpia lo que creo fuera de su jerarquia:
@@ -332,11 +347,7 @@ public class Boss_MedusaMorgana : EnemyBase
 
         ClearBorderVfx();
 
-        if (activeBeamVfx != null)
-        {
-            Destroy(activeBeamVfx);
-            activeBeamVfx = null;
-        }
+        DestroyBeamVfxNow();
     }
 
     // Climax es el ataque que invoca enemigos. Sin oleadas ni golemPrefab no invoca nada.
@@ -1412,17 +1423,7 @@ public class Boss_MedusaMorgana : EnemyBase
     {
         if (meteorBeamVfx != null)
         {
-            if (activeBeamVfx == null)
-            {
-                activeBeamVfx = Instantiate(meteorBeamVfx, start, Quaternion.identity);
-            }
-
-            Vector3 dir = end - start;
-            activeBeamVfx.transform.position = start;
-            if (dir.sqrMagnitude > 0.0001f) activeBeamVfx.transform.rotation = Quaternion.LookRotation(dir.normalized);
-
-            Vector3 s = activeBeamVfx.transform.localScale;
-            activeBeamVfx.transform.localScale = new Vector3(s.x, s.y, dir.magnitude);
+            DrawBeamVfx(start, end, length);
             return;
         }
 
@@ -1451,15 +1452,169 @@ public class Boss_MedusaMorgana : EnemyBase
         beamLine.enabled = false;
     }
 
+    // Hay dos clases de prefab y se tratan distinto:
+    //
+    //  - Con ParticleSystem (kamehameha.prefab): NO se estira la escala. El prefab
+    //    usa scalingMode Local, asi que estirar Z multiplica el tamano de cada
+    //    particula y el efecto revienta. En su lugar se gobierna la emision:
+    //        velocidad = largo / meteorBeamVfxExtendTime   -> la punta llega a tiempo
+    //        vida      = meteorBeamVfxExtendTime           -> muere justo en el final
+    //        emision   = densidad / vida                   -> chorro continuo
+    //    Los sistemas que vienen quietos en el prefab (la bola de la boca) no viajan:
+    //    solo se les aplica el grosor.
+    //
+    //  - Sin ParticleSystem (malla): se estira en Z, como siempre.
+    private void DrawBeamVfx(Vector3 start, Vector3 end, float length)
+    {
+        bool firstFrame = activeBeamVfx == null;
+
+        if (firstFrame)
+        {
+            activeBeamVfx = Instantiate(meteorBeamVfx, start, BeamVfxRotation(end - start));
+            beamParticles = activeBeamVfx.GetComponentsInChildren<ParticleSystem>(true);
+            beamParticleLength = -1f;
+
+            if (beamParticles.Length > 0) SetupBeamParticles();
+        }
+
+        if (beamParticles != null && beamParticles.Length > 0)
+        {
+            // El chorro va de la boca al final de la franja, a 1 m del suelo, asi baja
+            // hacia la zona que hace dano en vez de pasar por encima del jugador.
+            if (meteorBeamVfxFollowOrigin || firstFrame)
+                activeBeamVfx.transform.position = start;
+
+            Vector3 from = activeBeamVfx.transform.position;
+
+            activeBeamVfx.transform.rotation = BeamVfxRotation(end - from);
+            ApplyBeamParticleLength((end - from).magnitude);
+            return;
+        }
+
+        Vector3 dir = end - start;
+
+        activeBeamVfx.transform.position = start;
+        if (dir.sqrMagnitude > 0.0001f) activeBeamVfx.transform.rotation = Quaternion.LookRotation(dir.normalized);
+
+        Vector3 s = activeBeamVfx.transform.localScale;
+        activeBeamVfx.transform.localScale = new Vector3(s.x, s.y, dir.magnitude);
+    }
+
+    private Quaternion BeamVfxRotation(Vector3 dir)
+    {
+        if (dir.sqrMagnitude < 0.0001f) dir = beamDir;
+
+        return Quaternion.LookRotation(dir.normalized) * Quaternion.Euler(meteorBeamVfxRotationOffset);
+    }
+
+    // Se hace una sola vez al instanciar, antes de que el sistema simule su primer frame.
+    private void SetupBeamParticles()
+    {
+        int count = beamParticles.Length;
+        float scale = Mathf.Max(0.01f, meteorBeamVfxScale);
+
+        beamBaseSize = new float[count];
+        beamBaseSpeed = new float[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            ParticleSystem ps = beamParticles[i];
+            if (ps == null) continue;
+
+            ParticleSystem.MainModule main = ps.main;
+
+            beamBaseSize[i] = main.startSizeMultiplier;
+            beamBaseSpeed[i] = main.startSpeedMultiplier;
+
+            // Grosor por tamano y no por escala del transform: con scalingMode Local
+            // la escala del padre ni siquiera llega al sistema hijo.
+            main.startSizeMultiplier = beamBaseSize[i] * scale;
+
+            // Trail en el mismo espacio que la simulacion: si el emisor sigue a la
+            // boca, el chorro se mueve entero en vez de doblarse.
+            ParticleSystem.TrailModule trails = ps.trails;
+            if (trails.enabled) trails.worldSpace = false;
+
+            if (!ps.isPlaying) ps.Play(false);
+        }
+    }
+
+    // Recalcula solo si el largo cambio de verdad (por ejemplo si una pared corta el
+    // rayo), no cada frame.
+    private void ApplyBeamParticleLength(float length)
+    {
+        if (Mathf.Abs(length - beamParticleLength) < 0.1f) return;
+
+        beamParticleLength = length;
+
+        float extend = Mathf.Max(0.02f, meteorBeamVfxExtendTime);
+        float rate = Mathf.Max(1f, meteorBeamVfxDensity) / extend;
+
+        for (int i = 0; i < beamParticles.Length; i++)
+        {
+            ParticleSystem ps = beamParticles[i];
+
+            // La bola de la boca viene con velocidad 0: no viaja, no se toca.
+            if (ps == null || beamBaseSpeed[i] <= 0.01f) continue;
+
+            ParticleSystem.MainModule main = ps.main;
+            main.startSpeedMultiplier = length / extend;
+            main.startLifetimeMultiplier = extend;
+
+            ParticleSystem.EmissionModule emission = ps.emission;
+            emission.rateOverTimeMultiplier = rate;
+        }
+    }
+
     private void HideBeam()
     {
         if (beamLine != null) beamLine.enabled = false;
 
-        if (activeBeamVfx != null)
+        if (activeBeamVfx == null) return;
+
+        if (beamParticles != null && beamParticles.Length > 0)
         {
-            Destroy(activeBeamVfx);
-            activeBeamVfx = null;
+            float longest = 0f;
+
+            for (int i = 0; i < beamParticles.Length; i++)
+            {
+                ParticleSystem ps = beamParticles[i];
+                if (ps == null) continue;
+
+                bool travels = beamBaseSpeed != null && i < beamBaseSpeed.Length && beamBaseSpeed[i] > 0.01f;
+
+                // Lo que viaja termina su recorrido: el chorro se suelta de la boca y
+                // sale disparado. Lo que esta quieto en la boca se apaga en el acto;
+                // si no, quedaria flotando donde estaba la boca.
+                ps.Stop(false, travels
+                    ? ParticleSystemStopBehavior.StopEmitting
+                    : ParticleSystemStopBehavior.StopEmittingAndClear);
+
+                if (travels) longest = Mathf.Max(longest, ps.main.startLifetimeMultiplier);
+            }
+
+            Destroy(activeBeamVfx, longest + 0.5f);
+            ForgetBeamVfx();
+            return;
         }
+
+        DestroyBeamVfxNow();
+    }
+
+    private void DestroyBeamVfxNow()
+    {
+        if (activeBeamVfx != null) Destroy(activeBeamVfx);
+
+        ForgetBeamVfx();
+    }
+
+    private void ForgetBeamVfx()
+    {
+        activeBeamVfx = null;
+        beamParticles = null;
+        beamBaseSize = null;
+        beamBaseSpeed = null;
+        beamParticleLength = -1f;
     }
 
     // ---------- METEOR SHOWER (FASE 2) ----------
