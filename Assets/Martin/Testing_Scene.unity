@@ -2182,11 +2182,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10b19b991e1875342a49c118703d96cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CheatManager
-  LevelTuto: {fileID: 0}
-  Level1: {fileID: 0}
-  Level2: {fileID: 0}
-  Level3: {fileID: 0}
-  Level4: {fileID: 0}
+  enableCheats: 1
+  destinations:
+  - destinationName: Zone_02
+    checkpointData: {fileID: 11400000, guid: a1cde1aad07fa394d8cb56415b3eb2c3, type: 2}
+    key: 41
+    requireCtrl: 0
+    requireShift: 1
+    requireAlt: 0
+  - destinationName: Zone_03
+    checkpointData: {fileID: 11400000, guid: 11e7e3217765ebc449e09c81c1d50bc2, type: 2}
+    key: 42
+    requireCtrl: 0
+    requireShift: 1
+    requireAlt: 0
+  - destinationName: Zone_04
+    checkpointData: {fileID: 11400000, guid: e5d78783217dff746b300f4d7297ad5f, type: 2}
+    key: 43
+    requireCtrl: 0
+    requireShift: 1
+    requireAlt: 0
+  - destinationName: Zone_05
+    checkpointData: {fileID: 11400000, guid: adbf11c5049ad874a97760884a9a162e, type: 2}
+    key: 44
+    requireCtrl: 0
+    requireShift: 1
+    requireAlt: 0
+  - destinationName: 
+    checkpointData: {fileID: 0}
+    key: 0
+    requireCtrl: 0
+    requireShift: 0
+    requireAlt: 0
 --- !u!1 &94194968
 GameObject:
   m_ObjectHideFlags: 0
