@@ -1,9 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VectorGraphics;
-using UnityEditor.SearchService;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 public class Teleport_Manager : MonoBehaviour
