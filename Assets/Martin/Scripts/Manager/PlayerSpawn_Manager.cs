@@ -41,7 +41,6 @@ public class PlayerSpawn_Manager : MonoBehaviour
 
         var playerInstance = Instantiate(currentCharacterInfo.prefab, spawnPoint.position, Quaternion.identity);
 
-        if (CheatManager.Instance != null) CheatManager.Instance.SetPlayerTarget(playerInstance);
         if (RespawnManager.Instance != null) RespawnManager.Instance.SetPlayerTarget(playerInstance);
         if (Player_Manager.Instance != null) Player_Manager.Instance.SetPlayer(playerInstance);
 

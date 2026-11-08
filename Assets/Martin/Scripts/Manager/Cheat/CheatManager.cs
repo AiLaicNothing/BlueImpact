@@ -1,122 +1,122 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class CheatManager : MonoBehaviour
 {
-    [SerializeField] private Transform LevelTuto;
-    [SerializeField] private Transform Level1;
-    [SerializeField] private Transform Level2;
-    [SerializeField] private Transform Level3;
-    [SerializeField] private Transform Level4;
+    public static CheatManager Instance { get; private set; }
 
-    private GameObject player;
-    private bool isTeleporting;
+    [System.Serializable]
+    public class CheatDestination
+    {
+        [Header("Destination")]
+        public string destinationName;
+        public CheckpointData checkpointData;
 
-    public static CheatManager Instance;
+        [Header("Input Combination")]
+        public Key key = Key.Digit1;
+        public bool requireCtrl = true;
+        public bool requireShift = true;
+        public bool requireAlt = false;
+    }
+
+    [Header("Settings")]
+    [SerializeField] private bool enableCheats = true;
+
+    [Header("Cheat Destinations")]
+    [SerializeField] private List<CheatDestination> destinations = new();
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void Update()
     {
-        if (isTeleporting) return;
+        if (!enableCheats || Keyboard.current == null)
+            return;
 
-        Keyboard kb = Keyboard.current;
-        if (kb == null || !kb.pKey.isPressed) return;
+        Keyboard keyboard = Keyboard.current;
 
-        if (kb.digit1Key.wasPressedThisFrame)
+        foreach (CheatDestination destination in destinations)
         {
-            TeleportTo(LevelTuto);
-        }
-        else if (kb.digit2Key.wasPressedThisFrame)
-        {
-            TeleportTo(Level1);
-        }
-        else if (kb.digit3Key.wasPressedThisFrame)
-        {
-            TeleportTo(Level2);
-        }
-        else if (kb.digit4Key.wasPressedThisFrame)
-        {
-            StartCoroutine(TeleportToLevel("Zone_03", "", Level3));
-        }
-        else if (kb.digit5Key.wasPressedThisFrame)
-        {
-            // Antes había un TeleportTo(Level4) aquí que movía al jugador antes de cargar la escena.
-            StartCoroutine(TeleportToLevel("Testing4", "Zone_03", Level4));
-        }
-    }
+            if (destination == null || destination.checkpointData == null)
+                continue;
 
-    private IEnumerator TeleportToLevel(string sceneToLoad, string sceneToUnload, Transform teleportPoint)
-    {
-        if (player == null || SceneLoaderManager.Instance == null)
-        {
-            Debug.LogWarning("CheatManager: Player o SceneLoaderManager no disponibles.");
-            yield break;
-        }
-
-        isTeleporting = true;
-        try
-        {
-            Debug.Log("Teleporting to: " + sceneToLoad);
-
-            // 1. Cargar la escena destino y esperar
-            yield return StartCoroutine(SceneLoaderManager.Instance.LoadSceneAndWait(sceneToLoad));
-
-            // 2. Teletransportar
-            TeleportTo(teleportPoint);
-
-            // 3. Descargar la escena anterior (si se indicó)
-            if (!string.IsNullOrEmpty(sceneToUnload))
+            if (IsCombinationPressed(keyboard, destination))
             {
-                yield return StartCoroutine(SceneLoaderManager.Instance.UnloadSceneAndWait(sceneToUnload));
+                TeleportToDestination(destination);
+                break;
             }
-
-            Debug.Log("Teleport complete.");
-        }
-        finally
-        {
-            // Se libera aunque la carga falle o se detenga la corrutina
-            isTeleporting = false;
         }
     }
 
-    private void TeleportTo(Transform desiredPos)
+    private static bool IsCombinationPressed(Keyboard keyboard, CheatDestination destination)
     {
-        if (player == null || desiredPos == null) return;
+        if (destination.key == Key.None)
+            return false;
 
-        PlayerControl controller = player.GetComponent<PlayerControl>();
-        Rigidbody rb = player.GetComponent<Rigidbody>();
+        var keyControl = keyboard[destination.key];
+        if (keyControl == null || !keyControl.wasPressedThisFrame)
+            return false;
 
-        if (controller != null) controller.enabled = false;
+        bool ctrl = keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed;
+        bool shift = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
+        bool alt = keyboard.leftAltKey.isPressed || keyboard.rightAltKey.isPressed;
 
-        if (rb != null)
-        {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            rb.position = desiredPos.position;
-        }
-        else
-        {
-            player.transform.position = desiredPos.position;
-        }
-
-        if (controller != null) controller.enabled = true;
+        // The modifier combination must match exactly.
+        return ctrl == destination.requireCtrl &&
+               shift == destination.requireShift &&
+               alt == destination.requireAlt;
     }
 
-    public void SetPlayerTarget(GameObject player)
+    // Also callable from a debug UI Button or the Inspector through a UnityEvent.
+    public void TeleportToDestination(int index)
     {
-        this.player = player;
+        if (!enableCheats)
+            return;
+
+        if (index < 0 || index >= destinations.Count)
+        {
+            Debug.LogWarning("[Cheat] Invalid destination index.");
+            return;
+        }
+
+        TeleportToDestination(destinations[index]);
+    }
+
+    private void TeleportToDestination(CheatDestination destination)
+    {
+        if (!enableCheats || destination == null)
+            return;
+
+        if (destination.checkpointData == null)
+        {
+            Debug.LogError("[Cheat] CheckpointData is missing.");
+            return;
+        }
+
+        if (Teleport_Manager.Instance == null)
+        {
+            Debug.LogError("[Cheat] Teleport_Manager is missing.");
+            return;
+        }
+
+        if (Teleport_Manager.Instance.IsTeleporting)
+            return;
+
+        Debug.Log($"[Cheat] Teleporting to '{destination.destinationName}'.");
+
+        // CheckpointData overload: no DiscoveredCheckpoint constructor change required.
+        // isCheat=true means the active respawn checkpoint is NOT saved/changed.
+        Teleport_Manager.Instance.Teleport(destination.checkpointData, isCheat: true);
     }
 }
