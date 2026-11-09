@@ -14,6 +14,13 @@ public class DiscoveredCheckpoint
         _data = checkpoint.Data;
     }
 
+    public DiscoveredCheckpoint(CheckpointData data)
+    {
+        _checkpointID = data.checkpointID;
+        _sceneName = data.locationSceneName;
+        _data = data;
+    }
+
     public bool Matches(string sceneName, string checkpointID)
     {
         return _sceneName == sceneName && _checkpointID == checkpointID;

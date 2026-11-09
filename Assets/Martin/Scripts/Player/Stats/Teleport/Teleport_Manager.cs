@@ -1,5 +1,4 @@
 using System.Collections;
-using Unity.VectorGraphics;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,6 +7,7 @@ public class Teleport_Manager : MonoBehaviour
     public static Teleport_Manager Instance { get; private set; }
 
     private bool isTeleporting;
+    public bool IsTeleporting => isTeleporting;
 
     private void Awake()
     {
@@ -21,7 +21,33 @@ public class Teleport_Manager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    public void Teleport(DiscoveredCheckpoint destination)
+    // Existing gameplay usage is unchanged:
+    // Teleport_Manager.Instance.Teleport(discoveredCheckpoint);
+    public void Teleport(DiscoveredCheckpoint destination, bool isCheat = false)
+    {
+        if (destination == null)
+        {
+            Debug.LogError("[Teleport] Destination is null.");
+            return;
+        }
+
+        BeginTeleport(destination._sceneName, destination._checkpointID, isCheat);
+    }
+
+    // Debug usage: pass the CheckpointData ScriptableObject directly.
+    // No additional constructor is needed in DiscoveredCheckpoint.
+    public void Teleport(CheckpointData destination, bool isCheat = true)
+    {
+        if (destination == null)
+        {
+            Debug.LogError("[Teleport] CheckpointData is null.");
+            return;
+        }
+
+        BeginTeleport(destination.locationSceneName, destination.checkpointID, isCheat);
+    }
+
+    private void BeginTeleport(string sceneName, string checkpointID, bool isCheat)
     {
         if (isTeleporting)
         {
@@ -29,23 +55,17 @@ public class Teleport_Manager : MonoBehaviour
             return;
         }
 
-        if (destination == null)
-        {
-            Debug.LogError("[Teleport] Destination is null.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(destination._sceneName) ||
-            string.IsNullOrWhiteSpace(destination._checkpointID))
+        if (string.IsNullOrWhiteSpace(sceneName) ||
+            string.IsNullOrWhiteSpace(checkpointID))
         {
             Debug.LogError("[Teleport] Destination scene name or checkpoint ID is empty.");
             return;
         }
 
-        StartCoroutine(TeleportRoutine(destination));
+        StartCoroutine(TeleportRoutine(sceneName, checkpointID, isCheat));
     }
 
-    private IEnumerator TeleportRoutine(DiscoveredCheckpoint destination)
+    private IEnumerator TeleportRoutine(string sceneName, string checkpointID, bool isCheat)
     {
         isTeleporting = true;
 
@@ -57,16 +77,13 @@ public class Teleport_Manager : MonoBehaviour
                 yield break;
             }
 
-            Debug.Log($"[Teleport] Loading scene '{destination._sceneName}'.");
+            Debug.Log($"[Teleport] Loading scene '{sceneName}'.");
+            yield return SceneLoaderManager.Instance.LoadSceneAndWait(sceneName);
 
-            yield return SceneLoaderManager.Instance.LoadSceneAndWait(destination._sceneName);
-
-            var scene = SceneManager.GetSceneByName(destination._sceneName);
-
+            var scene = SceneManager.GetSceneByName(sceneName);
             if (!scene.IsValid() || !scene.isLoaded)
             {
-                Debug.LogError(
-                    $"[Teleport] Scene '{destination._sceneName}' was not loaded.");
+                Debug.LogError($"[Teleport] Scene '{sceneName}' was not loaded.");
                 yield break;
             }
 
@@ -76,24 +93,18 @@ public class Teleport_Manager : MonoBehaviour
                 yield break;
             }
 
-            Checkpoint checkpoint =
-                Checkpoints_Manager.Instance.FindCheckpointInScene(
-                    destination._sceneName,
-                    destination._checkpointID);
+            Checkpoint checkpoint = Checkpoints_Manager.Instance.FindCheckpointInScene(
+                sceneName, checkpointID);
 
             if (checkpoint == null)
             {
-                Debug.LogError(
-                    $"[Teleport] Checkpoint '{destination._checkpointID}' " +
-                    $"was not found in '{destination._sceneName}'.");
+                Debug.LogError($"[Teleport] Checkpoint '{checkpointID}' was not found in '{sceneName}'.");
                 yield break;
             }
 
             if (checkpoint.SpawnPoint == null)
             {
-                Debug.LogError(
-                    $"[Teleport] Checkpoint '{destination._checkpointID}' " +
-                    "has no SpawnPoint assigned.");
+                Debug.LogError($"[Teleport] Checkpoint '{checkpointID}' has no SpawnPoint assigned.");
                 yield break;
             }
 
@@ -104,7 +115,6 @@ public class Teleport_Manager : MonoBehaviour
             }
 
             GameObject player = Player_Manager.Instance.GetPlayer();
-
             if (player == null)
             {
                 Debug.LogError("[Teleport] Player_Manager.GetPlayer() returned null.");
@@ -120,17 +130,17 @@ public class Teleport_Manager : MonoBehaviour
             if (playerControl != null)
                 playerControl.enabled = false;
 
-            // Teleport the player.
             player.transform.SetPositionAndRotation(targetPosition, targetRotation);
 
-            // Reset Rigidbody physics, if present.
-            if (rb != null)
+            // Only dynamic rigidbodies allow direct velocity changes.
+            if (rb != null && !rb.isKinematic)
             {
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
             }
 
-            // Clear the movement lock shown in your PlayerControl usage.
+            Physics.SyncTransforms();
+
             if (playerControl != null)
             {
                 playerControl.blockVelocity = false;
@@ -138,26 +148,22 @@ public class Teleport_Manager : MonoBehaviour
                 playerControl.UnlockPlayerControl();
             }
 
-            Physics.SyncTransforms();
+            // Normal checkpoint travel updates the saved checkpoint/respawn.
+            // Debug travel leaves it unchanged.
+            if (!isCheat)
+                Checkpoints_Manager.Instance.SetActiveCheckpoint(checkpoint);
 
-            Debug.Log(
-                $"[Teleport] PlayerControl enabled: " +
-                $"{(playerControl != null && playerControl.enabled)}, " +
-                $"Time scale: {Time.timeScale}");
+            Debug.Log($"[Teleport] Teleported to '{checkpointID}' in '{sceneName}' (cheat: {isCheat}).");
 
-            Checkpoints_Manager.Instance.SetActiveCheckpoint(checkpoint);
-
-            Debug.Log(
-                $"[Teleport] Successfully teleported to checkpoint " +
-                $"'{destination._checkpointID}' in '{destination._sceneName}'.");
-
-            // Close the menu only after teleportation succeeds.
             yield return null;
 
-            if (Checkpoint_Menu.Instance != null)
-                Checkpoint_Menu.Instance.Close();
-            else
-                Debug.LogWarning("[Teleport] Checkpoint_Menu.Instance is missing.");
+            if (!isCheat)
+            {
+                if (Checkpoint_Menu.Instance != null)
+                    Checkpoint_Menu.Instance.Close();
+                else
+                    Debug.LogWarning("[Teleport] Checkpoint_Menu.Instance is missing.");
+            }
         }
         finally
         {
