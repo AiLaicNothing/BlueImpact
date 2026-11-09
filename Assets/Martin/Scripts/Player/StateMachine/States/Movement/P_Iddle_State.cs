@@ -19,6 +19,7 @@ public class P_Iddle_State : PlayerState
 
             if (player.Anim.HasState(0, idle))
             {
+                player.Anim.SetBool("Idle2", false);
                 player.Anim.SetBool("Idle", true);
             }
             else
@@ -26,6 +27,7 @@ public class P_Iddle_State : PlayerState
                 Debug.Log("[PlayerAnimator] is missing idle State");
             }
         }
+        timerIdle2 = 0;
     }
 
     public override void OnUpdate()
@@ -48,10 +50,31 @@ public class P_Iddle_State : PlayerState
             player.ChangeState(player.jump_State);
             return;
         }
+        if(timerIdle2 < 5f) timerIdle2 += Time.deltaTime;
+        if(timerIdle2 >= 5f)
+        {
+            if (player.Anim != null)
+            {
+                int idle2 = Animator.StringToHash("Idle2");
+
+                if (player.Anim.HasState(0, idle2))
+                {
+                    player.Anim.SetBool("Idle2", true);
+                }
+                else
+                {
+                    Debug.Log("[PlayerAnimator] is missing idle2 State");
+                }
+            }
+        }
+
     }
 
     public override void OnExit()
     {
+        timerIdle2 = 0;
+
+        player.Anim.SetBool("Idle2", false);
         player.Anim.SetBool("Idle", false);
     }
 }

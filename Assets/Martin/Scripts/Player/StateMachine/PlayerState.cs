@@ -4,6 +4,8 @@ public abstract class PlayerState
 {
     protected PlayerControl player;
     static protected bool falling;
+
+    static protected float timerIdle2;
     public PlayerState(PlayerControl player)
     {
         this.player = player;

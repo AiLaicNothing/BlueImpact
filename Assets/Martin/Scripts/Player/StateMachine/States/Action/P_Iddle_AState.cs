@@ -6,13 +6,14 @@ public class P_Iddle_AState : PlayerState
     public override void OnEnter()
     {
         Debug.Log("Enter Iddle Action State");
-
+        timerIdle2 = 0;
         if (player.Anim != null)
         {
             int idle = Animator.StringToHash("Idle");
 
             if (player.Anim.HasState(0, idle) && player.IsGrounded())
             {
+                player.Anim.SetBool("Idle2", false);
                 player.Anim.SetBool("Idle", true);
             }
             else
@@ -39,6 +40,24 @@ public class P_Iddle_AState : PlayerState
         {
             player.Anim.SetBool("Walking", false);
             player.Anim.SetBool("Idle", true);
+        }
+
+        if (timerIdle2 < 5f) timerIdle2 += Time.deltaTime;
+        if (timerIdle2 >= 5f)
+        {
+            if (player.Anim != null)
+            {
+                int idle2 = Animator.StringToHash("Idle2");
+
+                if (player.Anim.HasState(0, idle2))
+                {
+                    player.Anim.SetBool("Idle2", true);
+                }
+                else
+                {
+                    Debug.Log("[PlayerAnimator] is missing idle2 State");
+                }
+            }
         }
 
         if (player.canDash)
@@ -152,6 +171,8 @@ public class P_Iddle_AState : PlayerState
 
     public override void OnExit()
     {
+        timerIdle2 = 0;
+        player.Anim.SetBool("Idle2", false);
         player.Anim.SetBool("Walking", false);
         player.Anim.SetBool("Idle", false);
     }

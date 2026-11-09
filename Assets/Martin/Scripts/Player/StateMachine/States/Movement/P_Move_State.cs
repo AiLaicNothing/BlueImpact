@@ -52,7 +52,19 @@ public class P_Move_State : PlayerState
         if (player.lockOnTarget.isTargeting)
         {
             //Debug.Log("LockON Anim");
-            player.Anim.SetBool("LockOn", true);
+            if (player.Anim != null)
+            {
+                int lockOn = Animator.StringToHash("LockOn");
+
+                if (player.Anim.HasState(0, lockOn))
+                {
+                    player.Anim.SetBool("LockOn", true);
+                }
+                else
+                {
+                    Debug.Log("[PlayerAnimator] is missing LockOn State");
+                }
+            }
         }
         else
         {
