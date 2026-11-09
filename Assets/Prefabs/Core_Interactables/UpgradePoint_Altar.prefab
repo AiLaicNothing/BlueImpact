@@ -357,6 +357,11 @@ MonoBehaviour:
   pickupVfx: {fileID: 2927657347876220942}
   showPopup: 1
   currentPlayer: {fileID: 0}
+  durationDissolve: 1
+  dieMaterial: {fileID: 2100000, guid: 308b5b29a2d51f74991cc76f13aa14b2, type: 2}
+  dieMaterial2: {fileID: 2100000, guid: b3bb55ac618a0224ea89793c6756c426, type: 2}
+  EdgeColor: {r: 0.32325262, g: 0.13965285, b: 2.3275473, a: 1}
+  EdgeColor2: {r: 0.4369856, g: 1.0706031, b: 1.7479424, a: 1}
 --- !u!82 &5250672698335066266
 AudioSource:
   m_ObjectHideFlags: 0
@@ -683,7 +688,7 @@ Transform:
   m_GameObject: {fileID: 6427330775679293699}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.088, y: 2.01, z: -0.009}
+  m_LocalPosition: {x: -0.088, y: 2.055, z: -0.009}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -697,7 +702,7 @@ TrailRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6427330775679293699}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -748,7 +753,7 @@ TrailRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.38679314
+        value: 0
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -758,6 +763,15 @@ TrailRenderer:
       - serializedVersion: 3
         time: 0.8373016
         value: 0.3962264
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.39622498
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -786,17 +800,17 @@ TrailRenderer:
       ctime6: 0
       ctime7: 0
       atime0: 0
-      atime1: 65535
-      atime2: 0
-      atime3: 0
-      atime4: 0
+      atime1: 36430
+      atime2: 65535
+      atime3: 65535
+      atime4: 65535
       atime5: 0
       atime6: 0
       atime7: 0
       m_Mode: 0
-      m_ColorSpace: -1
+      m_ColorSpace: 0
       m_NumColorKeys: 2
-      m_NumAlphaKeys: 2
+      m_NumAlphaKeys: 3
     numCornerVertices: 0
     numCapVertices: 0
     alignment: 0

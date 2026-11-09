@@ -28,7 +28,17 @@ public class SkillPickup : MonoBehaviour, IInteractable
     [SerializeField] TrailRenderer vfx;
     private bool pickedUp;
     private bool characterConfigured;
+    [Min(0.01f)] [SerializeField] private float durationDissolve = 1.5f;
+    [SerializeField] private Material dieMaterial;
+    [ColorUsage(true, true)]
+    [SerializeField]
+    private Color EdgeColor = new Color(0.1875f * 2.33059f, 0.45937f * 2.33059f, 0.75f * 2.33059f, 1f);
 
+    private readonly List<Material> clonMaterials = new List<Material>();
+
+    private static readonly int DissolveProgressHash = Shader.PropertyToID("_DisolveProgress");
+    private static readonly int EdgeColorHash = Shader.PropertyToID("_EdgeColor");
+    private static readonly int MainTexHash = Shader.PropertyToID("_MainTex");
     private Skill currentSkill;
     private PlayerControl currentPlayer;
 
@@ -62,6 +72,11 @@ public class SkillPickup : MonoBehaviour, IInteractable
     private void OnDisable()
     {
         PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
+        foreach (Material material in clonMaterials)
+        {
+            if (material != null) Destroy(material);
+        }
+        clonMaterials.Clear();
     }
 
     private void Start()
@@ -214,6 +229,8 @@ public class SkillPickup : MonoBehaviour, IInteractable
 
         if (destroyOnPickup)
         {
+            ChangeMaterials();
+            StartCoroutine(DieEffect());
             StartCoroutine(FadeOutCoroutine());
         }
         else
@@ -298,7 +315,59 @@ public class SkillPickup : MonoBehaviour, IInteractable
 
         audioSource.PlayOneShot(pickupSound, soundVolume);
     }
+    private void ChangeMaterials()
+    {
+        if (dieMaterial == null) return;
 
+        foreach (Renderer renderer in renderers)
+        {
+            if (renderer == null) continue;
+            if (renderer.gameObject.GetComponent<TrailRenderer>()) continue;
+            if (renderer.gameObject.GetComponent<ParticleSystem>()) continue;
+            Material[] original = renderer.sharedMaterials;
+            Material[] dissolve = new Material[original.Length];
+
+            for (int i = 0; i < original.Length; i++)
+            {
+                Material clone = new Material(dieMaterial);
+                if (clone.HasProperty(DissolveProgressHash)) clone.SetFloat(DissolveProgressHash, 0f);
+
+                if (clone.HasProperty(EdgeColorHash)) clone.SetColor(EdgeColorHash, EdgeColor);
+
+                if (original[i] != null && original[i].HasProperty(MainTexHash) &&
+                    clone.HasProperty(MainTexHash))
+                {
+                    Texture texture = original[i].GetTexture(MainTexHash);
+                    if (texture != null) clone.SetTexture(MainTexHash, texture);
+                }
+
+                dissolve[i] = clone;
+                clonMaterials.Add(clone);
+            }
+
+            renderer.sharedMaterials = dissolve;
+        }
+    }
+
+    private IEnumerator DieEffect()
+    {
+        float elapsed = 0f;
+
+        while (elapsed < durationDissolve)
+        {
+            elapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(elapsed / durationDissolve);
+
+            foreach (Material material in clonMaterials)
+            {
+                if (material != null && material.HasProperty(DissolveProgressHash))
+                    material.SetFloat(DissolveProgressHash, progress);
+            }
+
+            yield return null;
+        }
+
+    }
     private IEnumerator FadeOutCoroutine()
     {
         float elapsed = 0f;
@@ -307,7 +376,7 @@ public class SkillPickup : MonoBehaviour, IInteractable
 
         float duration = Mathf.Max(0.01f, fadeOutDuration);
         vfx.enabled = true;
-
+        vfx.transform.position = new Vector3(vfx.transform.position.x + 0.1f, vfx.transform.position.y + 0.1f, vfx.transform.position.z + 0.1f);
         // Prevent another interaction during the fade.
         if (colliders != null)
         {
@@ -351,4 +420,5 @@ public class SkillPickup : MonoBehaviour, IInteractable
 
         gameObject.SetActive(false);
     }
+
 }
