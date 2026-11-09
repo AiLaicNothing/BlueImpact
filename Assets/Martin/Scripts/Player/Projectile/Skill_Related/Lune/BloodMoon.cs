@@ -107,13 +107,13 @@ public class BloodMoon : MonoBehaviour
     {
         timer = 0f;
 
+        var vfxPrefab = Instantiate(vfx, transform.position, Quaternion.identity);
+
+        Destroy(vfxPrefab, duration);
         while (timer < duration)
         {
             DealDamage();
 
-            var vfxPrefab = Instantiate(vfx, transform.position, Quaternion.identity);
-
-            Destroy(vfxPrefab, 1f);
 
             yield return new WaitForSeconds(tickRate);
 

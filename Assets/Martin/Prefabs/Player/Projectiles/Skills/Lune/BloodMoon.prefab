@@ -107,7 +107,7 @@ MonoBehaviour:
   duration: 5
   tickRate: 0.5
   radius: 5
-  vfx: {fileID: 2054803858064431036, guid: 500c1d6ddd48f2c4092af85e4e941eb2, type: 3}
+  vfx: {fileID: 7038231927286915583, guid: f813a1dca751a624ba1a1b79d8019d34, type: 3}
   enemyLayer:
     serializedVersion: 2
     m_Bits: 256
@@ -137,7 +137,7 @@ Transform:
   m_GameObject: {fileID: 2684691208868613049}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.23, z: 0.24}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -169,7 +169,7 @@ TrailRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a26d8eacafdd18247ac907050a667fc8, type: 2}
+  - {fileID: 2100000, guid: 71b8906ce9195c244b8739eb3dcbcf47, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -202,7 +202,7 @@ TrailRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.4811325
+        value: 1
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -211,7 +211,7 @@ TrailRenderer:
         outWeight: 0.33333334
       - serializedVersion: 3
         time: 1
-        value: 0.6037731
+        value: 0
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -354,6 +354,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 2bc424dad733532458f762d084f58419, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 08e8ed06aad7d274eb6f9940c342a8fa, type: 2}
     - target: {fileID: 919132149155446097, guid: 2bc424dad733532458f762d084f58419, type: 3}
       propertyPath: m_Name
       value: moom luna
