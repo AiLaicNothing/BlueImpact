@@ -96,6 +96,9 @@ public class StellarRainTrigger : MonoBehaviour
             Vector3 dir = (other.transform.position - transform.position).normalized;
 
             dmg.TakeDamage(info);
+            if (damageSFX != null)
+            {
+            }
         }
         
         
