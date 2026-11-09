@@ -206,7 +206,7 @@ public class LockOnTarget : MonoBehaviour
         }
     }
 
-    private void ClearTarget()
+    public void ClearTarget()
     {
         if (!isTargeting)
             return;
