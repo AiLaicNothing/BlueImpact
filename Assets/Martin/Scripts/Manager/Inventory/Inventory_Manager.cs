@@ -27,6 +27,10 @@ public class Inventory_Manager : MonoBehaviour
         {
             LoadData();
         }
+        else
+        {
+            SaveInventory();
+        }
     }
 
     private void LoadData()

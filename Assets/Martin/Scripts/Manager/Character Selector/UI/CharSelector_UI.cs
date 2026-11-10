@@ -19,9 +19,12 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
     [SerializeField] private Button[] charButtons;
     [SerializeField] private Button confirmButton;
 
+    private List<Skill> fakeUnlockedSkills = new List<Skill>();
+    [SerializeField] private Skill[] fakeSkills = new Skill[4];
     private bool hasSelectedAlready;
     private bool isRegistered; // Si este panel está en la pila de GamepadCursor
     private int currentIndex;
+    private bool saved;
     private void Awake()
     {
         if (panel != null) panel.SetActive(false);
@@ -39,6 +42,12 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
             SelectCharacter(currentIndex);
             StartGame();
             hasSelectedAlready = true;
+        }
+        else
+        {
+            SaveLoadManager.Instance.SaveGame("unlockedSkills", fakeUnlockedSkills);
+
+            SaveLoadManager.Instance.SaveGame("equipedSkills", fakeSkills);
         }
         if (hasSelectedAlready) return;
 
@@ -93,6 +102,9 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
 
+        saved = false;
+        if (SaveLoadManager.Instance != null)
+            SaveLoadManager.Instance.SaveGame("gameCreated", saved);
         Register();
 
         if (music != null && !audioSource.isPlaying)
@@ -186,7 +198,7 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
                     PlayerSpawn_Manager.Instance.SpawnCharacter(spawnPoints);
                     Debug.Log("cargando checkpoint guardado");
-                    Invoke(nameof(LoadRespawn), 0.5f);
+                    Invoke(nameof(LoadRespawn), 0.4f);
                     return;
                 }
             }
@@ -194,6 +206,10 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
         var spawnPoint = CharSelector_Manager.Instance.GetInitialSpawnPoint();
         CharSelector_Manager.Instance.SetupRespawn();
         PlayerSpawn_Manager.Instance.SpawnCharacter(spawnPoint);
+
+        saved = true;
+        if (SaveLoadManager.Instance != null)
+            SaveLoadManager.Instance.SaveGame("gameCreated", saved);
     }
 
     // ---------- IGamepadPanel ----------

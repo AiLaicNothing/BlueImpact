@@ -115,6 +115,10 @@ public class PlayerControl : Controller, IDamageable
         {
             LoadSkills();
         }
+        else
+        {
+            SaveLoadManager.Instance.SaveGame("unlockedSkills", unlockedSkills);
+        }
         foreach (var skill in skills)
         {
             if (skill != null && !unlockedSkills.Contains(skill))
@@ -129,7 +133,11 @@ public class PlayerControl : Controller, IDamageable
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
         if (loadedData != null)
         {
-            unlockedSkills = loadedData.unlockedSkills ?? new List<Skill>();
+            for(int i = 0; i < loadedData.unlockedSkills.Count; i++)
+            {
+                unlockedSkills.Add(loadedData.unlockedSkills[i]);
+            }
+            //unlockedSkills = loadedData.unlockedSkills ?? new List<Skill>();
 
             if (loadedData.equipedSkills != null)
             {

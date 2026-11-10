@@ -20,6 +20,10 @@ public class Event_Manager : MonoBehaviour
         {
             LoadData();
         }
+        else
+        {
+            SaveLoadManager.Instance.SaveGame("eventStates", eventStates);
+        }
     }
     void LoadData()
     {

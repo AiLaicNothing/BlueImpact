@@ -136,9 +136,6 @@ public class MainMenuManager : MonoBehaviour
     {
         if (isTransitioning) return;
 
-        saved = true;
-        if (SaveLoadManager.Instance != null)
-            SaveLoadManager.Instance.SaveGame("gameCreated", saved);
 
         SaveLoadManager.canLoad = false;
         PlayButtonSound();

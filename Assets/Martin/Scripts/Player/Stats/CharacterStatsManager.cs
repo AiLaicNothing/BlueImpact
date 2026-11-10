@@ -86,9 +86,15 @@ public class CharacterStatsManager : MonoBehaviour
         totalEarnedPoints = characterData.startingStatPoints;
         if(SaveLoadManager.canLoad)
         { 
-            LoadStats(); 
+            LoadStats();
         }
-        
+        else
+        {
+            SaveLoadManager.Instance.SaveGame("allocatedPoints", allocatedPoints);
+
+            SaveLoadManager.Instance.SaveGame("totalEarnedPoints", totalEarnedPoints);
+        }
+
         RecalculateAvailablePoints();
 
         OnStatsChanged?.Invoke();
@@ -128,7 +134,7 @@ public class CharacterStatsManager : MonoBehaviour
     //This show how the change will affect that stat
     public int GetDisplayedStat(StatsType statType)
     {
-        return GetBaseStat(statType) + GetPendingPoints(statType);
+        return GetBaseStat(statType) + GetPendingPoints(statType) + GetAllocatedPoints(statType);
     }
 
     //This show the stat with the points already assigned
@@ -154,7 +160,7 @@ public class CharacterStatsManager : MonoBehaviour
     {
         // The player can only remove points that were assigned by them and not the base stats
 
-        if (pendingPoints[statsType] <= allocatedPoints[statsType]) return false;
+        if (pendingPoints[statsType] <= 0) return false;
 
         pendingPoints[statsType]--;
 
@@ -184,7 +190,7 @@ public class CharacterStatsManager : MonoBehaviour
                 foreach (StatSavedEntry entry in loadedData.savedStats)
                 {
                     allocatedPoints[entry.statType] = entry.points;
-                    pendingPoints[entry.statType] = entry.points;
+                    pendingPoints[entry.statType] = 0;
                 }
             }
              
@@ -194,8 +200,8 @@ public class CharacterStatsManager : MonoBehaviour
     {
         foreach (StatsType stat in AllStats)
         {
-            allocatedPoints[stat] = pendingPoints[stat];
-
+            allocatedPoints[stat] += pendingPoints[stat];
+            pendingPoints[stat] = 0;
         }
 
         RecalculateAvailablePoints();
@@ -210,7 +216,7 @@ public class CharacterStatsManager : MonoBehaviour
     {
         foreach (StatsType stat in AllStats)
         {
-            pendingPoints[stat] = allocatedPoints[stat];
+            pendingPoints[stat] = 0;
         }
 
         RecalculateAvailablePoints();
@@ -226,7 +232,7 @@ public class CharacterStatsManager : MonoBehaviour
 
         foreach (StatsType stat in AllStats)
         {
-            usedPoint += pendingPoints[stat];
+            usedPoint += pendingPoints[stat] + allocatedPoints[stat];
         }
 
         availablePoints = totalEarnedPoints - usedPoint;
@@ -272,7 +278,7 @@ public class CharacterStatsManager : MonoBehaviour
     {
         foreach (StatsType stat in AllStats)
         {
-            pendingPoints[stat] = allocatedPoints[stat];
+            pendingPoints[stat] = 0;
         }
 
         RecalculateAvailablePoints();

@@ -56,7 +56,7 @@ public class StatRow : MonoBehaviour
 
         int pendingValue = statsManager.GetPendingPoints(_statType);
         int allocatedValue = statsManager.GetAllocatedPoints(_statType);
-        int changeValue = pendingValue - allocatedValue;
+        int changeValue = pendingValue;
 
         int resultValue = statsManager.GetDisplayedStat(_statType);
 
@@ -69,6 +69,7 @@ public class StatRow : MonoBehaviour
         bool wasInteractable = increaseButton.interactable;
 
         increaseButton.interactable = canIncrease;
+        decreaseButton.interactable = pendingValue > 0;
 
         //This is call when the button can be interacted but it cant increase more
         if (wasInteractable && !canIncrease && _eventSystem != null) CheckIfSelectedAndSwitchFocus();

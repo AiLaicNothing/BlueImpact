@@ -25,6 +25,11 @@ public class Checkpoints_Manager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         if (SaveLoadManager.canLoad) LoadData();
+        else 
+        { 
+            SaveLoadManager.Instance.SaveGame("discoveredCheckpoints", discoveredCheckpoints);
+            SaveLoadManager.Instance.SaveGame("activeCheckpoint", activeCheckpoint);
+        }
     }
 
     private void Start()
@@ -45,7 +50,11 @@ public class Checkpoints_Manager : MonoBehaviour
 
         if (loadedData.discoveredCheckpoints != null)
         {
-            discoveredCheckpoints.AddRange(loadedData.discoveredCheckpoints);
+            for(int i = 0; i < loadedData.discoveredCheckpoints.Count; i++)
+            {
+                discoveredCheckpoints.Add(loadedData.discoveredCheckpoints[i]);
+            }
+            //discoveredCheckpoints.AddRange(loadedData.discoveredCheckpoints);
         }
 
         activeCheckpoint = loadedData.activeCheckpoint;

@@ -20,6 +20,10 @@ public class Pickup_Manager : MonoBehaviour
         {
             LoadData();
         }
+        else
+        {
+            SaveLoadManager.Instance.SaveGame("collectedPickups", collectedPickups);
+        }
     }
     void LoadData()
     {

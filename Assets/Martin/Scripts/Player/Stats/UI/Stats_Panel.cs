@@ -152,6 +152,7 @@ public class Stats_Panel : MonoBehaviour, IGamepadPanel
     {
         availablePointsText.text = $"Puntos: {CharacterStatsManager.Instance.AvailablePoints}";
         confirmButton.interactable = CharacterStatsManager.Instance.GetTotalPendingPoints() > 0;
+        resetButton.interactable = CharacterStatsManager.Instance.GetTotalPendingPoints() > 0;
     }
 
     // ---------- IGamepadPanel ----------
@@ -169,7 +170,7 @@ public class Stats_Panel : MonoBehaviour, IGamepadPanel
         }
 
         confirmButton.interactable = interactable && CharacterStatsManager.Instance.GetTotalPendingPoints() > 0;
-        resetButton.interactable = interactable;
+        resetButton.interactable = interactable && CharacterStatsManager.Instance.GetTotalPendingPoints() > 0;
 
         foreach (var entry in entries)
         {

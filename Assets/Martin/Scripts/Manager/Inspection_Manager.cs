@@ -21,6 +21,10 @@ public class Inspection_Manager : MonoBehaviour
         {
             LoadData();
         }
+        else
+        {
+            SaveLoadManager.Instance.SaveGame("inspectedObjects", inspectedObjects);
+        }
     }
     void LoadData()
     {

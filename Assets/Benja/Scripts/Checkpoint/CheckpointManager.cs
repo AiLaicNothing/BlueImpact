@@ -13,7 +13,14 @@ public class CheckpointManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-        LoadData();
+        if (SaveLoadManager.canLoad)
+        {
+            LoadData();
+        }
+        else
+        {
+            SaveLoadManager.Instance.SaveGame("checkpoint", activeCheckpoint);
+        }
     }
     void LoadData()
     {
