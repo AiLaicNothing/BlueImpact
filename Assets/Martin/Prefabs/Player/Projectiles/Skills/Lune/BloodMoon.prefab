@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 1058435165001759151}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.4993, y: 0.44838, z: 0.02645}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -99,8 +99,8 @@ MonoBehaviour:
   forwardSpeed: 15
   maxRange: 25
   spawnHeight: 20
-  firstSpeed: 5
-  fallSpeed: 35
+  firstSpeed: 0.8
+  fallSpeed: 40
   groundCheckDistance: 1
   groundLayer:
     serializedVersion: 2
@@ -111,6 +111,7 @@ MonoBehaviour:
   vfx: {fileID: 7038231927286915583, guid: f813a1dca751a624ba1a1b79d8019d34, type: 3}
   vfxOffset: {x: 0, y: 0.2, z: 0}
   starsVfx: {fileID: 6682268787200709353}
+  trailVfx: {fileID: 8111998648093143522}
   enemyLayer:
     serializedVersion: 2
     m_Bits: 256

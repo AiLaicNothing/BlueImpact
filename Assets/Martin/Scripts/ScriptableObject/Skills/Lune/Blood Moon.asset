@@ -21,16 +21,16 @@ MonoBehaviour:
   castTime: 0.15
   cooldown: 2
   actionTime: 0.8
-  haveProjection: 0
+  haveProjection: 1
   longCasting: 0
   castAnimation: Luna de Sangre
   actionAnimation: 
   castSound: {fileID: 0}
   actionSound: {fileID: 8300000, guid: e9baac927f7455d4caf44b5fe729de53, type: 3}
   moonPrefab: {fileID: 1058435165001759151, guid: 19a3b9bf5c5e3c343b14a1ab989f1ed7, type: 3}
-  maxRange: 25
-  height: 2
-  offset: {x: 0.13, y: 4, z: 1.31}
+  maxRange: 20
+  height: 15
+  offset: {x: 0.13, y: 2, z: 1.31}
   hitData:
     physicalScale: 0
     magicalScale: 2.5
@@ -44,13 +44,13 @@ MonoBehaviour:
     pushForce: 0
     knockDownForce: 0
     knockDownForwardScale: 0
-  groundLayer:
-    serializedVersion: 2
-    m_Bits: 0
+  projectionObject: {fileID: 7911465154196756979, guid: 5cb17642dca16d344a47f058cf8ea9f7, type: 3}
+  projectionOffset: {x: 0, y: -6.5, z: 0}
   sfx: {fileID: 0}
   vfx: {fileID: 7001180173436569294, guid: 297e9f2755ec4ed49b29ddb0cbbc8e82, type: 3}
+  sumEdgeVfx: 2.4
   durationVfx: 3
-  firstPause: 0.9
-  secondPause: 0.9
-  thirdPause: 0.9
-  maxTimer: 3
+  firstPause: 0.93
+  secondPause: 0.93
+  thirdPause: 0.93
+  maxTimer: 1.1

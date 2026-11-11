@@ -27,6 +27,7 @@ public class BloodMoon : MonoBehaviour
     [SerializeField] private GameObject vfx;
     [SerializeField] private Vector3 vfxOffset;
     [SerializeField] private ParticleSystem starsVfx;
+    [SerializeField] private TrailRenderer trailVfx;
 
     [SerializeField] private LayerMask enemyLayer;
 
@@ -45,6 +46,8 @@ public class BloodMoon : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         moonMat = moonRenderer.GetComponent<Renderer>().material;
+        starsVfx.Stop();
+        trailVfx.enabled = false;
     }
 
     public void Initialize(PlayerControl player, HitData hitData, Vector3 targetPos, Vector3 circlePosition, float maxTimer)
@@ -73,7 +76,7 @@ public class BloodMoon : MonoBehaviour
             targetPoint = groundHit.point;
         }
 
-        transform.position = targetPoint + Vector3.up * spawnHeight;
+        //transform.position = targetPoint + Vector3.up * spawnHeight;
 
         rb.linearVelocity = Vector3.down * firstSpeed;
     }
@@ -90,6 +93,9 @@ public class BloodMoon : MonoBehaviour
         if (timerSpeed >= maxTimerSpeed && !speedChange)
         {
             rb.linearVelocity = Vector3.down * fallSpeed;
+
+            starsVfx.Play();
+            trailVfx.enabled = true;
             speedChange = true;
         }
 

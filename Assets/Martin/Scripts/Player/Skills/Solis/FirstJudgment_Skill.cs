@@ -64,7 +64,7 @@ public class FirstJudgment_Skill : Skill
         Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
-            Material mat = renderer.sharedMaterial;
+            Material mat = renderer.material;
             Color color = mat.color;
             color.a = 0.5f;
             mat.color = color;
@@ -108,7 +108,7 @@ public class FirstJudgment_Skill : Skill
         Renderer[] renderers = projectionObjectSave.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
-            Material mat = renderer.sharedMaterial;
+            Material mat = renderer.material;
             mat.color = color;
         }
     }
