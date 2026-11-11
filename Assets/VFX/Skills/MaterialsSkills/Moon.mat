@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-4562407022829820005
+--- !u!114 &-2276648424308840460
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
@@ -20,32 +20,35 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: RedSkyMat
-  m_Shader: {fileID: -6465566751694194690, guid: a278c848c0b62b94b807d8ee7c00a859, type: 3}
+  m_Name: Moon
+  m_Shader: {fileID: -6465566751694194690, guid: 2695ca7eaa89cbd47ad01048b2d19071, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
-  - _SURFACE_TYPE_TRANSPARENT
+  - _ALPHATEST_ON
   m_InvalidKeywords: []
-  m_LightmapFlags: 4
+  m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: 3000
+  m_CustomRenderQueue: 2450
   stringTagMap:
-    RenderType: Transparent
+    RenderType: TransparentCutout
   disabledShaderPasses:
   - MOTIONVECTORS
-  - DepthOnly
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 2ab7853cdd95eab43a7bca342b564573, type: 3}
+    - _Base_Tex:
+        m_Texture: {fileID: 2800000, guid: 96e398f825d100e46a8ca8cfe6334db5, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Mask:
-        m_Texture: {fileID: 2800000, guid: a0bcddd8b082ea84b97a3f9ce03ec8de, type: 3}
+    - _MaskMap:
+        m_Texture: {fileID: 2800000, guid: 9fe9cb53d9dd8e549ac7734da0abb5f1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Normal_Map:
+        m_Texture: {fileID: 2800000, guid: f0ac2ef0e29cdb84e9d78192a45e918b, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -62,30 +65,33 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _AlphaC: 0
-    - _AlphaClip: 0
-    - _AlphaToMask: 0
-    - _Blend: 2
+    - _AlphaClip: 1
+    - _AlphaToMask: 1
+    - _Blend: 0
+    - _BlendModePreserveSpecular: 1
     - _CastShadows: 1
-    - _CoreLenght: -1
-    - _CoreThickness: 0.93
     - _Cull: 2
-    - _DistorsionAmount: 0.99
-    - _DistorsionScale: 41.73
-    - _DstBlend: 1
-    - _DstBlendAlpha: 1
+    - _CutOff_Height: -104
+    - _DistorsionAmount: 0.101
+    - _DistorsionScale: 30
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _Edge_Thickness: 0.9
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _SrcBlend: 5
+    - _ReceiveShadows: 1
+    - _SrcBlend: 1
     - _SrcBlendAlpha: 1
-    - _Surface: 1
+    - _Surface: 0
+    - _WorkflowMode: 1
     - _ZTest: 4
-    - _ZWrite: 0
+    - _ZWrite: 1
     - _ZWriteControl: 0
     m_Colors:
-    - _Color: {r: 0.52990735, g: 0.27998573, b: 2.325099, a: 1}
-    - _CoreColor: {r: 0.73844975, g: 0.674, b: 1, a: 1}
-    - _DistorsionSpeed: {r: 0.1, g: 0.16, b: 0, a: 0}
-    - _MainTexSpeed: {r: 0.42, g: 0.11, b: 0, a: 0}
+    - _BaseTexSpeed: {r: 0, g: 0.1, b: 0, a: 0}
+    - _Color: {r: 191.74902, g: 0.00002914429, b: 0, a: 1}
+    - _DistosionSpeed: {r: 0, g: 0, b: 0, a: 0}
+    - _Edge_Color: {r: 7.7528276, g: 0, b: 0.12493828, a: 1}
+    - _Sword_Pivot: {r: 0, g: 15, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

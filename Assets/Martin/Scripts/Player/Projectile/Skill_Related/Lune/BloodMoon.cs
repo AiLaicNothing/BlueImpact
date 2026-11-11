@@ -11,6 +11,7 @@ public class BloodMoon : MonoBehaviour
     [Header("Targeting")]
     [SerializeField] private float maxRange = 25f;
     [SerializeField] private float spawnHeight = 20f;
+    [SerializeField] private float firstSpeed = 15f;
     [SerializeField] private float fallSpeed = 35f;
 
     private Rigidbody rb;
@@ -24,6 +25,8 @@ public class BloodMoon : MonoBehaviour
     [SerializeField] private float tickRate = 0.5f;
     [SerializeField] private float radius = 5f;
     [SerializeField] private GameObject vfx;
+    [SerializeField] private Vector3 vfxOffset;
+    [SerializeField] private ParticleSystem starsVfx;
 
     [SerializeField] private LayerMask enemyLayer;
 
@@ -31,19 +34,27 @@ public class BloodMoon : MonoBehaviour
     private PlayerControl player;
     private bool hasLanded;
     private float timer;
-
+    [Header("Shader")]
+    Material moonMat;
+    [SerializeField] Renderer moonRenderer;
+    [SerializeField] Vector3 circlePosition;
+    [SerializeField] float timerSpeed;
+    [SerializeField] float maxTimerSpeed;
+    bool speedChange;
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        moonMat = moonRenderer.GetComponent<Renderer>().material;
     }
 
-    public void Initialize(PlayerControl player, HitData hitData, Vector3 targetPos )
+    public void Initialize(PlayerControl player, HitData hitData, Vector3 targetPos, Vector3 circlePosition, float maxTimer)
     {
         this.hitData = hitData;
         this.player = player;
-
+        this.circlePosition = circlePosition;
+        moonMat.SetVector("_Sword_Pivot", this.circlePosition);
+        maxTimerSpeed = maxTimer;
         Vector3 targetPoint = targetPos;
-
         Vector3 dir = targetPoint - player.transform.position;
         float dist = dir.magnitude;
 
@@ -64,17 +75,25 @@ public class BloodMoon : MonoBehaviour
 
         transform.position = targetPoint + Vector3.up * spawnHeight;
 
-        rb.linearVelocity = Vector3.down * fallSpeed;
+        rb.linearVelocity = Vector3.down * firstSpeed;
     }
-
     private void FixedUpdate()
     {
         if (hasLanded) return;
-
+        ChangeSpped();
         RotateToVelocity();
         CheckGround();
     }
+    void ChangeSpped()
+    {
+        timerSpeed += Time.fixedDeltaTime;
+        if (timerSpeed >= maxTimerSpeed && !speedChange)
+        {
+            rb.linearVelocity = Vector3.down * fallSpeed;
+            speedChange = true;
+        }
 
+    }
     private void RotateToVelocity()
     {
         if (rb.linearVelocity.sqrMagnitude > 0.01f)
@@ -99,7 +118,7 @@ public class BloodMoon : MonoBehaviour
         // stop movement
         rb.linearVelocity = Vector3.zero;
         rb.useGravity = false;
-
+        starsVfx.Stop();
         StartCoroutine(DamageWaves());
     }
 
@@ -107,7 +126,7 @@ public class BloodMoon : MonoBehaviour
     {
         timer = 0f;
 
-        var vfxPrefab = Instantiate(vfx, transform.position, Quaternion.identity);
+        var vfxPrefab = Instantiate(vfx, transform.position + vfxOffset, Quaternion.identity);
 
         Destroy(vfxPrefab, duration);
         while (timer < duration)

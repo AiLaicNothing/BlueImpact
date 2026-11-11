@@ -19,7 +19,7 @@ MonoBehaviour:
   statsType: 2
   cost: 0
   castTime: 0.15
-  cooldown: 6
+  cooldown: 2
   actionTime: 0.8
   haveProjection: 0
   longCasting: 0
@@ -28,9 +28,9 @@ MonoBehaviour:
   castSound: {fileID: 0}
   actionSound: {fileID: 8300000, guid: e9baac927f7455d4caf44b5fe729de53, type: 3}
   moonPrefab: {fileID: 1058435165001759151, guid: 19a3b9bf5c5e3c343b14a1ab989f1ed7, type: 3}
-  maxRange: 20
-  height: 2.5
-  offset: {x: 0, y: 0, z: 1}
+  maxRange: 25
+  height: 2
+  offset: {x: 0.13, y: 4, z: 1.31}
   hitData:
     physicalScale: 0
     magicalScale: 2.5
@@ -44,4 +44,13 @@ MonoBehaviour:
     pushForce: 0
     knockDownForce: 0
     knockDownForwardScale: 0
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 0
   sfx: {fileID: 0}
+  vfx: {fileID: 7001180173436569294, guid: 297e9f2755ec4ed49b29ddb0cbbc8e82, type: 3}
+  durationVfx: 3
+  firstPause: 0.9
+  secondPause: 0.9
+  thirdPause: 0.9
+  maxTimer: 3
