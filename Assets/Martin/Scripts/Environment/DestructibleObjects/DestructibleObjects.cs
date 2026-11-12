@@ -5,6 +5,7 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
 {
     private Rigidbody rb;
     AudioSource audioSource;
+    Material thisMaterial;
     [SerializeField] GameObject brokenPrefab;
     [SerializeField] AudioClip destructionClip;
     [SerializeField] float explosiveForce = 250;
@@ -12,11 +13,13 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
     [SerializeField] float pieceFadeSpeed = 0.25f;
     [SerializeField] float pieceDestroyDelay = 2f;
     [SerializeField] float pieceSleepCheckDelay = 0.1f;
+    [SerializeField] bool thisMaterialIsToon;
     float life = 1;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        thisMaterial = GetComponent<Renderer>().sharedMaterial;
         //audioSource = GetComponent<AudioSource>();
     }
     public void TakeDamage(in DamageInfo info)
@@ -46,6 +49,15 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
             audioSource.PlayOneShot(destructionClip);
         }
         GameObject brokenInstance = Instantiate(brokenPrefab, transform.position, transform.rotation);
+        brokenInstance.transform.localScale = gameObject.transform.localScale;
+        if (!thisMaterialIsToon)
+        {
+            Material[] mats = brokenInstance.transform.GetComponentsInChildren<Material>();
+            for (int i = 0; i < mats.Length; i++)
+            {
+                mats[i] = thisMaterial;
+            }
+        }
 
         Rigidbody[] rbs = brokenInstance.GetComponentsInChildren<Rigidbody>();
         foreach(Rigidbody body in rbs)
