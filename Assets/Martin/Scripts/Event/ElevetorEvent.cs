@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class ElevetorEvent : MonoBehaviour
+public class ElevetorEvent : MonoBehaviour, ILevelSpawnSource
 {
     [Header("Persistence")]
     [SerializeField] private WorldEvent_Data eventData;
@@ -260,6 +260,9 @@ public class ElevetorEvent : MonoBehaviour
         // Wait until all enemy waves are cleared.
         yield return Ambush();
 
+        // Encuentro completado: sus kills dejan de revertirse.
+        LevelObjectiveManager.Instance?.CommitEncounter(LevelObjectiveManager.PathOf(transform));
+
         Debug.Log("[ElevetorEvent] Ambush cleared. Moving to bottom.");
 
         //Continue to the bottom.
@@ -338,6 +341,15 @@ public class ElevetorEvent : MonoBehaviour
         plattform.localPosition = position;
     }
 
+    // Para LevelObjectiveManager: enemigos contables de ambas oleadas.
+    public int CountLevelEnemies()
+    {
+        int n = 0;
+        foreach (GameObject g in wave1_enemies) if (g != null) n++;
+        foreach (GameObject g in wave2_enemies) if (g != null) n++;
+        return n;
+    }
+
     private IEnumerator Ambush()
     {
         yield return SpawnWaveAndWait(wave1_enemies, "Wave 1");
@@ -390,6 +402,11 @@ public class ElevetorEvent : MonoBehaviour
 
             if (enemy != null)
             {
+                // Oleada 1 usa índices 0..99; oleada 2 usa 100..199. Kills revertibles hasta completar.
+                LevelObjectiveManager.AssignObjective(enemy, gameObject.scene,
+                    LevelObjectiveManager.PathOf(transform),
+                    (wave == wave1_enemies ? 0 : 100) + i, true, true);
+
                 enemy.OnSpawn(spawnPoints, safePoint, false, spawnPoint);
             }
             else

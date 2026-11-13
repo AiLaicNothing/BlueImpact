@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class AmbushEvent : MonoBehaviour
+public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 {
     [Header("Save System")]
     [SerializeField] private WorldEvent_Data eventData;
@@ -180,6 +180,9 @@ public class AmbushEvent : MonoBehaviour
 
         Debug.Log("[AmbushEvent] All enemies defeated.");
 
+        // Encuentro completado: sus kills dejan de revertirse.
+        LevelObjectiveManager.Instance?.CommitEncounter(LevelObjectiveManager.PathOf(transform));
+
         // STEP 6: Enter cutscene mode.
         SetCutsceneMode(true);
 
@@ -294,6 +297,15 @@ public class AmbushEvent : MonoBehaviour
         }
     }
 
+    // Para LevelObjectiveManager: enemigos contables del encuentro.
+    public int CountLevelEnemies()
+    {
+        int n = 0;
+        foreach (SpawnEntry e in spawnEntries)
+            if (e.enemyPrefab != null && e.countsForLevel) n++;
+        return n;
+    }
+
     public void Spawn(int index)
     {
         if (index < 0 || index >= spawnEntries.Count) return;
@@ -311,6 +323,10 @@ public class AmbushEvent : MonoBehaviour
 
         if (enemy != null)
         {
+            // Kills de ambush se revierten si el jugador muere antes de completarlo.
+            LevelObjectiveManager.AssignObjective(enemy, gameObject.scene,
+                LevelObjectiveManager.PathOf(transform), index, entry.countsForLevel, true);
+
             enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint);
         }
         else

@@ -159,6 +159,14 @@ public class BossEvent : MonoBehaviour
         boss.OnSpawn(null, center, false, spawnPos);
         boss.OnPhaseTwoStarted += OnBossPhaseTwo;
 
+        // Entrada "Encuentro misterioso" del panel de Quest. El boss no cuenta para el porcentaje.
+        if (LevelZone.TryGetConfig(gameObject.scene, out LevelConfig levelCfg) && LevelObjectiveManager.Instance != null)
+        {
+            string levelId = levelCfg.LevelId;
+            LevelObjectiveManager.Instance.NotifyBossEncounterStarted(levelId);
+            boss.OnDied += _ => LevelObjectiveManager.Instance?.NotifyBossDefeated(levelId);
+        }
+
         // Entrada: baja desde el punto de spawn hasta el suelo
         if (desiredGroundPos != null && fallSpeed > 0f)
         {
