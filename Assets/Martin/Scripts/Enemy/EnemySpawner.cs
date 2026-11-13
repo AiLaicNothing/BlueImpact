@@ -15,7 +15,36 @@ public class EnemySpawner : MonoBehaviour, ILevelSpawnSource
 
     public event Action<EnemyBase> OnEnemySpawned;
 
-    // Enemigos de este spawner que siguen existiendo (los muertos se destruyen)
+    private void OnEnable()
+    {
+        LevelObjectiveManager.OnKillsReverted += HandleKillsReverted;
+    }
+
+    private void OnDisable()
+    {
+        LevelObjectiveManager.OnKillsReverted -= HandleKillsReverted;
+    }
+
+    // Al morir el jugador (después de que el manager revierte los kills pendientes):
+    // se destruyen los enemigos que queden y se recrean en su punto de spawn con la vida completa.
+    // Los slots ya derrotados y fijados en un checkpoint no se recrean.
+    // Solo spawners activados por SpawnerManager (no oleadas del boss, que tienen su propio reinicio).
+    private void HandleKillsReverted()
+    {
+        if (!hasSpawnedAlready || CountLevelEnemies() == 0) return;
+
+        List<int> toRespawn = new();
+        for (int i = 0; i < spawnEntries.Count; i++)
+            if (spawnEntries[i].hasSpawned) toRespawn.Add(i);
+
+        DespawnAll();
+
+        foreach (int i in toRespawn) SpawnSlot(i, true);
+        hasSpawnedAlready = true;
+
+        Debug.Log($"[EnemySpawner] {name}: jugador murió, enemigos recreados ({AliveCount}).", this);
+    }
+
     public int AliveCount
     {
         get
@@ -31,13 +60,20 @@ public class EnemySpawner : MonoBehaviour, ILevelSpawnSource
 
         for (int i = 0; i < spawnEntries.Count; i++)
         {
-            if (spawnEntries[i].spawnOnStart) Spawn(i);
+            if (spawnEntries[i].spawnOnStart) SpawnSlot(i, true);
         }
 
         hasSpawnedAlready = true;
     }
 
     public void Spawn(int index)
+    {
+        SpawnSlot(index, false);
+    }
+
+    // skipDefeated: solo para las salas normales (SpawnerManager y reinicio al morir).
+    // Las oleadas del boss (WaveManager -> SpawnAll) siempre crean a sus enemigos.
+    private void SpawnSlot(int index, bool skipDefeated)
     {
         if (index < 0 || index >= spawnEntries.Count) return;
 
@@ -46,6 +82,15 @@ public class EnemySpawner : MonoBehaviour, ILevelSpawnSource
         if (entry.oneTimeSpawn && entry.hasSpawned) return;
 
         if (entry.enemyPrefab == null || entry.spawnPoint == null) return;
+
+        // Slot ya derrotado (fijo o pendiente): no se crea. Se marca como usado para que,
+        // si el jugador muere y el kill se revierte, el spawner lo vuelva a crear.
+        if (skipDefeated && entry.countsForLevel &&
+            LevelObjectiveManager.IsSlotDefeated(gameObject.scene, LevelObjectiveManager.PathOf(transform), index))
+        {
+            entry.hasSpawned = true;
+            return;
+        }
 
         GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation, GetHolder());
 
@@ -58,9 +103,11 @@ public class EnemySpawner : MonoBehaviour, ILevelSpawnSource
 
         // Cada entrada es un "slot" del nivel. Si reaparece (oneTimeSpawn = false), sigue ocupando
         // el mismo slot: LevelObjectiveManager cuenta una sola vez por slot.
+        // resetsOnDeath = true: si el jugador muere antes de desbloquear la salida, estos kills
+        // se pierden (los enemigos reaparecen y hay que volver a matarlos).
         LevelObjectiveManager.AssignObjective(enemy, gameObject.scene,
             LevelObjectiveManager.PathOf(transform), index,
-            entry.countsForLevel, false);
+            entry.countsForLevel, true);
 
         enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint);
 

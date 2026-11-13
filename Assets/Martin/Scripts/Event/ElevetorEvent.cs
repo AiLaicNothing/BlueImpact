@@ -23,6 +23,10 @@ public class ElevetorEvent : MonoBehaviour, ILevelSpawnSource
     [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private Transform safePoint;
 
+    [Tooltip("Si los enemigos del elevador cuentan para el porcentaje del nivel. " +
+             "Desmarcar si el evento está detrás de la compuerta del nivel: si no, el total incluye enemigos inalcanzables.")]
+    [SerializeField] private bool countsForLevel = true;
+
     [Header("Free Movement Texts")]
     [SerializeField] private string goUpText = "Subir";
     [SerializeField] private string goDownText = "Bajar";
@@ -344,6 +348,8 @@ public class ElevetorEvent : MonoBehaviour, ILevelSpawnSource
     // Para LevelObjectiveManager: enemigos contables de ambas oleadas.
     public int CountLevelEnemies()
     {
+        if (!countsForLevel) return 0;
+
         int n = 0;
         foreach (GameObject g in wave1_enemies) if (g != null) n++;
         foreach (GameObject g in wave2_enemies) if (g != null) n++;
@@ -405,7 +411,7 @@ public class ElevetorEvent : MonoBehaviour, ILevelSpawnSource
                 // Oleada 1 usa índices 0..99; oleada 2 usa 100..199. Kills revertibles hasta completar.
                 LevelObjectiveManager.AssignObjective(enemy, gameObject.scene,
                     LevelObjectiveManager.PathOf(transform),
-                    (wave == wave1_enemies ? 0 : 100) + i, true, true);
+                    (wave == wave1_enemies ? 0 : 100) + i, countsForLevel, true);
 
                 enemy.OnSpawn(spawnPoints, safePoint, false, spawnPoint);
             }

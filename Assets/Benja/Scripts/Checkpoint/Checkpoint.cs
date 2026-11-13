@@ -41,6 +41,9 @@ public class Checkpoint : MonoBehaviour, IInteractable
     {
         Checkpoints_Manager.Instance.SetActiveCheckpoint(this);
 
+        // Fija los kills del nivel hechos desde el último checkpoint.
+        LevelObjectiveManager.Instance?.CommitPendingKills();
+
         bool firstDiscovery = Checkpoints_Manager.Instance.DiscoverCheckpoint(this);
 
         if (firstDiscovery)

@@ -65,6 +65,7 @@ public class QuestPanelUI : MonoBehaviour
         manager.OnBossDefeated += HandleBossDefeated;
         manager.OnExitBlocked += HandleExitBlocked;
         manager.OnThresholdReached += HandleThresholdReached;
+        manager.OnSessionCleared += HandleSessionCleared;
     }
 
     private void OnDestroy()
@@ -78,6 +79,20 @@ public class QuestPanelUI : MonoBehaviour
         manager.OnBossDefeated -= HandleBossDefeated;
         manager.OnExitBlocked -= HandleExitBlocked;
         manager.OnThresholdReached -= HandleThresholdReached;
+        manager.OnSessionCleared -= HandleSessionCleared;
+    }
+
+    // Salir al menú: se oculta todo el panel hasta entrar de nuevo a un nivel.
+    private void HandleSessionCleared()
+    {
+        currentLevelId = null;
+
+        if (toastRoutine != null) StopCoroutine(toastRoutine);
+        toastRoutine = null;
+
+        if (root != null) root.SetActive(false);
+        if (bossEntry != null) bossEntry.SetActive(false);
+        if (toastRoot != null) toastRoot.SetActive(false);
     }
 
     private void HandleLevelEntered(string levelId)
