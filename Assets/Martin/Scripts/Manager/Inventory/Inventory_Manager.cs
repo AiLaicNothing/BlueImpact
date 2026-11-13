@@ -38,13 +38,16 @@ public class Inventory_Manager : MonoBehaviour
         if (SaveLoadManager.Instance == null) return;
 
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
-        if (loadedData == null || loadedData.inventory == null) return;
+        if (loadedData == null || loadedData.inventoryIDs == null) return;
 
         inventory.Clear();
-        foreach (Item_Data item in loadedData.inventory)
+        foreach (int id in loadedData.inventoryIDs)
         {
-            // Los Item_Data llegan null desde JsonUtility (ver SaveData). Se omiten.
-            if (item != null) inventory.Add(item);
+            Item_Data foundItem = GameDatabase.Instance.GetItemByID(id);
+            if (foundItem != null)
+            {
+                inventory.Add(foundItem);
+            }
         }
     }
 

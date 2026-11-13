@@ -32,11 +32,13 @@ public class Inspection_Manager : MonoBehaviour
         if (loadedData != null)
         {
             inspectedObjects.Clear();
-            if (loadedData.inspectedObjects == null) return;
-
-            foreach (Log_Data log in loadedData.inspectedObjects)
+            foreach (int id in loadedData.inspectedObjectsIDs)
             {
-                inspectedObjects.Add(log);
+                Log_Data foundInspected = GameDatabase.Instance.GetLogByID(id);
+                if (foundInspected != null)
+                {
+                    inspectedObjects.Add(foundInspected);
+                }
             }
         }
     }

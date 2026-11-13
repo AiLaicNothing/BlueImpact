@@ -19,18 +19,23 @@ public struct EventStateSavedEntry
 public class SaveData
 {
     public int currentIndexCharacter;
+
     public List<StatSavedEntry> savedStats = new();
     public List<string> collectedPickups = new();
     public List<EventStateSavedEntry> eventStates = new();
+
     public int availablePoints;
     public int totalEarnedPoints;
-    public List<DiscoveredCheckpoint> discoveredCheckpoints = new();
-    public List<Log_Data> discoveredLogs = new();
-    public List<Log_Data> inspectedObjects = new();
-    public List<Item_Data> inventory = new();
-    public DiscoveredCheckpoint activeCheckpoint;
-    public Checkpoint checkpoint;
-    public List<Skill> unlockedSkills = new();
-    public Skill[] equipedSkills = new Skill[0];
+
+    public List<string> discoveredCheckpoints = new();
+    public string activeCheckpointID;
+    public string currentCheckpointID;
+
+    public List<int> inspectedObjectsIDs = new(); 
+    public List<int> inventoryIDs = new();
+    public List<int> discoveredLogsIDs = new();
+    public List<string> unlockedSkillsIDs = new();
+    public string[] equipedSkillsIDs = new string[0];
+
     public bool gameCreated;
 }

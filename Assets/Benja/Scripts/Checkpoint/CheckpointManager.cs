@@ -27,7 +27,18 @@ public class CheckpointManager : MonoBehaviour
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
         if (loadedData != null)
         {
-            activeCheckpoint = loadedData.checkpoint;
+            if (!string.IsNullOrEmpty(loadedData.currentCheckpointID))
+            {
+                Checkpoint[] sceneCheckpoints = Object.FindObjectsByType<Checkpoint>(FindObjectsSortMode.None);
+                foreach (Checkpoint sceneCp in sceneCheckpoints)
+                {
+                    if (sceneCp.Data != null && sceneCp.Data.checkpointID == loadedData.currentCheckpointID)
+                    {
+                    activeCheckpoint = sceneCp;
+                    break;
+                    }
+                }
+            }   
         }
     }
     private void OnEnable()

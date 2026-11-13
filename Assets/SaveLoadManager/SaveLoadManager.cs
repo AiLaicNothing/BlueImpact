@@ -1,5 +1,7 @@
 using UnityEngine;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 public class SaveLoadManager : MonoBehaviour
@@ -56,13 +58,28 @@ public class SaveLoadManager : MonoBehaviour
                 }
                 break;
             case "discoveredLogs":
-                data.discoveredLogs = (System.Collections.Generic.List<Log_Data>)value;
+                List<Log_Data> logs = (List<Log_Data>)value;
+                data.discoveredLogsIDs.Clear();
+                foreach (Log_Data l in logs)
+                {
+                    if (l != null) data.discoveredLogsIDs.Add(l.log_ID);
+                }
                 break;
             case "inspectedObjects":
-                data.inspectedObjects = (System.Collections.Generic.List<Log_Data>)value;
+                List<Log_Data> inspected = (List<Log_Data>)value;
+                data.inspectedObjectsIDs.Clear();
+                foreach (Log_Data l in inspected)
+                {
+                    if (l != null) data.inspectedObjectsIDs.Add(l.log_ID);
+                }
                 break;
             case "inventory":
-                data.inventory = (System.Collections.Generic.List<Item_Data>)value;
+                List<Item_Data> items = (List<Item_Data>)value;
+                data.inventoryIDs.Clear();
+                foreach (Item_Data item in items)
+                {
+                    if (item != null) data.inventoryIDs.Add(item.ID);
+                }
                 break;
             case "availablePoints":
                 data.availablePoints = (int)value;
@@ -71,22 +88,39 @@ public class SaveLoadManager : MonoBehaviour
                 data.totalEarnedPoints = (int)value;
                 break;
             case "discoveredCheckpoints":
-                data.discoveredCheckpoints = (System.Collections.Generic.List<DiscoveredCheckpoint>)value;
+                List<DiscoveredCheckpoint> cps = (List<DiscoveredCheckpoint>)value;
+                data.discoveredCheckpoints.Clear();
+                foreach (DiscoveredCheckpoint cpe in cps)
+                {
+                    if (cpe != null) data.discoveredCheckpoints.Add(cpe._checkpointID);
+                }
                 break;
             case "activeCheckpoint":
-                data.activeCheckpoint = (DiscoveredCheckpoint)value;
+                DiscoveredCheckpoint activeCp = (DiscoveredCheckpoint)value;
+                data.activeCheckpointID = activeCp != null ? activeCp._checkpointID : "";
                 break;
             case "unlockedSkills":
-                data.unlockedSkills = (System.Collections.Generic.List<Skill>)value;
+                List<Skill> skills = (List<Skill>)value;
+                data.unlockedSkillsIDs.Clear();
+                foreach (Skill s in skills)
+                {
+                    if (s != null) data.unlockedSkillsIDs.Add(s.skillName);
+                }
                 break;
             case "equipedSkills":
-                data.equipedSkills = (Skill[])value;
+                Skill[] eqSkills = (Skill[])value;
+                data.equipedSkillsIDs = new string[eqSkills.Length];
+                for (int i = 0; i < eqSkills.Length; i++)
+                {
+                    data.equipedSkillsIDs[i] = eqSkills[i] != null ? eqSkills[i].skillName : "";
+                }
                 break;
             case "gameCreated":
                 data.gameCreated = (bool)value;
                 break;
             case "checkpoint":
-                data.checkpoint = (Checkpoint)value;
+                Checkpoint cp = (Checkpoint)value;
+                data.currentCheckpointID = cp != null ? cp.Data.checkpointID : "";
                 break;
             default:
                 Debug.LogWarning($"SaveLoadManager: campo desconocido '{fieldName}'. No se guardó.");

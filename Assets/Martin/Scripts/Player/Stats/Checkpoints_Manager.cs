@@ -47,17 +47,24 @@ public class Checkpoints_Manager : MonoBehaviour
         if (loadedData == null) return;
 
         discoveredCheckpoints.Clear();
-
-        if (loadedData.discoveredCheckpoints != null)
+        foreach (string id in loadedData.discoveredCheckpoints)
         {
-            for(int i = 0; i < loadedData.discoveredCheckpoints.Count; i++)
+            CheckpointData foundData = GameDatabase.Instance.GetCheckpointByID(id);
+            if (foundData != null)
             {
-                discoveredCheckpoints.Add(loadedData.discoveredCheckpoints[i]);
+                discoveredCheckpoints.Add(new DiscoveredCheckpoint(foundData));
             }
-            //discoveredCheckpoints.AddRange(loadedData.discoveredCheckpoints);
         }
 
-        activeCheckpoint = loadedData.activeCheckpoint;
+        if (!string.IsNullOrEmpty(loadedData.activeCheckpointID))
+        {
+            CheckpointData activeData = GameDatabase.Instance.GetCheckpointByID(loadedData.activeCheckpointID);
+            if (activeData != null)
+            {
+                activeCheckpoint = new DiscoveredCheckpoint(activeData);
+            }
+        }
+
     }
 
     public bool DiscoverCheckpoint(Checkpoint checkpoint)

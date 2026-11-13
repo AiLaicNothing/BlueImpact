@@ -34,11 +34,13 @@ public class Log_Manager : MonoBehaviour
         if (loadedData != null)
         {
             discoveredLogs.Clear();
-            if (loadedData.discoveredLogs == null) return;
-
-            foreach (Log_Data log in loadedData.discoveredLogs)
+            foreach (int id in loadedData.discoveredLogsIDs)
             {
-                discoveredLogs.Add(log);
+                Log_Data foundLog = GameDatabase.Instance.GetLogByID(id);
+                if (foundLog != null)
+                {
+                    discoveredLogs.Add(foundLog);
+                }
             }
         }
     }

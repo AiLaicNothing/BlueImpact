@@ -133,17 +133,22 @@ public class PlayerControl : Controller, IDamageable
         SaveData loadedData = SaveLoadManager.Instance.LoadGame();
         if (loadedData != null)
         {
-            for(int i = 0; i < loadedData.unlockedSkills.Count; i++)
+            foreach(string id in loadedData.unlockedSkillsIDs)
             {
-                unlockedSkills.Add(loadedData.unlockedSkills[i]);
+                Skill found = GameDatabase.Instance.GetSkillByID(id);
+                if (found != null) unlockedSkills.Add(found);
             }
             //unlockedSkills = loadedData.unlockedSkills ?? new List<Skill>();
-
-            if (loadedData.equipedSkills != null)
+            skills = new Skill[loadedData.equipedSkillsIDs.Length];
+            if (loadedData.equipedSkillsIDs != null)
             {
-                for (int i = 0; i < loadedData.equipedSkills.Length && i < skills.Length; i++)
+                for (int i = 0; i < loadedData.equipedSkillsIDs.Length && i < skills.Length; i++)
                 {
-                    skills[i] = loadedData.equipedSkills[i];
+                    string id = loadedData.equipedSkillsIDs[i];
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        skills[i] = GameDatabase.Instance.GetSkillByID(id);
+                    }
                 }
             }
             
