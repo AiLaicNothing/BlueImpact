@@ -78,7 +78,7 @@ public class SolarDescent_Skill : Skill
 
         DamageInfo info = new DamageInfo
         {
-            damage = (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Physical_Damage) * hitData.physicalScale) + (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Magical_Damage) * hitData.magicalScale)/2,
+            damage = (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Physical_Damage) * hitData.physicalScale) + (CharacterStatsManager.Instance.GetCurrentStat(StatsType.Magical_Damage) * hitData.magicalScale),
             hitDirection = dir,
             throwType = hitData.throwType,
             stunDuration = hitData.stunDuration,

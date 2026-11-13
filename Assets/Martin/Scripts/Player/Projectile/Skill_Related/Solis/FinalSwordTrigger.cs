@@ -29,7 +29,7 @@ public class FinalSwordTrigger : MonoBehaviour
         if (other.gameObject.layer == enemyLayer && !fSPrefab.trueFinish)
         {
             fSPrefab.ChangeDmgInfo(fSPrefab.player, fSPrefab.direction, fSPrefab.hitData);
-            IDamageable damageable = other.GetComponent<IDamageable>();
+            IDamageable damageable = other.GetComponentInParent<IDamageable>();
 
             if (damageable != null)
             {
