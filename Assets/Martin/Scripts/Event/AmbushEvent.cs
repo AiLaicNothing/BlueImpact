@@ -18,7 +18,8 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
     [Header("Spawn VFX")]
     [SerializeField] private GameObject spawnVfx;
-    [SerializeField] private Transform[] vfxPos;
+    [SerializeField] private float vfxDuration = 1f;
+    [SerializeField] private Vector3 vfxOffset = new Vector3(0,0.5f,0);
 
     [Header("Doors")]
     [SerializeField] private Transform[] doors;
@@ -165,7 +166,7 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
         yield return MoveDoors(false);
 
         // STEP 3: Spawn enemies and play spawn camera event.
-        StartWave();
+        yield return StartCoroutine(StartWave());
 
         // STEP 4: Return control to the player.
         SetCutsceneMode(false);
@@ -269,7 +270,7 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     // ENEMY SPAWNING
     // =========================
 
-    private void StartWave()
+    private IEnumerator StartWave()
     {
         if (cameraShowSpawn != null && CameraEventRelay.Instance != null)
         {
@@ -281,18 +282,20 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
         for (int i = 0; i < spawnEntries.Count; i++)
         {
+            SpawnEntry entry = spawnEntries[i];
             // Spawn visual effect.
-            if (spawnVfx != null && vfxPos != null && i < vfxPos.Length && vfxPos[i] != null)
+            if (spawnVfx != null && entry.enemyPrefab != null && entry.spawnPoint != null)
             {
-                Transform point = vfxPos[i];
-
-                GameObject vfx = Instantiate(spawnVfx, point.position, point.rotation);
+                Debug.Log("VfxAmbush1");
+                if (entry.enemyPrefab == null || entry.spawnPoint == null) yield return null;
+                Debug.Log("VfxAmbush2");
+                GameObject vfx = Instantiate(spawnVfx, entry.spawnPoint.position + vfxOffset, entry.spawnPoint.rotation);
 
                 MoveSpawnedObjectToEventScene(vfx);
 
-                Destroy(vfx, 2.25f);
+                Destroy(vfx, vfxDuration +2);
             }
-
+            yield return new WaitForSeconds(vfxDuration / 2);
             Spawn(i);
         }
     }

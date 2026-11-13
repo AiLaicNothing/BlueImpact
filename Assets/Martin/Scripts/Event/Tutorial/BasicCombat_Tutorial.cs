@@ -13,6 +13,7 @@ public class BasicCombat_Tutorial : MonoBehaviour, ILevelSpawnSource
     [Header("Enemies")]
     [SerializeField] private List<SpawnEntry> spawnEntries = new();
     [SerializeField] private GameObject spawnVfx;
+    [SerializeField] private float vfxDuration = 1f;
 
     [Header("Event State")]
     [SerializeField] private bool hasStarted;
@@ -152,7 +153,7 @@ public class BasicCombat_Tutorial : MonoBehaviour, ILevelSpawnSource
 
         yield return MoveDoors(false);
 
-        yield return StartSpawn();
+        
 
         if (ui != null)
         {
@@ -164,7 +165,7 @@ public class BasicCombat_Tutorial : MonoBehaviour, ILevelSpawnSource
                 yield return null;
             }
         }
-
+        yield return StartSpawn();
         if (Log_Manager.Instance.IsDiscoveredLog(logData))
         {
             yield return null;
@@ -277,7 +278,7 @@ public class BasicCombat_Tutorial : MonoBehaviour, ILevelSpawnSource
 
         for (int i = 0; i < spawnEntries.Count; i++)
         {
-            SpawnEnemy(i);
+           yield return StartCoroutine(SpawnEnemy(i));
         }
 
         yield break;
@@ -292,14 +293,14 @@ public class BasicCombat_Tutorial : MonoBehaviour, ILevelSpawnSource
         return n;
     }
 
-    private void SpawnEnemy(int index)
+    private IEnumerator SpawnEnemy(int index)
     {
-        if (index < 0 || index >= spawnEntries.Count) return;
+        if (index < 0 || index >= spawnEntries.Count) yield return null;
 
         SpawnEntry entry = spawnEntries[index];
 
         if (entry.enemyPrefab == null ||
-            entry.spawnPoint == null) return;
+            entry.spawnPoint == null) yield return null;
 
         // Spawn VFX.
         if (spawnVfx != null)
@@ -308,9 +309,9 @@ public class BasicCombat_Tutorial : MonoBehaviour, ILevelSpawnSource
 
             MoveSpawnedObjectToEventScene(vfx);
 
-            Destroy(vfx, 1f);
+            Destroy(vfx, vfxDuration + 2f);
         }
-
+        yield return new WaitForSeconds(vfxDuration / 2);
         // Spawn enemy.
         GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation);
 
@@ -322,7 +323,7 @@ public class BasicCombat_Tutorial : MonoBehaviour, ILevelSpawnSource
         {
             Debug.LogWarning("[BasicCombat_Tutorial] Enemy prefab missing EnemyBase.", enemyObj);
 
-            Destroy(enemyObj); return;
+            Destroy(enemyObj); yield return null;
         }
 
         // Kills del tutorial se revierten si el jugador muere antes de completarlo.

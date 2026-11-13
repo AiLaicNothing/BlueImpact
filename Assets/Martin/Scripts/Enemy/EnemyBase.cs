@@ -946,7 +946,16 @@ public class EnemyBase : MonoBehaviour, IDamageable
     private IEnumerator DieEffect()
     {
         float elapsed = 0f;
-
+        healthUI.gameObject.SetActive(false);
+        barUI.gameObject.SetActive(false);
+        Transform[] ts = gameObject.GetComponentsInChildren<Transform>();
+        foreach (Transform a in ts)
+        {
+            if (player.lockOnTarget.CurrentTarget == a && player.lockOnTarget.isTargeting)
+            {
+                player.lockOnTarget.ClearTarget();
+            }
+        }
         while (elapsed < durationDissolve)
         {
             elapsed += Time.deltaTime;

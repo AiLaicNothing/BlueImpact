@@ -6,6 +6,7 @@ public abstract class PlayerState
     static protected bool falling;
 
     static protected float timerIdle2;
+    static protected bool idle2Active;
     public PlayerState(PlayerControl player)
     {
         this.player = player;

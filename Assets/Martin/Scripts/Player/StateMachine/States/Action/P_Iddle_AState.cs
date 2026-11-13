@@ -41,24 +41,7 @@ public class P_Iddle_AState : PlayerState
             player.Anim.SetBool("Walking", false);
             player.Anim.SetBool("Idle", true);
         }
-
-        if (timerIdle2 < 5f) timerIdle2 += Time.deltaTime;
-        if (timerIdle2 >= 5f)
-        {
-            if (player.Anim != null)
-            {
-                int idle2 = Animator.StringToHash("Idle2");
-
-                if (player.Anim.HasState(0, idle2))
-                {
-                    player.Anim.SetBool("Idle2", true);
-                }
-                else
-                {
-                    Debug.Log("[PlayerAnimator] is missing idle2 State");
-                }
-            }
-        }
+        Idle2();
 
         if (player.canDash)
         {
@@ -169,6 +152,35 @@ public class P_Iddle_AState : PlayerState
         base.OnUpdate();
     }
 
+    void Idle2()
+    {
+        int idle2 = Animator.StringToHash("Idle2");
+        if (timerIdle2 < 5f && !idle2Active)
+        {
+            timerIdle2 += Time.deltaTime;
+        }
+        if (player.Anim.IsInTransition(0) && player.Anim.GetBool(idle2))
+        {
+            idle2Active = false;
+            player.Anim.SetBool("Idle2", false);
+        }
+        if (timerIdle2 >= 5f && !player.Anim.GetBool(idle2))
+        {
+            if (player.Anim != null)
+            {
+                if (player.Anim.HasState(0, idle2))
+                {
+                    player.Anim.SetBool("Idle2", true);
+                    idle2Active = true;
+                    timerIdle2 = 0;
+                }
+                else
+                {
+                    Debug.Log("[PlayerAnimator] is missing idle2 State");
+                }
+            }
+        }
+    }
     public override void OnExit()
     {
         timerIdle2 = 0;

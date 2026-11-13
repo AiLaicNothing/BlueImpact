@@ -198,7 +198,7 @@ public class CharSelector_UI : MonoBehaviour, IGamepadPanel
 
                     PlayerSpawn_Manager.Instance.SpawnCharacter(spawnPoints);
                     Debug.Log("cargando checkpoint guardado");
-                    Invoke(nameof(LoadRespawn), 0.8f);
+                    Invoke(nameof(LoadRespawn), 0.4f);
                     return;
                 }
             }

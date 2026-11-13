@@ -3,7 +3,6 @@ using UnityEngine;
 public class P_Iddle_State : PlayerState
 {
     public P_Iddle_State(PlayerControl player) : base(player) { }
-
     public override void OnEnter()
     {
         Debug.Log("Enter Iddle State");
@@ -50,16 +49,30 @@ public class P_Iddle_State : PlayerState
             player.ChangeState(player.jump_State);
             return;
         }
-        if(timerIdle2 < 5f) timerIdle2 += Time.deltaTime;
-        if(timerIdle2 >= 5f)
+        Idle2();
+
+    }
+    void Idle2()
+    {
+        int idle2 = Animator.StringToHash("Idle2");
+        if (timerIdle2 < 5f && !idle2Active)
+        {
+            timerIdle2 += Time.deltaTime;
+        }
+        if (player.Anim.IsInTransition(0) && player.Anim.GetBool(idle2))
+        {
+            idle2Active = false;
+            player.Anim.SetBool("Idle2", false);
+        }
+        if (timerIdle2 >= 5f && !player.Anim.GetBool(idle2))
         {
             if (player.Anim != null)
             {
-                int idle2 = Animator.StringToHash("Idle2");
-
                 if (player.Anim.HasState(0, idle2))
                 {
                     player.Anim.SetBool("Idle2", true);
+                    idle2Active = true;
+                    timerIdle2 = 0;
                 }
                 else
                 {
@@ -67,9 +80,7 @@ public class P_Iddle_State : PlayerState
                 }
             }
         }
-
     }
-
     public override void OnExit()
     {
         timerIdle2 = 0;
