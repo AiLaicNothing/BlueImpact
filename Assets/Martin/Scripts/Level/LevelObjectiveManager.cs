@@ -17,6 +17,11 @@ public class LevelObjectiveManager : MonoBehaviour
     public event Action<string, int> OnExitBlocked;             // levelId, enemigos que faltan
     public event Action<string> OnBossEncounterStarted;         // levelId
     public event Action<string> OnBossDefeated;                 // levelId
+    public event Action OnSessionCleared;                       // se salió de la partida (menú)
+
+    // Se dispara al morir el jugador, DESPUÉS de revertir los kills pendientes.
+    // Los EnemySpawner lo usan para recrear solo los enemigos que se perdieron.
+    public static event Action OnKillsReverted;
 
     private sealed class LevelState
     {
@@ -56,11 +61,24 @@ public class LevelObjectiveManager : MonoBehaviour
     private void OnEnable()
     {
         PlayerControl.OnPlayerDied += HandlePlayerDied;
+        SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
     private void OnDisable()
     {
         PlayerControl.OnPlayerDied -= HandlePlayerDied;
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+    }
+
+    // Carga Single (salir al menú, cargar partida): se descarta todo el estado en memoria.
+    // Al volver a entrar a un nivel, sus kills se recargan desde el guardado.
+    // Las zonas se cargan en modo Additive, así que esto no se dispara al cruzar un SceneLoader.
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (mode != LoadSceneMode.Single) return;
+
+        levels.Clear();
+        OnSessionCleared?.Invoke();
     }
 
     // =====================================================================
@@ -107,21 +125,57 @@ public class LevelObjectiveManager : MonoBehaviour
     {
         if (config == null || zoneRoot == null) return;
 
-        if (!levels.TryGetValue(config.LevelId, out LevelState state))
-        {
-            state = new LevelState
-            {
-                config = config,
-                total = CountSpawnSources(zoneRoot.scene)
-            };
-
-            LoadSavedKills(state);
-            levels.Add(config.LevelId, state);
-        }
+        LevelState state = GetOrCreateState(config, zoneRoot.scene);
 
         OnLevelEntered?.Invoke(config.LevelId);
         Notify(state);
         CheckThreshold(state);
+    }
+
+    private LevelState GetOrCreateState(LevelConfig config, Scene scene)
+    {
+        if (levels.TryGetValue(config.LevelId, out LevelState state)) return state;
+
+        state = new LevelState
+        {
+            config = config,
+            total = CountSpawnSources(scene)
+        };
+
+        LoadSavedKills(state);
+        levels.Add(config.LevelId, state);
+        return state;
+    }
+
+    // ¿Este slot ya está derrotado (fijo o pendiente)? Los spawners no crean slots derrotados.
+    // Así, aunque la escena se descargue y vuelva a cargar, los enemigos muertos siguen muertos.
+    public static bool IsSlotDefeated(Scene scene, string sourceKey, int index)
+    {
+        if (Instance == null) return false;
+        if (!LevelZone.TryGetConfig(scene, out LevelConfig config)) return false;
+
+        LevelState state = Instance.GetOrCreateState(config, scene);
+        return state.defeated.Contains(config.LevelId + "|" + sourceKey + "|" + index);
+    }
+
+    // =====================================================================
+    // CHECKPOINT
+    // =====================================================================
+
+    // Llamado al usar un checkpoint: los kills pendientes quedan fijos y se guardan.
+    // Esos enemigos ya no reaparecen aunque el jugador muera.
+    public void CommitPendingKills()
+    {
+        bool changed = false;
+
+        foreach (LevelState state in levels.Values)
+        {
+            if (state.resettable.Count == 0) continue;
+            state.resettable.Clear();
+            changed = true;
+        }
+
+        if (changed) SaveAll();
     }
 
     private static int CountSpawnSources(Scene scene)
@@ -201,6 +255,8 @@ public class LevelObjectiveManager : MonoBehaviour
         }
 
         if (changed) SaveAll();
+
+        OnKillsReverted?.Invoke();
     }
 
     private static string SourceOf(string objectiveId)
@@ -224,6 +280,12 @@ public class LevelObjectiveManager : MonoBehaviour
         if (state.defeated.Count < RequiredFor(state)) return;
 
         state.thresholdReached = true;
+
+        // Salida desbloqueada: los kills pendientes quedan fijos y se guardan.
+        // Morir después ya no revierte el progreso del nivel.
+        state.resettable.Clear();
+        SaveAll();
+
         Notify(state);
         OnThresholdReached?.Invoke(state.config.LevelId);
     }
