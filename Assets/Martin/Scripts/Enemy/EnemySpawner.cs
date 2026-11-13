@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemySpawner : MonoBehaviour
+public class EnemySpawner : MonoBehaviour, ILevelSpawnSource
 {
     [SerializeField] private GameObject enemyHolders;
     [SerializeField] private List<SpawnEntry> spawnEntries = new();
@@ -56,12 +56,28 @@ public class EnemySpawner : MonoBehaviour
             return;
         }
 
+        // Cada entrada es un "slot" del nivel. Si reaparece (oneTimeSpawn = false), sigue ocupando
+        // el mismo slot: LevelObjectiveManager cuenta una sola vez por slot.
+        LevelObjectiveManager.AssignObjective(enemy, gameObject.scene,
+            LevelObjectiveManager.PathOf(transform), index,
+            entry.countsForLevel, false);
+
         enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint);
 
         entry.hasSpawned = true;
         entry.spawnedEnemy = enemy;
 
         Track(enemy, enemyObj);
+    }
+
+    // Slots contables del spawner: una por entrada con prefab y countsForLevel.
+    // No depende de oneTimeSpawn: las entradas que reaparecen también cuentan como un slot.
+    public int CountLevelEnemies()
+    {
+        int n = 0;
+        foreach (SpawnEntry e in spawnEntries)
+            if (e.enemyPrefab != null && e.countsForLevel) n++;
+        return n;
     }
 
     // Para invocaciones (por ejemplo, los golems del boss): no depende de SpawnEntry
@@ -77,6 +93,9 @@ public class EnemySpawner : MonoBehaviour
             Destroy(obj);
             return null;
         }
+
+        // Invocaciones (boss): no cuentan para el nivel.
+        LevelObjectiveManager.AssignObjective(enemy, gameObject.scene, null, 0, false, false);
 
         enemy.OnSpawn(null, safePoint != null ? safePoint : spawnPoint, false, spawnPoint);
 

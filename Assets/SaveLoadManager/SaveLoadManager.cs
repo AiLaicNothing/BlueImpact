@@ -122,6 +122,9 @@ public class SaveLoadManager : MonoBehaviour
                 Checkpoint cp = (Checkpoint)value;
                 data.currentCheckpointID = cp != null ? cp.Data.checkpointID : "";
                 break;
+            case "levelKills":
+                data.levelKills = (System.Collections.Generic.List<LevelKillsSavedEntry>)value;
+                break;
             default:
                 Debug.LogWarning($"SaveLoadManager: campo desconocido '{fieldName}'. No se guardó.");
                 return;

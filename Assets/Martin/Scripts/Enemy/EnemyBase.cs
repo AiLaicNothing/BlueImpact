@@ -6,6 +6,26 @@ using UnityEngine.AI;
 
 public class EnemyBase : MonoBehaviour, IDamageable
 {
+    // ================================================================
+    // OBJETIVOS DE NIVEL (contador de bloqueo)
+    // ================================================================
+
+    public event System.Action<EnemyBase> OnDied;
+
+    // false por defecto: boss, summons y spawns sin configurar no cuentan
+    public bool CountsForLevel { get; private set; }
+    public bool ResetsOnPlayerDeath { get; private set; }
+    public string LevelId { get; private set; }
+    public string ObjectiveId { get; private set; }
+
+    public void ConfigureObjective(string levelId, string objectiveId, bool counts, bool resetsOnDeath)
+    {
+        LevelId = levelId;
+        ObjectiveId = objectiveId;
+        CountsForLevel = counts;
+        ResetsOnPlayerDeath = resetsOnDeath;
+    }
+
     [Header("Stats")]
     [SerializeField] protected EnemyStats stats;
 
@@ -173,7 +193,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         {
             Debug.LogError($"[EnemyBase] {name} needs a Rigidbody.", this);
         }
-        
+
         if (agent != null)
         {
             // Keep only one movement authority: the dynamic Rigidbody.
@@ -843,6 +863,9 @@ public class EnemyBase : MonoBehaviour, IDamageable
         if (isDead) return;
         isDead = true;
 
+        OnDied?.Invoke(this);
+        LevelObjectiveManager.Instance?.NotifyEnemyDied(this);
+
         StopEnemyRoutines();
         DisableAgent();
         DisablePhysicsOnDeath();
@@ -923,16 +946,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     private IEnumerator DieEffect()
     {
         float elapsed = 0f;
-        healthUI.gameObject.SetActive(false);
-        barUI.gameObject.SetActive(false);
-        Transform[] ts = gameObject.GetComponentsInChildren<Transform>();
-        foreach(Transform a in ts)
-        {
-            if(player.lockOnTarget.CurrentTarget == a && player.lockOnTarget.isTargeting)
-            {
-                player.lockOnTarget.ClearTarget();
-            }
-        }
+
         while (elapsed < durationDissolve)
         {
             elapsed += Time.deltaTime;

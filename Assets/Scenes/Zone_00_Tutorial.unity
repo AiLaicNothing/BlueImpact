@@ -41015,6 +41015,7 @@ MonoBehaviour:
     hasPatrol: 0
     spawnOnStart: 0
     oneTimeSpawn: 0
+    countsForLevel: 1
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
   - enemyPrefab: {fileID: 7353159426421426004, guid: ed8878aba28c7ae4fb349ef1a55e9cfc, type: 3}
@@ -41024,6 +41025,7 @@ MonoBehaviour:
     hasPatrol: 0
     spawnOnStart: 0
     oneTimeSpawn: 0
+    countsForLevel: 1
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
   - enemyPrefab: {fileID: 7353159426421426004, guid: ed8878aba28c7ae4fb349ef1a55e9cfc, type: 3}
@@ -41033,6 +41035,7 @@ MonoBehaviour:
     hasPatrol: 0
     spawnOnStart: 0
     oneTimeSpawn: 0
+    countsForLevel: 1
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
   spawnVfx: {fileID: 0}
@@ -96511,6 +96514,73 @@ Transform:
   - {fileID: 461783733}
   m_Father: {fileID: 508395956}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1860485320
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1860485323}
+  - component: {fileID: 1860485322}
+  - component: {fileID: 1860485321}
+  m_Layer: 0
+  m_Name: LevelZone_Tutorial
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1860485321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1860485320}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63b62e5e85711dd46b1c6c026abcc703, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelZone
+  config: {fileID: 11400000, guid: 0257ab79ee815194680d413313d24d62, type: 2}
+--- !u!65 &1860485322
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1860485320}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 34, y: 6.5, z: 16.5}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!4 &1860485323
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1860485320}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -51.47, y: -5.15, z: 48.86}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &1873955600
 Mesh:
   m_ObjectHideFlags: 0
@@ -108497,6 +108567,7 @@ MonoBehaviour:
     hasPatrol: 0
     spawnOnStart: 0
     oneTimeSpawn: 0
+    countsForLevel: 1
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
   spawnVfx: {fileID: 0}
@@ -109130,3 +109201,4 @@ SceneRoots:
   - {fileID: 832172834}
   - {fileID: 1808194203}
   - {fileID: 1486502423}
+  - {fileID: 1860485323}

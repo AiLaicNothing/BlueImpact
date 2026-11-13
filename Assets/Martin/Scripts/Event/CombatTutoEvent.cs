@@ -3,8 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CombatTutoEvent : MonoBehaviour
+public class CombatTutoEvent : MonoBehaviour, ILevelSpawnSource
 {
+    // Para LevelObjectiveManager: enemigos contables del encuentro.
+    public int CountLevelEnemies()
+    {
+        int n = 0;
+        foreach (SpawnEntry e in spawnEntries)
+            if (e.enemyPrefab != null && e.countsForLevel) n++;
+        return n;
+    }
+
     [SerializeField] private List<SpawnEntry> spawnEntries = new();
     [SerializeField] private GameObject spawnVfx;
     private bool hasActivated;
@@ -111,6 +120,10 @@ public class CombatTutoEvent : MonoBehaviour
         GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation);
 
         EnemyBase enemy = enemyObj.GetComponent<EnemyBase>();
+
+        // Encuentro único sin reinicio: kills permanentes.
+        LevelObjectiveManager.AssignObjective(enemy, gameObject.scene,
+            LevelObjectiveManager.PathOf(transform), index, entry.countsForLevel, false);
 
         enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint);
 

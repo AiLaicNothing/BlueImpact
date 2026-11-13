@@ -38,4 +38,13 @@ public class SaveData
     public string[] equipedSkillsIDs = new string[0];
 
     public bool gameCreated;
+    public List<LevelKillsSavedEntry> levelKills = new();
+}
+
+// Kills permanentes por nivel. Lista (no Dictionary) porque JsonUtility no serializa diccionarios.
+[System.Serializable]
+public class LevelKillsSavedEntry
+{
+    public string levelId;
+    public List<string> defeatedIds = new();
 }

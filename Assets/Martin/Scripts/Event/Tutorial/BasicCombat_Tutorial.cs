@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
-public class BasicCombat_Tutorial : MonoBehaviour
+public class BasicCombat_Tutorial : MonoBehaviour, ILevelSpawnSource
 {
     [Header("Save System")]
     [SerializeField] private WorldEvent_Data eventData;
@@ -186,6 +186,9 @@ public class BasicCombat_Tutorial : MonoBehaviour
 
         Debug.Log("[BasicCombat_Tutorial] All enemies defeated.");
 
+        // Tutorial completado: sus kills dejan de revertirse.
+        LevelObjectiveManager.Instance?.CommitEncounter(LevelObjectiveManager.PathOf(transform));
+
         SetCutsceneMode(true);
 
         yield return MoveDoors(true);
@@ -280,6 +283,15 @@ public class BasicCombat_Tutorial : MonoBehaviour
         yield break;
     }
 
+    // Para LevelObjectiveManager: enemigos contables del tutorial.
+    public int CountLevelEnemies()
+    {
+        int n = 0;
+        foreach (SpawnEntry e in spawnEntries)
+            if (e.enemyPrefab != null && e.countsForLevel) n++;
+        return n;
+    }
+
     private void SpawnEnemy(int index)
     {
         if (index < 0 || index >= spawnEntries.Count) return;
@@ -312,6 +324,10 @@ public class BasicCombat_Tutorial : MonoBehaviour
 
             Destroy(enemyObj); return;
         }
+
+        // Kills del tutorial se revierten si el jugador muere antes de completarlo.
+        LevelObjectiveManager.AssignObjective(enemy, gameObject.scene,
+            LevelObjectiveManager.PathOf(transform), index, entry.countsForLevel, true);
 
         enemy.OnSpawn(entry.patrolPoints, entry.safePoint, entry.hasPatrol, entry.spawnPoint);
 
