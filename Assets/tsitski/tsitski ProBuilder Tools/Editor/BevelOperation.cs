@@ -6,11 +6,12 @@ using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.ProBuilder.MeshOperations;
 using Math = UnityEngine.ProBuilder.Math;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     [System.Serializable]
     internal class BevelOperation : MeshSceneOperation {
-        private const string MenuPath = "Tools/tsitski ProBuilder Tools/Modelling/Bevel &b";
+        private const string MenuPath = "Tools/tsitski/ProBuilder/Modelling/Bevel &b";
         private const int MaxEdgeLoops = 16;
         private const float WeldDistance = 1e-4f;
 

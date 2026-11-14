@@ -15,6 +15,7 @@
 
 using UnityEngine;
 using System.Collections.Generic;
+using Tsitski.Core;
 
 
 namespace Tsitski.ProBuilderTools.Csg

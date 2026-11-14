@@ -12,37 +12,78 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 981195aeb72da294da08ba34e2f86938, type: 3}
   m_Name: Floor Plan Stats
   m_EditorClassIdentifier: Tsitski.ProBuilderTools::Tsitski.ProBuilderTools.ProBuilderFloorPlanStats
+  storeHeight: 1
   height: 4
+  storeThickness: 1
   thickness: 0.25
   alignment: 0
   wallsAroundHoles: 0
   squareCorners: 0
   loopCutStep: 1
   verticalLoopCutStep: 1
+  applyCutsToProBuilderMesh: 0
   roundingSegments: 8
-  floorPlanOutlineSettings:
-  - trimStats: {fileID: 0}
-    arrayStats: {fileID: 11400000, guid: 2cdb88af8ee1a584680d0e2ff93c0060, type: 2}
+  roofStats: {fileID: 0}
+  layers:
+  - name: Corner Pillar Array Stats
+    stats: {fileID: 11400000, guid: 2cdb88af8ee1a584680d0e2ff93c0060, type: 2}
     wallSide: 0
+    polesFrom: {fileID: 0}
     height: 0
     heightFromTop: 0
-  - trimStats: {fileID: 0}
-    arrayStats: {fileID: 11400000, guid: 81cff44427a409542afb1e76a85c96a6, type: 2}
+    matchHeight: 1
+    sideOffset: 0
+    syncedName: Corner Pillar Array Stats
+    legacyFence: {fileID: 0}
+    legacyArray: {fileID: 0}
+    legacyTrim: {fileID: 0}
+  - name: Western Triangle Detail Array
+    stats: {fileID: 11400000, guid: 81cff44427a409542afb1e76a85c96a6, type: 2}
     wallSide: 0
+    polesFrom: {fileID: 0}
     height: 0.7
     heightFromTop: 1
-  - trimStats: {fileID: 11400000, guid: 822e15ab58d8e254da26e5441de35d5c, type: 2}
-    arrayStats: {fileID: 0}
+    matchHeight: 0
+    sideOffset: 0
+    syncedName: Western Triangle Detail Array
+    legacyFence: {fileID: 0}
+    legacyArray: {fileID: 0}
+    legacyTrim: {fileID: 0}
+  - name: Outside Wall Top Trim Stats
+    stats: {fileID: 11400000, guid: 822e15ab58d8e254da26e5441de35d5c, type: 2}
     wallSide: 0
+    polesFrom: {fileID: 0}
     height: 0
     heightFromTop: 1
-  - trimStats: {fileID: 11400000, guid: e7aa9a4b0d40dd34d9b120108c041303, type: 2}
-    arrayStats: {fileID: 0}
+    matchHeight: 0
+    sideOffset: 0
+    syncedName: Outside Wall Top Trim Stats
+    legacyFence: {fileID: 0}
+    legacyArray: {fileID: 0}
+    legacyTrim: {fileID: 0}
+  - name: Outside Wall Base Trim Stats
+    stats: {fileID: 11400000, guid: e7aa9a4b0d40dd34d9b120108c041303, type: 2}
     wallSide: 0
+    polesFrom: {fileID: 0}
     height: 0
     heightFromTop: 0
-  - trimStats: {fileID: 11400000, guid: aae81400d204f4141b8651688aa491f2, type: 2}
-    arrayStats: {fileID: 0}
+    matchHeight: 0
+    sideOffset: 0
+    syncedName: Outside Wall Base Trim Stats
+    legacyFence: {fileID: 0}
+    legacyArray: {fileID: 0}
+    legacyTrim: {fileID: 0}
+  - name: Simple Baseboard Trim Stats
+    stats: {fileID: 11400000, guid: aae81400d204f4141b8651688aa491f2, type: 2}
     wallSide: 1
+    polesFrom: {fileID: 0}
     height: 0
     heightFromTop: 0
+    matchHeight: 0
+    sideOffset: 0
+    syncedName: Simple Baseboard Trim Stats
+    legacyFence: {fileID: 0}
+    legacyArray: {fileID: 0}
+    legacyTrim: {fileID: 0}
+  insideMaterial: {fileID: 0}
+  outsideMaterial: {fileID: 0}

@@ -6,10 +6,11 @@ using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.ProBuilder.MeshOperations;
 using EditorUtility = UnityEditor.EditorUtility;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     public static class TsitskiProBuilderTools {
-        const string MenuRoot = "Tools/tsitski ProBuilder Tools/";
+        const string MenuRoot = "Tools/tsitski/ProBuilder/";
         const float PositionTolerance = 0.00001f;
         const float CollinearTolerance = 0.0001f;
         const float CoplanarDot = 0.9998f;
@@ -271,77 +272,6 @@ namespace Tsitski.ProBuilderTools {
 
         static Vector3 Centroid(List<Vector3> points) => points.Aggregate(Vector3.zero, (sum, p) => sum + p) / points.Count;
 
-        [MenuItem(MenuRoot + "Modelling/Center Transform To Mesh")]
-        static void CenterTransformToMesh() {
-#if UNITY_2022_2_OR_NEWER
-            Vector3 grid = EditorSnapSettings.gridSize;
-#else
-            Vector3 grid = EditorSnapSettings.move;
-#endif
-
-            foreach (ProBuilderMesh mesh in MeshSelection.top.ToArray()) {
-                IList<Vector3> positions = mesh.positions;
-                if (positions.Count == 0)
-                    continue;
-
-                Bounds bounds = new(positions[0], Vector3.zero);
-                foreach (Vector3 position in positions)
-                    bounds.Encapsulate(position);
-
-                IPathOwner[] pathOwners = mesh.GetComponents<IPathOwner>().Where(p => p.localPath != null).ToArray();
-                if (pathOwners.FirstOrDefault(p => p.pathInStats) is Component sharedOwner) {
-                    Debug.LogWarning($"Center Transform To Mesh skipped '{mesh.name}': the path on its {sharedOwner.GetType().Name} is stored in its stats asset and shared with other objects.", mesh);
-                    continue;
-                }
-
-                Transform cutResult = mesh.TryGetComponent(out ProBuilderCutTarget cutTarget) ? cutTarget.resultTransform : null;
-                if (cutResult) {
-                    Undo.RecordObject(cutResult, "Center Transform To Mesh");
-                    cutResult.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-                    cutResult.localScale = Vector3.one;
-                }
-
-                Vector3 center = SnapToGrid(mesh.transform.TransformPoint(bounds.center), grid);
-                if ((center - mesh.transform.position).sqrMagnitude < 1e-10f)
-                    continue;
-
-                Transform[] children = mesh.transform.Cast<Transform>().Where(c => c != cutResult).ToArray();
-                Undo.RecordObject(mesh, "Center Transform To Mesh");
-                Undo.RecordObject(mesh.transform, "Center Transform To Mesh");
-                Undo.RecordObjects(children, "Center Transform To Mesh");
-
-                (Vector3 position, Quaternion rotation)[] childPoses = children.Select(c => (c.position, c.rotation)).ToArray();
-
-                Transform transform = mesh.transform;
-                Vector3[] worldPositions = positions.Select(p => transform.TransformPoint(p)).ToArray();
-
-                Vector3[][] worldPaths = pathOwners.Select(o => o.localPath.Select(p => transform.TransformPoint(p)).ToArray()).ToArray();
-                Undo.RecordObjects(pathOwners.Cast<Object>().ToArray(), "Center Transform To Mesh");
-
-                transform.position = center;
-                mesh.positions = worldPositions.Select(p => transform.InverseTransformPoint(p)).ToArray();
-                mesh.ToMesh();
-                mesh.Refresh();
-
-                for (int i = 0; i < children.Length; i++)
-                    children[i].SetPositionAndRotation(childPoses[i].position, childPoses[i].rotation);
-
-                for (int i = 0; i < pathOwners.Length; i++) {
-                    pathOwners[i].localPath = worldPaths[i].Select(p => transform.InverseTransformPoint(p)).ToList();
-                    pathOwners[i].Rebuild();
-                    EditorUtility.SetDirty((Object)pathOwners[i]);
-                }
-
-                mesh.Optimize();
-                EditorUtility.SetDirty(mesh);
-            }
-
-            ProBuilderEditor.Refresh();
-        }
-
-        [MenuItem(MenuRoot + "Modelling/Center Transform To Mesh", true)]
-        static bool CenterTransformToMeshValidate() => MeshSelection.top.Any();
-
         [MenuItem(MenuRoot + "Generate/Walls From Floor Plan")]
         static void GenerateWallsFromFloorPlan() {
             const string undoName = "Generate Walls From Floor Plan";
@@ -361,7 +291,7 @@ namespace Tsitski.ProBuilderTools {
 
                 ProBuilderMesh mesh = Undo.AddComponent<ProBuilderMesh>(walls);
                 mesh.Clear();
-                ProBuilderFloorPlan plan = Undo.AddComponent<ProBuilderFloorPlan>(walls);
+                TsitskiProBuilderFloorPlan plan = Undo.AddComponent<TsitskiProBuilderFloorPlan>(walls);
                 plan.floor = floor;
                 plan.Rebuild();
 
@@ -385,7 +315,7 @@ namespace Tsitski.ProBuilderTools {
             int group = Undo.GetCurrentGroup();
 
             foreach (ProBuilderMesh mesh in PolygonCandidates().ToArray()) {
-                List<List<Vector2>> loops = ProBuilderFloorPlan.FloorOutlines(mesh, out float top);
+                List<List<Vector2>> loops = TsitskiProBuilderFloorPlan.FloorOutlines(mesh, out float top);
                 if (loops.Count == 0) {
                     Debug.LogWarning($"[tsitski ProBuilder Tools] Convert To Polygon skipped '{mesh.name}': it has no faces pointing up.", mesh);
                     continue;
@@ -408,10 +338,9 @@ namespace Tsitski.ProBuilderTools {
                 List<Vector3> ToPath(List<Vector2> loop) => loop.Select(p => new Vector3(p.x, y, p.y)).ToList();
 
                 Undo.RecordObject(mesh, undoName);
-                ProBuilderPolygon polygon = Undo.AddComponent<ProBuilderPolygon>(mesh.gameObject);
+                TsitskiProBuilderPolygon polygon = Undo.AddComponent<TsitskiProBuilderPolygon>(mesh.gameObject);
                 polygon.thickness = thickness;
-                polygon.path = ToPath(loops[outer]);
-                polygon.pathRadii = new List<float>();
+                polygon.paths = new List<PolygonPath> { new() { path = ToPath(loops[outer]) } };
                 polygon.holes = holes.Select(h => new PolygonHole { path = ToPath(h) }).ToList();
                 polygon.Rebuild();
                 EditorUtility.SetDirty(polygon);
@@ -427,19 +356,14 @@ namespace Tsitski.ProBuilderTools {
         static IEnumerable<ProBuilderMesh> PolygonCandidates() =>
             Selection.gameObjects
                 .Select(g => g.GetComponent<ProBuilderMesh>())
-                .Where(m => m && m.faceCount > 0 && !m.GetComponent<ProBuilderPolygon>() && !m.GetComponent<ProBuilderFloorPlan>() &&
-                            !m.GetComponent<ProBuilderTrim>() && !m.GetComponent<ProBuilderArray>() && !m.GetComponent<ProBuilderStairs>() &&
-                            !m.GetComponent<ProBuilderPillar>());
+                .Where(m => m && m.faceCount > 0 && !m.GetComponent<TsitskiProBuilderPolygon>() && !m.GetComponent<TsitskiProBuilderFloorPlan>() &&
+                            !m.GetComponent<TsitskiProBuilderTrim>() && !m.GetComponent<TsitskiArray>() && !m.GetComponent<TsitskiProBuilderStairs>() &&
+                            !m.GetComponent<TsitskiProBuilderPillar>());
 
         static IEnumerable<ProBuilderMesh> FloorPlanCandidates() =>
             Selection.gameObjects
                 .Select(g => g.GetComponent<ProBuilderMesh>())
-                .Where(m => m && !m.GetComponent<ProBuilderFloorPlan>() && m.faceCount > 0);
-
-        static Vector3 SnapToGrid(Vector3 position, Vector3 grid) => new(
-            grid.x > 0f ? Mathf.Round(position.x / grid.x) * grid.x : position.x,
-            grid.y > 0f ? Mathf.Round(position.y / grid.y) * grid.y : position.y,
-            grid.z > 0f ? Mathf.Round(position.z / grid.z) * grid.z : position.z);
+                .Where(m => m && !m.GetComponent<TsitskiProBuilderFloorPlan>() && m.faceCount > 0);
 
         [MenuItem(MenuRoot + "Modelling/Collapse Edges or Vertices &DEL", true)]
         static bool CollapseSelectionValidate() =>

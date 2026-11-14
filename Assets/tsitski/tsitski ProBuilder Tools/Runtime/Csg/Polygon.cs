@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools.Csg
 {
@@ -13,6 +14,7 @@ namespace Tsitski.ProBuilderTools.Csg
         public Material material;
         public int cutterFace = -1;
         public int smoothingGroup = -1;
+        public float smoothingAngle;
 
         public Polygon(List<Vertex> list, Material mat)
         {

@@ -1,5 +1,6 @@
 using System.Reflection;
 using UnityEngine.ProBuilder;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     public static class ProBuilderCompat {

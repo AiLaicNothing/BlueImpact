@@ -7,7 +7,7 @@ using Tsitski.Core;
 namespace Tsitski.ProBuilderTools {
     [System.Serializable]
     internal class SnapOntoPathOperation : SceneOperation {
-        private const string MenuPath = "Tools/tsitski ProBuilder Tools/Snap Onto Path";
+        private const string MenuPath = "Tools/tsitski/Core/Placement/Snap Onto Path";
         private const int StairsRoundingSegments = 8;
 
         [SerializeField] private float _offset;
@@ -30,7 +30,7 @@ namespace Tsitski.ProBuilderTools {
             public Vector3 up;
         }
 
-        [MenuItem(MenuPath)]
+        [MenuItem(MenuPath, false, 104)]
         private static void SnapOntoPath() => Run(new SnapOntoPathOperation());
 
         [MenuItem(MenuPath, true)]
@@ -158,7 +158,7 @@ namespace Tsitski.ProBuilderTools {
         private static List<PathSegment> FloorPlanSegments(Transform[] selected) {
             List<PathSegment> segments = new();
 
-            foreach (ProBuilderFloorPlan plan in ProBuilderFloorPlan.All) {
+            foreach (TsitskiProBuilderFloorPlan plan in TsitskiProBuilderFloorPlan.All) {
                 if (Excluded(plan, selected))
                     continue;
 
@@ -183,19 +183,19 @@ namespace Tsitski.ProBuilderTools {
                 bool loop = false;
 
                 switch (owner) {
-                    case ProBuilderArray array:
+                    case TsitskiArray array:
                         points = PathUtility.Rounded(array.activePath, array.activePathRadii, array.activeClosed, array.activeRoundingSegments, out loop);
                         break;
-                    case ProBuilderTrim trim:
+                    case TsitskiProBuilderTrim trim:
                         points = PathUtility.Rounded(trim.activePath, trim.activePathRadii, trim.activeClosed, trim.activeRoundingSegments, out loop);
                         break;
-                    case ProBuilderFloorPlan plan:
+                    case TsitskiProBuilderFloorPlan plan:
                         points = PathUtility.Rounded(plan.path, plan.pathRadii, true, plan.activeRoundingSegments, out loop);
                         break;
-                    case ProBuilderStairs stairs:
+                    case TsitskiProBuilderStairs stairs:
                         points = PathUtility.Rounded(stairs.path, stairs.pathRadii, false, StairsRoundingSegments, out loop);
                         break;
-                    case ProBuilderCutter { shape: ProBuilderCutterShape.Path } cutter:
+                    case TsitskiProBuilderCutter { shape: ProBuilderCutterShape.Path } cutter:
                         points = PathUtility.Clean(CutterVolume.PathPoints(cutter));
                         break;
                     default:

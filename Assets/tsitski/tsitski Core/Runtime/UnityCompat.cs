@@ -2,11 +2,13 @@ using UnityEngine;
 
 namespace Tsitski.Core {
     public static class UnityCompat {
-        public static T[] FindAll<T>() where T : Object {
-#if UNITY_2022_2_OR_NEWER
-            return Object.FindObjectsByType<T>(FindObjectsSortMode.None);
+        public static T[] FindAll<T>(bool includeInactive = false) where T : Object {
+#if UNITY_6000_4_OR_NEWER
+            return Object.FindObjectsByType<T>(includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude);
+#elif UNITY_2022_2_OR_NEWER
+            return Object.FindObjectsByType<T>(includeInactive ? FindObjectsInactive.Include : FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 #else
-            return Object.FindObjectsOfType<T>();
+            return Object.FindObjectsOfType<T>(includeInactive);
 #endif
         }
 

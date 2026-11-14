@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     [Serializable]
@@ -15,6 +16,32 @@ namespace Tsitski.ProBuilderTools {
         public PillarProfile(params Vector2[] points) => this.points = new List<Vector2>(points);
 
         public PillarProfile Copy() => new() { points = new List<Vector2>(points ?? new List<Vector2>()), radii = new List<float>(radii ?? new List<float>()) };
+
+        public static float Width(params PillarProfile[] profiles) {
+            float width = 0f;
+            foreach (PillarProfile profile in profiles)
+                if (profile is { valid: true })
+                    foreach (Vector2 p in profile.points)
+                        width = Mathf.Max(width, Mathf.Abs(p.x));
+            return width;
+        }
+
+        public static void SyncWidth(ref float width, ref float lastWidth, params PillarProfile[] profiles) {
+            float measured = Width(profiles);
+            if (lastWidth >= 0f && Mathf.Abs(width - lastWidth) > 1e-5f && measured > 1e-5f) {
+                width = Mathf.Max(0.001f, width);
+                float scale = width / measured;
+                foreach (PillarProfile profile in profiles)
+                    if (profile?.points != null)
+                        for (int i = 0; i < profile.points.Count; i++)
+                            profile.points[i] = new Vector2(profile.points[i].x * scale, profile.points[i].y);
+            }
+            else {
+                width = measured;
+            }
+
+            lastWidth = width;
+        }
 
         public static PillarProfile DefaultBottom() => new(new Vector2(0.3f, 0f), new Vector2(0.3f, 2f / 3f), new Vector2(0.25f, 1f));
         public static PillarProfile DefaultCenter() => new(new Vector2(0.25f, 0f), new Vector2(0.25f, 1f));

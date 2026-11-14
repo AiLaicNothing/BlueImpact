@@ -1,3 +1,4 @@
+using Tsitski.Core;
 namespace Tsitski.ProBuilderTools.Csg
 {
     /// <summary>

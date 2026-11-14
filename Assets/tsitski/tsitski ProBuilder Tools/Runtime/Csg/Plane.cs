@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools.Csg
 {
@@ -133,14 +134,14 @@ namespace Tsitski.ProBuilderTools.Csg
 
                     if (f.Count >= 3)
                     {
-                        var p = new Polygon(f, polygon.material) { cutterFace = polygon.cutterFace, smoothingGroup = polygon.smoothingGroup };
+                        var p = new Polygon(f, polygon.material) { cutterFace = polygon.cutterFace, smoothingGroup = polygon.smoothingGroup, smoothingAngle = polygon.smoothingAngle };
                         if (p.plane.Valid())
                             front.Add(p);
                     }
 
                     if (b.Count >= 3)
                     {
-                        var p = new Polygon(b, polygon.material) { cutterFace = polygon.cutterFace, smoothingGroup = polygon.smoothingGroup };
+                        var p = new Polygon(b, polygon.material) { cutterFace = polygon.cutterFace, smoothingGroup = polygon.smoothingGroup, smoothingAngle = polygon.smoothingAngle };
                         if (p.plane.Valid())
                             back.Add(p);
                     }
