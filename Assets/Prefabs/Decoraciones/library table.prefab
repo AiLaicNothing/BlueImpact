@@ -52,9 +52,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7b39e61a20cce7844ba51ee5ead4b383, type: 2}
     - target: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
       propertyPath: m_Name
       value: library table
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
+      propertyPath: m_Layer
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
+      propertyPath: m_TagString
+      value: Obstacle
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -63,5 +75,33 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5353582276207109029}
   m_SourcePrefab: {fileID: 100100000, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
+--- !u!1 &2813172096187630241 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 4a424e8352b0fa94181e7a61e7101917, type: 3}
+  m_PrefabInstance: {fileID: 3155630035176734704}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5353582276207109029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2813172096187630241}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 1
+  m_Area: 1
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 0
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff
