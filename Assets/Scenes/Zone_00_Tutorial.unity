@@ -64446,10 +64446,15 @@ MonoBehaviour:
   vfxDuration: 1
   vfxOffset: {x: 0, y: 0.5, z: 0}
   doors:
-  - {fileID: 1898919949}
-  - {fileID: 137468518}
+  - transform: {fileID: 1898919949}
+    isClosed: 0
+  - transform: {fileID: 137468518}
+    isClosed: 0
   posY: 5
   doorSpeed: 4.5
+  hasReward: 0
+  reward: {fileID: 0}
+  rewardShowDuration: 2
   closeDoorsEvent:
     cameraID: 102
     duration: 2
@@ -64466,6 +64471,17 @@ MonoBehaviour:
     duration: 1.5
     activePriority: 100
     inactivePriority: -100
+    followTarget: {fileID: 0}
+    lookAtTarget: {fileID: 0}
+    restoreGameplayCamera: 1
+    interruptCurrent: 1
+    pausePlayer: 1
+    mutePlayerAudio: 1
+  cameraShowReward:
+    cameraID: 0
+    duration: 3
+    activePriority: 100
+    inactivePriority: 0
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
     restoreGameplayCamera: 1
