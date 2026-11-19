@@ -6,6 +6,17 @@ using UnityEngine.SceneManagement;
 
 public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 {
+    [System.Serializable]
+    public struct Door
+    {
+        [Tooltip("Door transform. Place it in its CLOSED position in the scene.")]
+        public Transform transform;
+
+        [Tooltip("If true, this door stays closed from the beginning and only opens " +
+                 "when the event is completed (shortcut reward).")]
+        public bool isClosed;
+    }
+
     [Header("Save System")]
     [SerializeField] private WorldEvent_Data eventData;
 
@@ -19,16 +30,23 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     [Header("Spawn VFX")]
     [SerializeField] private GameObject spawnVfx;
     [SerializeField] private float vfxDuration = 1f;
-    [SerializeField] private Vector3 vfxOffset = new Vector3(0,0.5f,0);
+    [SerializeField] private Vector3 vfxOffset = new Vector3(0, 0.5f, 0);
 
     [Header("Doors")]
-    [SerializeField] private Transform[] doors;
+    [SerializeField] private Door[] doors;
     [SerializeField] private float posY = 4f;
     [SerializeField] private float doorSpeed = 2f;
+
+    [Header("Reward")]
+    [SerializeField] private bool hasReward;
+    [SerializeField] private GameObject reward;
+    [Tooltip("How long the cutscene holds while the reward camera plays.")]
+    [SerializeField] private float rewardShowDuration = 2f;
 
     [Header("Camera Events")]
     [SerializeField] private CameraRequest closeDoorsEvent;
     [SerializeField] private CameraRequest cameraShowSpawn;
+    [SerializeField] private CameraRequest cameraShowReward;
 
     private Vector3[] closedLocalPositions;
 
@@ -47,14 +65,22 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     {
         // Doors are already positioned CLOSED in the scene.
         // Remember their original local positions.
+        if (doors == null) doors = new Door[0];
+
         closedLocalPositions = new Vector3[doors.Length];
 
         for (int i = 0; i < doors.Length; i++)
         {
-            if (doors[i] != null)
+            if (doors[i].transform != null)
             {
-                closedLocalPositions[i] = doors[i].localPosition;
+                closedLocalPositions[i] = doors[i].transform.localPosition;
             }
+        }
+
+        // Reward stays hidden until the event is completed.
+        if (reward != null)
+        {
+            reward.SetActive(false);
         }
     }
 
@@ -106,9 +132,15 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
             hasFinished = Event_Manager.Instance.IsCompleted(eventData);
         }
 
-        // Doors are always OPEN when the event is inactive.
-        // This does not play any animation or camera event.
-        SetDoorsInstant(true);
+        // Inactive event:
+        // - Normal doors are OPEN.
+        // - "isClosed" doors stay CLOSED until the event is completed.
+        // Completed event: every door is OPEN.
+        // No animation or camera event is played here.
+        SetDoorsInstant(true, includeLockedDoors: hasFinished);
+
+        // Completed event: reward is already revealed.
+        SetRewardActive(hasFinished);
 
         Debug.Log($"[AmbushEvent] State restored. Completed: {hasFinished}", this);
     }
@@ -162,8 +194,8 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
             CameraEventRelay.Instance.Play(closeDoorsEvent);
         }
 
-        // STEP 2: Close doors.
-        yield return MoveDoors(false);
+        // STEP 2: Close all doors ("isClosed" doors are already closed).
+        yield return MoveDoors(false, includeLockedDoors: true);
 
         // STEP 3: Spawn enemies and play spawn camera event.
         yield return StartCoroutine(StartWave());
@@ -187,27 +219,72 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
         // STEP 6: Enter cutscene mode.
         SetCutsceneMode(true);
 
-        // STEP 7: Open doors.
-        yield return MoveDoors(true);
+        // STEP 7: Open ALL doors, including the "isClosed" shortcut doors.
+        yield return MoveDoors(true, includeLockedDoors: true);
 
-        // STEP 8: Return control to the player.
+        // STEP 8: Reveal the reward.
+        yield return ShowReward();
+
+        // STEP 9: Return control to the player.
         SetCutsceneMode(false);
 
-        // STEP 9: Mark the event as completed.
+        // STEP 10: Mark the event as completed.
         hasFinished = true;
         hasStarted = false;
 
-        // STEP 10: Save permanent completion.
+        // STEP 11: Save permanent completion.
         SaveEventState();
 
         Debug.Log("[AmbushEvent] Event completed.");
     }
 
     // =========================
+    // REWARD
+    // =========================
+
+    private IEnumerator ShowReward()
+    {
+        if (!hasReward || reward == null) yield break;
+
+        SetRewardActive(true);
+
+        if (cameraShowReward != null && CameraEventRelay.Instance != null)
+        {
+            CameraEventRelay.Instance.Play(cameraShowReward);
+
+            yield return new WaitForSeconds(rewardShowDuration);
+        }
+
+        Debug.Log("[AmbushEvent] Reward revealed.");
+    }
+
+    private void SetRewardActive(bool active)
+    {
+        if (!hasReward || reward == null) return;
+
+        reward.SetActive(active);
+    }
+
+    // =========================
     // DOOR MOVEMENT
     // =========================
 
-    private IEnumerator MoveDoors(bool open)
+    // Returns the local Y the door at index i should move to.
+    // open = false            -> every door goes CLOSED.
+    // open = true             -> normal doors go OPEN.
+    // includeLockedDoors=true -> "isClosed" doors also go OPEN.
+    private float GetTargetY(int i, bool open, bool includeLockedDoors)
+    {
+        float targetY = closedLocalPositions[i].y;
+
+        bool shouldOpen = open && (includeLockedDoors || !doors[i].isClosed);
+
+        if (shouldOpen) targetY += posY;
+
+        return targetY;
+    }
+
+    private IEnumerator MoveDoors(bool open, bool includeLockedDoors)
     {
         if (doors == null || closedLocalPositions == null) yield break;
 
@@ -219,21 +296,17 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
             for (int i = 0; i < doors.Length; i++)
             {
-                Transform door = doors[i];
+                Transform door = doors[i].transform;
 
                 if (door == null) continue;
 
-                // Original position is the CLOSED position.
-                float targetY = closedLocalPositions[i].y;
-
-                // Add the offset to calculate OPEN position.
-                if (open) targetY += posY;
+                float targetY = GetTargetY(i, open, includeLockedDoors);
 
                 Vector3 currentPosition = door.localPosition;
 
                 float newY = Mathf.MoveTowards(currentPosition.y, targetY, Mathf.Max(0.01f, doorSpeed) * Time.deltaTime);
 
-                door.localPosition = new Vector3(currentPosition.x, newY,currentPosition.z);
+                door.localPosition = new Vector3(currentPosition.x, newY, currentPosition.z);
 
                 if (Mathf.Abs(newY - targetY) > 0.001f)
                 {
@@ -245,22 +318,21 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
         }
 
         // Ensure doors reach their exact destinations.
-        SetDoorsInstant(open);
+        SetDoorsInstant(open, includeLockedDoors);
     }
 
-    private void SetDoorsInstant(bool open)
+    private void SetDoorsInstant(bool open, bool includeLockedDoors)
     {
         if (doors == null || closedLocalPositions == null) return;
 
         for (int i = 0; i < doors.Length; i++)
         {
-            Transform door = doors[i];
+            Transform door = doors[i].transform;
 
             if (door == null) continue;
 
             Vector3 position = closedLocalPositions[i];
-
-            if (open) position.y += posY;
+            position.y = GetTargetY(i, open, includeLockedDoors);
 
             door.localPosition = position;
         }
@@ -286,14 +358,11 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
             // Spawn visual effect.
             if (spawnVfx != null && entry.enemyPrefab != null && entry.spawnPoint != null)
             {
-                Debug.Log("VfxAmbush1");
-                if (entry.enemyPrefab == null || entry.spawnPoint == null) yield return null;
-                Debug.Log("VfxAmbush2");
                 GameObject vfx = Instantiate(spawnVfx, entry.spawnPoint.position + vfxOffset, entry.spawnPoint.rotation);
 
                 MoveSpawnedObjectToEventScene(vfx);
 
-                Destroy(vfx, vfxDuration +2);
+                Destroy(vfx, vfxDuration + 2);
             }
             yield return new WaitForSeconds(vfxDuration / 2);
             Spawn(i);
@@ -304,8 +373,7 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     public int CountLevelEnemies()
     {
         int n = 0;
-        foreach (SpawnEntry e in spawnEntries)
-            if (e.enemyPrefab != null && e.countsForLevel) n++;
+        foreach (SpawnEntry e in spawnEntries) if (e.enemyPrefab != null && e.countsForLevel) n++;
         return n;
     }
 
@@ -315,7 +383,7 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
         SpawnEntry entry = spawnEntries[index];
 
-        if (entry.enemyPrefab == null || entry.spawnPoint == null)  return;
+        if (entry.enemyPrefab == null || entry.spawnPoint == null) return;
 
         GameObject enemyObj = Instantiate(entry.enemyPrefab, entry.spawnPoint.position, entry.spawnPoint.rotation);
 
@@ -374,8 +442,7 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     {
         if (GameModeManager.Instance != null)
         {
-            GameModeManager.Instance.SetMode(cutscene? GameMode.Cutscene : GameMode.Gameplay
-            );
+            GameModeManager.Instance.SetMode(cutscene ? GameMode.Cutscene : GameMode.Gameplay);
         }
 
         if (playerControl != null)
@@ -417,8 +484,11 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
         ResetSpawnEntries();
 
-        // Return doors to their OPEN positions.
-        SetDoorsInstant(true);
+        // Normal doors return OPEN, "isClosed" doors stay CLOSED.
+        SetDoorsInstant(true, includeLockedDoors: false);
+
+        // Reward stays hidden until completion.
+        SetRewardActive(false);
 
         // Allow the player to retry.
         hasStarted = false;
