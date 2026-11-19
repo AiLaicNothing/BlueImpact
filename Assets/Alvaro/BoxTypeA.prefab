@@ -19,7 +19,7 @@ GameObject:
   m_TagString: Wall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &7791855062385182930
 Transform:
@@ -2684,12 +2684,12 @@ GameObject:
   - component: {fileID: 7832140042811424754}
   - component: {fileID: 2144814883983627620}
   - component: {fileID: 1353707174762050692}
-  m_Layer: 0
+  m_Layer: 12
   m_Name: BoxTypeA
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &7832140042811424754
 Transform:
@@ -2761,7 +2761,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 16
   m_IsActive: 1
 --- !u!4 &8912433134025030546
 Transform:
@@ -2786,6 +2786,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7832140042811424754}
     m_Modifications:
+    - target: {fileID: 2388295649631624808, guid: f50c21aa67b759a4982cc66f42acffcb, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 4139723317556968751, guid: f50c21aa67b759a4982cc66f42acffcb, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0
@@ -2798,9 +2802,17 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: -0
       objectReference: {fileID: 0}
+    - target: {fileID: 5106900983062191093, guid: f50c21aa67b759a4982cc66f42acffcb, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 6408229011468818657, guid: f50c21aa67b759a4982cc66f42acffcb, type: 3}
       propertyPath: m_Name
       value: vfx fire
+      objectReference: {fileID: 0}
+    - target: {fileID: 6408229011468818657, guid: f50c21aa67b759a4982cc66f42acffcb, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 9025872497168671212, guid: f50c21aa67b759a4982cc66f42acffcb, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2920,6 +2932,10 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: ad39cd6407721e44c917365671959250, type: 2}
+    - target: {fileID: -4767028990906104261, guid: 51a13505de2b7864c92dda0cc9bbfc64, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: -4339808860622743915, guid: 51a13505de2b7864c92dda0cc9bbfc64, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2960,10 +2976,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Trampa de Proyectiles
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 51a13505de2b7864c92dda0cc9bbfc64, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 4051416021442577287, guid: 51a13505de2b7864c92dda0cc9bbfc64, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 4074170249256659550, guid: 51a13505de2b7864c92dda0cc9bbfc64, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: b16eb73262201f94f86de525acd8e317, type: 2}
+    - target: {fileID: 5709967459703819854, guid: 51a13505de2b7864c92dda0cc9bbfc64, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 16
+      objectReference: {fileID: 0}
     - target: {fileID: 6250649859461354317, guid: 51a13505de2b7864c92dda0cc9bbfc64, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
