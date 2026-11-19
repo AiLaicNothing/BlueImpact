@@ -282,6 +282,9 @@ public class BossEvent : MonoBehaviour
 
     private IEnumerator DoBarrier(bool isActive)
     {
+
+        if (barrier == null) yield return null;
+
         if (barrierCamera != null)
         {
             CameraEventRelay.Instance.Play(barrierCamera);

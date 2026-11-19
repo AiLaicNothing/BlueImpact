@@ -15,9 +15,26 @@ namespace Tsitski.ProBuilderTools {
         private const float MinMitre = 0.25f;
 
 
-        public static bool IsPath(ProBuilderCutter cutter) => cutter.shape == ProBuilderCutterShape.Path;
+        public static bool IsPath(TsitskiProBuilderCutter cutter) => cutter.shape == ProBuilderCutterShape.Path;
 
-        public static Bounds LocalBounds(ProBuilderCutter cutter) {
+        public static bool IsMesh(TsitskiProBuilderCutter cutter) => cutter.shape == ProBuilderCutterShape.Mesh;
+
+        public static int MeshHash(Mesh mesh) {
+            if (!mesh)
+                return 0;
+            HashCode hash = new();
+            hash.Add(mesh.subMeshCount);
+            foreach (Vector3 vertex in mesh.vertices)
+                hash.Add(vertex);
+            for (int s = 0; s < mesh.subMeshCount; s++)
+                foreach (int index in mesh.GetTriangles(s))
+                    hash.Add(index);
+            return hash.ToHashCode();
+        }
+
+        public static Bounds LocalBounds(TsitskiProBuilderCutter cutter) {
+            if (IsMesh(cutter))
+                return cutter.shapeMesh ? cutter.shapeMesh.bounds : new Bounds(Vector3.zero, Vector3.zero);
             if (!IsPath(cutter))
                 return new Bounds(Vector3.zero, Vector3.one);
 
@@ -34,9 +51,9 @@ namespace Tsitski.ProBuilderTools {
             return bounds;
         }
 
-        public static List<Vector3> PathPoints(ProBuilderCutter cutter) => PathPoints(cutter, out _);
+        public static List<Vector3> PathPoints(TsitskiProBuilderCutter cutter) => PathPoints(cutter, out _);
 
-        public static List<Vector3> PathPoints(ProBuilderCutter cutter, out List<Quaternion> rotations) {
+        public static List<Vector3> PathPoints(TsitskiProBuilderCutter cutter, out List<Quaternion> rotations) {
             List<Vector3> points = new();
             rotations = new List<Quaternion>();
             if (cutter.pathPoints == null)
@@ -61,12 +78,12 @@ namespace Tsitski.ProBuilderTools {
             return up.sqrMagnitude > 1e-10f ? up.normalized : Vector3.up;
         }
 
-        private static float HalfWidth(ProBuilderCutter cutter) => Mathf.Max(MinSize, cutter.pathWidth) * 0.5f;
+        private static float HalfWidth(TsitskiProBuilderCutter cutter) => Mathf.Max(MinSize, cutter.pathWidth) * 0.5f;
 
-        private static float HalfHeight(ProBuilderCutter cutter) => Mathf.Max(MinSize, cutter.pathHeight) * 0.5f;
+        private static float HalfHeight(TsitskiProBuilderCutter cutter) => Mathf.Max(MinSize, cutter.pathHeight) * 0.5f;
 
-        public static List<Vector4[]> Cells(ProBuilderCutter cutter) {
-            if (IsPath(cutter))
+        public static List<Vector4[]> Cells(TsitskiProBuilderCutter cutter) {
+            if (IsPath(cutter) || IsMesh(cutter))
                 return PathTube(cutter).cells;
 
             List<Vector4[]> cells = new();
@@ -87,8 +104,8 @@ namespace Tsitski.ProBuilderTools {
             return cells;
         }
 
-        public static List<CutterFace> Faces(ProBuilderCutter cutter) {
-            if (IsPath(cutter))
+        public static List<CutterFace> Faces(TsitskiProBuilderCutter cutter) {
+            if (IsPath(cutter) || IsMesh(cutter))
                 return PathFaces(cutter);
 
             List<CutterFace> faces = new();
@@ -116,21 +133,23 @@ namespace Tsitski.ProBuilderTools {
             return faces;
         }
 
-        private static List<CutterFace> PathFaces(ProBuilderCutter cutter) => PathTube(cutter).faces;
+        private static List<CutterFace> PathFaces(TsitskiProBuilderCutter cutter) => PathTube(cutter).faces;
 
-        private static Tube PathTube(ProBuilderCutter cutter) {
+        private static Tube PathTube(TsitskiProBuilderCutter cutter) {
             int hash = PathHash(cutter);
             if (cutter.pathTubeCache is Tube cached && cutter.pathFaceHash == hash)
                 return cached;
 
-            Tube tube = BuildTube(cutter);
+            Tube tube = IsMesh(cutter) ? BuildMeshVolume(cutter.shapeMesh) : BuildTube(cutter);
             cutter.pathTubeCache = tube;
             cutter.pathFaceHash = hash;
             return tube;
         }
 
-        private static int PathHash(ProBuilderCutter cutter) {
+        private static int PathHash(TsitskiProBuilderCutter cutter) {
             HashCode hash = new();
+            hash.Add((int)cutter.shape);
+            hash.Add(MeshHash(cutter.shapeMesh));
             hash.Add(cutter.pathWidth);
             hash.Add(cutter.pathHeight);
             hash.Add(cutter.cornerSegments);
@@ -152,9 +171,9 @@ namespace Tsitski.ProBuilderTools {
             public readonly List<Vector3[]> sections = new();
         }
 
-        public static IReadOnlyList<Vector3[]> PathSections(ProBuilderCutter cutter) => PathTube(cutter).sections;
+        public static IReadOnlyList<Vector3[]> PathSections(TsitskiProBuilderCutter cutter) => PathTube(cutter).sections;
 
-        private static Tube BuildTube(ProBuilderCutter cutter) {
+        private static Tube BuildTube(TsitskiProBuilderCutter cutter) {
             Tube tube = new();
             List<Vector3> points = PathPoints(cutter, out List<Quaternion> rotations);
             if (points.Count < 2)
@@ -219,6 +238,86 @@ namespace Tsitski.ProBuilderTools {
             AddCap(tube, -tangents[0], 5, sections[0]);
             AddCap(tube, tangents[count - 1], 4, sections[count - 1]);
             return tube;
+        }
+
+        private static Tube BuildMeshVolume(Mesh mesh) {
+            Tube tube = new();
+            if (!mesh)
+                return tube;
+
+            Vector3[] vertices = mesh.vertices;
+            List<(Vector3 a, Vector3 b, Vector3 c, int part)> triangles = new();
+            for (int part = 0; part < mesh.subMeshCount; part++) {
+                int[] indices = mesh.GetTriangles(part);
+                if (indices.Length < 12)
+                    continue;
+
+                Vector3 centroid = Vector3.zero;
+                foreach (int index in indices)
+                    centroid += vertices[index];
+                centroid /= indices.Length;
+
+                List<Vector4> planes = new();
+                for (int t = 0; t + 2 < indices.Length; t += 3) {
+                    Vector3 a = vertices[indices[t]], b = vertices[indices[t + 1]], c = vertices[indices[t + 2]];
+                    Vector3 normal = Vector3.Cross(b - a, c - a);
+                    if (normal.sqrMagnitude < 1e-12f)
+                        continue;
+                    normal.Normalize();
+                    if (Vector3.Dot(normal, a - centroid) < 0f) {
+                        normal = -normal;
+                        (b, c) = (c, b);
+                    }
+
+                    triangles.Add((a, b, c, part));
+                    Vector4 plane = Plane(normal, Vector3.Dot(normal, a));
+                    if (!planes.Any(p => Vector3.Dot(new Vector3(p.x, p.y, p.z), normal) > 0.99999f && Mathf.Abs(p.w - plane.w) < 1e-4f))
+                        planes.Add(plane);
+                }
+
+                if (planes.Count >= 4 && Bounded(planes))
+                    tube.cells.Add(planes.ToArray());
+            }
+
+            Vector3Int Key(Vector3 p) => new(Mathf.RoundToInt(p.x * 1e4f), Mathf.RoundToInt(p.y * 1e4f), Mathf.RoundToInt(p.z * 1e4f));
+            string Shape((Vector3 a, Vector3 b, Vector3 c, int part) t) =>
+                string.Join("|", new[] { Key(t.a), Key(t.b), Key(t.c) }.Select(k => $"{k.x},{k.y},{k.z}").OrderBy(k => k, StringComparer.Ordinal));
+
+            Dictionary<string, HashSet<int>> owners = new();
+            foreach (var t in triangles) {
+                string shape = Shape(t);
+                if (!owners.TryGetValue(shape, out HashSet<int> parts))
+                    owners[shape] = parts = new HashSet<int>();
+                parts.Add(t.part);
+            }
+
+            foreach (var t in triangles) {
+                if (owners[Shape(t)].Count > 1)
+                    continue;
+
+                Vector3 normal = Vector3.Cross(t.b - t.a, t.c - t.a).normalized;
+                Vector3 size = new(Mathf.Abs(normal.x), Mathf.Abs(normal.y), Mathf.Abs(normal.z));
+                int face = size.x >= size.y && size.x >= size.z ? normal.x > 0f ? 0 : 1
+                    : size.y >= size.z ? normal.y > 0f ? 2 : 3
+                    : normal.z > 0f ? 4 : 5;
+                tube.faces.Add(new CutterFace { corners = new List<Vector3> { t.a, t.b, t.c }, face = face });
+            }
+
+            return tube;
+        }
+
+        private static bool Bounded(List<Vector4> planes) {
+            for (int x = -1; x <= 1; x++)
+            for (int y = -1; y <= 1; y++)
+            for (int z = -1; z <= 1; z++) {
+                Vector3 direction = new(x, y, z);
+                if (direction == Vector3.zero)
+                    continue;
+                direction.Normalize();
+                if (!planes.Any(p => Vector3.Dot(new Vector3(p.x, p.y, p.z), direction) > 0.05f))
+                    return false;
+            }
+            return true;
         }
 
         private static void AddTriangle(Tube tube, Vector3 outward, int face, Vector3 a, Vector3 b, Vector3 c) {

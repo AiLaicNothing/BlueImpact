@@ -9,7 +9,15 @@ namespace Tsitski.ProBuilderTools {
         Cylinder = 1,
         Polygon = 2,
         Explosion = 3,
-        Path = 4
+        Path = 4,
+        Mesh = 5
+    }
+
+    public enum ProBuilderCutFaces {
+        First = 0,
+        Second = 1,
+        Shared = 2,
+        Self = 3
     }
 
     public enum ProBuilderCutMode {
@@ -31,13 +39,13 @@ namespace Tsitski.ProBuilderTools {
         public List<float> polygonRadii;
         public Vector3 size;
 
-        public static CutterShapeSettings From(ProBuilderCutter c) => new() {
+        public static CutterShapeSettings From(TsitskiProBuilderCutter c) => new() {
             shape = c.shape, cornerRadius = c.cornerRadius, cornerSegments = c.cornerSegments, cylinderSegments = c.cylinderSegments,
             explosionSeed = c.explosionSeed, explosionSpikes = c.explosionSpikes, explosionMinorSpikes = c.explosionMinorSpikes,
             explosionJaggedness = c.explosionJaggedness, polygonPoints = c.polygonPoints, polygonRadii = c.polygonRadii, size = c.size
         };
 
-        public static CutterShapeSettings From(ProBuilderCutterStats c) => new() {
+        public static CutterShapeSettings From(TsitskiProBuilderCutterStats c) => new() {
             shape = c.shape, cornerRadius = c.cornerRadius, cornerSegments = c.cornerSegments, cylinderSegments = c.cylinderSegments,
             explosionSeed = c.explosionSeed, explosionSpikes = c.explosionSpikes, explosionMinorSpikes = c.explosionMinorSpikes,
             explosionJaggedness = c.explosionJaggedness, polygonPoints = c.polygonPoints, polygonRadii = c.polygonRadii, size = c.size
@@ -49,9 +57,9 @@ namespace Tsitski.ProBuilderTools {
             new(-0.5f, -0.5f), new(0.5f, -0.5f), new(0.5f, 0.5f), new(-0.5f, 0.5f)
         };
 
-        public static List<Vector2> Build(ProBuilderCutter cutter) => Build(CutterShapeSettings.From(cutter));
+        public static List<Vector2> Build(TsitskiProBuilderCutter cutter) => Build(CutterShapeSettings.From(cutter));
 
-        public static List<Vector2> Build(ProBuilderCutterStats stats) => Build(CutterShapeSettings.From(stats));
+        public static List<Vector2> Build(TsitskiProBuilderCutterStats stats) => Build(CutterShapeSettings.From(stats));
 
         public static List<Vector2> Build(CutterShapeSettings cutter) {
             List<Vector2> outline = new();
@@ -68,6 +76,7 @@ namespace Tsitski.ProBuilderTools {
                     Explosion(cutter, outline);
                     break;
                 case ProBuilderCutterShape.Path:
+                case ProBuilderCutterShape.Mesh:
                     return outline;
                 case ProBuilderCutterShape.Polygon:
                     if (cutter.polygonPoints != null)

@@ -9,7 +9,9 @@ namespace Tsitski.Core {
         public List<Vector3> points;
         public List<float> radii;
         public List<Quaternion> rotations;
+        public List<float> values;
         public string undoName;
+        public bool deletePath;
     }
 
     public class PathPointHandles {
@@ -22,6 +24,8 @@ namespace Tsitski.Core {
         public bool allowRounding = true;
         public bool editableCount = true;
         public bool transformHandles = true;
+        public bool deletesPath;
+        public int openMinimum = 1;
         public event Action Selected;
 
         private readonly Action _repaint;
@@ -31,17 +35,23 @@ namespace Tsitski.Core {
         private Quaternion _rotation = Quaternion.identity;
         private Vector3 _scale = Vector3.one;
         private List<Quaternion> _rotations;
+        private List<float> _values;
 
         public PathPointHandles(Action repaint) => _repaint = repaint;
 
         public PathEdit Do(IReadOnlyList<Vector3> points, IReadOnlyList<float> sourceRadii, bool closed, Quaternion worldRotation,
-            IReadOnlyList<Quaternion> sourceRotations = null) {
+            IReadOnlyList<Quaternion> sourceRotations = null, IReadOnlyList<float> sourceValues = null) {
             _rotations = sourceRotations == null
                 ? null
                 : Enumerable.Range(0, points.Count).Select(i => i < sourceRotations.Count ? sourceRotations[i] : Quaternion.identity).ToList();
+            _values = sourceValues == null
+                ? null
+                : Enumerable.Range(0, points.Count).Select(i => i < sourceValues.Count ? sourceValues[i] : 0f).ToList();
             PathEdit edit = DoEdit(points, sourceRadii, closed, worldRotation);
-            if (edit != null)
+            if (edit != null) {
                 edit.rotations = _rotations;
+                edit.values = _values;
+            }
             return edit;
         }
 
@@ -59,7 +69,7 @@ namespace Tsitski.Core {
 
             List<float> radii = PointRounding.Synced(sourceRadii, points.Count);
             Event e = Event.current;
-            int minimum = closed ? 3 : 1;
+            int minimum = closed ? 3 : Mathf.Max(1, openMinimum);
 
             PathEdit command = editableCount ? Commands(points, radii, e, minimum) : null;
             if (command != null)
@@ -149,7 +159,14 @@ namespace Tsitski.Core {
                     _rotations[i] = turned * _rotations[i];
 
             if (_pasted is { } pasted && pasted.Matches(selected, transformed.Count)) {
-                PasteOrder.Reorder(transformed, radii, ref pasted, closed, Vector3.Distance, selected, _rotations);
+                if (_values != null) {
+                    List<(Vector3 point, float value)> pairs = transformed.Select((p, i) => (p, _values[i])).ToList();
+                    PasteOrder.Reorder(pairs, radii, ref pasted, closed, (a, b) => Vector3.Distance(a.point, b.point), selected, _rotations);
+                    transformed = pairs.Select(p => p.point).ToList();
+                    _values = pairs.Select(p => p.value).ToList();
+                }
+                else
+                    PasteOrder.Reorder(transformed, radii, ref pasted, closed, Vector3.Distance, selected, _rotations);
                 _pasted = pasted;
                 _pasteDragged = true;
             }
@@ -176,10 +193,17 @@ namespace Tsitski.Core {
             return any;
         }
 
+        public void SelectAll(int count) {
+            SetSelection(count, Enumerable.Range(0, count).ToArray());
+            if (count > 0)
+                Selected?.Invoke();
+        }
+
         private PathEdit Insert(IReadOnlyList<Vector3> points, List<float> radii, int index, Vector3 position, string undoName) {
             List<Vector3> inserted = new(points);
             inserted.Insert(index, position);
             radii.Insert(index, 0f);
+            _values?.Insert(index, 0f);
             _rotations?.Insert(index, _rotations.Count == 0 ? Quaternion.identity : _rotations[Mathf.Clamp(index - 1, 0, _rotations.Count - 1)]);
             SetSelection(inserted.Count, index);
             Selected?.Invoke();
@@ -202,6 +226,8 @@ namespace Tsitski.Core {
             Handles.color = ButtonColor;
             return Handles.Button(position, Quaternion.identity, size, size * 1.5f, Handles.DotHandleCap);
         }
+
+        public void Select(int count, IEnumerable<int> indices) => SetSelection(count, indices.ToArray());
 
         private void SetSelection(int count, params int[] indices) {
             _pasted = null;
@@ -228,6 +254,7 @@ namespace Tsitski.Core {
                 List<Vector3> result = new(points);
                 result.InsertRange(insertAt, pasted);
                 radii.InsertRange(insertAt, Enumerable.Repeat(0f, pasted.Count));
+                _values?.InsertRange(insertAt, Enumerable.Repeat(0f, pasted.Count));
                 _rotations?.InsertRange(insertAt, Enumerable.Repeat(Quaternion.identity, pasted.Count));
                 SetSelection(result.Count, Enumerable.Range(insertAt, pasted.Count).ToArray());
                 _pasted = new PastedPoints { anchor = insertAt - 1, start = insertAt, count = pasted.Count };
@@ -266,12 +293,22 @@ namespace Tsitski.Core {
                 return null;
             }
 
-            if (!delete || points.Count - selected.Count < minimum)
+            if (!delete)
                 return null;
+
+            if (points.Count - selected.Count < minimum) {
+                if (!deletesPath)
+                    return null;
+
+                selected.Clear();
+                _pasted = null;
+                return new PathEdit { points = new List<Vector3>(), radii = new List<float>(), deletePath = true, undoName = "Delete Path" };
+            }
 
             List<Vector3> remaining = points.Where((_, i) => !selected.Contains(i)).ToList();
             List<float> remainingRadii = radii.Where((_, i) => !selected.Contains(i)).ToList();
             _rotations = _rotations?.Where((_, i) => !selected.Contains(i)).ToList();
+            _values = _values?.Where((_, i) => !selected.Contains(i)).ToList();
             SetSelection(remaining.Count);
             return new PathEdit { points = remaining, radii = remainingRadii, undoName = "Delete Path Points" };
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.ProBuilder;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     [Serializable]
@@ -93,8 +94,7 @@ namespace Tsitski.ProBuilderTools {
 
             mesh.transform.localRotation = Quaternion.identity;
             mesh.transform.localScale = Vector3.one;
-            mesh.RebuildWithPositionsAndFaces(outPositions, outFaces);
-            mesh.textures = outUvs;
+            ManualUvs.Rebuild(mesh, outPositions, outFaces, outUvs);
             mesh.ToMesh();
             mesh.Refresh();
 

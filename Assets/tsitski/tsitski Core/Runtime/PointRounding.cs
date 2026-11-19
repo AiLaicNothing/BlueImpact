@@ -18,7 +18,7 @@ namespace Tsitski.Core {
             Round(points.Select(p => (Vector3)p).ToList(), radii, closed, segments).Select(p => (Vector2)p).ToList();
 
         public static List<Vector3> Round(IReadOnlyList<Vector3> points, IReadOnlyList<float> radii, bool closed, int segments,
-            List<int> sources = null) {
+            List<int> sources = null, System.Func<float, int> segmentsForArc = null) {
             List<Vector3> result = new();
             int count = points.Count;
             segments = Mathf.Max(1, segments);
@@ -56,9 +56,10 @@ namespace Tsitski.Core {
                 Vector3 to = point + v * tangent - center;
                 float sweep = Mathf.PI - angle;
                 float sinSweep = Mathf.Sin(sweep);
+                int arcSegments = segmentsForArc != null ? Mathf.Max(1, segmentsForArc(radius * sweep)) : segments;
 
-                for (int k = 0; k <= segments; k++) {
-                    float t = (float)k / segments;
+                for (int k = 0; k <= arcSegments; k++) {
+                    float t = (float)k / arcSegments;
                     result.Add(center + (Mathf.Sin((1f - t) * sweep) * from + Mathf.Sin(t * sweep) * to) / sinSweep);
                     sources?.Add(i);
                 }

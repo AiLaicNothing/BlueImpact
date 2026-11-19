@@ -5,6 +5,7 @@ using UnityEditor.ProBuilder;
 using UnityEngine;
 using UnityEngine.ProBuilder;
 using EditorUtility = UnityEditor.EditorUtility;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     [System.Serializable]

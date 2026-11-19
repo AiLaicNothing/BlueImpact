@@ -1,5 +1,18 @@
+using Tsitski.Core;
 namespace Tsitski.ProBuilderTools {
     internal static class Tooltips {
+        public const string MaterialSetupType = "Simple puts one material on every face. Complex sorts faces into inside and outside walls, floors and roofs.";
+        public const string SimpleMaterial = "Material put on every face of the selected ProBuilder meshes. Empty keeps their materials.";
+        public const string InsideWall = "Walls facing into a closed space. Empty keeps those faces' materials.";
+        public const string OutsideWall = "Walls facing out into the open. Empty keeps those faces' materials.";
+        public const string InsideTrim = "Whole ProBuilder Trims, Arrays and Pillars that are mostly inside. Empty uses Inside Wall.";
+        public const string OutsideTrim = "Whole ProBuilder Trims, Arrays and Pillars that are mostly outside. Empty uses Outside Wall.";
+        public const string InsideFloor = "Upward faces with something above them, like room floors. Empty keeps those faces' materials.";
+        public const string OutsideFloor = "Upward faces open to the sky that aren't part of a roof, and undersides with nothing below. Empty keeps those faces' materials.";
+        public const string InsideRoof = "Downward faces with something below them, like ceilings, and the underside of ProBuilder Roofs. Empty keeps those faces' materials.";
+        public const string OutsideRoof = "The top of ProBuilder Roofs. Empty keeps those faces' materials.";
+        public const string RealBlendLayer = "Real Blend layer these faces get filled with (when Real Blend is installed). Base is (0,0,0,0), Layer 1 is green (0,1,0,0), Layer 2 is blue (0,0,1,0).";
+        public const string InsideDistance = "How far a face looks along its normal for other geometry when deciding whether it's inside.";
         public const string PathEditing =
             "Edited in the Scene view. Click a point to select it, Shift+click or Shift+drag to select several. Selected points follow the Move / Rotate / Scale tool. " +
             "Click an edge midpoint to insert a point, click the dot past an open end to extend the path. " +
@@ -44,6 +57,7 @@ namespace Tsitski.ProBuilderTools {
         public const string TrimPath = "Path the profile is swept along. " + PathEditing + Regenerated;
         public const string CapEnds = "Close the ends of an open trim.";
         public const string SmoothingAngle = "Faces meeting at less than this angle are shaded smooth.";
+        public const string CutterSmoothingAngle = "Generated faces meeting at less than this angle are shaded smooth. 0 keeps every edge hard.";
         public const string LoopCutStep = "Distance between loop cuts along each segment, smaller means more cuts. Below 0.1 turns them off.";
         public const string RoundBevel = "Segments used to round each path corner, 0 keeps sharp mitred corners. The profile itself is unchanged.";
         public const string FlattenAngledEnds =
@@ -56,6 +70,9 @@ namespace Tsitski.ProBuilderTools {
         public const string FloorPlanPath =
             "Path the walls are built along, in local space. Generated from the Floor when one is assigned, otherwise " + PathEditing + Regenerated;
         public const string WallHeight = "Height of the walls.";
+        public const string StoreHeight = "Use the height stored here for every object using the asset. Off lets each object keep its own height.";
+        public const string StoreThickness = "Use the thickness stored here for every object using the asset. Off lets each object keep its own thickness.";
+        public const string StoreWidth = "Use the width stored here on every point of every object using the asset. Off lets each point keep its own width.";
         public const string WallThickness = "Thickness of the walls.";
         public const string Alignment =
             "Inside keeps the wall's outer face flush with the floor edge, Outside puts the wall's inner face there, Center straddles it.";
@@ -65,16 +82,53 @@ namespace Tsitski.ProBuilderTools {
         public const string VerticalLoopCutStep = "Distance between horizontal loop cuts up the walls, smaller means more cuts. Below 0.1 turns them off.";
         public const string FloorPlanStats = "Shared Height, Thickness, Alignment, corner and loop cut settings, editing them updates every floor plan using the asset.";
 
-        public const string PolygonStats = "Shared Thickness, and the outline and holes when Save Polygon is on, editing them updates every polygon using the asset.";
-        public const string PolygonThickness = "How far the polygon is extruded up from its outline.";
+        public const string PolygonStats = "Shared Thickness, Subdivision Step, and the outline and holes when Save Polygon is on, editing them updates every polygon using the asset.";
+        public const string PolygonThickness = "How far the polygon is extruded from its outline, negative extrudes downwards. Drag the arrow in the Scene view to change it.";
+        public const string FloorPlanRoofStats =
+            "Generate a roof over the outside of every closed wall loop, sitting on top of the walls. The roof's first path sets the slope from its Width and Height. Empty builds no roof.";
+        public const string ApplyCutsToProBuilderMesh =
+            "Make every cut its own ProBuilder face. Off keeps the ProBuilder faces whole and only splits the triangles of the built mesh.";
+        public const string GeneratorMaterial = "Material locked onto every face of the generated mesh, reapplied on each rebuild and skipped by Setup Materials. Empty leaves materials free.";
+        public const string PolygonTopMaterial = "Material locked onto the upward facing faces, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string PolygonBottomMaterial = "Material locked onto the downward facing faces, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string StairsTopStepMaterial = "Material locked onto the treads and landing tops, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string StairsForwardStepMaterial = "Material locked onto the risers, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string StairsSideMaterial = "Material locked onto the sides, underside, back and landing edges and bottoms, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string InsideMaterial = "Material locked onto the inside faces of the walls, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string OutsideMaterial = "Material locked onto the outside faces of the walls, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string PolygonSubdivisionStep =
+            "Distance between cuts across each top and bottom piece along both of its axes, smaller means more cuts. Below 0.1 turns it off.";
         public const string SavePolygon = "Store the outline and holes in the stats, editing them updates every polygon using the asset.";
+        public const string PolygonPaths =
+            "Outlines combined into one polygon, overlapping or touching outlines are merged. Copy a whole outline in the Scene view and paste it to add a new one.";
         public const string PolygonPath =
             "Outline of the polygon on the XZ plane, in local space. " + PathEditing + Regenerated;
         public const string PolygonHoles =
             "Holes cut through the polygon. Overlapping holes are merged, and holes crossing the outline cut notches out of it.";
         public const string PolygonHolePath = "Outline of the hole on the XZ plane, in local space. " + PathEditing;
 
+        public const string PathStats = "Shared width, height, sampling, smoothing and materials, editing them updates every path using the asset.";
+        public const string PathStatsWidth = "Width of the path at every point of every object using the asset. Drag the side handles in the Scene view to change it.";
+        public const string PathGeneratorWidth = "Width of the path at every point while Store Width is on. Drag the side handles in the Scene view to change it.";
+        public const string PathGeneratorHeight = "How far the path is extruded from its points, negative extrudes downwards. Drag the arrow in the Scene view to change it.";
+        public const string PathSamplesPerSegment = "How many pieces each span between two points is split into along the curve.";
+        public const string SavePathBranches = "Store the branches in the stats, editing them updates every path using the asset.";
+        public const string PathBranches =
+            "Curves the path follows. Points of different branches placed on top of each other join into a junction, so branches can meet as T, cross or any number of ways. Copy a whole branch in the Scene view and paste it to add a new one.";
+        public const string PathBranchPoints = "Points the branch curves through, in local space. Points can sit at different heights. " + PathEditing;
+        public const string PathBranchWidths = "Width of the path at each point.";
+        public const string PathTopMaterial = "Material locked onto the top of the path and its junctions, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string PathSideMaterial = "Material locked onto the sides and end caps, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+        public const string PathBottomMaterial = "Material locked onto the underside, reapplied on each rebuild and skipped by Setup Materials. Empty leaves them free.";
+
         public const string StairsStats = "Shared Width, Step Height, Solid, Thickness and cutter settings, editing them updates every stairs using the asset.";
+        public const string CutterShapeMesh =
+            "Closed mesh that is cut away, in the cutter's local space. Each submesh must be convex; faces shared between submeshes are left out of the cut.";
+        public const string StairsMode = "Path follows the path points. Spiral winds around the stairs' pivot, set by Spiral Height, Radius, Width and Angle.";
+        public const string SpiralHeight = "Total height the spiral climbs. Drag the arrow on the centre in the Scene view to change it.";
+        public const string SpiralRadius = "Distance from the centre of the spiral to the middle of the steps. A radius of half the Width or less closes the centre. Drag the handle along the bottom step in the Scene view to change it.";
+        public const string SpiralAngle = "How far the spiral turns from bottom to top, in degrees, for example 90 for a quarter turn or 360 for a full turn. Drag the handle on the top step in the Scene view to change it.";
+        public const string SpiralClockwise = "Turn clockwise (seen from above) while climbing.";
         public const string StairsPath =
             "Each pair of points is a flight. The first point is the front edge of the first step, the last the back edge of the last step, " +
             "every point in between gets a Width by Width landing at its height. " + PathEditing + Regenerated;
@@ -98,7 +152,15 @@ namespace Tsitski.ProBuilderTools {
             "Trim Stats for a trim generated along the right edge of the stairs and landings. Its profile's X points away from the stairs, Y up, " +
             "(0, 0) sits on the line through the back edges of the steps.";
 
+        public const string BottomTrimForwardOffset =
+            "Moves the bottom end of both stairs trims along the path's direction there (negative moves it back), e.g. to land it on the floor in front of the first step.";
+        public const string BottomTrimUpwardOffset = "Moves the bottom end of both stairs trims up (negative moves it down).";
+        public const string TopTrimForwardOffset =
+            "Moves the top end of both stairs trims along the path's direction there (negative moves it back), e.g. to run it onto the floor above.";
+        public const string TopTrimUpwardOffset = "Moves the top end of both stairs trims up (negative moves it down).";
+
         public const string PillarStats = "Shared profile, middle split, sides and smoothing, editing them updates every pillar using the asset.";
+        public const string PillarWidth = "Distance of the furthest profile point from the pillar center. Changing it scales every profile point outwards or inwards.";
         public const string PillarHeight = "Total height of the pillar. The middle part repeats to fill it, drag the handle on top of the pillar in the Scene view.";
         public const string BottomProfile =
             "Outline of the pillar's base, revolved around its axis (or swept along a corner). X is the distance from the axis, Y runs 0 to 1 across the bottom section's height.";
@@ -122,15 +184,9 @@ namespace Tsitski.ProBuilderTools {
         public const string CornerSide =
             "Which side of the legs the pillar is on, going from the start leg through the corner to the end leg: Outside on the right, Inside on the left. " +
             "Snapped and generated pillars follow the path's direction, so Outside is a floor plan's exterior face and Inside its interior face at every corner.";
-        public const string FloorPlanOutlineSettings =
+        public const string FloorPlanLayers =
             "Trims and arrays generated as child objects along the wall faces, one per entry and face. " +
-            "Use Array Stats with corner Pillar Stats and Auto Snap To Path to put pillars in every corner.";
-        public const string OutlineTrimStats = "Trim Stats for a trim running along the wall face. Its profile's X points away from the wall, Y up.";
-        public const string OutlineArrayStats = "Array Stats for an array running along the wall face.";
-        public const string OutlineWallSide =
-            "Which wall faces get the trim and array: Inside faces the floor plan's interior, Outside faces away from it, or Both.";
-        public const string OutlineHeight = "Height of the trim and array path, measured up from the bottom of the walls (or down from the top).";
-        public const string HeightFromTop = "Measure Height down from the top of the walls instead of up from the bottom.";
+            "Use Array Stats with corner Pillar Stats and Auto Snap To Path to put pillars in every corner, and Match Height to make them as tall as the walls.";
         public const string ArrayCornerSide =
             "Corner Side given to the pillars this array places. Floor plans set it per wall face: Outside for exterior faces, Inside for interior ones.";
         public const string PillarRoundBevel =
@@ -172,6 +228,7 @@ namespace Tsitski.ProBuilderTools {
         public const string CutterCenter = "Centre of the cutter's box in local space.";
         public const string CutterSize = "Size of the cutter's box in local space.";
         public const string CreateMesh = "Fill the inside of the hole with faces.";
+        public const string FacesOn = "Which object gets the hole's generated faces when the cutter passes through several meshes. First and Second put all of them (the whole tunnel) on the mesh the cutter penetrates most or second most. Shared has each mesh fill its own part. Self puts them on a ProBuilder mesh under the cutter, and every mesh just gets a hole.";
         public const string CutMode = "Which meshes this cutter cuts: ProBuilder meshes, regular meshes (any MeshFilter with a saved mesh, including generated ones like fences), or both. Regular meshes are never modified, the cut result is generated next to them.";
         public const string CutThroughParent = "Also cut the mesh this cutter is a child of, and the other meshes under it.";
         public const string IgnorePrefabMeshes = "Don't cut meshes that are part of a prefab instance (anything under the outermost prefab root).";
@@ -179,17 +236,17 @@ namespace Tsitski.ProBuilderTools {
         public const string ClipToTunnel = "Trim the hole's faces to the mesh along these axes.";
         public const string RevealMaterial = "Material for the faces inside the hole, defaults to the mesh's first material.";
 
-        public const string AutoNameGenerators = "Name generator objects (cutters, trims, arrays, stairs, pillars, floor plans) after their stats asset, or after the component when they have no stats.";
         public const string BakedCutters = "Cutters already baked into this mesh. They no longer cut it; remove one to let it cut again.";
-        public const string ContributeGIByDefault = "Turn on the Contribute GI static flag on objects when a generator component is added to them (polygons, floor plans, trims, arrays, stairs, pillars) and on the child objects generators create.";
-        public const string GizmosOnlyOnSelected = "Only draw cutter gizmos for selected cutters.";
-        public const string RebuildAfterDragging = "Wait until a dragged handle is released before rebuilding: recutting meshes around a cutter (box, polygon points, path) and rebuilding trims, arrays, stairs, pillars and floor plans from their paths and profiles. Turn off to rebuild live while dragging.";
         public const string RoofStats = "Shared profile and thickness, and the paths when Save Paths is on, editing them updates every roof using the asset.";
         public const string RoofProfile =
             "Shape of the roof slope from the eave (first point) to the ridge (last point), stretched to every path's half width and height. " +
             "Two points give a plain pitch, more give mansard or curved roofs. Edit it in the Scene view on any path.";
         public const string RoofThickness = "Thickness of the roof shell. The top is copied down by this much, so the attic underneath stays open.";
-        public const string SaveRoofPaths = "Store the paths in the stats, editing them updates every roof using the asset.";
+        public const string FillRoof = "Make the roof solid, with a flat underside at the bottom of the eaves, instead of a shell with an open attic.";
+        public const string GenerateGableWalls = "Build a wall under each gable, filling the gap between the roof's underside and the bottom of the eaves. Not built on a filled roof.";
+        public const string GableWallIndent = "How far each gable wall sits in from the edge of the gable.";
+        public const string GableWallThickness = "Thickness of the gable walls.";
+        public const string SaveRoofPaths ="Store the paths in the stats, editing them updates every roof using the asset.";
         public const string RoofPaths =
             "Center lines of the building's wings, each with its own width and height. Overlapping or touching wings are merged into one roof with valleys where they meet.";
         public const string RoofPathWidth = "Width of the roof around this path, from eave to eave. Drag the profile's eave point or the dot opposite it in the Scene view.";
@@ -197,6 +254,5 @@ namespace Tsitski.ProBuilderTools {
         public const string RoofGableStart = "End the roof at the first point with a vertical gable instead of a hip. Click the end marker in the Scene view.";
         public const string RoofGableEnd = "End the roof at the last point with a vertical gable instead of a hip. Click the end marker in the Scene view.";
         public const string RoofPathPoints = "Center line on the XZ plane, in local space. " + PathEditing;
-        public const string DefaultMeshMaterial = "Material given to generated meshes (polygons, roofs, trims, arrays, stairs, pillars, floor plan walls) when they don't have one.";
     }
 }

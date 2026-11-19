@@ -1,15 +1,38 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     internal static class PolygonBoolean {
         private const double Epsilon = 1e-4;
 
+        public static List<(List<D2> outline, List<List<D2>> holes)> Combine(IEnumerable<List<D2>> shapes, IEnumerable<List<D2>> cutters) {
+            List<List<D2>> cutterList = cutters.ToList();
+            List<(List<D2> outline, List<List<D2>> holes)> regions = new();
+            foreach ((List<D2> outline, List<List<D2>> unionHoles) in Union(shapes))
+                regions.AddRange(Subtract(outline, unionHoles.Concat(cutterList)));
+            return regions;
+        }
+
+        public static List<(List<D2> outline, List<List<D2>> holes)> Union(IEnumerable<List<D2>> shapes) {
+            List<List<D2>> loops = shapes.Where(Valid).Select(Counterclockwise).ToList();
+            if (loops.Count <= 1)
+                return loops.Select(l => (l, new List<List<D2>>())).ToList();
+
+            return Regions(Chain(Split(loops, (i, mid, direction) => KeepUnion(loops, i, mid, direction), _ => false)));
+        }
+
         public static List<(List<D2> outline, List<List<D2>> holes)> Subtract(List<D2> outline, IEnumerable<List<D2>> cutters) {
             List<List<D2>> loops = new() { Counterclockwise(outline) };
-            loops.AddRange(cutters.Where(c => c is { Count: >= 3 } && Math.Abs(RoofGeometry.SignedArea(c)) > Epsilon * Epsilon).Select(Counterclockwise));
+            loops.AddRange(cutters.Where(Valid).Select(Counterclockwise));
 
+            return Regions(Chain(Split(loops, (i, mid, direction) => Keep(loops, i, mid, direction), i => i > 0)));
+        }
+
+        private static bool Valid(List<D2> loop) => loop is { Count: >= 3 } && Math.Abs(RoofGeometry.SignedArea(loop)) > Epsilon * Epsilon;
+
+        private static List<(D2 a, D2 b)> Split(List<List<D2>> loops, Func<int, D2, D2, bool> keep, Func<int, bool> reversed) {
             List<(D2 a, D2 b)> kept = new();
             List<double> cuts = new();
             for (int i = 0; i < loops.Count; i++) {
@@ -36,18 +59,18 @@ namespace Tsitski.ProBuilderTools {
 
                         D2 start = a + direction * cuts[k], end = a + direction * cuts[k + 1];
                         D2 mid = (start + end) * 0.5;
-                        if (!Keep(loops, i, mid, direction))
+                        if (!keep(i, mid, direction))
                             continue;
 
-                        if (i == 0)
-                            kept.Add((start, end));
-                        else
-                            kept.Add((end, start));
+                        kept.Add(reversed(i) ? (end, start) : (start, end));
                     }
                 }
             }
 
-            List<List<D2>> result = Chain(kept);
+            return kept;
+        }
+
+        private static List<(List<D2> outline, List<List<D2>> holes)> Regions(List<List<D2>> result) {
             List<List<D2>> outers = result.Where(l => RoofGeometry.SignedArea(l) > 0).OrderBy(RoofGeometry.SignedArea).ToList();
             List<(List<D2> outline, List<List<D2>> holes)> regions = outers.Select(o => (o, new List<List<D2>>())).ToList();
             foreach (List<D2> hole in result.Where(l => RoofGeometry.SignedArea(l) < 0)) {
@@ -65,6 +88,25 @@ namespace Tsitski.ProBuilderTools {
             if (RoofGeometry.SignedArea(points) < 0)
                 points.Reverse();
             return points;
+        }
+
+        private static bool KeepUnion(List<List<D2>> loops, int index, D2 mid, D2 direction) {
+            for (int j = 0; j < loops.Count; j++) {
+                if (j == index)
+                    continue;
+
+                int side = Side(loops[j], mid, direction, out bool sameDirection);
+                if (side == 0) {
+                    if (!sameDirection || j < index)
+                        return false;
+                    continue;
+                }
+
+                if (side > 0)
+                    return false;
+            }
+
+            return true;
         }
 
         private static bool Keep(List<List<D2>> loops, int index, D2 mid, D2 direction) {

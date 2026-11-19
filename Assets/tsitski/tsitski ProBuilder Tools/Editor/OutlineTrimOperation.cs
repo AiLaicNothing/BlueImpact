@@ -8,7 +8,7 @@ using Tsitski.Core;
 namespace Tsitski.ProBuilderTools {
     [System.Serializable]
     internal class OutlineTrimOperation : SceneOperation {
-        private const string MenuPath = "Tools/tsitski ProBuilder Tools/Generate/Outline Trim";
+        private const string MenuPath = "Tools/tsitski/ProBuilder/Generate/Outline Trim";
         private const float MinMitre = 0.25f;
 
         private enum Side {
@@ -75,17 +75,17 @@ namespace Tsitski.ProBuilderTools {
         }
 
         private static ProBuilderMesh WallsFor(ProBuilderMesh mesh) {
-            if (mesh.GetComponent<ProBuilderFloorPlan>())
+            if (mesh.GetComponent<TsitskiProBuilderFloorPlan>())
                 return mesh;
 
-            foreach (ProBuilderFloorPlan plan in UnityCompat.FindAll<ProBuilderFloorPlan>())
+            foreach (TsitskiProBuilderFloorPlan plan in UnityCompat.FindAll<TsitskiProBuilderFloorPlan>())
                 if (plan.floor == mesh && plan.TryGetComponent(out ProBuilderMesh walls))
                     return walls;
             return mesh;
         }
 
         private static Source Read(ProBuilderMesh mesh) {
-            List<List<Vector2>> loops = ProBuilderFloorPlan.FloorOutlines(mesh, out float top);
+            List<List<Vector2>> loops = TsitskiProBuilderFloorPlan.FloorOutlines(mesh, out float top);
             if (loops.Count == 0)
                 return null;
 
@@ -141,11 +141,11 @@ namespace Tsitski.ProBuilderTools {
 
             if (_output == Output.Trim)
                 _statsGuid = StatsField("Trim Stats", "Trim Stats to give the new trims. Stats that store their own path are ignored.", _statsGuid,
-                    typeof(ProBuilderTrimStats));
+                    typeof(TsitskiProBuilderTrimStats));
             else
                 _arrayStatsGuid = StatsField("Array Stats",
                     "Array Stats to give the new arrays, including their source mesh. Stats that store their own path are ignored. Without stats each array gets a default cube source.",
-                    _arrayStatsGuid, typeof(ProBuilderArrayStats));
+                    _arrayStatsGuid, typeof(TsitskiArrayStats));
         }
 
         private static string StatsField(string label, string tooltip, string guid, System.Type type) {
@@ -188,13 +188,13 @@ namespace Tsitski.ProBuilderTools {
                 float y = _height == Height.Top ? source.top : source.bottom;
                 List<Vector3> path = loop.Select(p => toLocal.MultiplyPoint3x4(new Vector3(p.x, y, p.y))).ToList();
 
-                if (created is ProBuilderTrim trim) {
+                if (created is TsitskiProBuilderTrim trim) {
                     trim.path = path;
                     trim.pathRadii = new List<float>();
                     trim.closed = true;
                     trim.Rebuild();
                 }
-                else if (created is ProBuilderArray array) {
+                else if (created is TsitskiArray array) {
                     array.path = path;
                     array.pathRadii = new List<float>();
                     array.closed = true;
@@ -261,35 +261,36 @@ namespace Tsitski.ProBuilderTools {
                 _created.Add(created);
         }
 
-        private ProBuilderTrim CreateTrim(GameObject createdObject) {
-            ProBuilderTrim trim = createdObject.AddComponent<ProBuilderTrim>();
+        private TsitskiProBuilderTrim CreateTrim(GameObject createdObject) {
+            TsitskiProBuilderTrim trim = createdObject.AddComponent<TsitskiProBuilderTrim>();
             if (!createdObject.TryGetComponent(out MeshCollider _))
                 createdObject.AddComponent<MeshCollider>();
 
-            ProBuilderTrimStats stats = Load<ProBuilderTrimStats>(_statsGuid);
+            TsitskiProBuilderTrimStats stats = Load<TsitskiProBuilderTrimStats>(_statsGuid);
             trim.stats = stats && !stats.storePath ? stats : null;
             return trim;
         }
 
-        private ProBuilderArray CreateArray(GameObject createdObject) {
-            ProBuilderArray array = createdObject.AddComponent<ProBuilderArray>();
-            ProBuilderArrayStats stats = Load<ProBuilderArrayStats>(_arrayStatsGuid);
+        private TsitskiArray CreateArray(GameObject createdObject) {
+            TsitskiArray array = createdObject.AddComponent<TsitskiArray>();
+            TsitskiArrayStats stats = Load<TsitskiArrayStats>(_arrayStatsGuid);
             if (stats && stats.storePath)
                 stats = null;
 
             array.stats = stats;
-            bool statsSource = stats && stats.source;
-            bool storedSource = stats && stats.storeSource && stats.sourceMesh != null && stats.sourceMesh.hasData;
+            bool statsSource = stats && stats.piece;
+            ArraySourceData stored = ProBuilderArrayPieces.StoredSource(stats);
+            ProBuilderMesh localSource = ProBuilderArrayPieces.LocalSource(array);
 
-            if ((statsSource || storedSource) && array.source) {
-                Object.DestroyImmediate(array.source.gameObject);
-                array.source = null;
+            if ((statsSource || stored != null) && localSource) {
+                Object.DestroyImmediate(localSource.gameObject);
+                array.piece = null;
             }
 
-            if (storedSource)
-                array.CreateSourceFrom(stats.sourceMesh);
-            else if (!statsSource && !array.source)
-                array.CreateSource();
+            if (stored != null)
+                ProBuilderArrayPieces.CreateSourceFrom(array, stored);
+            else if (!statsSource && !array.piece)
+                ProBuilderArrayPieces.CreateSource(array);
 
             return array;
         }

@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEditor.ProBuilder;
 using UnityEngine;
 using UnityEngine.ProBuilder;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     [InitializeOnLoad]
@@ -58,7 +59,7 @@ namespace Tsitski.ProBuilderTools {
             GUILayout.BeginArea(new Rect(Padding, Padding, position.width - Padding * 2f, position.height - Padding * 2f));
             GUILayout.Label(_operation.displayTitle, EditorStyles.boldLabel);
             _operation.DrawContents();
-            TsitskiProBuilderToolsPopup.FitHeight(this, GUILayoutUtility.GetLastRect().yMax + Padding * 2f);
+            TsitskiToolsPopup.FitHeight(this, GUILayoutUtility.GetLastRect().yMax + Padding * 2f);
             GUILayout.EndArea();
         }
 

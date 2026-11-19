@@ -6,11 +6,12 @@ using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.ProBuilder.MeshOperations;
 using Math = UnityEngine.ProBuilder.Math;
+using Tsitski.Core;
 
 namespace Tsitski.ProBuilderTools {
     [System.Serializable]
     internal class InsetFacesOperation : MeshSceneOperation {
-        private const string MenuPath = "Tools/tsitski ProBuilder Tools/Modelling/Inset Faces &i";
+        private const string MenuPath = "Tools/tsitski/ProBuilder/Modelling/Inset Faces &i";
         private const float MinMitre = 0.2f;
 
         [SerializeField] private float _insetWidth = 0.1f;

@@ -6,9 +6,15 @@ public class PickupPersistence : MonoBehaviour
     [Header("Persistence")]
     [SerializeField] private Pickup_Data pickupData;
 
+    private Log log;
     private bool consumed;
 
     public bool IsCollected => consumed || (Pickup_Manager.Instance != null && Pickup_Manager.Instance.IsCollected(pickupData));
+
+    private void Awake()
+    {
+        log = GetComponent<Log>();
+    }
 
     private void Start()
     {
@@ -18,7 +24,7 @@ public class PickupPersistence : MonoBehaviour
             return;
         }
 
-        if (IsCollected) Destroy(gameObject);
+        if (IsCollected) log.enabled = false;
     }
 
     public bool TryCollect()
@@ -33,18 +39,18 @@ public class PickupPersistence : MonoBehaviour
 
     public void FinishCollect(float destroyDelay = 0f)
     {
-        foreach (Collider col in GetComponentsInChildren<Collider>(true))
-        {
-            col.enabled = false;
-        }
+        //foreach (Collider col in GetComponentsInChildren<Collider>(true))
+        //{
+        //    col.enabled = false;
+        //}
 
-        foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
-        {
-            renderer.enabled = false;
-        }
+        //foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
+        //{
+        //    renderer.enabled = false;
+        //}
 
         InteractionUI.Instance?.Clear();
 
-        Destroy(gameObject, Mathf.Max(0f, destroyDelay));
+        log.enabled = false;
     }
 }

@@ -46,6 +46,24 @@ namespace Tsitski.Core {
             }
         }
 
+        public static bool SignedLength(Vector3 origin, Vector3 direction, ref float length, Color color, float min = 0.01f) {
+            direction = direction.normalized;
+            Vector3 pointing = length < 0f ? -direction : direction;
+            Vector3 tip = origin + direction * length;
+
+            using (new Handles.DrawingScope(color)) {
+                Handles.DrawDottedLine(origin, tip, 3f);
+                EditorGUI.BeginChangeCheck();
+                Vector3 moved = Handles.Slider(tip, pointing, HandleUtility.GetHandleSize(tip) * HandleScale * 1.5f, Handles.ConeHandleCap, 0f);
+                if (!EditorGUI.EndChangeCheck())
+                    return false;
+
+                float value = Vector3.Dot(moved - origin, direction);
+                length = Mathf.Abs(value) >= min ? value : value < 0f ? -min : min;
+                return true;
+            }
+        }
+
         public static bool Toggle(Vector3 position, Vector3 facing, bool value, Color on, Color off) {
             float size = HandleUtility.GetHandleSize(position) * HandleScale;
             Quaternion rotation = facing.sqrMagnitude > 1e-8f ? Quaternion.LookRotation(facing) : Quaternion.identity;

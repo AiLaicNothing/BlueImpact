@@ -12,16 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f39004218e31d7f4f8bbdabac2fbf6f8, type: 3}
   m_Name: Corner Pillar Array Stats
   m_EditorClassIdentifier: Tsitski.ProBuilderTools::Tsitski.ProBuilderTools.ProBuilderArrayStats
-  source: {fileID: 0}
+  piece: {fileID: 11400000, guid: ab8c069ec746db74f9a996421f534292, type: 2}
   storeSource: 0
-  sourceMesh:
-    positions: []
-    uvs: []
-    faces: []
-    materials: []
-  pillarStats: {fileID: 11400000, guid: ab8c069ec746db74f9a996421f534292, type: 2}
+  storedPiece:
+    rid: -2
   pillarHeight: 4
   mergeIntoMesh: 1
+  placement: 0
+  pieceRotation: {x: 0, y: 0, z: 0}
   spacing: 4
   offset: 0
   fitSpacing: 1
@@ -45,3 +43,10 @@ MonoBehaviour:
   - {x: 2.5, y: 0.25, z: -20.5}
   pathRadii: []
   closed: 1
+  material: {fileID: 0}
+  legacyPillar: {fileID: 0}
+  references:
+    version: 2
+    RefIds:
+    - rid: -2
+      type: {class: , ns: , asm: }
