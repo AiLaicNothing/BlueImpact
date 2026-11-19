@@ -33,6 +33,8 @@ public class Log : MonoBehaviour, IInteractable
         }
 
         pickup.FinishCollect(audioDuration);
+
+        Inspection_UI.Instance.OpenInspection(logData);
     }
 
     public string GetInteractionText()
