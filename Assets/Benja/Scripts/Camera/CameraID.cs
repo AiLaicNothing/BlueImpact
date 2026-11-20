@@ -3,11 +3,9 @@ using UnityEngine;
 
 public class CameraID : MonoBehaviour
 {
-    [SerializeField]
-    private int id;
+    [SerializeField] private int id;
 
-    [SerializeField]
-    private CinemachineCamera cameraReference;
+    [SerializeField] private CinemachineCamera cameraReference;
 
     public int ID => id;
 
@@ -15,7 +13,16 @@ public class CameraID : MonoBehaviour
 
     private void Reset()
     {
-        cameraReference =
-            GetComponent<CinemachineCamera>();
+        cameraReference = GetComponent<CinemachineCamera>();
+    }
+
+    private void OnEnable()
+    {
+        if (cameraReference != null) return;
+    }
+
+    private void OnDisable()
+    {
+        
     }
 }
