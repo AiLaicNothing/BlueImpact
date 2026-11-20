@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MeleeAttackCombo
   attackSteps:
   - attackVfx: {fileID: 5313456068782518071, guid: 50f1354827c77ef4b99c4dca0ee3411d, type: 3}
-    vfxSpawnTime: 0
+    vfxSpawnTime: 0.12
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 0}
-    vfxScale: {x: 1.5, y: 1, z: 1.5}
-    vfxRotOffset: {x: 0, y: 90, z: 0}
+    vfxScale: {x: -2, y: 2, z: 2}
+    vfxRotOffset: {x: 0, y: 45, z: 0}
     name: Basic_Attack01
-    duration: 0.45
+    duration: 0.1
     comboWindowStart: 0.3
     comboWindowEnd: 0.6
     hitTime: 0.2
@@ -35,18 +35,18 @@ MonoBehaviour:
       - serializedVersion: 3
         time: 0
         value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
         time: 1
         value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
         weightedMode: 0
         inWeight: 0
         outWeight: 0
@@ -73,15 +73,15 @@ MonoBehaviour:
     vfxDuration: 1
     vfxOffset: {x: 0, y: 0, z: 0}
     vfxScale: {x: 2, y: 1, z: 2}
-    vfxRotOffset: {x: -180, y: 90, z: 0}
+    vfxRotOffset: {x: 0, y: 0, z: 0}
     name: Basic-Attack02
-    duration: 0.6
+    duration: 0.04
     comboWindowStart: 0.4
     comboWindowEnd: 0.9
     hitTime: 0.2
     hitBoxSize: {x: 2.5, y: 2.5, z: 2}
     hitBoxOffSet: {x: 0, y: 0, z: 1}
-    moveDis: 0
+    moveDis: 0.3
     moveStartTime: 0.1
     moveDuration: 0.12
     moveCurve:
@@ -90,18 +90,18 @@ MonoBehaviour:
       - serializedVersion: 3
         time: 0
         value: 0
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
         weightedMode: 0
         inWeight: 0
         outWeight: 0
       - serializedVersion: 3
         time: 1
         value: 1
-        inSlope: 0
-        outSlope: 0
-        tangentMode: 0
+        inSlope: 1
+        outSlope: 1
+        tangentMode: 34
         weightedMode: 0
         inWeight: 0
         outWeight: 0
@@ -124,11 +124,11 @@ MonoBehaviour:
       knockDownForce: 10
       knockDownForwardScale: 0.15
   - attackVfx: {fileID: 5313456068782518071, guid: 50f1354827c77ef4b99c4dca0ee3411d, type: 3}
-    vfxSpawnTime: 0
+    vfxSpawnTime: 0.02
     vfxDuration: 1
     vfxOffset: {x: 0, y: -0.5, z: 0}
-    vfxScale: {x: 2, y: 2, z: 2}
-    vfxRotOffset: {x: 60, y: 0, z: -90}
+    vfxScale: {x: 2, y: 2, z: -2}
+    vfxRotOffset: {x: 90, y: 0, z: -90}
     name: Basic-Attack03
     duration: 0.6
     comboWindowStart: 0.4

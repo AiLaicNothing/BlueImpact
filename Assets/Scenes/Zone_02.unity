@@ -15036,8 +15036,7 @@ Transform:
   m_Children:
   - {fileID: 46092005}
   - {fileID: 365442384}
-  - {fileID: 1038501544}
-  - {fileID: 1435440960}
+  - {fileID: 1688316367}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &115928280
@@ -15096,7 +15095,7 @@ MonoBehaviour:
     countsForLevel: 1
     hasSpawned: 0
     spawnedEnemy: {fileID: 0}
-  spawnVfx: {fileID: 0}
+  spawnVfx: {fileID: 224342861709673535, guid: 7984d76665b57e04f9426f2c72ba269b, type: 3}
   vfxDuration: 1
   vfxOffset: {x: 0, y: 0.5, z: 0}
   doors:
@@ -15110,34 +15109,97 @@ MonoBehaviour:
   reward: {fileID: 0}
   rewardShowDuration: 0
   closeDoorsEvent:
+    camera: {fileID: 1038501546}
     cameraID: 203
     duration: 1
     activePriority: 100
     inactivePriority: -100
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
+    overrideBlendIn: 1
+    blendIn:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    overrideBlendOut: 1
+    blendOut:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
     mutePlayerAudio: 1
   cameraShowSpawn:
+    camera: {fileID: 1435440962}
     cameraID: 204
     duration: 1.5
     activePriority: 100
     inactivePriority: -100
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
+    overrideBlendIn: 1
+    blendIn:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    overrideBlendOut: 1
+    blendOut:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
     mutePlayerAudio: 1
   cameraShowReward:
+    camera: {fileID: 0}
     cameraID: 0
     duration: 3
     activePriority: 100
     inactivePriority: -100
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
+    overrideBlendIn: 1
+    blendIn:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    overrideBlendOut: 1
+    blendOut:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
@@ -30695,12 +30757,33 @@ MonoBehaviour:
   - {fileID: 371066069}
   useCameraOnActivation: 0
   activationCamera:
+    camera: {fileID: 0}
     cameraID: 0
     duration: 3
     activePriority: 100
     inactivePriority: 0
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
+    overrideBlendIn: 1
+    blendIn:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    overrideBlendOut: 1
+    blendOut:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
@@ -117550,7 +117633,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1038501544
 Transform:
   m_ObjectHideFlags: 0
@@ -117564,7 +117647,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 115928279}
+  m_Father: {fileID: 1688316367}
   m_LocalEulerAnglesHint: {x: 20, y: -90, z: 0}
 --- !u!114 &1038501545
 MonoBehaviour:
@@ -136107,12 +136190,33 @@ MonoBehaviour:
   lockedVisual: {fileID: 862839233}
   openVisual: {fileID: 0}
   openRequest:
+    camera: {fileID: 0}
     cameraID: 0
     duration: 3
     activePriority: 100
     inactivePriority: 0
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
+    overrideBlendIn: 1
+    blendIn:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    overrideBlendOut: 1
+    blendOut:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
@@ -159882,7 +159986,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1435440960
 Transform:
   m_ObjectHideFlags: 0
@@ -159896,7 +160000,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 115928279}
+  m_Father: {fileID: 1688316367}
   m_LocalEulerAnglesHint: {x: 25, y: 90, z: 0}
 --- !u!114 &1435440961
 MonoBehaviour:
@@ -191804,6 +191908,39 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5335451704511596875, guid: 9f156efd7cddb694c81598dc0d54caf7, type: 3}
   m_PrefabInstance: {fileID: 1687350632}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1688316366
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1688316367}
+  m_Layer: 0
+  m_Name: Cam
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1688316367
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1688316366}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1038501544}
+  - {fileID: 1435440960}
+  m_Father: {fileID: 115928279}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1694007085
 PrefabInstance:
   m_ObjectHideFlags: 0
