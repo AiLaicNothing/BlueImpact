@@ -6,6 +6,8 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
     private Rigidbody rb;
     AudioSource audioSource;
     Material thisMaterial;
+    private Collider col;
+    private Renderer rend;
     [SerializeField] GameObject brokenPrefab;
     [SerializeField] AudioClip destructionClip;
     [Header("Explosion Settings")]
@@ -28,7 +30,9 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
     {
         startPos = transform.position;
         startRot = transform.rotation;
-        rb = GetComponent<Rigidbody>();
+        rb = GetComponent<Rigidbody>(); 
+        col = GetComponent<Collider>();
+        rend = GetComponent<Renderer>();
         thisMaterial = GetComponent<Renderer>().sharedMaterial;
         //audioSource = GetComponent<AudioSource>();
     }
@@ -42,19 +46,20 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
             Explode();
         }
     }
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
         if (!forPuzzles || isBroken) return;
 
-        if (other.CompareTag("DestroyBox"))
+        if (collision.gameObject.CompareTag("DestroyBox"))
         {
             Explode();
         }
+
     }
     public void Explode()
     {
         isBroken = true;
-        Vector3 currentAngularVel = rb != null ? rb.angularVelocity : Vector3.zero;
+        //Vector3 currentAngularVel = rb != null ? rb.angularVelocity : Vector3.zero;
         if (rb != null)
         {
             if (forPuzzles)
@@ -68,20 +73,22 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
                 Destroy(rb);
             }
         }
-        if(TryGetComponent<Collider>(out Collider coliider))
+        Vector3 spawnPoition = transform.position;
+        Vector3 explosionCenter = transform.position;
+        if(rend != null)
         {
-            coliider.enabled = false;
+            explosionCenter = rend.bounds.center;
+
+            spawnPoition = rend.bounds.center - (transform.up * rend.bounds.extents.y);
         }
-        if(TryGetComponent<Renderer>(out Renderer renderer))
-        {
-            renderer.enabled = false;
-        }
-        if(destructionClip != null)
+        if (col != null) col.enabled = false;
+        if (rend != null) rend.enabled = false;
+        if (destructionClip != null)
         {
             audioSource.PlayOneShot(destructionClip);
         }
 
-        GameObject brokenInstance = Instantiate(brokenPrefab, transform.position, transform.rotation);
+        GameObject brokenInstance = Instantiate(brokenPrefab, spawnPoition, transform.rotation);
         brokenInstance.transform.localScale = gameObject.transform.localScale;
         if (!thisMaterialIsToon && thisMaterial != null)
         {
@@ -100,8 +107,8 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
         foreach(Rigidbody body in rbs)
         {
             
-            body.angularVelocity = currentAngularVel;            
-            body.AddExplosionForce(explosiveForce, transform.position, explosiveRadius);
+           // body.angularVelocity = currentAngularVel;            
+            body.AddExplosionForce(explosiveForce, explosionCenter, explosiveRadius);
         }
 
         StartCoroutine(FadeOutRigidbodies(rbs, brokenInstance));
@@ -172,14 +179,8 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
         }
 
 
-        if (TryGetComponent<Collider>(out Collider coliider))
-        {
-            coliider.enabled = true;
-        }
-        if (TryGetComponent<Renderer>(out Renderer renderer))
-        {
-            renderer.enabled = true;
-        }
+        if (col != null) col.enabled = true;
+        if (rend != null) rend.enabled = true;
 
         isBroken = false;
     }
