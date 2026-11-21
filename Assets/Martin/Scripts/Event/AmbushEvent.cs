@@ -44,8 +44,11 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     [SerializeField] private float rewardShowDuration = 2f;
 
     [Header("Camera Events")]
-    [SerializeField] private CameraRequest closeDoorsEvent;
+    [Tooltip("Plays from the moment the doors start closing until the last enemy has spawned. " +
+             "Its Duration is ignored: the event releases it when the spawn finishes.")]
     [SerializeField] private CameraRequest cameraShowSpawn;
+    [Tooltip("Extra seconds the spawn camera stays after the last enemy appears.")]
+    [SerializeField] private float spawnCameraHold = 0.5f;
     [SerializeField] private CameraRequest cameraShowReward;
 
     private Vector3[] closedLocalPositions;
@@ -75,6 +78,13 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
             {
                 closedLocalPositions[i] = doors[i].transform.localPosition;
             }
+        }
+
+        // The spawn camera lasts as long as doors + spawn take,
+        // so it is released manually instead of using its Duration.
+        if (cameraShowSpawn != null)
+        {
+            cameraShowSpawn.holdUntilReleased = true;
         }
 
         // Reward stays hidden until the event is completed.
@@ -185,20 +195,25 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     {
         Debug.Log("[AmbushEvent] Ambush started.");
 
-        // STEP 1: Enter cutscene mode.
+        // STEP 1: Enter cutscene mode and start the spawn camera.
+        // It stays active through the door closing AND the enemy spawn.
         SetCutsceneMode(true);
 
-        if (closeDoorsEvent != null &&
-            CameraEventRelay.Instance != null)
-        {
-            CameraEventRelay.Instance.Play(closeDoorsEvent);
-        }
+        PlayCamera(cameraShowSpawn);
 
         // STEP 2: Close all doors ("isClosed" doors are already closed).
         yield return MoveDoors(false, includeLockedDoors: true);
 
-        // STEP 3: Spawn enemies and play spawn camera event.
+        // STEP 3: Spawn enemies.
         yield return StartCoroutine(StartWave());
+
+        // Let the last spawn be seen, then end the spawn camera.
+        if (spawnCameraHold > 0f)
+        {
+            yield return new WaitForSeconds(spawnCameraHold);
+        }
+
+        ReleaseCamera(cameraShowSpawn);
 
         // STEP 4: Return control to the player.
         SetCutsceneMode(false);
@@ -236,6 +251,24 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
         SaveEventState();
 
         Debug.Log("[AmbushEvent] Event completed.");
+    }
+
+    // =========================
+    // CAMERA
+    // =========================
+
+    private void PlayCamera(CameraRequest request)
+    {
+        if (request == null || CameraEventRelay.Instance == null) return;
+
+        CameraEventRelay.Instance.Play(request);
+    }
+
+    private void ReleaseCamera(CameraRequest request)
+    {
+        if (request == null || CameraEventRelay.Instance == null) return;
+
+        CameraEventRelay.Instance.Release(request);
     }
 
     // =========================
@@ -344,10 +377,7 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
     private IEnumerator StartWave()
     {
-        if (cameraShowSpawn != null && CameraEventRelay.Instance != null)
-        {
-            CameraEventRelay.Instance.Play(cameraShowSpawn);
-        }
+        // The spawn camera is already active (started in STEP 1).
 
         enemies.Clear();
         ResetSpawnEntries();
@@ -467,6 +497,10 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
         // Stop ongoing movement and combat sequence.
         StopAllCoroutines();
+
+        // The spawn camera waits to be released; if the sequence was
+        // stopped mid-spawn, release it here so it doesn't stay stuck.
+        ReleaseCamera(cameraShowSpawn);
 
         // Restore player control.
         SetCutsceneMode(false);

@@ -14,6 +14,9 @@ public class CameraRequest
     [Header("Timing")]
     [Tooltip("Duration active of the camera + the blend duration")]
     public float duration = 3f;
+    [Tooltip("If checked, Duration is ignored and the camera stays active " +
+         "until the event calls Release on this request.")]
+    public bool holdUntilReleased;
 
     [Header("Priority")]
     public int activePriority = 100;

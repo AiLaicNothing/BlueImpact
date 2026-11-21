@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class BossEvent : MonoBehaviour
 {
@@ -26,9 +27,18 @@ public class BossEvent : MonoBehaviour
     [Header("Boss HUD")]
     [SerializeField] private BossHealthHUD bossHud;
 
+    [Header("Boss Music")]
+    [Tooltip("Musica que empieza cuando el boss toca el suelo.")]
+    [SerializeField] private Soundtrack bossTrack;
+
+    [Tooltip("Si esta marcado, al morir el boss vuelve la musica de la zona. " +
+             "Desmarcalo si quieres que la musica del boss siga durante el evento final.")]
+    [SerializeField] private bool endMusicOnBossDeath = true;
+
+    private bool bossMusicActive;
+
     [Header("Ritmo de la intro (segundos)")]
     [SerializeField] private float pauseAfterDoor = 0.4f;
-    [SerializeField] private float barrierWait = 1f;
     [SerializeField] private float pauseAfterLanding = 0.5f;
     [SerializeField] private float pauseBeforeCombat = 0.8f;
 
@@ -38,25 +48,26 @@ public class BossEvent : MonoBehaviour
     [SerializeField] private float pauseAfterPhaseTwo = 0.6f;
 
     [Header("Door Event")]
+    [Tooltip("Puerta de la sala. Colocala CERRADA en la escena: al empezar el juego se abre sola " +
+             "para que el jugador pueda pasar, y se cierra cuando empieza el evento.")]
     [SerializeField] private Transform doorTransform;
-    [SerializeField] private float moveSpeed;
-    [SerializeField] private Transform openPos;
-    [SerializeField] private Transform closePos;
+    [Tooltip("Cuanto sube la puerta (en Y local) desde su posicion cerrada para quedar abierta.")]
+    [SerializeField] private float posY = 4f;
+    [FormerlySerializedAs("moveSpeed")]
+    [SerializeField] private float doorSpeed = 2f;
 
-    [SerializeField] private GameObject barrier;
+    private Vector3 doorClosedLocalPos;
 
     [Header("End Event")]
     // Evento final: cadenas, descenso del cristal y los tres finales.
     // Si lo dejas vacio, al morir el boss se reproduce la cinematica generica y va al menu.
     [SerializeField] private BlueImpactEvent blueImpactEvent;
     [SerializeField] private float pauseAfterBossDeath = 2f;
-    [SerializeField] private bool keepBarrierAfterBoss = true;  // el jugador no debe irse antes de elegir
     [SerializeField] private GameObject secretUI;
     [SerializeField] private GameObject continueUI;
 
     [Header("Cameras")]
     [SerializeField] private CameraRequest doorCamera;
-    [SerializeField] private CameraRequest barrierCamera;
     [SerializeField] private CameraRequest bossCamera;
     [SerializeField] private CameraRequest RewardCamera;
 
@@ -66,6 +77,17 @@ public class BossEvent : MonoBehaviour
 
     private GameObject player;
     private PlayerControl playerControl;
+
+    private void Awake()
+    {
+        // La puerta esta CERRADA en la escena: se guarda esa posicion
+        // y se abre al instante para que el jugador pueda entrar.
+        if (doorTransform != null)
+        {
+            doorClosedLocalPos = doorTransform.localPosition;
+            SetDoorInstant(true);
+        }
+    }
 
     private void OnEnable()
     {
@@ -77,6 +99,33 @@ public class BossEvent : MonoBehaviour
     {
         PlayerControl.OnPlayerDied -= ResetEvent;
         PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
+
+        // Si la zona se descarga en plena pelea, la musica vuelve a la de la zona
+        EndBossMusic();
+    }
+
+    // =========================
+    // MUSICA
+    // =========================
+
+    private void StartBossMusic()
+    {
+        if (bossMusicActive || bossTrack == null || !Soundtrack_Manager.IsAvailable) return;
+
+        bossMusicActive = true;
+        Soundtrack_Manager.Instance.StartBossMusic(bossTrack);
+    }
+
+    private void EndBossMusic()
+    {
+        if (!bossMusicActive) return;
+
+        bossMusicActive = false;
+
+        if (Soundtrack_Manager.IsAvailable)
+        {
+            Soundtrack_Manager.Instance.EndBossMusic();
+        }
     }
 
     // Se ejecuta cuando el jugador es instanciado (despues de elegir personaje)
@@ -104,13 +153,10 @@ public class BossEvent : MonoBehaviour
         }
 
         // 2. La puerta se cierra
-        yield return MoveDoor(closePos.position);
+        yield return MoveDoor(false);
         yield return new WaitForSeconds(pauseAfterDoor);
 
-        // 3. Aparece la barrera
-        yield return DoBarrier(true);
-
-        // 4. Entrada del boss: aparece, grita y se muestran sus barras
+        // 3. Entrada del boss: aparece, cae al suelo (empieza su musica), grita y se muestran sus barras
         yield return SpawnBoss();
 
         if (boss == null)
@@ -120,7 +166,7 @@ public class BossEvent : MonoBehaviour
             yield break;
         }
 
-        // 5. El jugador recupera el control y el boss empieza a atacar tras su delay inicial
+        // 4. El jugador recupera el control y el boss empieza a atacar tras su delay inicial
         if (playerControl != null)
         {
             playerControl.MutePlayerAudio(false);
@@ -131,7 +177,7 @@ public class BossEvent : MonoBehaviour
 
         Debug.Log("[BossEvent] Inicia el combate");
 
-        // 6. Combate: se espera a que el boss sea destruido
+        // 5. Combate: se espera a que el boss sea destruido
         while (bossObject != null)
         {
             yield return null;
@@ -185,6 +231,9 @@ public class BossEvent : MonoBehaviour
             // Toca el suelo: golpe de impacto
             boss.PlayLandingSound();
         }
+
+        // El boss ya esta en el suelo: empieza su musica
+        StartBossMusic();
 
         if (smokeVfx != null)
         {
@@ -262,40 +311,46 @@ public class BossEvent : MonoBehaviour
         }
     }
 
-    private IEnumerator MoveDoor(Vector3 desiredPos)
+    // =========================
+    // PUERTA
+    // =========================
+
+    // Y local de la puerta: cerrada = posicion de la escena, abierta = cerrada + posY
+    private float GetDoorTargetY(bool open)
     {
-        if (doorCamera != null)
+        return doorClosedLocalPos.y + (open ? posY : 0f);
+    }
+
+    private IEnumerator MoveDoor(bool open, bool playCamera = true)
+    {
+        if (playCamera && doorCamera != null)
         {
             CameraEventRelay.Instance.Play(doorCamera);
         }
 
         if (doorTransform == null) yield break;
 
-        while (Vector3.Distance(doorTransform.position, desiredPos) > 0.01f)
+        float targetY = GetDoorTargetY(open);
+
+        while (Mathf.Abs(doorTransform.localPosition.y - targetY) > 0.001f)
         {
-            doorTransform.position = Vector3.MoveTowards(doorTransform.position, desiredPos, moveSpeed * Time.deltaTime);
+            Vector3 p = doorTransform.localPosition;
+            p.y = Mathf.MoveTowards(p.y, targetY, Mathf.Max(0.01f, doorSpeed) * Time.deltaTime);
+            doorTransform.localPosition = p;
+
             yield return null;
         }
 
-        doorTransform.position = desiredPos;
+        SetDoorInstant(open);
     }
 
-    private IEnumerator DoBarrier(bool isActive)
+    private void SetDoorInstant(bool open)
     {
+        if (doorTransform == null) return;
 
-        if (barrier == null) yield return null;
-
-        if (barrierCamera != null)
-        {
-            CameraEventRelay.Instance.Play(barrierCamera);
-        }
-
-        if (barrier != null)
-        {
-            barrier.SetActive(isActive);
-        }
-
-        yield return new WaitForSeconds(barrierWait);
+        Vector3 p = doorClosedLocalPos;
+        p.y = GetDoorTargetY(open);
+        doorTransform.localPosition = p;
     }
 
     // Destruye a los enemigos que invoco el boss y los meteoritos que siguen cayendo,
@@ -336,15 +391,11 @@ public class BossEvent : MonoBehaviour
         // Lo que Morgana dejo en la sala (invocados de Climax, meteoritos) se va con ella
         ClearBossLeftovers();
 
-        if (doorTransform != null && openPos != null)
-        {
-            doorTransform.position = openPos.position;
-        }
+        // La puerta vuelve a quedar abierta para el siguiente intento
+        SetDoorInstant(true);
 
-        if (barrier != null)
-        {
-            barrier.SetActive(false);
-        }
+        // Vuelve la musica normal de la zona
+        EndBossMusic();
 
         hasStarted = false;
         eventActive = false;
@@ -363,15 +414,21 @@ public class BossEvent : MonoBehaviour
             bossHud.Hide();
         }
 
+        if (endMusicOnBossDeath)
+        {
+            EndBossMusic();
+        }
+
+        // La puerta se abre mientras sigue el resto del evento (sin camara propia:
+        // las camaras del Blue Impact son las que mandan a partir de aqui)
+        StartCoroutine(MoveDoor(true, playCamera: false));
+
         yield return new WaitForSeconds(pauseAfterBossDeath);
 
         // Camino normal: el evento del Blue Impact toma el control desde aqui
         if (blueImpactEvent != null)
         {
             Debug.Log("[BossEvent] Boss derrotado, pasa al evento del Blue Impact");
-
-            // La barrera se queda puesta: el jugador no debe salir sin elegir un final
-            if (barrier != null) barrier.SetActive(keepBarrierAfterBoss);
 
             blueImpactEvent.StartSequence(playerControl);
             yield break;
@@ -434,4 +491,4 @@ public class BossEvent : MonoBehaviour
 
         StartBossEvent();
     }
-}
+}

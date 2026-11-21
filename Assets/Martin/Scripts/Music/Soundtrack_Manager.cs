@@ -87,15 +87,16 @@ public class Soundtrack_Manager : MonoBehaviour
         Instance = this;
         isQuitting = false;
 
-        //// DontDestroyOnLoad only works on objects that are not children of anything.
-        //if (transform.parent != null) transform.SetParent(null);
+        // DontDestroyOnLoad only works on objects that are not children of anything.
+        if (transform.parent != null) transform.SetParent(null);
 
-        //DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(gameObject);
     }
 
     void Start()
     {
-        if (startingTrack != null && currentTrack == null && zoneTrack == null) SetZoneMusic(startingTrack);
+        if (startingTrack != null && currentTrack == null && zoneTrack == null)
+            SetZoneMusic(startingTrack);
     }
 
     void OnApplicationQuit()
@@ -105,8 +106,7 @@ public class Soundtrack_Manager : MonoBehaviour
 
     void OnDestroy()
     {
-        if (Instance == this)
-            Instance = null;
+        if (Instance == this) Instance = null;
     }
 
     // ------------------------------------------------------------------ Public API
@@ -115,8 +115,8 @@ public class Soundtrack_Manager : MonoBehaviour
     public void SetZoneMusic(Soundtrack track)
     {
         zoneTrack = track;
-        if (bossTrack == null)
-            TransitionTo(track, zoneTransition, silenceGap);
+
+        if (bossTrack == null)TransitionTo(track, zoneTransition, silenceGap);
     }
 
     // Switches to boss music, overriding zone music.
@@ -135,7 +135,7 @@ public class Soundtrack_Manager : MonoBehaviour
         TransitionTo(zoneTrack, bossEndTransition, bossEndSilenceGap);
     }
 
-    // Fades out all music. Entering a MusicZone again will start music again.
+    // Fades out all music. Going through a MusicTrigger will start music again.
     // fadeOutTime < 0 = use each track's own fade-out time.
     public void StopMusic(float fadeOutTime = -1f)
     {
@@ -147,33 +147,7 @@ public class Soundtrack_Manager : MonoBehaviour
         }
     }
 
-    // Called by MusicZone when the player enters. The most recently entered zone wins.
-    public void EnterZone(MusicZone zone)
-    {
-        if (zone == null) return;
-        activeZones.Remove(zone);  // in case it was already in the list
-        activeZones.Add(zone);
-        RefreshZoneMusic();
-    }
-
-    // Called by MusicZone when the player leaves or the zone's scene is unloaded.
-    public void ExitZone(MusicZone zone)
-    {
-        if (activeZones.Remove(zone))
-            RefreshZoneMusic();
-    }
-
     // ------------------------------------------------------------------ Internals
-
-    void RefreshZoneMusic()
-    {
-        // Outside every zone: keep playing whatever was last playing (no awkward silence
-        // in corridors or gaps between trigger volumes).
-        if (activeZones.Count == 0) return;
-
-        MusicZone lastZone = activeZones[activeZones.Count - 1];
-        SetZoneMusic(lastZone.Track);
-    }
 
     void TransitionTo(Soundtrack track, MusicTransition style, float gap)
     {
@@ -192,8 +166,7 @@ public class Soundtrack_Manager : MonoBehaviour
             FadeOut(v, cut ? 0f : GetFadeOutTime(v.track));
 
             // Time left = how loud it still is * how long a full fade takes.
-            if (v.started)
-                longestFadeOut = Mathf.Max(longestFadeOut, v.fade * v.fadeDuration);
+            if (v.started) longestFadeOut = Mathf.Max(longestFadeOut, v.fade * v.fadeDuration);
         }
 
         if (track == null || track.clip == null) return; // a "silent" zone
@@ -249,10 +222,8 @@ public class Soundtrack_Manager : MonoBehaviour
             }
 
             // Move the fade towards its target.
-            if (v.fadeDuration <= 0f)
-                v.fade = v.target;  // instant
-            else
-                v.fade = Mathf.MoveTowards(v.fade, v.target, dt / v.fadeDuration);
+            if (v.fadeDuration <= 0f) v.fade = v.target;  // instant
+            else v.fade = Mathf.MoveTowards(v.fade, v.target, dt / v.fadeDuration);
 
             v.source.volume = FadeCurve(v.fade) * v.track.volume * musicVolume;
 

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class CameraEventRelay : MonoBehaviour
@@ -17,17 +18,24 @@ public class CameraEventRelay : MonoBehaviour
 
     public void Play(CameraRequest request)
     {
-        if (request == null)
-            return;
+        if (request == null) return;
 
         if (CameraEventSystem.Instance == null)
         {
-            Debug.LogError(
-                "[CameraEventRelay] CameraEventSystem missing.");
+            Debug.LogError("[CameraEventRelay] CameraEventSystem missing.");
 
             return;
         }
 
         CameraEventSystem.Instance.Play(request);
+    }
+
+    public void Release(CameraRequest request)
+    {
+        if (request == null) return;
+
+        if (CameraEventSystem.Instance == null) return;
+
+        CameraEventSystem.Instance.Release(request);
     }
 }

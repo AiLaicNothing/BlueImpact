@@ -2,14 +2,16 @@ using UnityEngine;
 
 public class MusicZone : MonoBehaviour
 {
-    [SerializeField] private Soundtrack track;
-    [SerializeField] private bool activateOnStart;
+    [Tooltip("Music when the player goes through in the direction of the arrow.")]
+    [SerializeField] Soundtrack trackForward;
 
-    [SerializeField] Color gizmoColor = new Color(0.3f, 0.6f, 1f, 0.12f);
+    [Tooltip("Music when the player goes through against the arrow (going back). Empty = don't change.")]
+    [SerializeField] Soundtrack trackBackward;
 
-    public Soundtrack Track => track;
+    [Tooltip("Play Track Forward as soon as this scene starts. Only use it in the scene where the player " +
+             "spawns.")]
+    [SerializeField] bool playOnStart = false;
 
-    // Runs when you add the component in the editor: makes the collider a trigger automatically.
     void Reset()
     {
         GetComponent<Collider>().isTrigger = true;
@@ -17,23 +19,27 @@ public class MusicZone : MonoBehaviour
 
     void Start()
     {
-        if (activateOnStart && Soundtrack_Manager.IsAvailable) Soundtrack_Manager.Instance.EnterZone(this);
+        if (playOnStart && trackForward != null && Soundtrack_Manager.IsAvailable)
+            Soundtrack_Manager.Instance.SetZoneMusic(trackForward);
     }
 
-    void OnTriggerEnter(Collider other)
-    {
-        if (IsPlayer(other) && Soundtrack_Manager.IsAvailable) Soundtrack_Manager.Instance.EnterZone(this);
-    }
-
+    // We use Exit so we know which side the player came out of.
+    // If the player walks in and turns back, the music doesn't change.
     void OnTriggerExit(Collider other)
     {
-        if (IsPlayer(other) && Soundtrack_Manager.IsAvailable) Soundtrack_Manager.Instance.ExitZone(this);
-    }
+        if (!IsPlayer(other)) return;
 
-    // Runs when this zone's scene is unloaded while the player is still inside.
-    void OnDisable()
-    {
-        if (Soundtrack_Manager.IsAvailable) Soundtrack_Manager.Instance.ExitZone(this);
+        if (!Soundtrack_Manager.IsAvailable) return;
+
+        // Positive = player is on the arrow side of the trigger.
+
+        Vector3 toPlayer = other.bounds.center - transform.position;
+
+        bool wentForward = Vector3.Dot(transform.forward, toPlayer) > 0f;
+
+        Soundtrack track = wentForward ? trackForward : trackBackward;
+
+        if (track != null) Soundtrack_Manager.Instance.SetZoneMusic(track);
     }
 
     // True if the collider is the player, or a child collider of the player's Rigidbody.
@@ -42,30 +48,35 @@ public class MusicZone : MonoBehaviour
         if (other.CompareTag("Player")) return true;
 
         if (other.attachedRigidbody != null && other.attachedRigidbody.CompareTag("Player")) return true;
+
         return false;
     }
 
-    // Draws the zone in the Scene view so you can see where each music area is.
+    // Draws the trigger and an arrow showing the forward direction in the Scene view.
     void OnDrawGizmos()
     {
-        BoxCollider box = GetComponent<BoxCollider>();
+        Collider col = GetComponent<Collider>();
+
+        if (col == null) return;
+
+        BoxCollider box = col as BoxCollider;
 
         if (box != null)
         {
             Gizmos.matrix = transform.localToWorldMatrix;
-            Gizmos.color = gizmoColor;
+            Gizmos.color = new Color(0.3f, 0.6f, 1f, 0.15f);
             Gizmos.DrawCube(box.center, box.size);
-            Gizmos.color = new Color(gizmoColor.r, gizmoColor.g, gizmoColor.b, 1f);
+            Gizmos.color = new Color(0.3f, 0.6f, 1f, 1f);
             Gizmos.DrawWireCube(box.center, box.size);
-            return;
+            Gizmos.matrix = Matrix4x4.identity;
         }
 
-        Collider col = GetComponent<Collider>();
-
-        if (col != null)
-        {
-            Gizmos.color = gizmoColor;
-            Gizmos.DrawCube(col.bounds.center, col.bounds.size);
-        }
+        // Arrow
+        Vector3 start = col.bounds.center;
+        Vector3 end = start + transform.forward * 2f;
+        Gizmos.color = Color.blue;
+        Gizmos.DrawLine(start, end);
+        Gizmos.DrawLine(end, end - transform.forward * 0.5f + transform.right * 0.3f);
+        Gizmos.DrawLine(end, end - transform.forward * 0.5f - transform.right * 0.3f);
     }
 }

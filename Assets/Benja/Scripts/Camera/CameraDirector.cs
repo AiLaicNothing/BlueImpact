@@ -7,14 +7,39 @@ public class CameraDirector : MonoBehaviour
 {
     public static CameraDirector Instance;
 
+    [Header("Gameplay")]
+    [SerializeField]
+    private int gameplayPriority = 10;
+
+    [Header("Debug")]
+    [SerializeField]
+    private bool debug;
+
+    private CinemachineCamera gameplayCamera;
+
+    private CinemachineCamera currentCamera;
+
+    private CameraRequest activeRequest;
+
+    private Coroutine activeRoutine;
+
+    private bool releaseRequested;
+
+    private PlayerControl playerControl;
+
+    // One-shot blend override: the next blend whose target is
+    // `blendTarget` uses `pendingBlend` instead of the Brain's settings.
+    private ICinemachineCamera blendTarget;
+
+    private CinemachineBlendDefinition pendingBlend;
+
     private static readonly Dictionary<int, CinemachineCamera> registry = new();
 
     public static void Register(int id, CinemachineCamera cam)
     {
         if (cam == null) return;
 
-        if (registry.TryGetValue(id, out var existing) &&
-            existing != null &&
+        if (registry.TryGetValue(id, out var existing) &&existing != null &&
             existing != cam)
         {
             Debug.LogWarning($"[CameraDirector] Duplicate Camera ID {id}: " +
@@ -38,27 +63,6 @@ public class CameraDirector : MonoBehaviour
     // SETTINGS / STATE
     // =========================
 
-    [Header("Gameplay")]
-    [SerializeField]
-    private int gameplayPriority = 10;
-
-    [Header("Debug")]
-    [SerializeField]
-    private bool debug;
-
-    private CinemachineCamera gameplayCamera;
-
-    private CinemachineCamera currentCamera;
-
-    private CameraRequest activeRequest;
-
-    private Coroutine activeRoutine;
-
-    private PlayerControl playerControl;
-
-    private ICinemachineCamera blendTarget;
-
-    private CinemachineBlendDefinition pendingBlend;
 
     // =========================
     // LIFECYCLE
@@ -97,6 +101,8 @@ public class CameraDirector : MonoBehaviour
         if (CameraEventSystem.Instance != null)
         {
             CameraEventSystem.Instance.OnCameraRequest += HandleRequest;
+
+            CameraEventSystem.Instance.OnCameraRelease += HandleRelease;
         }
     }
 
@@ -105,6 +111,8 @@ public class CameraDirector : MonoBehaviour
         if (CameraEventSystem.Instance != null)
         {
             CameraEventSystem.Instance.OnCameraRequest -= HandleRequest;
+
+            CameraEventSystem.Instance.OnCameraRelease -= HandleRelease;
         }
 
         PlayerSpawn_Manager.OnPlayerSpawned -= OnPlayerSpawned;
@@ -114,11 +122,13 @@ public class CameraDirector : MonoBehaviour
     {
         playerControl = player;
 
-        if (debug) Debug.Log("[CameraDirector] PlayerControl received: " + player.gameObject.name);
-        
+        if (debug)
+        {
+            Debug.Log("[CameraDirector] PlayerControl received: " + player.gameObject.name);
+        }
     }
 
-    public void RegisterPlayerCamera(CinemachineCamera cam)
+    public void RegisterPlayerCamera( CinemachineCamera cam)
     {
         gameplayCamera = cam;
 
@@ -131,17 +141,18 @@ public class CameraDirector : MonoBehaviour
 
     private CinemachineCamera ResolveCamera(CameraRequest request)
     {
-        // Direct reference (same scene as the event) — preferred.
+        // 1) Direct reference (same scene as the event) — preferred.
         if (request.camera != null) return request.camera;
 
-        // Fallback: ID registered by a CameraID in any loaded scene.
+        // 2) Fallback: ID registered by a CameraID in any loaded scene.
         if (registry.TryGetValue(request.cameraID, out var cam) && cam != null)
             return cam;
 
         return null;
     }
 
-    private void HandleRequest(CameraRequest request)
+    private void HandleRequest(
+        CameraRequest request)
     {
         if (request == null) return;
 
@@ -203,9 +214,23 @@ public class CameraDirector : MonoBehaviour
 
         cam.Priority = request.activePriority;
 
-        if (request.duration > 0f)
+        releaseRequested = false;
+
+        if (request.holdUntilReleased)
         {
-            yield return new WaitForSeconds( request.duration);
+            // Stays until the event calls Release.
+            while (!releaseRequested) yield return null;
+        }
+        else if (request.duration > 0f)
+        {
+            // Fixed duration, but can still be ended early with Release.
+            float elapsed = 0f;
+
+            while (elapsed < request.duration && !releaseRequested)
+            {
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
         }
 
         // Transition OUT
@@ -227,6 +252,16 @@ public class CameraDirector : MonoBehaviour
         currentCamera = null;
         activeRequest = null;
         activeRoutine = null;
+    }
+
+    private void HandleRelease(CameraRequest request)
+    {
+        // Only release if that request is the one currently playing.
+        // If another request already interrupted it, there's nothing to do.
+        if (request != null && request == activeRequest)
+        {
+            releaseRequested = true;
+        }
     }
 
     private void ApplyPlayerState(CameraRequest request, bool cinematic)
