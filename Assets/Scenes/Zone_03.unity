@@ -25431,12 +25431,34 @@ MonoBehaviour:
   lockedVisual: {fileID: 1937669203}
   openVisual: {fileID: 0}
   openRequest:
+    camera: {fileID: 0}
     cameraID: 0
     duration: 3
+    holdUntilReleased: 0
     activePriority: 100
     inactivePriority: 0
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
+    overrideBlendIn: 1
+    blendIn:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    overrideBlendOut: 1
+    blendOut:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
@@ -39225,7 +39247,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &725544252
 MonoBehaviour:
   m_ObjectHideFlags: 0
