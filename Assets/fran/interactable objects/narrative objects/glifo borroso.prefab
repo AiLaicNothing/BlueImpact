@@ -10,8 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 93805723136986102}
   - component: {fileID: 7700741033880854161}
-  - component: {fileID: 7820059418691792326}
-  - component: {fileID: 4894091732617435898}
   m_Layer: 14
   m_Name: glifo borroso
   m_TagString: Untagged
@@ -57,35 +55,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 3, y: 3, z: 3}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &7820059418691792326
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 338178208614767096}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7dedfd4f9df47a941a58bc71119f50fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Item
-  data: {fileID: 11400000, guid: d9861143b0825ac4383dbc59dbc2d972, type: 2}
-  _vfx: {fileID: 1705991502332477636}
-  audioSource: {fileID: 0}
-  pickUpAudio: {fileID: 0}
---- !u!114 &4894091732617435898
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 338178208614767096}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1a007b1bb1b5f54b856d20430a010fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PickupPersistence
-  pickupData: {fileID: 0}
 --- !u!1 &5583461353773704027
 GameObject:
   m_ObjectHideFlags: 0
@@ -442,11 +411,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f635a0578c923f949af165a5525bcc57, type: 3}
---- !u!1 &1705991502332477636 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2826183304179849474, guid: f635a0578c923f949af165a5525bcc57, type: 3}
-  m_PrefabInstance: {fileID: 3500555328462477766}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7929445441444542826 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6818296023241138348, guid: f635a0578c923f949af165a5525bcc57, type: 3}
