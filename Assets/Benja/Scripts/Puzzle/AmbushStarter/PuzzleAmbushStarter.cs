@@ -3,8 +3,8 @@ using UnityEngine;
 public class PuzzleAmbushStarter : PuzzleBase
 {
     private bool _isOpen;
-    [SerializeField]AmbushEvent ambushEvent;
-    private void Awake()
+    [SerializeField]Collider ambushEvent;
+    private void Start()
     {
         ambushEvent.enabled = false;
     }
