@@ -28,7 +28,7 @@ public static class LevelSetupTools
         "Assets/Scenes/Zone_02.unity",
         "Assets/Scenes/Zone_03.unity",
         "Assets/Scenes/Zone_04.unity",
-        "Assets/Scenes/Zone_05.unity",
+        "Assets/Scenes/Zone_04_ForgottenLibrary.unity",
     };
 
     // =====================================================================
@@ -140,6 +140,12 @@ public static class LevelSetupTools
     {
         int created = 0;
 
+        // Si una emboscada hace de salida del nivel (doorsAreLevelExit), no se crean compuertas:
+        // sus puertas ya bloquean la salida hasta llegar al porcentaje.
+        bool ambushIsExit = SceneComponents<AmbushEvent>(scene)
+            .Any(a => new SerializedObject(a).FindProperty("doorsAreLevelExit").boolValue);
+        if (ambushIsExit) return 0;
+
         foreach (SceneLoader loader in SceneComponents<SceneLoader>(scene))
         {
             string target = new SerializedObject(loader).FindProperty("sceneNameLoad").stringValue;
@@ -192,13 +198,12 @@ public static class LevelSetupTools
 
     private static bool IsForwardGate(string currentScene, string targetScene)
     {
-        int from = ZoneNumber(currentScene);
-        int to = ZoneNumber(targetScene);
-
-        // Solo zonas de hub en adelante (Zone_02 y superiores); tutoriales (0 y 1) no se bloquean.
-        // El destino tiene que ser una escena de la lista del juego (no p. ej. Zone_04_ForgottenLibrary).
-        bool isGameScene = System.Array.Exists(LevelScenes, p => System.IO.Path.GetFileNameWithoutExtension(p) == targetScene);
-        return from >= 2 && to > from && to <= 5 && isGameScene;
+        // Se usa el orden de LevelScenes (tutorial, nivel 1..4), no el número del nombre:
+        // Zone_04 y Zone_04_ForgottenLibrary tienen el mismo número pero son niveles distintos.
+        // El tutorial (índice 0) no se bloquea.
+        int from = System.Array.FindIndex(LevelScenes, p => System.IO.Path.GetFileNameWithoutExtension(p) == currentScene);
+        int to = System.Array.FindIndex(LevelScenes, p => System.IO.Path.GetFileNameWithoutExtension(p) == targetScene);
+        return from >= 1 && to > from;
     }
 
     // "Zone_03" -> 3. "Zone_00_Tutorial" -> 0. Otros nombres -> -1.
