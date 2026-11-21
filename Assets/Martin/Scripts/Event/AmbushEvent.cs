@@ -34,6 +34,11 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
     [Header("Doors")]
     [SerializeField] private Door[] doors;
+
+    [Tooltip("Las puertas de esta emboscada son la salida del nivel: empiezan cerradas y solo se abren " +
+             "al ganar la emboscada Y llegar al porcentaje de kills del nivel. Sustituye a la LevelGate en esta salida.")]
+    [SerializeField] private bool doorsAreLevelExit;
+
     [SerializeField] private float posY = 4f;
     [SerializeField] private float doorSpeed = 2f;
 
@@ -108,6 +113,45 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
         }
 
         RestoreEventState();
+
+        if (doorsAreLevelExit && LevelObjectiveManager.Instance != null)
+            LevelObjectiveManager.Instance.OnThresholdReached += HandleThresholdReached;
+    }
+
+    private void OnDestroy()
+    {
+        if (LevelObjectiveManager.Instance != null)
+            LevelObjectiveManager.Instance.OnThresholdReached -= HandleThresholdReached;
+    }
+
+    // =========================
+    // SALIDA DEL NIVEL
+    // =========================
+
+    // true si las puertas "Is Closed" son la salida y el nivel aún no llega al porcentaje.
+    private bool ExitLocked()
+    {
+        if (!doorsAreLevelExit) return false;
+        if (LevelObjectiveManager.Instance == null) return false;
+        if (!LevelZone.TryGetConfig(gameObject.scene, out LevelConfig config)) return false;
+
+        return !LevelObjectiveManager.Instance.IsUnlocked(config.LevelId);
+    }
+
+    private void NotifyExitBlocked()
+    {
+        if (LevelZone.TryGetConfig(gameObject.scene, out LevelConfig config))
+            LevelObjectiveManager.Instance?.NotifyExitBlocked(config.LevelId);
+    }
+
+    // Se llegó al porcentaje: si la emboscada ya se ganó, se abre la salida.
+    // Si todavía no se gana, la abrirá Ambush() al terminar.
+    private void HandleThresholdReached(string levelId)
+    {
+        if (!hasFinished) return;
+        if (!LevelZone.TryGetConfig(gameObject.scene, out LevelConfig config) || config.LevelId != levelId) return;
+
+        StartCoroutine(MoveDoors(true, includeLockedDoors: true));
     }
 
     private void OnDisable()
@@ -147,7 +191,7 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
         // - "isClosed" doors stay CLOSED until the event is completed.
         // Completed event: every door is OPEN.
         // No animation or camera event is played here.
-        SetDoorsInstant(true, includeLockedDoors: hasFinished);
+        SetDoorsInstant(true, includeLockedDoors: hasFinished && !ExitLocked());
 
         // Completed event: reward is already revealed.
         SetRewardActive(hasFinished);
@@ -178,6 +222,13 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
+
+        // Emboscada ganada pero la salida sigue bloqueada: aviso de cuántos enemigos faltan.
+        if (hasFinished && ExitLocked())
+        {
+            NotifyExitBlocked();
+            return;
+        }
 
         // Cannot activate while running or after completion.
         if (hasStarted || hasFinished) return;
@@ -235,7 +286,12 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
         SetCutsceneMode(true);
 
         // STEP 7: Open ALL doors, including the "isClosed" shortcut doors.
-        yield return MoveDoors(true, includeLockedDoors: true);
+        // Si son la salida del nivel y falta porcentaje, las "isClosed" siguen cerradas.
+        bool exitLocked = ExitLocked();
+        if (doorsAreLevelExit)
+            Debug.Log($"[AmbushEvent] Emboscada ganada. Salida del nivel {(exitLocked ? "BLOQUEADA (falta porcentaje)" : "desbloqueada")}." +
+                      (LevelObjectiveManager.Instance == null ? " AVISO: no hay LevelObjectiveManager (¿probando sin Testing_Scene?)." : ""), this);
+        yield return MoveDoors(true, includeLockedDoors: !exitLocked);
 
         // STEP 8: Reveal the reward.
         yield return ShowReward();
@@ -249,6 +305,8 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
 
         // STEP 11: Save permanent completion.
         SaveEventState();
+
+        if (exitLocked) NotifyExitBlocked();
 
         Debug.Log("[AmbushEvent] Event completed.");
     }
@@ -310,7 +368,10 @@ public class AmbushEvent : MonoBehaviour, ILevelSpawnSource
     {
         float targetY = closedLocalPositions[i].y;
 
-        bool shouldOpen = open && (includeLockedDoors || !doors[i].isClosed);
+        // Con doorsAreLevelExit, todas las puertas se tratan como "isClosed":
+        // no hace falta marcarlas una por una para que respeten el porcentaje del nivel.
+        bool locked = doors[i].isClosed || doorsAreLevelExit;
+        bool shouldOpen = open && (includeLockedDoors || !locked);
 
         if (shouldOpen) targetY += posY;
 

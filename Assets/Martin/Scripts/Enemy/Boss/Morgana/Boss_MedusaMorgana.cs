@@ -161,6 +161,20 @@ public class Boss_MedusaMorgana : EnemyBase
     [SerializeField] private float meteorAimAtPlayerChance = 0.35f; // probabilidad de que un meteorito vaya justo donde esta el jugador
     [SerializeField] private MeteorConfig meteor = new MeteorConfig();
 
+    [Header("Invulnerabilidad")]
+    [Tooltip("Invulnerable durante el cambio de forma (fase 1 -> fase 2).")]
+    [SerializeField] private bool invulnerableDuringTransform = true;
+    [Tooltip("Invulnerable mientras sigan vivas sus invocaciones (oleadas del Climax o golems).")]
+    [SerializeField] private bool invulnerableWhileSummonsAlive = true;
+    [Tooltip("Opcional: escudo o aura que se muestra mientras es invulnerable.")]
+    [SerializeField] private GameObject invulnerableVfx;
+    [Tooltip("Opcional: material que se superpone al modelo mientras es invulnerable " +
+             "(se añade como material extra, encima de los originales; ej. un fresnel o brillo).")]
+    [SerializeField] private Material invulnerableMaterial;
+
+    private Renderer[] invulnerableRenderers;
+    private bool invulnerableMaterialOn;
+
     [Header("Cambio de fase (2 modelos)")]
     [SerializeField] private GameObject phaseOneModel;
     [SerializeField] private GameObject phaseTwoModel;
@@ -407,8 +421,59 @@ public class Boss_MedusaMorgana : EnemyBase
             Debug.LogWarning("[Morgana] Meteor Shower: meteorShowerCastFrame esta despues del final de la animacion (" + meteorShowerFrames + " frames)");
     }
 
+    // Invulnerable mientras cambia de forma o mientras sus invocaciones siguen vivas,
+    // para que no se pueda saltar la mecánica matándola directamente.
+    protected override bool IsInvulnerable =>
+        (invulnerableDuringTransform && IsTransforming) ||
+        (invulnerableWhileSummonsAlive && SummonsAlive);
+
+    // Desde que baja del umbral hasta que la fase 2 queda activa.
+    private bool IsTransforming => phaseTwoStarted && !inPhaseTwo;
+
+    private bool SummonsAlive =>
+        (climaxWaves != null && climaxWaves.IsRunning) ||
+        (summonSpawner != null && summonSpawner.AliveCount > 0);
+
+    private void UpdateInvulnerableVfx()
+    {
+        bool on = !isDead && IsInvulnerable;
+
+        if (invulnerableVfx != null && invulnerableVfx.activeSelf != on) invulnerableVfx.SetActive(on);
+
+        SetInvulnerableMaterial(on);
+    }
+
+    // Añade o quita invulnerableMaterial como material extra en los modelos de las dos fases.
+    // Al quitarlo se filtra por referencia, así no pisa otros cambios de material (stagger, muerte).
+    private void SetInvulnerableMaterial(bool on)
+    {
+        if (invulnerableMaterial == null || invulnerableMaterialOn == on) return;
+        invulnerableMaterialOn = on;
+
+        if (invulnerableRenderers == null)
+        {
+            // Incluye inactivos: el modelo de la fase 2 está apagado al empezar.
+            var list = new System.Collections.Generic.List<Renderer>();
+            foreach (Renderer r in GetComponentsInChildren<Renderer>(true))
+                if (r is MeshRenderer || r is SkinnedMeshRenderer) list.Add(r);
+            invulnerableRenderers = list.ToArray();
+        }
+
+        foreach (Renderer r in invulnerableRenderers)
+        {
+            if (r == null) continue;
+
+            var mats = new System.Collections.Generic.List<Material>(r.sharedMaterials);
+            mats.RemoveAll(m => m == invulnerableMaterial);
+            if (on) mats.Add(invulnerableMaterial);
+            r.sharedMaterials = mats.ToArray();
+        }
+    }
+
     protected override void Update()
     {
+        UpdateInvulnerableVfx();
+
         if (isDead) return;
 
         base.Update();

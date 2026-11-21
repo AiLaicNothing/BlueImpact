@@ -382,9 +382,21 @@ public class EnemyBase : MonoBehaviour, IDamageable
     // DAMAGE: NORMAL RECOIL OR STAGGERED ATTACK REACTION
     // ================================================================
 
+    // Las subclases lo activan para ignorar el daño (ej. boss durante un cambio de fase).
+    protected virtual bool IsInvulnerable => false;
+
+    // Se llama cuando un golpe llega pero IsInvulnerable lo anula (para feedback visual o sonoro).
+    protected virtual void OnBlockedHit(in DamageInfo info) { }
+
     public void TakeDamage(in DamageInfo info)
     {
         if (isDead || stats == null) return;
+
+        if (IsInvulnerable)
+        {
+            OnBlockedHit(in info);
+            return;
+        }
 
         ShowHitVfx();
         if (audio_Source != null && onHit != null) audio_Source.PlayOneShot(onHit);
@@ -946,14 +958,23 @@ public class EnemyBase : MonoBehaviour, IDamageable
     private IEnumerator DieEffect()
     {
         float elapsed = 0f;
-        healthUI.gameObject.SetActive(false);
-        barUI.gameObject.SetActive(false);
-        Transform[] ts = gameObject.GetComponentsInChildren<Transform>();
-        foreach (Transform a in ts)
+
+        // Null checks: los bosses (Morgana) usan BossHealthHUD y no tienen healthUI/barUI.
+        // Sin esto, el coroutine lanza NullReferenceException, nunca llega al Destroy
+        // y BossEvent se queda esperando a que el boss desaparezca.
+        if (healthUI != null) healthUI.gameObject.SetActive(false);
+        if (barUI != null) barUI.gameObject.SetActive(false);
+
+        if (player != null && player.lockOnTarget != null && player.lockOnTarget.isTargeting)
         {
-            if (player.lockOnTarget.CurrentTarget == a && player.lockOnTarget.isTargeting)
+            Transform[] ts = gameObject.GetComponentsInChildren<Transform>();
+            foreach (Transform a in ts)
             {
-                player.lockOnTarget.ClearTarget();
+                if (player.lockOnTarget.CurrentTarget == a)
+                {
+                    player.lockOnTarget.ClearTarget();
+                    break;
+                }
             }
         }
         while (elapsed < durationDissolve)
