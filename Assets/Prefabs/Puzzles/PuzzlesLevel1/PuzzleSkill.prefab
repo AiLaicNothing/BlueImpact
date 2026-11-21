@@ -55,12 +55,33 @@ MonoBehaviour:
   - {fileID: 913915438863149012}
   useCameraOnActivation: 0
   activationCamera:
+    camera: {fileID: 0}
     cameraID: 104
     duration: 1.75
     activePriority: 100
     inactivePriority: -10
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
+    overrideBlendIn: 1
+    blendIn:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    overrideBlendOut: 1
+    blendOut:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
@@ -754,6 +775,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
+      propertyPath: canToggleOff
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
       propertyPath: indicatorSprite
       value: 
       objectReference: {fileID: 7379159944377331321}
@@ -796,20 +821,12 @@ PrefabInstance:
     m_TransformParent: {fileID: 7517301943657835335}
     m_Modifications:
     - target: {fileID: 1088443834077482962, guid: aed3ae6e882901444b9671f6f6fbe867, type: 3}
-      propertyPath: vfx
-      value: 
-      objectReference: {fileID: 8139170015964550401}
-    - target: {fileID: 1088443834077482962, guid: aed3ae6e882901444b9671f6f6fbe867, type: 3}
       propertyPath: pickupData
       value: 
       objectReference: {fileID: 11400000, guid: 5f7d26f5312edab4aa73feedbc3f0a1f, type: 2}
     - target: {fileID: 1088443834077482962, guid: aed3ae6e882901444b9671f6f6fbe867, type: 3}
       propertyPath: audioSource
       value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 1088443834077482962, guid: aed3ae6e882901444b9671f6f6fbe867, type: 3}
-      propertyPath: fadeOutDuration
-      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1088443834077482962, guid: aed3ae6e882901444b9671f6f6fbe867, type: 3}
       propertyPath: skillsByCharacter.Array.data[0].skill
@@ -871,11 +888,6 @@ PrefabInstance:
 --- !u!4 &1839938232335561050 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6609066204135090195, guid: aed3ae6e882901444b9671f6f6fbe867, type: 3}
-  m_PrefabInstance: {fileID: 4769550189935958345}
-  m_PrefabAsset: {fileID: 0}
---- !u!96 &8139170015964550401 stripped
-TrailRenderer:
-  m_CorrespondingSourceObject: {fileID: 3658326565912333384, guid: aed3ae6e882901444b9671f6f6fbe867, type: 3}
   m_PrefabInstance: {fileID: 4769550189935958345}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7174700656205000965
@@ -964,6 +976,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
       propertyPath: offColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
+      propertyPath: canToggleOff
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}

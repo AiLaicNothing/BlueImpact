@@ -8,33 +8,65 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
     Material thisMaterial;
     [SerializeField] GameObject brokenPrefab;
     [SerializeField] AudioClip destructionClip;
+    [Header("Explosion Settings")]
     [SerializeField] float explosiveForce = 250;
     [SerializeField] float explosiveRadius = 2f;
     [SerializeField] float pieceFadeSpeed = 0.25f;
     [SerializeField] float pieceDestroyDelay = 2f;
     [SerializeField] float pieceSleepCheckDelay = 0.1f;
-    [SerializeField] bool thisMaterialIsToon;
-    float life = 1;
 
+    [Header("Options")]
+    [SerializeField] bool thisMaterialIsToon;
+    [SerializeField] bool forPuzzles;
+
+    private Vector3 startPos;
+    private Quaternion startRot;
+    private bool wasKinematic;
+    private float life = 1f;
+    private bool isBroken = false;
     private void Awake()
     {
+        startPos = transform.position;
+        startRot = transform.rotation;
         rb = GetComponent<Rigidbody>();
         thisMaterial = GetComponent<Renderer>().sharedMaterial;
         //audioSource = GetComponent<AudioSource>();
     }
     public void TakeDamage(in DamageInfo info)
     {
+        if (forPuzzles || isBroken) return;
+
         life -= info.damage;
         if(life <= 0)
         {
             Explode();
         }
     }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!forPuzzles || isBroken) return;
+
+        if (other.CompareTag("DestroyBox"))
+        {
+            Explode();
+        }
+    }
     public void Explode()
     {
-        if(rb != null)
+        isBroken = true;
+        Vector3 currentAngularVel = rb != null ? rb.angularVelocity : Vector3.zero;
+        if (rb != null)
         {
-            Destroy(rb);
+            if (forPuzzles)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
+            else
+            {
+                Destroy(rb);
+            }
         }
         if(TryGetComponent<Collider>(out Collider coliider))
         {
@@ -48,25 +80,27 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
         {
             audioSource.PlayOneShot(destructionClip);
         }
+
         GameObject brokenInstance = Instantiate(brokenPrefab, transform.position, transform.rotation);
         brokenInstance.transform.localScale = gameObject.transform.localScale;
-        if (!thisMaterialIsToon)
+        if (!thisMaterialIsToon && thisMaterial != null)
         {
-            Material[] mats = brokenInstance.transform.GetComponentsInChildren<Material>();
-            for (int i = 0; i < mats.Length; i++)
+            Renderer[] mats = brokenInstance.transform.GetComponentsInChildren<Renderer>();
+            foreach(Renderer r in mats)
+            {
+                r.sharedMaterial = thisMaterial;
+            }
+            /**for (int i = 0; i < mats.Length; i++)
             {
                 mats[i] = thisMaterial;
-            }
+            }*/
         }
 
         Rigidbody[] rbs = brokenInstance.GetComponentsInChildren<Rigidbody>();
         foreach(Rigidbody body in rbs)
         {
-            if(rb != null)
-            {
-                body.angularVelocity = rb.angularVelocity;
-            }
-
+            
+            body.angularVelocity = currentAngularVel;            
             body.AddExplosionForce(explosiveForce, transform.position, explosiveRadius);
         }
 
@@ -112,9 +146,43 @@ public class DestructibleObjects : MonoBehaviour, IDamageable
             Destroy(r.gameObject);
         }
         Destroy(brokenInstance);
-        Destroy(gameObject);
-    }
 
+        if (forPuzzles)
+        {
+            ResetPuzzle();
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+    void ResetPuzzle()
+    {
+        transform.position = startPos;
+        transform.rotation = startRot;
+
+        if (rb != null)
+        {
+            rb.isKinematic = wasKinematic;
+            if (!wasKinematic)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+        }
+
+
+        if (TryGetComponent<Collider>(out Collider coliider))
+        {
+            coliider.enabled = true;
+        }
+        if (TryGetComponent<Renderer>(out Renderer renderer))
+        {
+            renderer.enabled = true;
+        }
+
+        isBroken = false;
+    }
     Renderer GetRendererFromRigidbody(Rigidbody rb)
     {
         return rb.GetComponent<Renderer>();
