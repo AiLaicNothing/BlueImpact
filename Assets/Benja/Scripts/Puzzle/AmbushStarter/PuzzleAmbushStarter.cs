@@ -3,7 +3,7 @@ using UnityEngine;
 public class PuzzleAmbushStarter : PuzzleBase
 {
     private bool _isOpen;
-    AmbushEvent ambushEvent;
+    [SerializeField]AmbushEvent ambushEvent;
     private void Awake()
     {
         ambushEvent.enabled = false;
