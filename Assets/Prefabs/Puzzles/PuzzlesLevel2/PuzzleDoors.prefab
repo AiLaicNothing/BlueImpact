@@ -5096,12 +5096,34 @@ MonoBehaviour:
   - {fileID: 5039592682334239665}
   useCameraOnActivation: 0
   activationCamera:
+    camera: {fileID: 0}
     cameraID: 104
     duration: 1.75
+    holdUntilReleased: 0
     activePriority: 100
     inactivePriority: -10
     followTarget: {fileID: 0}
     lookAtTarget: {fileID: 0}
+    overrideBlendIn: 1
+    blendIn:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+    overrideBlendOut: 1
+    blendOut:
+      Style: 1
+      Time: 1
+      CustomCurve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
     restoreGameplayCamera: 1
     interruptCurrent: 1
     pausePlayer: 1
@@ -5418,6 +5440,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
+      propertyPath: canToggleOff
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
       propertyPath: indicatorSprite
       value: 
       objectReference: {fileID: 6857022389568941055}
@@ -5537,6 +5563,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
       propertyPath: offColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
+      propertyPath: canToggleOff
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5771641447313117944, guid: 996c7a0cdb5ffd54aa018f423b9f1d1e, type: 3}
