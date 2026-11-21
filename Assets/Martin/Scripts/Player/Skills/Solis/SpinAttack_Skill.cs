@@ -18,7 +18,11 @@ public class SpinAttack_Skill : Skill
 
     [Header("Vfx")]
     [SerializeField] private GameObject vfx;
+    [SerializeField] private GameObject vfx2;
+    [SerializeField] private float timerVfx2;
     [SerializeField] private Vector3 vfxPos;
+    [SerializeField] private Vector3 vfx2Offset;
+    [SerializeField] private Quaternion vfx2OffsetRot;
     [SerializeField] private GameObject debugBox;
     [SerializeField] private bool debug;
 
@@ -36,12 +40,17 @@ public class SpinAttack_Skill : Skill
         player.blockVelocity = true;
         float timer = 0;
         bool soundPlayed = false;
-
+        //Material matVfx2 = vfx2.GetComponent<Renderer>().material;
         Vector3 vfxOffset = player.transform.position + player.Model.right * vfxPos.x + player.Model.up * vfxPos.y + player.Model.forward * vfxPos.z;
 
         if (vfx != null)
         {
             var vfxPrefab = Instantiate(vfx, vfxOffset, player.Model.rotation);
+            Destroy(vfxPrefab, duration);
+        }
+        if(vfx2 != null)
+        {
+            var vfxPrefab = Instantiate(vfx2, vfxOffset + vfx2Offset,  vfx2OffsetRot);
             Destroy(vfxPrefab, duration);
         }
         while (timer < duration)
@@ -51,7 +60,11 @@ public class SpinAttack_Skill : Skill
                 player.PlayAudio(actionSound, 0.8f);
                 soundPlayed = true;
             }
-
+            if(timer >= timerVfx2)
+            {
+                ParticleSystem p = vfx2.GetComponent<ParticleSystem>();
+                p.Stop();
+            }
             DealDamage(player);
             yield return new WaitForSeconds(tickRate);
             timer += tickRate;

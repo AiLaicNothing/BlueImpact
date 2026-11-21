@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class PuzzleDoor : MonoBehaviour, IActivatable
+public class PuzzleDoor : PuzzleBase
 {
     public enum MoveAxis { X, Y, Z }
 
@@ -93,7 +93,7 @@ public class PuzzleDoor : MonoBehaviour, IActivatable
         transform.position = _targetPosition;
     }
 
-    public void Activate()
+    public override void Activate()
     {
         if (_isOpen) return;
 
@@ -102,7 +102,7 @@ public class PuzzleDoor : MonoBehaviour, IActivatable
         ApplyState(true, true);
     }
 
-    public void Deactivate()
+    public override void Deactivate()
     {
         if (!_isOpen) return;
 

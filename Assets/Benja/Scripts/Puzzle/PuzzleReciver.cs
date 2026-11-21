@@ -27,7 +27,7 @@ public class PuzzleReceiver : MonoBehaviour
     [SerializeField] private List<ActivatorRequirement> requirements = new();
 
     [Header("Targets")]
-    [SerializeField] private List<PuzzleDoor> targets = new();
+    [SerializeField] private List<PuzzleBase> targets = new();
 
     [Header("Camera - On Activation")]
     [SerializeField] private bool useCameraOnActivation = true;
