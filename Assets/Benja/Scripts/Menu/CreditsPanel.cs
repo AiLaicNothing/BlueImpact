@@ -157,7 +157,7 @@ public class CreditsPanel : MonoBehaviour
 
 ~ ° ~
 
-Este juego fue creado por seis personas.
+Este juego fue creado por siete personas.
 
 Sin departamentos.
 Sin barreras.
@@ -179,6 +179,8 @@ EQUIPO
 [ ROSELING ]
 
 [ BOADA ]
+
+[Matías]
 
 AGRADECIMIENTOS
 
