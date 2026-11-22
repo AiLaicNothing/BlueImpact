@@ -1304,7 +1304,7 @@ public class PlayerControl : Controller, IDamageable
         // 🔊 Sonido de recibir daño
         PlayAudio(onHit, sfxVolume);
 
-        if (playerStatsManager.IsDead() || stats.IsDead())
+        if (stats.IsDead())
         {
             OnDead();
         }
