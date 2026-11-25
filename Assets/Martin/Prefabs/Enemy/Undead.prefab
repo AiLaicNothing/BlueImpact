@@ -12,9 +12,6 @@ GameObject:
   - component: {fileID: 6157888273806038348}
   - component: {fileID: 2199258661415980862}
   - component: {fileID: 6654724479812153992}
-  - component: {fileID: 5645680525476756212}
-  - component: {fileID: 2707896928336844764}
-  - component: {fileID: 3667158616257641555}
   m_Layer: 8
   m_Name: Undead
   m_TagString: Enemy
@@ -152,155 +149,74 @@ MonoBehaviour:
   debug: 1
   currentHp: 0
   currentStaggerBuild: 0
+  moveSpeed: 3.5
+  turnSpeed: 15
+  turnResponsiveness: 12
+  rangeHysteresis: 0.5
+  autoFaceMovement: 1
+  arrivalDistance: 0.5
+  navAgentTypeId: 0
+  navAreaMask: -1
+  navSampleRadius: 2
+  repathInterval: 0.25
+  repathTargetMove: 0.5
+  maxPathAge: 1
+  cornerReachDistance: 0.35
+  stoppingDistance: 0.15
+  separationLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  separationRadius: 1.2
+  separationStrength: 0.6
   instantDetection: 0
   detectionRange: 25
-  maxChaseDistance: 45
   detectionDelay: 0.25
-  obstacleLayer:
+  maxChaseDistance: 45
+  sightBlockingLayers:
     serializedVersion: 2
-    m_Bits: 7168
-  targetRayHeight: 1.2
-  attackRange: 2.5
-  arrivalDistance: 0.5
-  repathInterval: 0.25
-  turnSpeed: 15
-  facingAngle: 15
-  attackCooldown: 0.8
-  basicRecovery: 0.2
+    m_Bits: 2048
+  eyeHeight: 1.2
+  targetAimHeight: 1.2
+  aggroOnHit: 1
+  patrolWaitTime: 0
+  playerHitLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  useAnimationEvents: 1
   exitBlend: 0.08
   animationSafetyTimeout: 5
-  cutsMoveSpeed: 6
-  cutsCooldown: 8
-  cutsRecovery: 0.3
-  cutsHpThreshold: 0.75
-  cutsChance: 0.3
-  cutsChargeVfx: {fileID: 0}
-  wallCheckRadius: 0.35
-  wallCheckHeight: 1
-  wallExtraDistance: 0.12
-  hitBoxSize: {x: 2, y: 2, z: 2.5}
-  hitBoxOffset: {x: 0, y: 1, z: 1}
-  hitLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  minCutsHitInterval: 0.08
+  missingAnimationDuration: 0.8
+  idleState: Idle
+  moveState: Walk
+  staggerState: 
   state: 0
---- !u!195 &5645680525476756212
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 836079941225019311}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 0.8
-  m_Speed: 6
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 2
-  m_BaseOffset: 1
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
---- !u!108 &2707896928336844764
-Light:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 836079941225019311}
-  m_Enabled: 0
-  serializedVersion: 12
-  m_Type: 2
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
-  m_Range: 10
-  m_SpotAngle: 30
-  m_InnerSpotAngle: 21.80208
-  m_CookieSize2D: {x: 0.5, y: 0.5}
-  m_Shadows:
-    m_Type: 0
-    m_Resolution: -1
-    m_CustomResolution: -1
-    m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
-    m_NearPlane: 0.2
-    m_CullingMatrixOverride:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
-    m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
-  m_DrawHalo: 0
-  m_Flare: {fileID: 0}
-  m_RenderMode: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingLayerMask: 1
-  m_Lightmapping: 4
-  m_LightShadowCasterMode: 0
-  m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_UseBoundingSphereOverride: 0
-  m_UseViewFrustumForShadowCasterCull: 1
-  m_ForceVisible: 0
-  m_ShadowRadius: 0
-  m_ShadowAngle: 0
-  m_LightUnit: 1
-  m_LuxAtDistance: 1
-  m_EnableSpotReflector: 1
---- !u!114 &3667158616257641555
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 836079941225019311}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
-  m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
-  m_CustomShadowLayers: 0
-  m_LightCookieSize: {x: 1, y: 1}
-  m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
-  m_RenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_ShadowRenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_Version: 4
-  m_LightLayerMask: 1
-  m_ShadowLayerMask: 1
-  m_RenderingLayers: 1
-  m_ShadowRenderingLayers: 1
+  hasTarget: 0
+  attackRange: 2.5
+  facingTolerance: 15
+  slashState: Attack
+  slashCooldown: 0.8
+  slashHitTime: 0.4
+  slashDamageMultiplier: 1
+  slashRecovery: 0.2
+  slashHitBoxSize: {x: 1.4, y: 1, z: 1.4}
+  slashHitBoxOffset: {x: 0, y: 1, z: 1}
+  consecutiveHpThreshold: 0.75
+  consecutiveChance: 0.4
+  consecutiveCooldown: 7
+  consecutiveStartRange: 4
+  consecutiveAimTime: 0.35
+  consecutiveAimState: 
+  consecutiveState: ConsecutiveSlash
+  consecutiveDuration: 2
+  consecutiveMoveSpeed: 5
+  consecutiveHitMode: 0
+  consecutiveHitInterval: 0.3
+  consecutiveFirstHitDelay: 0.1
+  consecutiveDamageMultiplier: 0.6
+  consecutiveRecovery: 0.6
+  consecutiveHitBoxSize: {x: 1.8, y: 1.2, z: 1.6}
+  consecutiveHitBoxOffset: {x: 0, y: 1, z: 1}
+  consecutiveStartVfx: {fileID: 0}
 --- !u!1 &2745576170933154441
 GameObject:
   m_ObjectHideFlags: 0
@@ -487,7 +403,7 @@ Transform:
   m_GameObject: {fileID: 6583533215201237835}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.95, z: 0}
+  m_LocalPosition: {x: 0, y: -0.99, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
