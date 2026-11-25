@@ -21,13 +21,15 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: island floor 1
-  m_Shader: {fileID: 4800000, guid: 9df2335d9e598ff44ad54bb793afd071, type: 3}
+  m_Shader: {fileID: 4800000, guid: da563eed243366a4f95193691b662095, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _ANTITILING
+  - _OVERLAY
+  m_InvalidKeywords:
   - _EMISSIVE_SIMPLE
   - _IS_CLIPPING_OFF
-  m_InvalidKeywords:
   - _IS_OUTLINE_CLIPPING_NO
   - _MatCap
   - _OUTLINE_NML
@@ -38,7 +40,6 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap:
     IgnoreProjection: False
-    RenderType: Opaque
   disabledShaderPasses:
   - MOTIONVECTORS
   m_LockedProperties: 
@@ -70,8 +71,8 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
+        m_Texture: {fileID: 2800000, guid: 319b9c704b412b349815fd050fe97514, type: 3}
+        m_Scale: {x: 10, y: 10}
         m_Offset: {x: 0, y: 0}
     - _BentNormalMap:
         m_Texture: {fileID: 0}
@@ -177,6 +178,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _OverlayMap:
+        m_Texture: {fileID: 2800000, guid: 13962b5d15aac4946a74eff2a9a309b6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _ParallaxMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -280,6 +285,11 @@ Material:
     - _AngelRingOverridden: 0
     - _AngelRingVisible: 1
     - _Anisotropy: 0
+    - _AntiTiling: 1
+    - _AntiTilingContrast: 1
+    - _AntiTilingNoiseScale: 0.73
+    - _AntiTilingRotation: 51
+    - _AntiTilingScale: 0.8
     - _Ap_RimLight_FeatherOff: 0
     - _Ap_RimLight_Power: 0.1
     - _AutoRenderQueue: 1
@@ -385,6 +395,8 @@ Material:
     - _Is_ViewShift: 0
     - _LightDirection_MaskOn: 0
     - _LinkDetailsWithBase: 1
+    - _MacroScale: 0.36
+    - _MacroStrength: 0
     - _MatCap: 1
     - _MaterialID: 1
     - _Metallic: 0
@@ -400,6 +412,11 @@ Material:
     - _OutlineOverridden: 0
     - _OutlineVisible: 1
     - _Outline_Width: 100
+    - _Overlay: 1
+    - _OverlayCoverage: 0.21
+    - _OverlayNoiseScale: 0.15
+    - _OverlaySharpness: 0.6
+    - _OverlaySmoothness: 0.1
     - _PPDLodThreshold: 5
     - _PPDMaxSamples: 15
     - _PPDMinSamples: 5
@@ -412,6 +429,8 @@ Material:
     - _RimLight_FeatherOff: 0
     - _RimLight_InsideMask: 0.0001
     - _RimLight_Power: 0
+    - _RimPower: 3.2
+    - _RimStrength: 0
     - _Rotate_EmissiveUV: 0
     - _Rotate_MatCapUV: 0
     - _Rotate_NormalMapForMatCapUV: 0
@@ -423,7 +442,9 @@ Material:
     - _SecondShadeVisible: 1
     - _Set_SystemShadowsToBase: 1
     - _ShadeColor_Step: 0.331
-    - _Smoothness: 0.5
+    - _ShadeFeather: 0.067
+    - _ShadeStep: 0.46
+    - _Smoothness: 0
     - _SmoothnessRemapMax: 1
     - _SmoothnessRemapMin: 0
     - _SmoothnessTextureChannel: 0
@@ -458,6 +479,7 @@ Material:
     - _TexWorldScale: 1
     - _TexWorldScaleEmissive: 1
     - _Thickness: 1
+    - _ToonStrength: 1
     - _TransmissionMask: 1
     - _TransparentCullMode: 2
     - _TransparentEnabled: 0
@@ -512,9 +534,12 @@ Material:
     - _MatCapColor: {r: 1, g: 1, b: 1, a: 1}
     - _OutlineMaskColor: {r: 0, g: 0, b: 0, a: 1}
     - _Outline_Color: {r: 0.07984372, g: 0.06273406, b: 0.12452829, a: 1}
+    - _OverlayColor: {r: 0.46226418, g: 0.36207634, b: 0.25075653, a: 1}
+    - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _RimLightColor: {r: 1, g: 1, b: 1, a: 1}
     - _RimLightMaskColor: {r: 1, g: 0, b: 1, a: 1}
     - _SecondShadeMaskColor: {r: 0, g: 0, b: 1, a: 1}
+    - _ShadeColor: {r: 0.34999996, g: 0.34999996, b: 0.45, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SpecularColor: {r: 1, g: 1, b: 1, a: 1}
     - _ThicknessRemap: {r: 0, g: 1, b: 0, a: 0}

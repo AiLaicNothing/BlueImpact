@@ -24,11 +24,14 @@ public static class LevelSetupTools
 
     private static readonly string[] LevelScenes =
     {
+        // Orden del juego (Build Settings). Los nombres no siguen la numeración de niveles:
+        // tutorial, nivel 1, Zone_03 (entre nivel 1 y 2), nivel 2, nivel 3, nivel 4.
         "Assets/Scenes/Zone_00_Tutorial.unity",
         "Assets/Scenes/Zone_02.unity",
         "Assets/Scenes/Zone_03.unity",
         "Assets/Scenes/Zone_04.unity",
         "Assets/Scenes/Zone_04_ForgottenLibrary.unity",
+        "Assets/Scenes/Zone_05.unity",
     };
 
     // =====================================================================
