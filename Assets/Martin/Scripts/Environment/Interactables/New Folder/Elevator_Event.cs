@@ -16,10 +16,18 @@ public class Elevator_Event : MonoBehaviour
     [Tooltip("In base of its starting point")]
     [SerializeField] private bool isUp = true;
 
+    [Header("Activation")]
+    [Tooltip("If false, the elevator ignores any new request until it reaches its destination.")]
+    [SerializeField] private bool allowReverseMidPath = false;
+
+    [Tooltip("Seconds after arriving before the trigger can activate the elevator again.")]
+    [SerializeField] private float reactivationCooldown = 0.5f;
+
     private float upperY;
     private float lowerY;
 
     private Coroutine moveRoutine;
+    private float nextAllowedActivation;
 
     public bool IsUp => isUp;
     public bool IsMoving => moveRoutine != null;
@@ -56,7 +64,7 @@ public class Elevator_Event : MonoBehaviour
     {
         if (plattform == null) return;
 
-        if (Event_Manager.Instance != null &&eventData != null && 
+        if (Event_Manager.Instance != null && eventData != null &&
             Event_Manager.Instance.TryGetState(eventData, out WorldEvent_State saved))
         {
             // 0 = Top
@@ -85,6 +93,9 @@ public class Elevator_Event : MonoBehaviour
 
     public void ToggleElevator()
     {
+        // Ignore activations while travelling or right after arriving.
+        if (IsMoving || Time.time < nextAllowedActivation) return;
+
         if (isUp)
         {
             GoDown();
@@ -109,11 +120,12 @@ public class Elevator_Event : MonoBehaviour
     {
         if (plattform == null) return;
 
+        // Already travelling: only allow a direction change if explicitly enabled.
+        if (IsMoving && (!allowReverseMidPath || isUp == goingUp)) return;
+
         float targetY = goingUp ? upperY : lowerY;
 
-        if (moveRoutine != null && isUp == goingUp) return;
-
-        if (moveRoutine == null && Mathf.Abs(plattform.localPosition.y - targetY)<= reachThreshold)
+        if (!IsMoving && Mathf.Abs(plattform.localPosition.y - targetY) <= reachThreshold)
         {
             isUp = goingUp;
             return;
@@ -122,8 +134,7 @@ public class Elevator_Event : MonoBehaviour
         // Change the current destination.
         isUp = goingUp;
 
-        // Cancel existing movement so the elevator
-        // can reverse direction when requested.
+        // Only reached when allowReverseMidPath is true.
         if (moveRoutine != null)
         {
             StopCoroutine(moveRoutine);
@@ -134,7 +145,6 @@ public class Elevator_Event : MonoBehaviour
 
         moveRoutine = StartCoroutine(MovePlatformTo(targetY));
     }
-
 
     private IEnumerator MovePlatformTo(float targetY)
     {
@@ -152,6 +162,7 @@ public class Elevator_Event : MonoBehaviour
         SetPlatformY(targetY);
 
         moveRoutine = null;
+        nextAllowedActivation = Time.time + reactivationCooldown;
     }
 
     private void SetPlatformY(float targetY)

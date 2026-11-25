@@ -1,589 +1,186 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
+using UnityEngine.Serialization;
 
-public class Slime : EnemyBase
+public class Slime : Enemy
 {
-    [Header("Targeting")]
-    [SerializeField] private float attackRange = 2.5f;
-    [SerializeField] private LayerMask obstacleLayer;
-    [SerializeField] private float targetRayHeight = 1.2f;
+    [Header("Slime - Attack")]
+    [Min(0.1f)][SerializeField] private float attackRange = 2.5f;
+    [FormerlySerializedAs("facingAngleThreshold")]
+    [Range(1f, 180f)][SerializeField] private float facingTolerance = 15f;
+    [Min(0f)][SerializeField] private float attackCooldown = 0.2f;
+    [Tooltip("Animator state for the attack. If it does not exist, 'Missing Animation Duration' is used.")]
+    [SerializeField] private string attackState = "Attack";
+    [Tooltip("Only used when 'Use Animation Events' is OFF.")]
+    [Min(0f)][SerializeField] private float hitTime = 0.35f;
+    [Min(0f)][SerializeField] private float damageMultiplier = 1f;
+    [Tooltip("Seconds standing still after the attack, before retreating.")]
+    [Min(0f)][SerializeField] private float postAttackStunDuration = 0.3f;
 
-    [Header("Rotation")]
-    [SerializeField] private float facingAngleThreshold = 15f;
-    [SerializeField] private float turnSpeed = 15f;
-
-    [Header("Hit")]
+    [Header("Slime - Hitbox")]
     [SerializeField] private Vector3 hitBoxSize = new Vector3(1f, 1f, 1f);
-    [SerializeField] private Vector3 hitBoxPos = new Vector3(0f, 0f, 1f);
-    [SerializeField] private float hitTime = 0.35f;
-    [SerializeField] private float attackAnimDuration = 0.8f;
-    [SerializeField] private float postAttackStunDuration = 0.3f;
-    [SerializeField] private float attackCooldown = 0.2f;
-
-    [Header("Hit-and-Run Pattern")]
-    [SerializeField] private float retreatDistance = 5f;
-    [SerializeField] private float retreatSpeed = 7f;
-    [SerializeField] private float recoveryDuration = 1.5f;
-    [SerializeField] private float chaseSpeed = 4.5f;
-
-    [Header("Detection")]
-    [SerializeField] private float detectionRange = 8f;
-    [SerializeField] private float maxChaseDistance = 15f;
-    [SerializeField] private float detectionDelay = 0.25f;
-
-    [Header("Patrol")]
-    [SerializeField] private float stopDistance = 0.5f;
-
-    [Header("Debug")]
+    [FormerlySerializedAs("hitBoxPos")]
+    [SerializeField] private Vector3 hitBoxOffset = new Vector3(0f, 0f, 1f);
+    [Tooltip("Debug only: spawned for 0.2s where the hitbox was (needs 'debug' ON).")]
     [SerializeField] private GameObject hitBoxPrefab;
 
-    // =========================================================
-    // STATE
-    // =========================================================
+    [Header("Slime - Hit and Run")]
+    [Min(0.5f)][SerializeField] private float retreatDistance = 5f;
+    [Tooltip("Absolute speed while retreating (Move Speed is the chase speed).")]
+    [Min(0.1f)][SerializeField] private float retreatSpeed = 7f;
+    [Min(0.1f)][SerializeField] private float maxRetreatDuration = 3f;
+    [Tooltip("Seconds standing still facing the player after retreating.")]
+    [Min(0f)][SerializeField] private float recoveryDuration = 1.5f;
 
-    private bool hasDetectedPlayer;
-    private bool isFollowingPlayer;
-    private bool returningHome;
-    private bool isPerformingAction;
+    private static readonly float[] RetreatAngles = { 0f, 35f, -35f, 70f, -70f, 110f, -110f };
 
-    // Hit-and-Run states
-    private bool isRetreating;
-    private bool isRecovering;
-
-    private float detectionTimer;
-    private float actionTimer;
-
-    private int patrolIndex;
-    private int patrolDir = 1;
-
-    private float nextPlayerSearchTime;
+    private float nextAttackTime;
+    private bool inAttackRange;
+    private NavMeshPath retreatPath;
 
     protected override void Awake()
     {
         base.Awake();
-
-        if (agent != null)
-        {
-            agent.updateRotation = false;
-        }
+        retreatPath = new NavMeshPath();
     }
 
-    protected override void Update()
+    protected override void UpdateCombat()
     {
-        base.Update();
-
-        if (isDead) return;
-        if (isStunned || IsStaggered) return;
-        if (agent == null || !agent.enabled) return;
-
-        UpdateTarget();
-        HandleDetection();
-        HandleActions();
-
-        if (isPerformingAction || isRetreating || isRecovering) return;
-
-        HandleMovement();
-
-        if (agent.velocity.sqrMagnitude >= 0.01f)
+        float distance = FlatDistanceToPlayer();
+        if (!InRange(distance, attackRange, ref inAttackRange) || !CanSeePlayer())
         {
-           // anim.Play("Walk");
-        }
-        else
-        {
-           // anim.Play("Idle");
-        }
-    }
-
-    // =========================================================
-    // TARGETING
-    // =========================================================
-
-    private void UpdateTarget()
-    {
-        // Respaldo de búsqueda del jugador, con throttle: FindFirstObjectByType es costoso
-        if (HasValidPlayer() || Time.time < nextPlayerSearchTime) return;
-
-        nextPlayerSearchTime = Time.time + 1f;
-        player = FindFirstObjectByType<PlayerControl>();
-    }
-
-    private bool HasLineOfSight()
-    {
-        if (!HasValidPlayer()) return false;
-
-        Vector3 origin = transform.position + Vector3.up * targetRayHeight;
-        Vector3 targetPos = player.transform.position + Vector3.up * targetRayHeight;
-
-        Vector3 dir = (targetPos - origin).normalized;
-        float rayDistance = Vector3.Distance(origin, targetPos);
-
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, rayDistance, obstacleLayer))
-        {
-            if (hit.transform != player.transform && hit.transform.root != player.transform.root)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    // =========================================================
-    // DETECTION
-    // =========================================================
-
-    private void HandleDetection()
-    {
-        Transform home = HomePoint;
-        if (home == null) return;
-
-        if (!HasValidPlayer())
-        {
-            hasDetectedPlayer = false;
-            isFollowingPlayer = false;
-            detectionTimer = 0f;
+            MoveTo(player.transform.position);
             return;
         }
 
-        float playerDistHome = Vector3.Distance(player.transform.position, home.position);
-        float distPlayer = DistanceToPlayer();
-
-        if (!hasDetectedPlayer)
-        {
-            if (distPlayer <= detectionRange && HasLineOfSight())
-            {
-                detectionTimer += Time.deltaTime;
-
-                if (detectionTimer >= detectionDelay)
-                {
-                    hasDetectedPlayer = true;
-                    isFollowingPlayer = true;
-                }
-            }
-            else
-            {
-                detectionTimer = 0f;
-            }
-        }
-        else
-        {
-            if (playerDistHome > maxChaseDistance)
-            {
-                hasDetectedPlayer = false;
-                isFollowingPlayer = false;
-                returningHome = true;
-                detectionTimer = 0f;
-                isRetreating = false;
-                isRecovering = false;
-            }
-        }
+        StopMoving();
+        FacePlayer();
+        if (Time.time >= nextAttackTime && IsFacingPlayer(facingTolerance))
+            StartAction(HitAndRunRoutine());
     }
 
-    // =========================================================
-    // MOVEMENT
-    // =========================================================
+    // ----------------------------------------------------------------
+    // Attack -> Stun -> Retreat -> Recover
+    // ----------------------------------------------------------------
 
-    private void HandleMovement()
+    private IEnumerator HitAndRunRoutine()
     {
-        if (isFollowingPlayer && HasValidPlayer())
-        {
-            float distance = DistanceToPlayer();
+        // 1) Attack (direction locked at the start of the swing).
+        Vector3 direction = DirectionToPlayer();
+        LockFacing(direction);
+        StopMoving();
 
-            if (distance > attackRange)
+        bool hitDone = false;
+        yield return PlayAndWait(attackState, elapsed =>
+        {
+            if (!hitDone && EventOrTime(EvtHit, elapsed, hitTime))
             {
-                agent.isStopped = false;
-                agent.SetDestination(player.transform.position);
-                RotateToVelocity();
+                hitDone = true;
+                DoHit(direction);
             }
-            else
+        });
+
+        CrossFadeTo(idleState);
+
+        // 2) Post-attack stun.
+        if (postAttackStunDuration > 0f) yield return new WaitForSeconds(postAttackStunDuration);
+
+        // 3) Retreat away from the player (faces the movement direction).
+        UnlockFacing();
+        if (HasValidPlayer() && FindRetreatDestination(out Vector3 escape))
+        {
+            speedMultiplier = retreatSpeed / Mathf.Max(0.1f, moveSpeed);
+            float endTime = Time.time + maxRetreatDuration;
+
+            while (Time.time < endTime && HasValidPlayer())
             {
-                agent.isStopped = true;
-                agent.ResetPath();
-                RotateToTarget();
-            }
-        }
-        else if (returningHome)
-        {
-            agent.isStopped = false;
-            if (spawnPos != null) agent.SetDestination(spawnPos.position);
-
-            RotateToVelocity();
-
-            if (!agent.pathPending && agent.remainingDistance <= stopDistance)
-            {
-                returningHome = false;
-                agent.ResetPath();
-            }
-        }
-        else if (hasPatrol)
-        {
-            agent.isStopped = false;
-            HandlePatrol();
-            RotateToVelocity();
-        }
-        else
-        {
-            agent.ResetPath();
-        }
-    }
-
-    private void HandlePatrol()
-    {
-        if (patrolZones == null || patrolZones.Length == 0) return;
-
-        Transform posDesired = patrolZones[patrolIndex];
-
-        agent.SetDestination(posDesired.position);
-
-        float dist = Vector3.Distance(transform.position, posDesired.position);
-
-        if (dist <= stopDistance)
-        {
-            patrolIndex += patrolDir;
-
-            if (patrolIndex >= patrolZones.Length)
-            {
-                patrolIndex = patrolZones.Length - 2;
-                patrolDir = -1;
-            }
-            else if (patrolIndex < 0)
-            {
-                patrolIndex = 1;
-                patrolDir = 1;
-            }
-        }
-    }
-
-    // =========================================================
-    // ATTACK LOGIC
-    // =========================================================
-
-    private void HandleActions()
-    {
-        if (isPerformingAction || isRetreating || isRecovering)
-            return;
-        if (!hasDetectedPlayer)
-            return;
-        if (!HasValidPlayer())
-            return;
-
-        float distance = DistanceToPlayer();
-
-        actionTimer += Time.deltaTime;
-
-        if (distance <= attackRange && IsFacingTarget())
-        {
-            if (actionTimer >= attackCooldown)
-            {
-                StartCoroutine(PerformAttack());
-            }
-        }
-    }
-
-    private IEnumerator PerformAttack()
-    {
-        isPerformingAction = true;
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
-        FaceTargetInstant();
-
-       // anim.Play("Attack");
-
-        yield return new WaitForSeconds(hitTime);
-
-        FaceTargetInstant();
-        DoHit();
-
-        float remaining = attackAnimDuration - hitTime;
-        if (remaining > 0f)
-        {
-            yield return new WaitForSeconds(remaining);
-        }
-
-     //   anim.Play("Idle");
-
-        // Post-attack stun (aturdimiento tras golpe)
-        yield return new WaitForSeconds(postAttackStunDuration);
-
-        isPerformingAction = false;
-        actionTimer = 0f;
-
-        // TRANSICIÓN: Después del ataque, vamos a retirarnos
-        if (HasValidPlayer() && isFollowingPlayer)
-        {
-            StartCoroutine(PerformRetreat());
-        }
-    }
-
-    private void DoHit()
-    {
-        Vector3 attackForward = GetAttackForward();
-        Vector3 center = transform.position + attackForward * hitBoxPos.z + Vector3.up * hitBoxPos.y;
-        Quaternion rot = Quaternion.LookRotation(attackForward);
-
-        Collider[] hits = Physics.OverlapBox(center, hitBoxSize * 0.5f, rot);
-
-        ShowHitbox(center, hitBoxSize, rot);
-
-        foreach (var hit in hits)
-        {
-            if (!hit.CompareTag("Player")) continue;
-
-            IDamageable damageable = hit.GetComponentInParent<IDamageable>();
-
-            if (damageable != null)
-            {
-                DamageInfo info = new DamageInfo
-                {
-                    damage = stats.damage,
-                    hitDirection = transform.forward,
-                };
-
-                damageable.TakeDamage(in info);
-            }
-        }
-    }
-
-    // =========================================================
-    // RETREAT BEHAVIOR
-    // =========================================================
-
-    private IEnumerator PerformRetreat()
-    {
-        isRetreating = true;
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.ResetPath();
-        }
-
-        // Calcular dirección de retirada: alejarse del jugador
-        Vector3 retreatDir = GetRetreatDirection();
-
-        // Calcular posición objetivo de retirada
-        Vector3 retreatTarget = transform.position + retreatDir * retreatDistance;
-
-        // Usar el agente para navegar a la posición de retroceso
-        if (agent != null && agent.enabled)
-        {
-            agent.isStopped = false;
-            agent.speed = retreatSpeed;
-            agent.SetDestination(retreatTarget);
-
-            // Esperar hasta que llegue al destino o timeout
-            float timeout = 3f; // Máximo tiempo de retirada
-            float elapsed = 0f;
-
-            while (elapsed < timeout && !agent.pathPending && agent.remainingDistance > stopDistance)
-            {
-                RotateAwayFromPlayer();
-                elapsed += Time.deltaTime;
+                MoveTo(escape);
+                if (FlatDistance(transform.position, escape) <= arrivalDistance) break;
                 yield return null;
             }
 
-            // Asegurar que se detiene
-            agent.ResetPath();
-            agent.isStopped = true;
-        }
-        else
-        {
-            // Fallback si agent no está disponible: movimiento directo
-            float moveDistance = 0f;
-            while (moveDistance < retreatDistance)
-            {
-                float step = retreatSpeed * Time.deltaTime;
-                transform.position += retreatDir * step;
-                moveDistance += step;
-                yield return null;
-            }
+            StopMoving();
+            speedMultiplier = 1f;
         }
 
-        isRetreating = false;
-
-        // TRANSICIÓN: Después de retirarse, entra en recuperación
-        if (HasValidPlayer() && isFollowingPlayer)
+        // 4) Recovery: stand still, keep looking at the player.
+        CrossFadeTo(idleState);
+        float recoverEnd = Time.time + recoveryDuration;
+        while (Time.time < recoverEnd)
         {
-            StartCoroutine(PerformRecovery());
-        }
-    }
-
-    // =========================================================
-    // RECOVERY BEHAVIOR
-    // =========================================================
-
-    private IEnumerator PerformRecovery()
-    {
-        isRecovering = true;
-
-        if (agent != null)
-        {
-            agent.isStopped = true;
-            agent.speed = chaseSpeed; // Restaurar velocidad de persecución
-        }
-
-        // Durante la recuperación: solo mantener rotación hacia el jugador
-        float recoveryElapsed = 0f;
-        while (recoveryElapsed < recoveryDuration)
-        {
-            if (HasValidPlayer())
-            {
-                RotateToTarget();
-            }
-
-            recoveryElapsed += Time.deltaTime;
-          //  anim.Play("Idle");
+            FacePlayer();
             yield return null;
         }
 
-        isRecovering = false;
-
-        // TRANSICIÓN: Recuperación completa, volver a perseguir
-        if (HasValidPlayer() && isFollowingPlayer)
-        {
-            if (agent != null)
-            {
-                agent.isStopped = false;
-            }
-        }
+        nextAttackTime = Time.time + attackCooldown;
     }
 
-    // =========================================================
-    // ROTATION & UTILITIES
-    // =========================================================
-
-    private void RotateToVelocity()
+    private void DoHit(Vector3 direction)
     {
-        Vector3 vel = agent.velocity;
-        vel.y = 0f;
-
-        if (vel.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(vel.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
+        MeleeHit(hitBoxOffset, hitBoxSize, direction, damageMultiplier);
+        ShowHitbox(direction);
     }
 
-    private void RotateToTarget()
+    // Picks the reachable NavMesh point that gains the most distance from the player.
+    private bool FindRetreatDestination(out Vector3 best)
     {
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(dir.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
-    }
-
-    private void RotateAwayFromPlayer()
-    {
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = transform.position - player.transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        Quaternion rot = Quaternion.LookRotation(dir.normalized);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rot, Time.deltaTime * turnSpeed);
-    }
-
-    private void FaceTargetInstant()
-    {
-        if (!HasValidPlayer()) return;
-
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
-
-        if (dir.sqrMagnitude < 0.01f) return;
-
-        transform.rotation = Quaternion.LookRotation(dir.normalized);
-    }
-
-    private bool IsFacingTarget()
-    {
+        best = transform.position;
         if (!HasValidPlayer()) return false;
 
-        Vector3 dir = player.transform.position - transform.position;
-        dir.y = 0f;
+        NavMeshQueryFilter filter = NavFilter;
+        if (!NavMesh.SamplePosition(GetNavQueryPosition(), out NavMeshHit start, navSampleRadius, filter))
+            return false;
 
-        if (dir.sqrMagnitude < 0.01f) return false;
+        Vector3 away = Flat(transform.position - player.transform.position);
+        if (away.sqrMagnitude < 0.01f) away = -Flat(transform.forward);
+        away.Normalize();
 
-        float angle = Vector3.Angle(transform.forward, dir.normalized);
-        return angle <= facingAngleThreshold;
-    }
+        float currentDistance = FlatDistanceToPlayer();
+        float bestGain = 0.5f;
+        bool found = false;
 
-    private Vector3 GetAttackForward()
-    {
-        if (HasValidPlayer())
+        foreach (float angle in RetreatAngles)
         {
-            Vector3 dir = player.transform.position - transform.position;
-            dir.y = 0f;
+            Vector3 dir = Quaternion.Euler(0f, angle, 0f) * away;
+            Vector3 wanted = start.position + dir * retreatDistance;
+            if (!NavMesh.SamplePosition(wanted, out NavMeshHit target, 1.5f, filter)) continue;
 
-            if (dir.sqrMagnitude > 0.01f) return dir.normalized;
+            float gain = FlatDistance(target.position, player.transform.position) - currentDistance;
+            if (gain <= bestGain) continue;
+            if (!NavMesh.CalculatePath(start.position, target.position, filter, retreatPath) ||
+                retreatPath.status != NavMeshPathStatus.PathComplete) continue;
+
+            bestGain = gain;
+            best = target.position;
+            found = true;
         }
-
-        Vector3 fallback = transform.forward;
-        fallback.y = 0f;
-
-        if (fallback.sqrMagnitude < 0.01f) fallback = Vector3.forward;
-
-        return fallback.normalized;
+        return found;
     }
 
-    private Vector3 GetRetreatDirection()
-    {
-        if (HasValidPlayer())
-        {
-            // Dirección opuesta al jugador
-            Vector3 dir = transform.position - player.transform.position;
-            dir.y = 0f;
-
-            if (dir.sqrMagnitude > 0.01f) return dir.normalized;
-        }
-
-        // Fallback: alejarse hacia adelante
-        Vector3 fallback = transform.forward;
-        fallback.y = 0f;
-
-        if (fallback.sqrMagnitude < 0.01f) fallback = Vector3.forward;
-
-        return fallback.normalized;
-    }
-
-    public void ShowHitbox(Vector3 center, Vector3 size, Quaternion rot)
+    private void ShowHitbox(Vector3 direction)
     {
         if (hitBoxPrefab == null || !debug) return;
 
-        GameObject box = Instantiate(hitBoxPrefab, center, rot);
-        box.transform.localScale = size;
+        Quaternion rotation = Quaternion.LookRotation(Flat(direction).sqrMagnitude > 0.001f ? Flat(direction) : Vector3.forward);
+        GameObject box = Instantiate(hitBoxPrefab, transform.position + rotation * hitBoxOffset, rotation);
+        box.transform.localScale = hitBoxSize;
         Destroy(box, 0.2f);
     }
 
-    private void OnDrawGizmos()
+    protected override void OnActionCancelled()
     {
+        nextAttackTime = Time.time + attackCooldown;
+    }
+
+    protected override void OnDrawGizmosSelected()
+    {
+        base.OnDrawGizmosSelected();
         if (!debug) return;
-
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-
-        Gizmos.color = Color.green;
-        if (safeZone != null)
-        {
-            Gizmos.DrawWireSphere(safeZone.position, 1f);
-
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(safeZone.position, maxChaseDistance);
-        }
-
-        // Visualizar distancia de retroceso
-        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.color = new Color(1f, 0.9f, 0f);
         Gizmos.DrawWireSphere(transform.position, retreatDistance);
+        DrawHitBoxGizmo(transform, hitBoxOffset, hitBoxSize, new Color(1f, 0.3f, 0.3f));
     }
 }
