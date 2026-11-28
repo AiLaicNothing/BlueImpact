@@ -145,7 +145,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     private bool hadDestination;
     private bool agentWasStopped;
     private Vector3 previousDestination;
-    private int currentAnimHash;
+    protected int currentAnimHash;
     private Renderer[] allRenderers;
 
     private readonly List<Material> clonMaterials = new List<Material>();
@@ -254,7 +254,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
             return;
         }
 
-        if (isGroundEnemy && !isGrounded) return;
+        if (!CanDriveMovement()) return;
 
         if (isStunned || isStaggered)
         {
@@ -278,32 +278,59 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
     protected float DistanceToPlayer()
     {
-        return HasValidPlayer()? Vector3.Distance(transform.position, player.transform.position) : float.MaxValue;
+        return HasValidPlayer() ? Vector3.Distance(transform.position, player.transform.position) : float.MaxValue;
     }
 
     // ================================================================
     // RIGIDBODY NAVIGATION + PLAYER COLLISION RESISTANCE
     // ================================================================
 
+    // ----------------------------------------------------------------
+    // Movement hooks. Defaults = original NavMeshAgent behaviour (bosses).
+    // Enemy (normal enemies) overrides them to use NavMesh path queries instead.
+    // ----------------------------------------------------------------
+
+    /// <summary>Can the Rigidbody be driven this physics step?</summary>
+    protected virtual bool CanDriveMovement() => !(isGroundEnemy && !isGrounded);
+
+    /// <summary>Horizontal velocity the Rigidbody should reach.</summary>
+    protected virtual Vector3 GetDesiredVelocity()
+    {
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh || agent.isStopped) return Vector3.zero;
+
+        Vector3 desired = agent.desiredVelocity;
+        desired.y = 0f;
+        return Vector3.ClampMagnitude(desired, agent.speed);
+    }
+
+    /// <summary>True = set the velocity instantly (dashes) instead of accelerating.</summary>
+    protected virtual bool UseInstantVelocity => false;
+
+    /// <summary>Called after a damage hit that did not kill the enemy.</summary>
+    protected virtual void OnDamaged(in DamageInfo info) { }
+
+    /// <summary>Called when a push / launch / knockdown reaction ends.</summary>
+    protected virtual void OnReactionEnded() { }
+
     private void DriveRigidbodyFromNavMesh()
     {
-        Vector3 desired = Vector3.zero;
-
-        if (agent != null && agent.enabled && agent.isOnNavMesh && !agent.isStopped)
-        {
-            desired = agent.desiredVelocity;
-            desired.y = 0f;
-            desired = Vector3.ClampMagnitude(desired, agent.speed);
-        }
+        Vector3 desired = GetDesiredVelocity();
 
         Vector3 velocity = rb.linearVelocity;
         Vector3 horizontal = new Vector3(velocity.x, 0f, velocity.z);
 
-        // Accelerate towards navigation velocity instead of teleporting or
-        // setting transform.position (which would fight collision physics).
-        Vector3 delta = desired - horizontal;
-        delta = Vector3.ClampMagnitude(delta, navigationAcceleration * Time.fixedDeltaTime);
-        rb.AddForce(delta, ForceMode.VelocityChange);
+        if (UseInstantVelocity)
+        {
+            rb.linearVelocity = new Vector3(desired.x, velocity.y, desired.z);
+        }
+        else
+        {
+            // Accelerate towards navigation velocity instead of teleporting or
+            // setting transform.position (which would fight collision physics).
+            Vector3 delta = desired - horizontal;
+            delta = Vector3.ClampMagnitude(delta, navigationAcceleration * Time.fixedDeltaTime);
+            rb.AddForce(delta, ForceMode.VelocityChange);
+        }
 
         LimitPlayerBodyPush(desired);
 
@@ -315,7 +342,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
         }
     }
 
-    private void BrakeHorizontalMovement(float strength)
+    protected void BrakeHorizontalMovement(float strength)
     {
         if (strength <= 0f) return;
 
@@ -327,7 +354,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
     // A grounded character can brush against the enemy, but not shove it
     // across the level. The limit applies ONLY to physical player contacts,
     // NOT to damage-based push/launch/knockdown reactions.
-    private void LimitPlayerBodyPush(Vector3 expectedNavigationVelocity)
+    protected void LimitPlayerBodyPush(Vector3 expectedNavigationVelocity)
     {
         if (Time.time > playerContactUntil || isInReaction || (isGroundEnemy && !isGrounded)) return;
 
@@ -412,6 +439,8 @@ public class EnemyBase : MonoBehaviour, IDamageable
             Die();
             return;
         }
+
+        OnDamaged(in info);
 
         // Returns true if already staggered OR this hit just triggered stagger.
         bool canUseAttackForces = HandleStagger(info);
@@ -555,6 +584,7 @@ public class EnemyBase : MonoBehaviour, IDamageable
 
         // This method refuses to resume the NavMesh while still staggered.
         EnableAgentIfNeeded();
+        OnReactionEnded();
     }
 
     private IEnumerator WaitForLanding()
@@ -1022,4 +1052,3 @@ public class EnemyBase : MonoBehaviour, IDamageable
         this.spawnPos = spawnPos;
     }
 }
-

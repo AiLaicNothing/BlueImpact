@@ -139,7 +139,7 @@ public class PauseManager : MonoBehaviour
     {
         GamepadCursor.Instance?.CloseAllExcept(null);
         Time.timeScale = 1f;
-        SceneManager.LoadScene("menu");
+        SceneManager.LoadScene("Menu");
     }
 
     // ---------- HELPERS ----------

@@ -12,9 +12,6 @@ GameObject:
   - component: {fileID: 8374016008835660050}
   - component: {fileID: 7849738784648594215}
   - component: {fileID: 8736429359931728875}
-  - component: {fileID: 1046320319683683077}
-  - component: {fileID: 680673025485852476}
-  - component: {fileID: 23052857526333879}
   m_Layer: 8
   m_Name: Automata
   m_TagString: Enemy
@@ -151,160 +148,74 @@ MonoBehaviour:
   debug: 1
   currentHp: 0
   currentStaggerBuild: 0
+  moveSpeed: 3.5
+  turnSpeed: 540
+  turnResponsiveness: 12
+  rangeHysteresis: 0.5
+  autoFaceMovement: 1
+  arrivalDistance: 0.5
+  navAgentTypeId: 0
+  navAreaMask: -1
+  navSampleRadius: 2
+  repathInterval: 0.2
+  repathTargetMove: 0.5
+  maxPathAge: 1
+  cornerReachDistance: 0.35
+  stoppingDistance: 0.15
+  separationLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  separationRadius: 1.2
+  separationStrength: 0.6
+  instantDetection: 0
   detectionRange: 11
   detectionDelay: 0.4
-  instantDetection: 0
   maxChaseDistance: 25
   sightBlockingLayers:
     serializedVersion: 2
     m_Bits: 0
-  attackRange: 8
-  repathInterval: 0.2
-  turnSpeed: 15
-  facingTolerance: 20
-  burstChance: 0.62
-  attackTestMode: 0
-  attackCooldown: 0.8
-  attackRecovery: 0.25
-  animationTimeout: 5
-  projectilePrefab: {fileID: 8499267714821707363, guid: 71e2044fa01baca4cbfcc18c220214e7, type: 3}
-  firePoint: {fileID: 6754386472286928512}
-  aimHeight: 1.2
-  burstCount: 4
-  burstInterval: 0.25
-  dashSpeed: 15
-  dashMotionEndNormalized: 0.95
-  dashMaxDistance: 8
-  dashStopDistance: 2
-  spreadCount: 5
-  spreadAngle: 40
-  edgeMargin: 0.3
-  wallLayers:
-    serializedVersion: 2
-    m_Bits: 6144
-  wallRadius: 0.35
-  wallHeight: 1
-  logDash: 0
-  lastSafeDash: 0
-  lastDashStatus: 
-  detectedPlayer: 0
-  detectionTimer: 0
---- !u!195 &1046320319683683077
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2611962225852712224}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 0.8
-  m_Speed: 6
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 2
-  m_BaseOffset: 1
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
---- !u!108 &680673025485852476
-Light:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2611962225852712224}
-  m_Enabled: 0
-  serializedVersion: 12
-  m_Type: 2
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
-  m_Range: 10
-  m_SpotAngle: 30
-  m_InnerSpotAngle: 21.80208
-  m_CookieSize2D: {x: 0.5, y: 0.5}
-  m_Shadows:
-    m_Type: 0
-    m_Resolution: -1
-    m_CustomResolution: -1
-    m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
-    m_NearPlane: 0.2
-    m_CullingMatrixOverride:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
-    m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
-  m_DrawHalo: 0
-  m_Flare: {fileID: 0}
-  m_RenderMode: 0
-  m_CullingMask:
+  eyeHeight: 1.2
+  targetAimHeight: 1.2
+  aggroOnHit: 1
+  patrolWaitTime: 0
+  playerHitLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_RenderingLayerMask: 1
-  m_Lightmapping: 4
-  m_LightShadowCasterMode: 0
-  m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
-  m_UseBoundingSphereOverride: 0
-  m_UseViewFrustumForShadowCasterCull: 1
-  m_ForceVisible: 0
-  m_ShadowRadius: 0
-  m_ShadowAngle: 0
-  m_LightUnit: 1
-  m_LuxAtDistance: 1
-  m_EnableSpotReflector: 1
---- !u!114 &23052857526333879
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2611962225852712224}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
-  m_UsePipelineSettings: 1
-  m_AdditionalLightsShadowResolutionTier: 2
-  m_CustomShadowLayers: 0
-  m_LightCookieSize: {x: 1, y: 1}
-  m_LightCookieOffset: {x: 0, y: 0}
-  m_SoftShadowQuality: 0
-  m_RenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_ShadowRenderingLayersMask:
-    serializedVersion: 0
-    m_Bits: 1
-  m_Version: 4
-  m_LightLayerMask: 1
-  m_ShadowLayerMask: 1
-  m_RenderingLayers: 1
-  m_ShadowRenderingLayers: 1
+  useAnimationEvents: 1
+  exitBlend: 0.08
+  animationSafetyTimeout: 5
+  missingAnimationDuration: 0.8
+  idleState: Idle
+  moveState: Walk
+  staggerState: 
+  state: 0
+  hasTarget: 0
+  attackRange: 8
+  attackCooldown: 0.8
+  facingTolerance: 20
+  projectilePrefab: {fileID: 8499267714821707363, guid: 71e2044fa01baca4cbfcc18c220214e7, type: 3}
+  firePoint: {fileID: 6754386472286928512}
+  burstChance: 0.62
+  attackMode: 0
+  attackRecovery: 0.25
+  burstState: BurstFire
+  burstStartTime: 0.3
+  burstCount: 4
+  burstInterval: 0.25
+  trackPlayerDuringBurst: 1
+  burstDamageMultiplier: 0.6
+  surpriseMinDistance: 4
+  dashState: Dash
+  dashWindup: 0.2
+  dashSpeed: 15
+  dashMaxDuration: 0.6
+  dashStopDistance: 2
+  dashHoming: 1
+  spreadState: Spread
+  spreadFireTime: 0.2
+  spreadCount: 5
+  spreadAngle: 40
+  spreadDamageMultiplier: 0.8
 --- !u!1 &4567951724363192475
 GameObject:
   m_ObjectHideFlags: 0
@@ -393,7 +304,7 @@ Transform:
   m_GameObject: {fileID: 6460398974773328519}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.95, z: 0}
+  m_LocalPosition: {x: 0, y: -0.99, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1008,7 +919,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4760236537953277199, guid: a721abba58cb3d74ea2161720b13ccaa, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7721061455057164863}
+      addedObject: {fileID: 7513548473442797145}
   m_SourcePrefab: {fileID: 100100000, guid: a721abba58cb3d74ea2161720b13ccaa, type: 3}
 --- !u!4 &6600318152315300212 stripped
 Transform:
@@ -1020,7 +931,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4760236537953277199, guid: a721abba58cb3d74ea2161720b13ccaa, type: 3}
   m_PrefabInstance: {fileID: 3038042104017073595}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7721061455057164863
+--- !u!114 &7513548473442797145
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1029,7 +940,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7504838504763121844}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: afa7cea30261fab4888599c77b99e929, type: 3}
+  m_Script: {fileID: 11500000, guid: 6a7f4b75e8620a045ad17260b8483497, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::AutomataAnimationEvents
-  automata: {fileID: 8736429359931728875}
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimationEvents
